@@ -10,16 +10,18 @@ function Inscription() {
   const [chargement, setChargement] = useState(false)
   const navigate = useNavigate()
 
-  const gererInscription = async (e) => {
+const gererInscription = async (e) => {
     e.preventDefault()
     setChargement(true)
     setErreur(null)
 
-    // Inscription via Supabase Auth
     const { data, error } = await supabase.auth.signUp({
       email,
       password: motDePasse,
     })
+
+    console.log('data:', data)
+    console.log('error:', error)
 
     if (error) {
       setErreur(error.message)
@@ -27,10 +29,11 @@ function Inscription() {
       return
     }
 
-    // Création du profil dans notre table publique
     const { error: erreurProfil } = await supabase
       .from('profils')
       .insert({ id: data.user.id, pseudo })
+
+    console.log('erreurProfil:', erreurProfil)
 
     if (erreurProfil) {
       setErreur('Ce pseudo est déjà pris')
