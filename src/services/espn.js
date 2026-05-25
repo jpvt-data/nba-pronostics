@@ -51,3 +51,23 @@ export const recupererMatchs3Jours = async () => {
 
   return matchs
 }
+
+// Récupère le gagnant d'un match terminé par espn_id
+export const recupererGagnant = async (espnId) => {
+  try {
+    const response = await fetch(`${BASE_URL}/summary?event=${espnId}`)
+    const data = await response.json()
+
+    const competition = data.header?.competitions?.[0]
+    if (!competition) return null
+
+    const statut = competition.status?.type?.name
+    if (statut !== 'STATUS_FINAL') return null
+
+    const gagnant = competition.competitors.find(c => c.winner === true)
+    return gagnant ? gagnant.team.abbreviation : null
+  } catch (err) {
+    console.error('Erreur récupération gagnant:', err)
+    return null
+  }
+}

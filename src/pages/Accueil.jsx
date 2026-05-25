@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { recupererMatchs3Jours } from '../services/espn'
+import { calculerPoints } from '../services/points'
 
 // Formate la date pour affichage
 const formaterDateAffichage = (dateStr) => {
@@ -27,6 +28,7 @@ function Accueil() {
     const init = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       setUser(user)
+      await calculerPoints(user.id) // ← ici
 
       // Chargement matchs ESPN
       const matchsESPN = await recupererMatchs3Jours()
@@ -99,6 +101,7 @@ function Accueil() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
         <h1>🏀 NBA Pronos</h1>
         <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <button onClick={() => navigate('/classement')}>Classement</button>
           <button onClick={() => navigate('/groupes')}>Groupes</button>
           <button onClick={gererDeconnexion}>Déco</button>
         </div>
