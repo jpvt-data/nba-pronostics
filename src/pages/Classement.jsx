@@ -1,29 +1,26 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import Navigation from '../components/Navigation'
 
 function Classement() {
-  const [groupes, setGroupes] = useState([])
-  const [groupeActif, setGroupeActif] = useState(null)
+  const [groupes, setGroupes]       = useState([])
+  const [groupeActif, setActif]     = useState(null)
   const [classement, setClassement] = useState([])
-  const [chargement, setChargement] = useState(true)
+  const [chargement, setCharg]      = useState(true)
 
   useEffect(() => {
     const init = async () => {
       const { data: { user } } = await supabase.auth.getUser()
-
-      // Récupère les groupes de l'user
       const { data } = await supabase
         .from('membres_groupe')
         .select('groupe_id, groupes(id, nom)')
-        .eq('user_id', user.id)
-        .eq('actif', true)
-
+        .eq('user_id', user.id).eq('actif', true)
       setGroupes(data || [])
       if (data?.length > 0) {
-        setGroupeActif(data[0].groupes)
+        setActif(data[0].groupes)
         await chargerClassement(data[0].groupes.id)
       }
-      setChargement(false)
+      setCharg(false)
     }
     init()
   }, [])
@@ -32,56 +29,109 @@ function Classement() {
     const { data } = await supabase
       .from('membres_groupe')
       .select('points, user_id, profils(pseudo)')
-      .eq('groupe_id', groupeId)
-      .eq('actif', true)
+      .eq('groupe_id', groupeId).eq('actif', true)
       .order('points', { ascending: false })
-
     setClassement(data || [])
   }
 
   const changerGroupe = async (groupe) => {
-    setGroupeActif(groupe)
+    setActif(groupe)
     await chargerClassement(groupe.id)
   }
 
+  const medaille = (i) => ['🥇','🥈','🥉'][i] || null
+
   return (
-    <div style={{ maxWidth: 500, margin: '0 auto', padding: '1rem' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h1>🏆 Classement</h1>
-      </div>
+    <>
+      <Navigation />
+      <main style={{ flex: 1, padding: '20px 16px' }}>
+        <h2 style={{ marginBottom: 16 }}>Classement</h2>
 
-      {chargement && <p>Chargement...</p>}
+        {/* Sélecteur groupes */}
+        {groupes.length > 1 && (
+          <div style={{ display: 'flex', gap: 6, marginBottom: 16, overflowX: 'auto', scrollbarWidth: 'none' }}>
+            {groupes.map(m => {
+              const actif = groupeActif?.id === m.groupes.id
+              return (
+                <button key={m.groupe_id} onClick={() => changerGroupe(m.groupes)} style={{
+                  padding: '6px 14px', borderRadius: 'var(--radius-sm)', fontSize: 13, fontWeight: 500,
+                  background: actif ? 'var(--accent-dim)' : 'transparent',
+                  border: `1px solid ${actif ? 'var(--accent-border)' : 'var(--border)'}`,
+                  color: actif ? 'var(--accent)' : 'var(--text-2)',
+                  cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0,
+                }}>
+                  {m.groupes.nom}
+                </button>
+              )
+            })}
+          </div>
+        )}
 
-      {/* Sélecteur de groupe */}
-      {groupes.length > 1 && (
-        <div style={{ display: 'flex', gap: '0.5rem', margin: '1rem 0' }}>
-          {groupes.map(m => (
-            <button
-              key={m.groupe_id}
-              onClick={() => changerGroupe(m.groupes)}
-              style={{ fontWeight: groupeActif?.id === m.groupes.id ? 'bold' : 'normal' }}
-            >
-              {m.groupes.nom}
-            </button>
+        {/* Titre groupe */}
+        {groupeActif && (
+          <div style={{ fontSize: 12, color: 'var(--text-3)', marginBottom: 12 }}>
+            {groupeActif.nom} · {classement.length} membre{classement.length > 1 ? 's' : ''}
+          </div>
+        )}
+
+        {chargement && <p style={{ color: 'var(--text-3)', fontSize: 13 }}>Chargement…</p>}
+
+        {/* Podium top 3 */}
+        {classement.length >= 3 && (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginBottom: 16 }}>
+            {classement.slice(0, 3).map((m, i) => (
+              <div key={m.user_id} style={{
+                background: 'var(--bg-1)', border: `1px solid ${i === 0 ? 'var(--accent-border)' : 'var(--border)'}`,
+                borderRadius: 'var(--radius-md)', padding: '14px 8px', textAlign: 'center',
+              }}>
+                <div style={{ fontSize: 20, marginBottom: 6 }}>{medaille(i)}</div>
+                <div style={{
+                  fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 22,
+                  color: i === 0 ? 'var(--accent)' : 'var(--text-1)',
+                }}>{m.points}</div>
+                <div style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 2 }}>pts</div>
+                <div style={{ fontSize: 12, color: 'var(--text-2)', marginTop: 6, fontWeight: 500 }}>
+                  {m.profils?.pseudo || '—'}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Liste complète */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {classement.map((m, i) => (
+            <div key={m.user_id} style={{
+              display: 'flex', alignItems: 'center', gap: 12,
+              background: 'var(--bg-1)', border: '1px solid var(--border)',
+              borderRadius: 'var(--radius-sm)', padding: '10px 14px',
+            }}>
+              <span style={{
+                fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 16,
+                color: i < 3 ? 'var(--accent)' : 'var(--text-3)', minWidth: 22, textAlign: 'center',
+              }}>#{i + 1}</span>
+              <div style={{
+                width: 30, height: 30, borderRadius: '50%',
+                background: 'var(--bg-2)', display: 'flex', alignItems: 'center',
+                justifyContent: 'center', fontSize: 11, fontWeight: 600, color: 'var(--accent)',
+              }}>
+                {(m.profils?.pseudo || '?').slice(0, 2).toUpperCase()}
+              </div>
+              <span style={{ flex: 1, fontSize: 14, color: 'var(--text-1)', fontWeight: 500 }}>
+                {m.profils?.pseudo || 'Inconnu'}
+              </span>
+              <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 18, color: i < 3 ? 'var(--accent)' : 'var(--text-2)' }}>
+                {m.points}<span style={{ fontSize: 11, color: 'var(--text-3)', marginLeft: 2 }}>pts</span>
+              </span>
+            </div>
           ))}
         </div>
-      )}
 
-      {groupeActif && <h3>{groupeActif.nom}</h3>}
-
-      {/* Tableau classement */}
-      {classement.map((membre, index) => (
-        <div key={membre.user_id} style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '0.75rem 1rem', border: '1px solid #333', borderRadius: 8, marginBottom: '0.5rem' }}>
-          <span style={{ fontWeight: 700, minWidth: 24 }}>#{index + 1}</span>
-          <span style={{ flex: 1 }}>{membre.profils?.pseudo || 'Inconnu'}</span>
-          <span style={{ fontWeight: 600 }}>{membre.points} pts</span>
-        </div>
-      ))}
-
-      {!chargement && classement.length === 0 && (
-        <p>Aucun membre dans ce groupe.</p>
-      )}
-    </div>
+        {!chargement && classement.length === 0 && (
+          <p style={{ color: 'var(--text-3)', fontSize: 13 }}>Aucun membre dans ce groupe.</p>
+        )}
+      </main>
+    </>
   )
 }
 

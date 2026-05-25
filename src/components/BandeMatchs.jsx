@@ -6,123 +6,117 @@ const estVerrouille = (dateStr, statut) => {
   return new Date() >= new Date(dateStr)
 }
 
-const formaterHeure = (dateStr) => {
-  return new Date(dateStr).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
-}
+const formaterHeure = (dateStr) =>
+  new Date(dateStr).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
 
-const formaterJour = (dateStr) => {
-  return new Date(dateStr).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' })
+const formaterJour = (dateStr) =>
+  new Date(dateStr).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' })
+
+const statutLabel = (statut) => {
+  if (statut === 'STATUS_FINAL')       return { texte: 'Terminé',  couleur: 'var(--text-3)' }
+  if (statut === 'STATUS_IN_PROGRESS') return { texte: '● Live',   couleur: 'var(--success)' }
+  return null
 }
 
 function BandeMatchs({ matchs, userId }) {
   const [pronos, setPronos] = useState({})
 
   useEffect(() => {
-    const chargerPronos = async () => {
+    const charger = async () => {
       if (!userId) return
       const { data } = await supabase
         .from('pronos')
         .select('equipe_choisie, matchs(espn_id)')
         .eq('user_id', userId)
-
-      const index = {}
-      data?.forEach(p => {
-        if (p.matchs) index[p.matchs.espn_id] = p.equipe_choisie
-      })
-      setPronos(index)
+      const idx = {}
+      data?.forEach(p => { if (p.matchs) idx[p.matchs.espn_id] = p.equipe_choisie })
+      setPronos(idx)
     }
-    chargerPronos()
+    charger()
   }, [userId])
 
-  const faireProno = async (match, equipeChoisie) => {
+  const faireProno = async (match, equipe) => {
     if (estVerrouille(match.date, match.statut)) return
-
     const { data: matchDB } = await supabase
       .from('matchs')
       .upsert({
-        espn_id: match.espn_id,
-        date_match: match.date,
+        espn_id: match.espn_id, date_match: match.date,
         equipe_domicile: match.domicile.trigramme,
         equipe_exterieur: match.exterieur.trigramme,
         statut: match.statut,
       }, { onConflict: 'espn_id' })
-      .select()
-      .single()
-
+      .select().single()
     if (!matchDB) return
+    await supabase.from('pronos').upsert({
+      user_id: userId, match_id: matchDB.id,
+      equipe_choisie: equipe, resultat: 'en_attente',
+    }, { onConflict: 'user_id,match_id' })
+    setPronos(prev => ({ ...prev, [match.espn_id]: equipe }))
+  }
 
-    await supabase
-      .from('pronos')
-      .upsert({
-        user_id: userId,
-        match_id: matchDB.id,
-        equipe_choisie: equipeChoisie,
-        resultat: 'en_attente',
-      }, { onConflict: 'user_id,match_id' })
-
-    setPronos(prev => ({ ...prev, [match.espn_id]: equipeChoisie }))
+  const btnEquipe = (match, equipe, logo, score) => {
+    const verrou  = estVerrouille(match.date, match.statut)
+    const selec   = pronos[match.espn_id] === equipe
+    return (
+      <button
+        onClick={() => faireProno(match, equipe)}
+        disabled={verrou}
+        style={{
+          width: '100%', display: 'flex', alignItems: 'center', gap: 8,
+          background: selec ? 'var(--accent-dim)' : 'transparent',
+          border: `1px solid ${selec ? 'var(--accent-border)' : 'var(--border)'}`,
+          borderRadius: 'var(--radius-sm)', padding: '7px 8px',
+          cursor: verrou ? 'default' : 'pointer',
+          marginBottom: 4, transition: 'all 0.15s',
+        }}
+      >
+        <img src={logo} alt={equipe} style={{ width: 22, height: 22, objectFit: 'contain', flexShrink: 0 }} />
+        <span style={{
+          fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 14,
+          color: selec ? 'var(--accent)' : 'var(--text-1)', letterSpacing: '0.04em', flex: 1, textAlign: 'left',
+        }}>{equipe}</span>
+        {score !== null && score !== undefined && (
+          <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 15, color: 'var(--text-2)' }}>{score}</span>
+        )}
+      </button>
+    )
   }
 
   return (
-    <div style={{ overflowX: 'auto', padding: '1rem 0', borderBottom: '1px solid #1f1f1f' }}>
-      <div style={{ display: 'flex', gap: '0.75rem', padding: '0 1rem', minWidth: 'max-content' }}>
+    /* ⚠️ overflow-x sur le WRAPPER, pas sur l'enfant */
+    <div style={{
+      overflowX: 'auto',
+      WebkitOverflowScrolling: 'touch',
+      scrollbarWidth: 'none',
+      borderBottom: '1px solid var(--border)',
+      padding: '12px 0',
+    }}>
+      <div style={{
+        display: 'flex', gap: 10,
+        padding: '0 16px',
+        width: 'max-content', /* force le débordement horizontal */
+      }}>
         {matchs.map(match => {
-          const verrou = estVerrouille(match.date, match.statut)
-          const pronoActuel = pronos[match.espn_id]
-
+          const st = statutLabel(match.statut)
           return (
             <div key={match.espn_id} style={{
-              background: '#111',
-              border: '1px solid #1f1f1f',
-              borderRadius: 10,
-              padding: '0.75rem',
-              width: 160,
-              flexShrink: 0,
+              background: 'var(--bg-1)', border: '1px solid var(--border)',
+              borderRadius: 'var(--radius-md)', padding: '10px 10px 8px',
+              width: 156, flexShrink: 0,
             }}>
-              <div style={{ fontSize: 10, color: '#444', marginBottom: '0.5rem', textAlign: 'center' }}>
+              <div style={{ fontSize: 10, color: 'var(--text-3)', textAlign: 'center', marginBottom: 8 }}>
                 {formaterJour(match.date)} · {formaterHeure(match.date)}
               </div>
-
-              {/* Équipe extérieure */}
-              <button
-                onClick={() => faireProno(match, match.exterieur.trigramme)}
-                disabled={verrou}
-                style={{
-                  width: '100%', display: 'flex', alignItems: 'center', gap: '0.5rem',
-                  background: pronoActuel === match.exterieur.trigramme ? '#1a3a1a' : 'transparent',
-                  border: pronoActuel === match.exterieur.trigramme ? '1px solid #4CAF50' : '1px solid transparent',
-                  borderRadius: 6, padding: '0.4rem 0.5rem', cursor: verrou ? 'default' : 'pointer',
-                  marginBottom: 4,
-                }}
-              >
-                <img src={match.exterieur.logo} style={{ width: 24, height: 24, objectFit: 'contain' }} />
-                <span style={{ fontSize: 12, fontWeight: 600, color: '#ccc' }}>{match.exterieur.trigramme}</span>
-                {match.exterieur.score !== null && (
-                  <span style={{ fontSize: 12, color: '#888', marginLeft: 'auto' }}>{match.exterieur.score}</span>
-                )}
-              </button>
-
-              {/* Équipe domicile */}
-              <button
-                onClick={() => faireProno(match, match.domicile.trigramme)}
-                disabled={verrou}
-                style={{
-                  width: '100%', display: 'flex', alignItems: 'center', gap: '0.5rem',
-                  background: pronoActuel === match.domicile.trigramme ? '#1a3a1a' : 'transparent',
-                  border: pronoActuel === match.domicile.trigramme ? '1px solid #4CAF50' : '1px solid transparent',
-                  borderRadius: 6, padding: '0.4rem 0.5rem', cursor: verrou ? 'default' : 'pointer',
-                }}
-              >
-                <img src={match.domicile.logo} style={{ width: 24, height: 24, objectFit: 'contain' }} />
-                <span style={{ fontSize: 12, fontWeight: 600, color: '#ccc' }}>{match.domicile.trigramme}</span>
-                {match.domicile.score !== null && (
-                  <span style={{ fontSize: 12, color: '#888', marginLeft: 'auto' }}>{match.domicile.score}</span>
-                )}
-              </button>
-
-              <div style={{ fontSize: 10, color: '#333', textAlign: 'center', marginTop: '0.4rem' }}>
-                {match.statut === 'STATUS_FINAL' ? 'Terminé' : match.statut === 'STATUS_IN_PROGRESS' ? 'En cours' : ''}
-              </div>
+              {btnEquipe(match, match.exterieur.trigramme, match.exterieur.logo, match.exterieur.score)}
+              {btnEquipe(match, match.domicile.trigramme,  match.domicile.logo,  match.domicile.score)}
+              {st && (
+                <div style={{ fontSize: 10, fontWeight: 600, color: st.couleur, textAlign: 'center', marginTop: 4 }}>
+                  {st.texte}
+                </div>
+              )}
+              {pronos[match.espn_id] && !estVerrouille(match.date, match.statut) && (
+                <div style={{ fontSize: 10, color: 'var(--accent)', textAlign: 'center', marginTop: 4 }}>✓ Prono ok</div>
+              )}
             </div>
           )
         })}
