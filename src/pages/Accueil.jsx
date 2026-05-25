@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { recupererMatchs3Jours } from '../services/espn'
 import { calculerPoints } from '../services/points'
@@ -22,7 +21,7 @@ function Accueil() {
   const [pronos, setPronos] = useState({}) // { espn_id: equipe_choisie }
   const [chargement, setChargement] = useState(true)
   const [user, setUser] = useState(null)
-  const navigate = useNavigate()
+
 
   useEffect(() => {
     const init = async () => {
@@ -83,10 +82,6 @@ function Accueil() {
     setPronos(prev => ({ ...prev, [match.espn_id]: equipeChoisie }))
   }
 
-  const gererDeconnexion = async () => {
-    await supabase.auth.signOut()
-  }
-
   // Groupe les matchs par jour
   const matchsParJour = matchs.reduce((acc, match) => {
     const jour = new Date(match.date).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })
@@ -98,13 +93,8 @@ function Accueil() {
   return (
     <div style={{ maxWidth: 600, margin: '0 auto', padding: '1rem' }}>
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-        <h1>🏀 NBA Pronos</h1>
-        <div style={{ display: 'flex', gap: '0.5rem' }}>
-          <button onClick={() => navigate('/classement')}>Classement</button>
-          <button onClick={() => navigate('/groupes')}>Groupes</button>
-          <button onClick={gererDeconnexion}>Déco</button>
-        </div>
+      <div style={{ marginBottom: '1rem' }}>
+        <h1>NBA Pronos</h1>
       </div>
 
       {chargement && <p>Chargement des matchs...</p>}

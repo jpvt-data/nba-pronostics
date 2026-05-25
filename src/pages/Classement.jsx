@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 
 function Classement() {
@@ -7,7 +6,6 @@ function Classement() {
   const [groupeActif, setGroupeActif] = useState(null)
   const [classement, setClassement] = useState([])
   const [chargement, setChargement] = useState(true)
-  const navigate = useNavigate()
 
   useEffect(() => {
     const init = async () => {
@@ -50,7 +48,6 @@ function Classement() {
     <div style={{ maxWidth: 500, margin: '0 auto', padding: '1rem' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h1>🏆 Classement</h1>
-        <button onClick={() => navigate('/accueil')}>Accueil</button>
       </div>
 
       {chargement && <p>Chargement...</p>}
