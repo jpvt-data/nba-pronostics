@@ -42,7 +42,7 @@ function Navigation() {
       <div style={{
         position: 'fixed',
         top: 0,
-        right: menuOuvert ? 0 : '-280px',
+        right: menuOuvert ? 0 : '-300px',
         width: 260,
         height: '100%',
         background: '#0f0f0f',
