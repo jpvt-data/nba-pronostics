@@ -7,6 +7,7 @@ import Accueil from './pages/Accueil'
 import Groupes from './pages/Groupes'
 import Classement from './pages/Classement'
 import Navigation from './components/Navigation'
+import MesPronos from './pages/MesPronos'
 
 function App() {
   const [session, setSession] = useState(undefined)
@@ -37,6 +38,7 @@ function App() {
         <Route path="/accueil" element={session ? <Accueil /> : <Navigate to="/connexion" />} />
         <Route path="/groupes" element={session ? <Groupes /> : <Navigate to="/connexion" />} />
         <Route path="/classement" element={session ? <Classement /> : <Navigate to="/connexion" />} />
+        <Route path="/mes-pronos" element={session ? <MesPronos /> : <Navigate to="/connexion" />} />
         <Route path="*" element={<Navigate to={session ? '/accueil' : '/connexion'} />} />
       </Routes>
     </BrowserRouter>

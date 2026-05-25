@@ -5,6 +5,7 @@ const LIENS = [
   { chemin: '/accueil', label: 'Accueil' },
   { chemin: '/classement', label: 'Classement' },
   { chemin: '/groupes', label: 'Groupes' },
+  { chemin: '/mes-pronos', label: 'Pronos' },
 ]
 
 function Navigation() {
