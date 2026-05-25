@@ -1,45 +1,39 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import { supabase } from './lib/supabase'
-import Connexion from './pages/Connexion'
-import Inscription from './pages/Inscription'
-import Accueil from './pages/Accueil'
-import Groupes from './pages/Groupes'
-import Classement from './pages/Classement'
-import Navigation from './components/Navigation'
-import MesPronos from './pages/MesPronos'
+import Connexion    from './pages/Connexion'
+import Inscription  from './pages/Inscription'
+import Accueil      from './pages/Accueil'
+import Groupes      from './pages/Groupes'
+import Classement   from './pages/Classement'
+import MesPronos    from './pages/MesPronos'
+import MatchDetail  from './pages/MatchDetail'
 
 function App() {
   const [session, setSession] = useState(undefined)
 
   useEffect(() => {
-    // Récupère la session active au chargement
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session)
-    })
-
-    // Écoute les changements de session (connexion / déconnexion)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session)
-    })
-
+    supabase.auth.getSession().then(({ data: { session } }) => setSession(session))
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => setSession(session))
     return () => subscription.unsubscribe()
   }, [])
 
-  // Chargement initial
   if (session === undefined) return null
+
+  const prive = (el) => session ? el : <Navigate to="/connexion" />
+  const public_ = (el) => !session ? el : <Navigate to="/accueil" />
 
   return (
     <BrowserRouter>
-      {session && <Navigation />}
       <Routes>
-        <Route path="/connexion" element={!session ? <Connexion /> : <Navigate to="/accueil" />} />
-        <Route path="/inscription" element={!session ? <Inscription /> : <Navigate to="/accueil" />} />
-        <Route path="/accueil" element={session ? <Accueil /> : <Navigate to="/connexion" />} />
-        <Route path="/groupes" element={session ? <Groupes /> : <Navigate to="/connexion" />} />
-        <Route path="/classement" element={session ? <Classement /> : <Navigate to="/connexion" />} />
-        <Route path="/mes-pronos" element={session ? <MesPronos /> : <Navigate to="/connexion" />} />
-        <Route path="*" element={<Navigate to={session ? '/accueil' : '/connexion'} />} />
+        <Route path="/connexion"       element={public_(<Connexion />)} />
+        <Route path="/inscription"     element={public_(<Inscription />)} />
+        <Route path="/accueil"         element={prive(<Accueil />)} />
+        <Route path="/classement"      element={prive(<Classement />)} />
+        <Route path="/mes-pronos"      element={prive(<MesPronos />)} />
+        <Route path="/groupes"         element={prive(<Groupes />)} />
+        <Route path="/match/:espn_id"  element={prive(<MatchDetail />)} />
+        <Route path="*"                element={<Navigate to={session ? '/accueil' : '/connexion'} />} />
       </Routes>
     </BrowserRouter>
   )

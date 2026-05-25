@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase'
 import { Home, Trophy, BarChart2, Menu, X, Users, LogOut } from 'lucide-react'
 
 const LIENS = [
-  { chemin: '/accueil',    label: 'Pronos',     Icone: Home },
+  { chemin: '/accueil',    label: 'Board',     Icone: Home },
   { chemin: '/classement', label: 'Classement', Icone: Trophy },
   { chemin: '/mes-pronos', label: 'Mes stats',  Icone: BarChart2 },
 ]

@@ -1,10 +1,6 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-
-const estVerrouille = (dateStr, statut) => {
-  if (statut === 'STATUS_FINAL' || statut === 'STATUS_IN_PROGRESS') return true
-  return new Date() >= new Date(dateStr)
-}
 
 const formaterHeure = (dateStr) =>
   new Date(dateStr).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
@@ -12,8 +8,9 @@ const formaterHeure = (dateStr) =>
 const formaterJour = (dateStr) =>
   new Date(dateStr).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' })
 
-function BandeMatchs({ matchs, userId, onPronoFait }) {
-  const [pronos, setPronos] = useState({})
+function BandeMatchs({ matchs, userId }) {
+  const navigate = useNavigate()
+  const [pronos, setPronos] = useState({}) // { espn_id: equipe_choisie }
 
   useEffect(() => {
     const charger = async () => {
@@ -29,33 +26,9 @@ function BandeMatchs({ matchs, userId, onPronoFait }) {
     charger()
   }, [userId])
 
-  const faireProno = async (match, equipe) => {
-    if (estVerrouille(match.date, match.statut)) return
-    const { data: matchDB } = await supabase
-      .from('matchs')
-      .upsert({
-        espn_id: match.espn_id,
-        date_match: match.date,
-        equipe_domicile: match.domicile.trigramme,
-        equipe_exterieur: match.exterieur.trigramme,
-        statut: match.statut,
-      }, { onConflict: 'espn_id' })
-      .select().single()
-    if (!matchDB) return
-    await supabase.from('pronos').upsert({
-      user_id: userId,
-      match_id: matchDB.id,
-      equipe_choisie: equipe,
-      resultat: 'en_attente',
-    }, { onConflict: 'user_id,match_id' })
-    setPronos(prev => ({ ...prev, [match.espn_id]: equipe }))
-    if (onPronoFait) onPronoFait()
-  }
-
   if (!matchs.length) return null
 
   return (
-    /* wrapper : overflow-x ici, pas sur l'enfant */
     <div style={{
       overflowX: 'auto',
       WebkitOverflowScrolling: 'touch',
@@ -63,76 +36,61 @@ function BandeMatchs({ matchs, userId, onPronoFait }) {
       borderBottomWidth: 1, borderBottomStyle: 'solid', borderBottomColor: 'var(--border)',
       paddingTop: 12, paddingBottom: 12,
     }}>
-      {/* enfant : largeur naturelle — force le scroll */}
-      <div style={{
-        display: 'flex',
-        gap: 10,
-        paddingLeft: 16, paddingRight: 16,
-        width: 'max-content',
-      }}>
+      <div style={{ display: 'flex', gap: 10, paddingLeft: 16, paddingRight: 16, width: 'max-content' }}>
         {matchs.map(match => {
-          const verrou = estVerrouille(match.date, match.statut)
           const pronoActuel = pronos[match.espn_id]
+          const termine     = match.statut === 'STATUS_FINAL'
+          const enCours     = match.statut === 'STATUS_IN_PROGRESS'
 
           return (
-            <div key={match.espn_id} style={{
-              background: 'var(--bg-1)',
-              borderWidth: 1, borderStyle: 'solid', borderColor: 'var(--border)',
-              borderRadius: 'var(--radius-md)',
-              padding: '10px 10px 8px',
-              width: 156, flexShrink: 0,
-            }}>
+            <div
+              key={match.espn_id}
+              onClick={() => navigate(`/match/${match.espn_id}`)}
+              style={{
+                background: 'var(--bg-1)',
+                borderWidth: 1, borderStyle: 'solid', borderColor: 'var(--border)',
+                borderRadius: 'var(--radius-md)',
+                padding: '10px 10px 8px',
+                width: 150, flexShrink: 0,
+                cursor: 'pointer',
+              }}
+            >
+              {/* Date / heure */}
               <div style={{ fontSize: 10, color: 'var(--text-3)', textAlign: 'center', marginBottom: 8 }}>
                 {formaterJour(match.date)} · {formaterHeure(match.date)}
               </div>
 
-              {[
-                { tri: match.exterieur.trigramme, logo: match.exterieur.logo, score: match.exterieur.score },
-                { tri: match.domicile.trigramme,  logo: match.domicile.logo,  score: match.domicile.score  },
-              ].map(({ tri, logo, score }) => {
-                const selec = pronoActuel === tri
-                return (
-                  <button
-                    key={tri}
-                    onClick={() => faireProno(match, tri)}
-                    disabled={verrou}
-                    style={{
-                      width: '100%',
-                      display: 'flex', alignItems: 'center', gap: 8,
-                      background: selec ? 'var(--accent-dim)' : 'transparent',
-                      borderWidth: 1, borderStyle: 'solid',
-                      borderColor: selec ? 'var(--accent-border)' : 'var(--border)',
-                      borderRadius: 'var(--radius-sm)',
-                      paddingTop: 7, paddingBottom: 7, paddingLeft: 8, paddingRight: 8,
-                      cursor: verrou ? 'default' : 'pointer',
-                      marginBottom: 4,
-                    }}
-                  >
-                    <img src={logo} alt={tri} style={{ width: 22, height: 22, objectFit: 'contain', flexShrink: 0 }} />
-                    <span style={{
-                      fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 14,
-                      color: selec ? 'var(--accent)' : 'var(--text-1)',
-                      letterSpacing: '0.04em', flex: 1, textAlign: 'left',
-                    }}>{tri}</span>
-                    {score != null && (
-                      <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 15, color: 'var(--text-2)' }}>{score}</span>
-                    )}
-                  </button>
-                )
-              })}
+              {/* Équipes */}
+              {[match.exterieur, match.domicile].map((eq, i) => (
+                <div key={eq.trigramme} style={{
+                  display: 'flex', alignItems: 'center', gap: 7,
+                  paddingTop: 5, paddingBottom: 5,
+                  borderTopWidth: i === 1 ? 1 : 0, borderTopStyle: 'solid', borderTopColor: 'var(--border)',
+                }}>
+                  <img src={eq.logo} alt={eq.trigramme} style={{ width: 20, height: 20, objectFit: 'contain', flexShrink: 0 }} />
+                  <span style={{
+                    fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 14,
+                    color: 'var(--text-1)', letterSpacing: '0.04em', flex: 1,
+                  }}>{eq.trigramme}</span>
+                  {(termine || enCours) && eq.score != null && (
+                    <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 14, color: 'var(--text-2)' }}>
+                      {eq.score}
+                    </span>
+                  )}
+                </div>
+              ))}
 
-              {/* statut */}
-              <div style={{ fontSize: 10, textAlign: 'center', marginTop: 4,
-                color: match.statut === 'STATUS_IN_PROGRESS' ? 'var(--success)' : 'var(--text-3)',
-                fontWeight: match.statut === 'STATUS_IN_PROGRESS' ? 600 : 400,
-              }}>
-                {match.statut === 'STATUS_FINAL'       && 'Terminé'}
-                {match.statut === 'STATUS_IN_PROGRESS' && '● Live'}
+              {/* Statut + prono */}
+              <div style={{ marginTop: 6, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: 10, fontWeight: 600, color: enCours ? 'var(--success)' : 'var(--text-3)' }}>
+                  {enCours ? '● Live' : termine ? 'Terminé' : ''}
+                </span>
+                {pronoActuel && (
+                  <span style={{ fontSize: 10, color: 'var(--accent)', fontWeight: 600 }}>
+                    ✓ {pronoActuel}
+                  </span>
+                )}
               </div>
-
-              {pronoActuel && !verrou && (
-                <div style={{ fontSize: 10, color: 'var(--accent)', textAlign: 'center', marginTop: 2 }}>✓ Prono ok</div>
-              )}
             </div>
           )
         })}
