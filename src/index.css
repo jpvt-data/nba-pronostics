@@ -120,3 +120,13 @@ code {
 @media (max-width: 767px) {
   #root { padding-bottom: 56px; }
 }
+
+html, body {
+  overflow-x: hidden;
+  width: 100%;
+  max-width: 100%;
+}
+
+* {
+  box-sizing: border-box;
+}
