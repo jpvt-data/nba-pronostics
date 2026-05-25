@@ -6,7 +6,6 @@ import BandeMatchs from '../components/BandeMatchs'
 import ClassementRapide from '../components/ClassementRapide'
 import PronosAttente from '../components/PronosAttente'
 import RunsPotes from '../components/RunsPotes'
-import LeadersStats from '../components/LeadersStats'
 
 function Accueil() {
   const [matchs, setMatchs] = useState([])
@@ -34,7 +33,6 @@ function Accueil() {
         <ClassementRapide userId={user?.id} />
         <PronosAttente matchs={matchs} userId={user?.id} />
         <RunsPotes userId={user?.id} />
-        <LeadersStats />
       </div>
     </div>
   )
