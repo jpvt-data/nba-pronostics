@@ -137,9 +137,6 @@ function MatchDetail() {
             {resultat==='correct' ? '✓ Correct' : resultat==='incorrect' ? '✗ Raté' : '⏳'}
           </span>
         )}
-        {!selec && !termine && !verrou && (
-          <span style={{ fontSize:10, color:'var(--text-3)', marginTop:2 }}>Cliquer pour miser</span>
-        )}
       </button>
     )
   }
@@ -181,9 +178,9 @@ function MatchDetail() {
             </div>
           )}
           {!verrou && prono && (
-            <div style={{ textAlign:'center', fontSize:12, color:'var(--accent)', marginBottom:12, fontWeight:500 }}>
-              Tu as misé sur <strong>{prono}</strong> — clique sur l'autre pour changer
-            </div>
+          <div style={{ textAlign:'center', fontSize:12, color:'var(--text-3)', marginBottom:12 }}>
+              Tu peux encore changer d'avis !
+          </div>
           )}
 
           <div style={{ display:'grid', gridTemplateColumns:'1fr auto 1fr', alignItems:'center', gap:4 }}>
@@ -249,15 +246,15 @@ function MatchDetail() {
 
         {/* Forme L5 */}
         {(ext.l5?.length > 0 || dom.l5?.length > 0) && (
-          <div style={S.card}>
+        <div style={S.card}>
             <h3 style={{ marginBottom:12 }}>Forme récente</h3>
-            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16 }}>
-              {[ext, dom].map(eq => (
-                <div key={eq.trigramme}>
-                  <div style={{ fontSize:11, color:'var(--text-3)', marginBottom:6, textAlign:'center' }}>{eq.trigramme}</div>
-                  <div style={{ display:'flex', gap:4, justifyContent:'center' }}>
+            <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
+            {[ext, dom].map(eq => (
+                <div key={eq.trigramme} style={{ display:'flex', alignItems:'center', gap:10, paddingLeft:16 }}>
+                <div style={{ fontSize:11, color:'var(--text-3)', fontWeight:600, minWidth:28 }}>{eq.trigramme}</div>
+                <div style={{ display:'flex', gap:4, flexWrap:'wrap' }}>
                     {eq.l5?.map((j, i) => (
-                      <div key={i} style={{
+                    <div key={i} style={{
                         width:26, height:26, borderRadius:4,
                         display:'flex', alignItems:'center', justifyContent:'center',
                         fontFamily:'var(--font-display)', fontWeight:700, fontSize:13,
@@ -265,13 +262,13 @@ function MatchDetail() {
                         color: j.resultat==='W' ? 'var(--success)' : 'var(--danger)',
                         borderWidth:1, borderStyle:'solid',
                         borderColor: j.resultat==='W' ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)',
-                      }}>{j.resultat}</div>
+                    }}>{j.resultat}</div>
                     ))}
-                  </div>
                 </div>
-              ))}
+                </div>
+            ))}
             </div>
-          </div>
+        </div>
         )}
 
         {/* Stats */}
@@ -302,30 +299,32 @@ function MatchDetail() {
 
         {/* Leaders */}
         {(dom.leaders?.length > 0 || ext.leaders?.length > 0) && (
-          <div style={S.card}>
+        <div style={S.card}>
             <h3 style={{ marginBottom:12 }}>Leaders</h3>
-            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
-              {[ext, dom].map(eq => (
+            <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
+            {[ext, dom].map(eq => (
                 <div key={eq.trigramme}>
-                  <div style={{ fontSize:11, color:'var(--text-3)', marginBottom:8, fontWeight:600 }}>{eq.trigramme}</div>
-                  <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
-                    {eq.leaders?.map((l, i) => (
-                      <div key={i} style={{ display:'flex', alignItems:'center', gap:8 }}>
-                        {l.photo && <img src={l.photo} alt={l.joueur||''} style={{ width:32, height:32, borderRadius:'50%', objectFit:'cover', flexShrink:0, background:'var(--bg-2)' }} />}
-                        <div style={{ minWidth:0 }}>
-                          <div style={{ fontSize:11, fontWeight:600, color:'var(--text-1)', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{l.joueur}</div>
-                          <div style={{ fontSize:10, color:'var(--text-3)' }}>
-                            <span style={{ fontFamily:'var(--font-display)', fontWeight:700, color:'var(--accent)' }}>{l.valeur}</span>
+                <div style={{ fontSize:11, color:'var(--text-3)', marginBottom:8, fontWeight:600 }}>{eq.trigramme} — {eq.nom}</div>
+                <div style={{ display:'flex', flexDirection:'column', gap:8, paddingLeft:16 }}>
+                {eq.leaders?.map((l, i) => (
+                    <div key={i} style={{ display:'flex', alignItems:'center', gap:10 }}>
+                        {l.photo && (
+                        <img src={l.photo} alt={l.joueur||''} style={{ width:36, height:36, borderRadius:'50%', objectFit:'cover', flexShrink:0, background:'var(--bg-2)' }} />
+                        )}
+                        <div style={{ minWidth:0, flex:1 }}>
+                        <div style={{ fontSize:12, fontWeight:600, color:'var(--text-1)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{l.joueur}</div>
+                        <div style={{ fontSize:11, color:'var(--text-3)' }}>
+                            <span style={{ fontFamily:'var(--font-display)', fontWeight:700, fontSize:14, color:'var(--accent)' }}>{l.valeur}</span>
                             {' '}{l.categorie}
-                          </div>
                         </div>
-                      </div>
+                        </div>
+                    </div>
                     ))}
-                  </div>
                 </div>
-              ))}
+                </div>
+            ))}
             </div>
-          </div>
+        </div>
         )}
 
         {/* Blessés */}
