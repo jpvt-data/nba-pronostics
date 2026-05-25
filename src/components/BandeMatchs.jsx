@@ -33,7 +33,6 @@ function BandeMatchs({ matchs, userId }) {
       overflowX: 'auto',
       WebkitOverflowScrolling: 'touch',
       scrollbarWidth: 'none',
-      borderBottomWidth: 1, borderBottomStyle: 'solid', borderBottomColor: 'var(--border)',
       paddingTop: 12, paddingBottom: 12,
     }}>
       <div style={{ display: 'flex', gap: 10, paddingLeft: 16, paddingRight: 16, width: 'max-content' }}>
