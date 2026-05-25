@@ -33,9 +33,9 @@ function App() {
         <Route path="/connexion" element={!session ? <Connexion /> : <Navigate to="/accueil" />} />
         <Route path="/inscription" element={!session ? <Inscription /> : <Navigate to="/accueil" />} />
         <Route path="/accueil" element={session ? <Accueil /> : <Navigate to="/connexion" />} />
-        <Route path="*" element={<Navigate to={session ? '/accueil' : '/connexion'} />} />
         <Route path="/groupes" element={session ? <Groupes /> : <Navigate to="/connexion" />} />
         <Route path="/classement" element={session ? <Classement /> : <Navigate to="/connexion" />} />
+        <Route path="*" element={<Navigate to={session ? '/accueil' : '/connexion'} />} />
       </Routes>
     </BrowserRouter>
   )
