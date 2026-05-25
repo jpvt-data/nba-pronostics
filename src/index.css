@@ -109,3 +109,13 @@ code {
   padding: 4px 8px;
   background: var(--code-bg);
 }
+
+@media (min-width: 768px) {
+  .nav-desktop { display: flex !important; }
+  .nav-mobile { display: none !important; }
+  #root { padding-top: 52px; }
+}
+
+@media (max-width: 767px) {
+  #root { padding-bottom: 56px; }
+}

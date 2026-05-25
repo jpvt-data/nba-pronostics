@@ -6,6 +6,7 @@ import Inscription from './pages/Inscription'
 import Accueil from './pages/Accueil'
 import Groupes from './pages/Groupes'
 import Classement from './pages/Classement'
+import Navigation from './components/Navigation'
 
 function App() {
   const [session, setSession] = useState(undefined)
@@ -29,6 +30,7 @@ function App() {
 
   return (
     <BrowserRouter>
+      {session && <Navigation />}
       <Routes>
         <Route path="/connexion" element={!session ? <Connexion /> : <Navigate to="/accueil" />} />
         <Route path="/inscription" element={!session ? <Inscription /> : <Navigate to="/accueil" />} />
