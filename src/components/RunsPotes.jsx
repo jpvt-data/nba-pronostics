@@ -6,89 +6,67 @@ function RunsPotes({ userId }) {
 
   useEffect(() => {
     const init = async () => {
-      // Récupère les groupes de l'user
       const { data: membres } = await supabase
         .from('membres_groupe')
         .select('groupe_id')
-        .eq('user_id', userId)
-        .eq('actif', true)
-
+        .eq('user_id', userId).eq('actif', true)
       if (!membres?.length) return
-      const groupeIds = membres.map(m => m.groupe_id)
 
-      // Récupère tous les membres de ces groupes (sauf l'user)
+      const groupeIds = membres.map(m => m.groupe_id)
       const { data: potes } = await supabase
         .from('membres_groupe')
         .select('user_id, profils(pseudo)')
-        .in('groupe_id', groupeIds)
-        .eq('actif', true)
-        .neq('user_id', userId)
-
+        .in('groupe_id', groupeIds).eq('actif', true).neq('user_id', userId)
       if (!potes?.length) return
 
-      // Pour chaque pote, récupère ses derniers pronos terminés
       const runsDetectes = []
-
       for (const pote of potes) {
-        const { data: derniersPronos } = await supabase
+        const { data: derniers } = await supabase
           .from('pronos')
           .select('resultat')
           .eq('user_id', pote.user_id)
           .in('resultat', ['correct', 'incorrect'])
           .order('cree_le', { ascending: false })
           .limit(5)
-
-        if (!derniersPronos?.length) continue
-
-        // Calcule le run actuel (série consécutive)
-        const premierResultat = derniersPronos[0].resultat
-        let compteur = 0
-        for (const prono of derniersPronos) {
-          if (prono.resultat === premierResultat) compteur++
+        if (!derniers?.length) continue
+        const premier = derniers[0].resultat
+        let count = 0
+        for (const p of derniers) {
+          if (p.resultat === premier) count++
           else break
         }
-
-        // N'affiche que les runs >= 3
-        if (compteur >= 3) {
-          runsDetectes.push({
-            pseudo: pote.profils?.pseudo,
-            type: premierResultat,
-            compteur,
-          })
-        }
+        if (count >= 3) runsDetectes.push({ pseudo: pote.profils?.pseudo, type: premier, count })
       }
-
       setRuns(runsDetectes)
     }
     if (userId) init()
   }, [userId])
 
-  if (runs.length === 0) return null
+  if (!runs.length) return null
 
   return (
-    <div style={{ margin: '1.5rem 0' }}>
-      <h3 style={{ fontSize: 13, fontWeight: 600, color: '#555', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.75rem' }}>
-        Dans le groupe
-      </h3>
-
-      {runs.map((run, index) => (
-        <div key={index} style={{
-          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          padding: '0.6rem 0.75rem',
-          background: run.type === 'correct' ? '#1a3a1a' : '#3a1a1a',
-          border: `1px solid ${run.type === 'correct' ? '#2d5a2d' : '#5a2d2d'}`,
-          borderRadius: 8, marginBottom: 4,
-        }}>
-          <span style={{ fontSize: 13, fontWeight: 600, color: '#fff' }}>
-            {run.pseudo}
-          </span>
-          <span style={{ fontSize: 13, color: run.type === 'correct' ? '#4CAF50' : '#f44336' }}>
-            {run.type === 'correct'
-              ? `🔥 ${run.compteur} corrects de suite`
-              : `❄️ ${run.compteur} ratés de suite`}
-          </span>
-        </div>
-      ))}
+    <div style={{ marginBottom: '1.5rem' }}>
+      <h3 style={{ marginBottom: 10 }}>Dans le groupe</h3>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+        {runs.map((run, i) => {
+          const feu  = run.type === 'correct'
+          return (
+            <div key={i} style={{
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+              paddingTop: 8, paddingBottom: 8, paddingLeft: 12, paddingRight: 12,
+              background: feu ? 'var(--success-dim)' : 'var(--danger-dim)',
+              borderWidth: 1, borderStyle: 'solid',
+              borderColor: feu ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)',
+              borderRadius: 'var(--radius-sm)',
+            }}>
+              <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-1)' }}>{run.pseudo}</span>
+              <span style={{ fontSize: 13, color: feu ? 'var(--success)' : 'var(--danger)' }}>
+                {feu ? `🔥 ${run.count} corrects` : `❄️ ${run.count} ratés`}
+              </span>
+            </div>
+          )
+        })}
+      </div>
     </div>
   )
 }

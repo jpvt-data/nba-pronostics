@@ -11,7 +11,6 @@
   --accent-dim: rgba(99, 102, 241, 0.12);
   --accent-border: rgba(99, 102, 241, 0.5);
   --orange: #f97316;
-  --orange-dim: rgba(249, 115, 22, 0.12);
   --success: #22c55e;
   --success-dim: rgba(34, 197, 94, 0.1);
   --danger: #ef4444;
@@ -48,21 +47,9 @@ html, body {
   min-height: 100svh;
   display: flex;
   flex-direction: column;
+  /* pas de overflow:hidden ici — bloque le scroll horizontal de la bande */
 }
 
-/* ── DESKTOP nav top ─────────────────────────────────── */
-@media (min-width: 768px) {
-  .nav-desktop { display: flex !important; }
-  .nav-mobile  { display: none  !important; }
-  #root { padding-top: 52px; }
-}
-
-/* ── MOBILE nav bottom ───────────────────────────────── */
-@media (max-width: 767px) {
-  #root { padding-bottom: 60px; }
-}
-
-/* ── UTILITAIRES ─────────────────────────────────────── */
 h1 { font-family: var(--font-display); font-size: 26px; font-weight: 700; color: var(--text-1); letter-spacing: 0.02em; }
 h2 { font-family: var(--font-display); font-size: 20px; font-weight: 700; color: var(--text-1); letter-spacing: 0.02em; }
 h3 { font-size: 11px; font-weight: 600; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.1em; }
@@ -70,7 +57,32 @@ h3 { font-size: 11px; font-weight: 600; color: var(--text-3); text-transform: up
 button { font-family: var(--font-body); cursor: pointer; }
 img { display: block; }
 
-/* scroll horizontal sans scrollbar visible */
+/* ── NAVBAR DESKTOP (≥768px) ─────────────────────────── */
+/* navbar top fixe de 52px — on décale #root vers le bas */
+@media (min-width: 768px) {
+  #root { padding-top: 52px; padding-bottom: 0; }
+}
+
+/* ── NAVBAR MOBILE (<768px) ──────────────────────────── */
+/* barre logo top 40px + bottom nav 60px */
+@media (max-width: 767px) {
+  #root { padding-top: 40px; padding-bottom: 60px; }
+}
+
+/* classes display gérées 100% par CSS — jamais écrasées en inline */
+.nav-desktop-full { display: none; }
+.nav-mobile-logo  { display: none; }
+.nav-mobile-bot   { display: none; }
+
+@media (min-width: 768px) {
+  .nav-desktop-full { display: flex; }
+}
+@media (max-width: 767px) {
+  .nav-mobile-logo { display: flex; }
+  .nav-mobile-bot  { display: flex;  }
+}
+
+/* scroll horizontal utilitaire */
 .scroll-x {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
