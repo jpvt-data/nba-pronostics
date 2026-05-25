@@ -12,7 +12,7 @@ const formaterHeure = (dateStr) =>
 const formaterJour = (dateStr) =>
   new Date(dateStr).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' })
 
-function BandeMatchs({ matchs, userId }) {
+function BandeMatchs({ matchs, userId, onPronoFait }) {
   const [pronos, setPronos] = useState({})
 
   useEffect(() => {
@@ -49,6 +49,7 @@ function BandeMatchs({ matchs, userId }) {
       resultat: 'en_attente',
     }, { onConflict: 'user_id,match_id' })
     setPronos(prev => ({ ...prev, [match.espn_id]: equipe }))
+    if (onPronoFait) onPronoFait()
   }
 
   if (!matchs.length) return null

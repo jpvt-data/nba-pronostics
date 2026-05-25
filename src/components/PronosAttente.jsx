@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 
-function PronosAttente({ userId }) {
+function PronosAttente({ userId, refreshKey }) {
   const [pronos, setPronos] = useState([])
 
   useEffect(() => {
@@ -14,7 +14,7 @@ function PronosAttente({ userId }) {
       setPronos(data || [])
     }
     if (userId) init()
-  }, [userId])
+  }, [userId, refreshKey])
 
   if (!pronos.length) return null
 

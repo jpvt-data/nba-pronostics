@@ -89,3 +89,19 @@ img { display: block; }
   scrollbar-width: none;
 }
 .scroll-x::-webkit-scrollbar { display: none; }
+
+/* ── PWA iOS — mode standalone (ajout en bas du fichier) ── */
+@media (display-mode: standalone) {
+  /* évite le freeze scroll/touch au retour sur l'app */
+  html, body {
+    height: 100dvh;
+    overflow: hidden;
+  }
+  #root {
+    height: 100dvh;
+    overflow-y: auto;
+    /* padding top safe area pour le notch iPhone */
+    padding-top: max(40px, env(safe-area-inset-top));
+    padding-bottom: max(60px, env(safe-area-inset-bottom));
+  }
+}
