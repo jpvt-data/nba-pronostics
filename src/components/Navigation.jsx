@@ -275,24 +275,6 @@ function Navigation() {
             </button>
           )
         })}
-        {/* Avatar dans la bottom nav mobile */}
-        <button
-          onClick={() => aller('/profil')}
-          style={{
-            flex: 1, height: '100%',
-            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3,
-            background: 'none', borderWidth: 0,
-            color: location.pathname === '/profil' ? 'var(--text-1)' : 'var(--text-3)',
-            fontSize: 10, fontWeight: 500, cursor: 'pointer',
-            boxShadow: location.pathname === '/profil' ? 'inset 0 2px 0 var(--accent)' : 'none',
-          }}
-        >
-          {profil?.avatar_url
-            ? <img src={profil.avatar_url} alt={profil.pseudo} style={{ width: 22, height: 22, borderRadius: '50%', objectFit: 'cover' }} />
-            : <UserCircle size={22} strokeWidth={1.5} />
-          }
-          Profil
-        </button>
       </nav>
 
       {changelogOuvert && (
