@@ -237,12 +237,20 @@ function Navigation() {
           <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--accent)', display: 'inline-block' }} />
           NBA PRONOS
         </span>
-        <button
-          onClick={() => setOuvert(!ouvert)}
-          style={{ background: 'none', borderWidth: 0, color: 'var(--text-3)', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: 4 }}
-        >
-          <Menu size={18} strokeWidth={1.5} />
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <button
+            onClick={() => navigate('/profil')}
+            style={{ background: 'none', borderWidth: 0, cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center' }}
+          >
+            <Avatar url={profil?.avatar_url} pseudo={profil?.pseudo} taille={26} fontSize={9} />
+          </button>
+          <button
+            onClick={() => setOuvert(!ouvert)}
+            style={{ background: 'none', borderWidth: 0, color: 'var(--text-3)', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: 4 }}
+          >
+            <Menu size={18} strokeWidth={1.5} />
+          </button>
+        </div>
       </nav>
 
       {/* ── MOBILE — bottom nav ── */}
