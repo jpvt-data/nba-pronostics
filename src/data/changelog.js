@@ -1,6 +1,14 @@
 // Changelog NBA Pronostics — une entrée par version/feature
 export const CHANGELOG = [
   {
+    version: 'v0.4',
+    date: '2026-05-26',
+    titre: 'Mode No Spoil',
+    desc: 'Active le mode No Spoil pour masquer les scores des matchs terminés : scores cachés dans la bande matchs, le calendrier et les fiches match. La série playoffs et le résultat de prono sont aussi masqués. À activer/désactiver depuis le bouton "No Spoil" en haut du Board ou depuis le menu hamburger.',
+    lien: '/accueil',
+    labelLien: 'Voir le Board',
+  },
+  {
     version: 'v0.3',
     date: '2026-05-26',
     titre: 'Calendrier NBA complet',
@@ -59,4 +67,4 @@ export const CHANGELOG = [
 ]
 
 // Version courante de l'app — à incrémenter à chaque déploiement avec nouveautés
-export const VERSION_COURANTE = 'v0.3'
+export const VERSION_COURANTE = 'v0.4'
