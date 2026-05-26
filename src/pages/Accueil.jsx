@@ -27,15 +27,9 @@ function Accueil() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
       setUser(user)
-
-      // Récupère le pseudo depuis le profil
       const { data: profil } = await supabase
-        .from('profils')
-        .select('pseudo')
-        .eq('id', user.id)
-        .single()
+        .from('profils').select('pseudo').eq('id', user.id).single()
       setPseudo(profil?.pseudo || null)
-
       calculerPoints(user.id).catch(() => {})
       const m = await recupererMatchs3Jours()
       setMatchs(m)
@@ -43,6 +37,30 @@ function Accueil() {
     }
     init()
   }, [])
+
+  const faireProno = async (match, equipeChoisie) => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+    const { data: matchDB } = await supabase
+      .from('matchs')
+      .upsert({
+        espn_id:          match.espn_id,
+        date_match:       match.date,
+        equipe_domicile:  match.domicile.trigramme,
+        equipe_exterieur: match.exterieur.trigramme,
+        statut:           match.statut,
+        type_saison:      match.typeSaisonNum ?? null,
+        saison:           match.saisonNum ?? null,
+      }, { onConflict: 'espn_id' })
+      .select().single()
+    if (!matchDB) return
+    await supabase.from('pronos').upsert({
+      user_id:       user.id,
+      match_id:      matchDB.id,
+      equipe_choisie: equipeChoisie,
+      resultat:      'en_attente',
+    }, { onConflict: 'user_id,match_id' })
+  }
 
   return (
     <>
@@ -79,7 +97,6 @@ function Accueil() {
           </p>
         </div>
 
-        {/* ── Séparateur ── */}
         <div style={SEP} />
 
         {/* ── Bande matchs ── */}
@@ -90,7 +107,7 @@ function Accueil() {
           </p>
         </div>
 
-        {!chargement && <BandeMatchs matchs={matchs} userId={user?.id} />}
+        {!chargement && <BandeMatchs matchs={matchs} userId={user?.id} onProno={faireProno} />}
         {!chargement && (
           <div style={{ padding: '10px 16px 0', display: 'flex', justifyContent: 'flex-end' }}>
             <button
@@ -101,8 +118,7 @@ function Accueil() {
                 borderWidth: 1, borderStyle: 'solid', borderColor: 'var(--border)',
                 borderRadius: 'var(--radius-sm)',
                 paddingTop: 5, paddingBottom: 5, paddingLeft: 12, paddingRight: 12,
-                cursor: 'pointer',
-                display: 'flex', alignItems: 'center', gap: 6,
+                cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
               }}
             >
               <Calendar size={13} strokeWidth={1.5} /> Calendrier complet
@@ -116,10 +132,8 @@ function Accueil() {
           </p>
         )}
 
-        {/* ── Séparateur ── */}
         {!chargement && <div style={SEP} />}
 
-        {/* ── Hub ── */}
         {!chargement && user && (
           <div style={{ padding: GUTTER, display: 'flex', flexDirection: 'column', gap: 24 }}>
             <ClassementRapide userId={user.id} />

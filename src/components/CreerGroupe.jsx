@@ -1,49 +1,95 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabase'
 
-const genererCode = () => {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
-  return 'NBA-' + Array.from({ length: 4 }, () => chars[Math.floor(Math.random() * chars.length)]).join('')
-}
+const TYPES_SAISON = [
+  { value: '',  label: 'Toutes (ligue générale)' },
+  { value: '2', label: 'Saison régulière' },
+  { value: '3', label: 'Playoffs' },
+  { value: '4', label: 'NBA Cup' },
+]
+
+const ANNEE_COURANTE = new Date().getFullYear()
+const ANNEES = [ANNEE_COURANTE - 1, ANNEE_COURANTE, ANNEE_COURANTE + 1]
 
 function CreerGroupe({ onSuccess }) {
-  const [nom, setNom]        = useState('')
-  const [erreur, setErreur]  = useState(null)
-  const [charg, setCharg]    = useState(false)
+  const [nom, setNom]             = useState('')
+  const [dateFin, setDateFin]     = useState('')
+  const [typeSaison, setType]     = useState('')
+  const [saison, setSaison]       = useState(String(ANNEE_COURANTE))
+  const [erreur, setErreur]       = useState(null)
+  const [charg, setCharg]         = useState(false)
 
-  const gererCreation = async (e) => {
-    e.preventDefault()
+  const gererCreation = async () => {
     setCharg(true); setErreur(null)
     const { data: { user } } = await supabase.auth.getUser()
-    const code = genererCode()
-    const { data: groupe, error } = await supabase
-      .from('groupes').insert({ nom, code_invitation: code, admin_id: user.id })
-      .select().single()
+    const { error } = await supabase
+      .from('groupes')
+      .insert({
+        nom,
+        admin_id:        user.id,
+        date_fin:        dateFin || null,
+        code_invitation: null,
+        type_saison:     typeSaison ? parseInt(typeSaison) : null,
+        saison:          typeSaison ? parseInt(saison) : null,
+      })
     if (error) { setErreur('Erreur lors de la création'); setCharg(false); return }
-    await supabase.from('membres_groupe').insert({ groupe_id: groupe.id, user_id: user.id })
     onSuccess()
     setCharg(false)
   }
 
   return (
     <div style={S.bloc}>
-      <h3 style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-2)', marginBottom: 12 }}>Créer un groupe</h3>
+      <h3 style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-2)', marginBottom: 12 }}>Nouvelle ligue</h3>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+
         <input
           type="text"
-          placeholder="Nom du groupe"
+          placeholder="Nom de la ligue (ex: Playoffs 2026)"
           value={nom}
           onChange={e => setNom(e.target.value)}
-          required
           style={S.input}
         />
+
+        <div>
+          <label style={S.label}>Type de compétition</label>
+          <select value={typeSaison} onChange={e => setType(e.target.value)} style={S.input}>
+            {TYPES_SAISON.map(t => (
+              <option key={t.value} value={t.value}>{t.label}</option>
+            ))}
+          </select>
+        </div>
+
+        {typeSaison && (
+          <div>
+            <label style={S.label}>Saison ESPN</label>
+            <select value={saison} onChange={e => setSaison(e.target.value)} style={S.input}>
+              {ANNEES.map(a => (
+                <option key={a} value={String(a)}>
+                  {a - 1}-{String(a).slice(2)} (ESPN {a})
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        <div>
+          <label style={S.label}>Date de fin (optionnelle)</label>
+          <input
+            type="date"
+            value={dateFin}
+            onChange={e => setDateFin(e.target.value)}
+            style={S.input}
+          />
+        </div>
+
         {erreur && <div style={S.erreur}>{erreur}</div>}
+
         <button
           onClick={gererCreation}
           disabled={charg || !nom.trim()}
           style={{ ...S.btn, opacity: charg || !nom.trim() ? 0.5 : 1 }}
         >
-          {charg ? 'Création…' : 'Créer le groupe'}
+          {charg ? 'Création…' : 'Créer la ligue'}
         </button>
       </div>
     </div>
@@ -55,6 +101,10 @@ const S = {
     background: 'var(--bg-1)',
     borderWidth: 1, borderStyle: 'solid', borderColor: 'var(--border)',
     borderRadius: 'var(--radius-md)', padding: '16px',
+  },
+  label: {
+    fontSize: 11, color: 'var(--text-3)',
+    display: 'block', marginBottom: 4,
   },
   input: {
     background: 'var(--bg-2)',

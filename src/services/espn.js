@@ -15,25 +15,27 @@ export const recupererMatchs3Jours = async () => {
     try {
       const res  = await fetch(`${BASE_URL}/scoreboard?dates=${formaterDate(date)}`)
       const data = await res.json()
-      const saison = data.season?.year
-        ? `${data.season.year - 1}-${String(data.season.year).slice(2)}`
-        : null
-      const typeSaison = TYPE_SAISON[data.season?.type] || null
+      const saisonNum  = data.season?.year ?? null
+      const typeSaisonNum = data.season?.type ?? null
+      const saison     = saisonNum ? `${saisonNum - 1}-${String(saisonNum).slice(2)}` : null
+      const typeSaison = TYPE_SAISON[typeSaisonNum] || null
 
       ;(data.events || []).forEach(evt => {
-        const comp = evt.competitions[0]
-        const dom  = comp.competitors.find(c => c.homeAway === 'home')
-        const ext  = comp.competitors.find(c => c.homeAway === 'away')
+        const comp  = evt.competitions[0]
+        const dom   = comp.competitors.find(c => c.homeAway === 'home')
+        const ext   = comp.competitors.find(c => c.homeAway === 'away')
         const venue = comp.venue
 
         matchs.push({
-          espn_id:    evt.id,
-          date:       evt.date,
-          statut:     comp.status.type.name,
+          espn_id:        evt.id,
+          date:           evt.date,
+          statut:         comp.status.type.name,
           saison,
           typeSaison,
-          stade:      venue?.fullName || null,
-          ville:      venue?.address?.city || null,
+          saisonNum,
+          typeSaisonNum,
+          stade:          venue?.fullName || null,
+          ville:          venue?.address?.city || null,
           domicile: {
             nom:       dom.team.displayName,
             trigramme: dom.team.abbreviation,
@@ -49,7 +51,7 @@ export const recupererMatchs3Jours = async () => {
         })
       })
     } catch (err) {
-      console.error(`Erreur ESPN scoreboard:`, err)
+      console.error('Erreur ESPN scoreboard:', err)
     }
   }
   return matchs
@@ -83,12 +85,11 @@ export const recupererDetailMatch = async (espnId) => {
         reb: idx['avgRebounds']            || null,
         ast: idx['avgAssists']             || null,
         blk: idx['avgBlocks']              || null,
-        stl: idx['avgSteals']              || null,
+        stl: idx['avgSteals']             || null,
         to:  idx['avgTotalTurnovers']      || null,
       }
     }
 
-    // Leaders (Points, Rebonds, Passes)
     const extraireLeaders = (teamLeaders) => {
       if (!teamLeaders?.leaders) return []
       return teamLeaders.leaders.slice(0, 3).map(cat => {
@@ -96,75 +97,65 @@ export const recupererDetailMatch = async (espnId) => {
         return {
           categorie: cat.displayName,
           valeur:    leader?.displayValue || null,
-          summary:   leader?.summary || null,
           joueur:    leader?.athlete?.displayName || null,
           photo:     leader?.athlete?.headshot?.href || null,
         }
       })
     }
 
-    const leadersData = data.leaders || []
-    const leadersDom  = leadersData.find(l => {
-      const id = boxDom?.team?.id
-      return l.team?.id === id
-    })
-    const leadersExt  = leadersData.find(l => {
-      const id = boxExt?.team?.id
-      return l.team?.id === id
-    })
-
-    // Forme récente L5
     const extraireL5 = (teamL5) => {
       if (!teamL5?.events) return []
       return teamL5.events.slice(0, 5).map(e => ({
-        resultat: e.gameResult, // 'W' ou 'L'
-        score:    e.score,
+        resultat:   e.gameResult,
+        score:      e.score,
         adversaire: e.opponent?.displayName || null,
-        logo:     e.opponentLogo || null,
       }))
     }
 
-    const l5Data = data.lastFiveGames || []
-    const l5Dom  = l5Data.find(l => l.team?.id === boxDom?.team?.id)
-    const l5Ext  = l5Data.find(l => l.team?.id === boxExt?.team?.id)
-
-    // Blessés
-    const extraireBlesssés = (teamInjuries) => {
+    const extraireBlessés = (teamInjuries) => {
       if (!teamInjuries?.injuries) return []
       return teamInjuries.injuries.map(inj => ({
-        joueur:   inj.athlete?.displayName || null,
-        photo:    inj.athlete?.headshot?.href || null,
-        statut:   inj.type?.description || inj.status || null,
-        type:     inj.details?.type || null,
+        joueur: inj.athlete?.displayName || null,
+        photo:  inj.athlete?.headshot?.href || null,
+        statut: inj.type?.description || inj.status || null,
+        type:   inj.details?.type || null,
       }))
     }
 
-    const injData = data.injuries || []
-    const injDom  = injData.find(l => l.team?.id === boxDom?.team?.id)
-    const injExt  = injData.find(l => l.team?.id === boxExt?.team?.id)
+    const leadersData = data.leaders || []
+    const l5Data      = data.lastFiveGames || []
+    const injData     = data.injuries || []
 
-    // Série saison / playoffs
-    const seriePlayoff  = data.seasonseries?.find(s => s.type === 'playoff')
-    const serieRegular  = data.seasonseries?.find(s => s.type === 'season')
-    const serie = seriePlayoff || serieRegular || null
+    const leadersDom = leadersData.find(l => l.team?.id === boxDom?.team?.id)
+    const leadersExt = leadersData.find(l => l.team?.id === boxExt?.team?.id)
+    const l5Dom      = l5Data.find(l => l.team?.id === boxDom?.team?.id)
+    const l5Ext      = l5Data.find(l => l.team?.id === boxExt?.team?.id)
+    const injDom     = injData.find(l => l.team?.id === boxDom?.team?.id)
+    const injExt     = injData.find(l => l.team?.id === boxExt?.team?.id)
+
+    const seriePlayoff = data.seasonseries?.find(s => s.type === 'playoff')
+    const serieRegular = data.seasonseries?.find(s => s.type === 'season')
+    const serie        = seriePlayoff || serieRegular || null
+
+    const saisonNum     = saison?.year ?? null
+    const typeSaisonNum = saison?.type ?? null
 
     return {
-      espn_id:     comp.id,
-      date:        comp.date,
-      statut:      comp.status?.type?.name,
-      statutLabel: comp.status?.type?.description,
-      periode:     comp.status?.period,
-      clock:       comp.status?.displayClock,
-      saison:      saison?.year
-        ? `${saison.year - 1}-${String(saison.year).slice(2)}`
-        : null,
-      typeSaison:  TYPE_SAISON[saison?.type] || null,
-      stade:       venue?.fullName || null,
-      ville:       venue?.address?.city || null,
+      espn_id:        comp.id,
+      date:           comp.date,
+      statut:         comp.status?.type?.name,
+      statutLabel:    comp.status?.type?.description,
+      periode:        comp.status?.period,
+      clock:          comp.status?.displayClock,
+      saison:         saisonNum ? `${saisonNum - 1}-${String(saisonNum).slice(2)}` : null,
+      typeSaison:     TYPE_SAISON[typeSaisonNum] || null,
+      saisonNum,
+      typeSaisonNum,
+      stade:          venue?.fullName || null,
+      ville:          venue?.address?.city || null,
       serie: serie ? {
         description: serie.round || serie.description || null,
         summary:     serie.summary || null,
-        seriesScore: serie.seriesScore || null,
       } : null,
       domicile: {
         nom:       boxDom?.team?.displayName || '',
@@ -176,7 +167,7 @@ export const recupererDetailMatch = async (espnId) => {
         stats:     extraireStats(boxDom),
         leaders:   extraireLeaders(leadersDom),
         l5:        extraireL5(l5Dom),
-        blessés:   extraireBlesssés(injDom),
+        blessés:   extraireBlessés(injDom),
       },
       exterieur: {
         nom:       boxExt?.team?.displayName || '',
@@ -188,7 +179,7 @@ export const recupererDetailMatch = async (espnId) => {
         stats:     extraireStats(boxExt),
         leaders:   extraireLeaders(leadersExt),
         l5:        extraireL5(l5Ext),
-        blessés:   extraireBlesssés(injExt),
+        blessés:   extraireBlessés(injExt),
       },
     }
   } catch (err) {
@@ -204,7 +195,12 @@ export const recupererGagnant = async (espnId) => {
     const comp = data.header?.competitions?.[0]
     if (!comp || comp.status?.type?.name !== 'STATUS_FINAL') return null
     const gagnant = comp.competitors.find(c => c.winner === true)
-    return gagnant ? gagnant.team.abbreviation : null
+    if (!gagnant) return null
+    return {
+      gagnant:     gagnant.team.abbreviation,
+      type_saison: data.header?.season?.type ?? null,
+      saison:      data.header?.season?.year ?? null,
+    }
   } catch (err) {
     console.error('Erreur récupération gagnant:', err)
     return null

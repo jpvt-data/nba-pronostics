@@ -25,12 +25,12 @@ const STATS_LABELS = [
 function MatchDetail() {
   const { espn_id } = useParams()
   const navigate    = useNavigate()
+  const { noSpoil } = useNoSpoil()
   const [match, setMatch]  = useState(null)
   const [user, setUser]    = useState(null)
   const [prono, setProno]  = useState(null)
   const [resultat, setRes] = useState(null)
   const [charg, setCharg]  = useState(true)
-  const { noSpoil }        = useNoSpoil()
   const [erreur, setErr]   = useState(false)
 
   useEffect(() => {
@@ -56,15 +56,21 @@ function MatchDetail() {
     const { data: matchDB } = await supabase
       .from('matchs')
       .upsert({
-        espn_id: match.espn_id, date_match: match.date,
-        equipe_domicile: match.domicile.trigramme,
+        espn_id:          match.espn_id,
+        date_match:       match.date,
+        equipe_domicile:  match.domicile.trigramme,
         equipe_exterieur: match.exterieur.trigramme,
-        statut: match.statut,
-      }, { onConflict: 'espn_id' }).select().single()
+        statut:           match.statut,
+        type_saison:      match.typeSaisonNum ?? null,
+        saison:           match.saisonNum ?? null,
+      }, { onConflict: 'espn_id' })
+      .select().single()
     if (!matchDB) return
     await supabase.from('pronos').upsert({
-      user_id: user.id, match_id: matchDB.id,
-      equipe_choisie: equipe, resultat: 'en_attente',
+      user_id:        user.id,
+      match_id:       matchDB.id,
+      equipe_choisie: equipe,
+      resultat:       'en_attente',
     }, { onConflict: 'user_id,match_id' })
     setProno(equipe); setRes('en_attente')
   }
@@ -85,17 +91,15 @@ function MatchDetail() {
   )
 
   const { domicile: dom, exterieur: ext } = match
-  const verrou  = estVerrouille(match.date, match.statut)
-  const termine = match.statut === 'STATUS_FINAL'
-  const enCours = match.statut === 'STATUS_IN_PROGRESS'
-  const dateStr  = new Date(match.date).toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long', year:'numeric' })
-  const heureStr = new Date(match.date).toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' })
-  const nbPeriodes = Math.max(dom.periodes?.length || 0, ext.periodes?.length || 0, 0)
+  const verrou     = estVerrouille(match.date, match.statut)
+  const termine    = match.statut === 'STATUS_FINAL'
+  const enCours    = match.statut === 'STATUS_IN_PROGRESS'
+  const dateStr    = new Date(match.date).toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long', year:'numeric' })
+  const heureStr   = new Date(match.date).toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' })
+  const nbPeriodes = Math.max(dom.periodes?.length || 0, ext.periodes?.length || 0)
 
-  // Carte équipe cliquable ou statique selon contexte
   const CarteEquipe = ({ eq, align }) => {
     const selec    = prono === eq.trigramme
-    const gagnant  = termine && eq.winner
     const perdant  = !noSpoil && termine && !eq.winner && (dom.score != null || ext.score != null)
     const cliquable = !verrou
 
@@ -120,14 +124,11 @@ function MatchDetail() {
           ? <img src={eq.logo} alt={eq.trigramme} style={{ width:68, height:68, objectFit:'contain' }} />
           : <div style={{ width:68, height:68, borderRadius:'50%', background:'var(--bg-2)', display:'flex', alignItems:'center', justifyContent:'center', fontFamily:'var(--font-display)', fontWeight:700, fontSize:18, color:'var(--text-3)' }}>{eq.trigramme}</div>
         }
-        <span style={{ fontFamily:'var(--font-display)', fontWeight:700, fontSize:22,
-          color: selec ? 'var(--accent)' : gagnant ? 'var(--text-1)' : 'var(--text-1)',
-          letterSpacing:'0.04em',
-        }}>{eq.trigramme}</span>
+        <span style={{ fontFamily:'var(--font-display)', fontWeight:700, fontSize:22, color: selec ? 'var(--accent)' : 'var(--text-1)', letterSpacing:'0.04em' }}>
+          {eq.trigramme}
+        </span>
         <span style={{ fontSize:11, color:'var(--text-3)', textAlign:'center' }}>{eq.nom}</span>
         <span style={{ fontSize:10, color:'var(--text-3)' }}>{align === 'ext' ? 'Extérieur' : 'Domicile'}</span>
-
-        {/* Indicateur prono / résultat */}
         {selec && !termine && (
           <span style={{ fontSize:11, color:'var(--accent)', fontWeight:600, marginTop:2 }}>✓ Mon prono</span>
         )}
@@ -148,7 +149,6 @@ function MatchDetail() {
       <Navigation />
       <main style={{ flex:1, padding:'16px 16px 40px' }}>
 
-        {/* Retour */}
         <button onClick={() => navigate(-1)} style={S.retour}>
           <ChevronLeft size={16} /> Board
         </button>
@@ -172,31 +172,33 @@ function MatchDetail() {
 
         {/* ── AFFICHE PRINCIPALE ── */}
         <div style={S.card}>
-
-          {/* Hint prono si match pas commencé */}
           {!verrou && !prono && (
             <div style={{ textAlign:'center', fontSize:12, color:'var(--text-3)', marginBottom:12 }}>
               Clique sur une équipe pour pronostiquer
             </div>
           )}
           {!verrou && prono && (
-          <div style={{ textAlign:'center', fontSize:12, color:'var(--text-3)', marginBottom:12 }}>
+            <div style={{ textAlign:'center', fontSize:12, color:'var(--text-3)', marginBottom:12 }}>
               Tu peux encore changer d'avis !
-          </div>
+            </div>
           )}
 
           <div style={{ display:'grid', gridTemplateColumns:'1fr auto 1fr', alignItems:'center', gap:4 }}>
             <CarteEquipe eq={ext} align="ext" />
 
-            {/* Centre : score ou VS + heure */}
+            {/* Score central */}
             <div style={{ textAlign:'center', minWidth:72, padding:'0 4px' }}>
               {(termine || enCours) && ext.score != null
                 ? <>
-                    <div style={{ fontFamily:'var(--font-display)', fontWeight:700, fontSize:noSpoil && termine ? 22 : 36, color: noSpoil && termine ? 'var(--text-3)' : 'var(--text-1)', lineHeight:1, whiteSpace:'nowrap' }}>
+                    <div style={{
+                      fontFamily:'var(--font-display)', fontWeight:700,
+                      fontSize: noSpoil && termine ? 22 : 36,
+                      color: noSpoil && termine ? 'var(--text-3)' : 'var(--text-1)',
+                      lineHeight:1, whiteSpace:'nowrap',
+                    }}>
                       {noSpoil && termine ? '🙈' : `${ext.score}–${dom.score}`}
                     </div>
-                    <div style={{ fontSize:10, marginTop:4, fontWeight: enCours ? 600 : 400,
-                      color: enCours ? 'var(--success)' : 'var(--text-3)' }}>
+                    <div style={{ fontSize:10, marginTop:4, fontWeight: enCours ? 600 : 400, color: enCours ? 'var(--success)' : 'var(--text-3)' }}>
                       {enCours ? `Q${match.periode} ${match.clock}` : (noSpoil ? 'Terminé' : 'Final')}
                     </div>
                   </>
@@ -232,7 +234,6 @@ function MatchDetail() {
             </div>
           )}
 
-          {/* Match en cours sans prono */}
           {enCours && !prono && (
             <div style={{ textAlign:'center', fontSize:12, color:'var(--text-3)', marginTop:12, paddingTop:12, borderTopWidth:1, borderTopStyle:'solid', borderTopColor:'var(--border)' }}>
               🔒 Match en cours — pronos fermés
@@ -248,15 +249,15 @@ function MatchDetail() {
 
         {/* Forme L5 */}
         {(ext.l5?.length > 0 || dom.l5?.length > 0) && (
-        <div style={S.card}>
+          <div style={S.card}>
             <h3 style={{ marginBottom:12 }}>Forme récente</h3>
             <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
-            {[ext, dom].map(eq => (
+              {[ext, dom].map(eq => (
                 <div key={eq.trigramme} style={{ display:'flex', alignItems:'center', gap:10, paddingLeft:16 }}>
-                <div style={{ fontSize:11, color:'var(--text-3)', fontWeight:600, minWidth:28 }}>{eq.trigramme}</div>
-                <div style={{ display:'flex', gap:4, flexWrap:'wrap' }}>
+                  <div style={{ fontSize:11, color:'var(--text-3)', fontWeight:600, minWidth:28 }}>{eq.trigramme}</div>
+                  <div style={{ display:'flex', gap:4, flexWrap:'wrap' }}>
                     {eq.l5?.map((j, i) => (
-                    <div key={i} style={{
+                      <div key={i} style={{
                         width:26, height:26, borderRadius:4,
                         display:'flex', alignItems:'center', justifyContent:'center',
                         fontFamily:'var(--font-display)', fontWeight:700, fontSize:13,
@@ -264,13 +265,13 @@ function MatchDetail() {
                         color: j.resultat==='W' ? 'var(--success)' : 'var(--danger)',
                         borderWidth:1, borderStyle:'solid',
                         borderColor: j.resultat==='W' ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)',
-                    }}>{j.resultat}</div>
+                      }}>{j.resultat}</div>
                     ))}
+                  </div>
                 </div>
-                </div>
-            ))}
+              ))}
             </div>
-        </div>
+          </div>
         )}
 
         {/* Stats */}
@@ -301,32 +302,30 @@ function MatchDetail() {
 
         {/* Leaders */}
         {(dom.leaders?.length > 0 || ext.leaders?.length > 0) && (
-        <div style={S.card}>
+          <div style={S.card}>
             <h3 style={{ marginBottom:12 }}>Leaders</h3>
             <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
-            {[ext, dom].map(eq => (
+              {[ext, dom].map(eq => (
                 <div key={eq.trigramme}>
-                <div style={{ fontSize:11, color:'var(--text-3)', marginBottom:8, fontWeight:600 }}>{eq.trigramme} — {eq.nom}</div>
-                <div style={{ display:'flex', flexDirection:'column', gap:8, paddingLeft:16 }}>
-                {eq.leaders?.map((l, i) => (
-                    <div key={i} style={{ display:'flex', alignItems:'center', gap:10 }}>
-                        {l.photo && (
-                        <img src={l.photo} alt={l.joueur||''} style={{ width:36, height:36, borderRadius:'50%', objectFit:'cover', flexShrink:0, background:'var(--bg-2)' }} />
-                        )}
+                  <div style={{ fontSize:11, color:'var(--text-3)', marginBottom:8, fontWeight:600 }}>{eq.trigramme} — {eq.nom}</div>
+                  <div style={{ display:'flex', flexDirection:'column', gap:8, paddingLeft:16 }}>
+                    {eq.leaders?.map((l, i) => (
+                      <div key={i} style={{ display:'flex', alignItems:'center', gap:10 }}>
+                        {l.photo && <img src={l.photo} alt={l.joueur||''} style={{ width:36, height:36, borderRadius:'50%', objectFit:'cover', flexShrink:0, background:'var(--bg-2)' }} />}
                         <div style={{ minWidth:0, flex:1 }}>
-                        <div style={{ fontSize:12, fontWeight:600, color:'var(--text-1)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{l.joueur}</div>
-                        <div style={{ fontSize:11, color:'var(--text-3)' }}>
+                          <div style={{ fontSize:12, fontWeight:600, color:'var(--text-1)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{l.joueur}</div>
+                          <div style={{ fontSize:11, color:'var(--text-3)' }}>
                             <span style={{ fontFamily:'var(--font-display)', fontWeight:700, fontSize:14, color:'var(--accent)' }}>{l.valeur}</span>
                             {' '}{l.categorie}
+                          </div>
                         </div>
-                        </div>
-                    </div>
+                      </div>
                     ))}
+                  </div>
                 </div>
-                </div>
-            ))}
+              ))}
             </div>
-        </div>
+          </div>
         )}
 
         {/* Blessés */}
