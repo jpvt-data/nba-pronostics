@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import { Home, Trophy, BarChart2, Menu, X, Users, LogOut, Calendar } from 'lucide-react'
+import { Home, Trophy, BarChart2, Menu, X, Users, LogOut, Calendar, Sparkles } from 'lucide-react'
+import PopupChangelog from './PopupChangelog'
 
 const LIENS = [
   { chemin: '/accueil',    label: 'Board',     Icone: Home },
@@ -21,6 +22,7 @@ function Navigation() {
   const navigate  = useNavigate()
   const location  = useLocation()
   const [ouvert, setOuvert] = useState(false)
+  const [changelogOuvert, setChangelogOuvert] = useState(false)
 
   const deconnecter = async () => { await supabase.auth.signOut(); setOuvert(false) }
   const aller = (chemin) => { navigate(chemin); setOuvert(false) }
@@ -82,6 +84,20 @@ function Navigation() {
           }}
         >
           <Calendar size={18} strokeWidth={1.5} /> Calendrier
+        </button>
+
+        <button
+          onClick={() => { setChangelogOuvert(true); setOuvert(false) }}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 10,
+            background: 'none', borderWidth: 0, color: 'var(--text-2)',
+            fontSize: 14, cursor: 'pointer',
+            paddingTop: '0.75rem', paddingBottom: '0.75rem',
+            paddingLeft: '0.5rem', paddingRight: '0.5rem',
+            borderRadius: 'var(--radius-sm)',
+          }}
+        >
+          <Sparkles size={18} strokeWidth={1.5} /> Quoi de neuf ?
         </button>
 
         <div style={{ marginTop: 'auto', borderTopWidth: 1, borderTopStyle: 'solid', borderTopColor: 'var(--border)', paddingTop: '1rem' }}>
@@ -228,6 +244,9 @@ function Navigation() {
           )
         })}
       </nav>
+      {changelogOuvert && (
+        <PopupChangelog forceOuvert onFermer={() => setChangelogOuvert(false)} />
+      )}
     </>
   )
 }

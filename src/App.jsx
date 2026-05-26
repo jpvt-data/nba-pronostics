@@ -9,6 +9,7 @@ import Classement   from './pages/Classement'
 import MesPronos    from './pages/MesPronos'
 import MatchDetail  from './pages/MatchDetail'
 import Calendrier from './pages/Calendrier'
+import PopupChangelog from './components/PopupChangelog'
 
 function App() {
   const [session, setSession] = useState(undefined)
@@ -26,6 +27,7 @@ function App() {
 
   return (
     <BrowserRouter>
+      {session && <PopupChangelog />}
       <Routes>
         <Route path="/connexion"       element={public_(<Connexion />)} />
         <Route path="/inscription"     element={public_(<Inscription />)} />
