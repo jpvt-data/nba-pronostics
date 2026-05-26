@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import Navigation from '../components/Navigation'
+import { Avatar } from '../pages/Profil'
 
 function Classement() {
   const [groupes, setGroupes]       = useState([])
@@ -28,7 +29,7 @@ function Classement() {
   const chargerClassement = async (groupeId) => {
     const { data } = await supabase
       .from('membres_groupe')
-      .select('points, user_id, profils(pseudo)')
+      .select('points, user_id, profils(pseudo, avatar_url)')
       .eq('groupe_id', groupeId).eq('actif', true)
       .order('points', { ascending: false })
     setClassement(data || [])
@@ -67,7 +68,6 @@ function Classement() {
           </div>
         )}
 
-        {/* Titre groupe */}
         {groupeActif && (
           <div style={{ fontSize: 12, color: 'var(--text-3)', marginBottom: 12 }}>
             {groupeActif.nom} · {classement.length} membre{classement.length > 1 ? 's' : ''}
@@ -81,15 +81,19 @@ function Classement() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginBottom: 16 }}>
             {classement.slice(0, 3).map((m, i) => (
               <div key={m.user_id} style={{
-                background: 'var(--bg-1)', border: `1px solid ${i === 0 ? 'var(--accent-border)' : 'var(--border)'}`,
+                background: 'var(--bg-1)',
+                borderWidth: 1, borderStyle: 'solid',
+                borderColor: i === 0 ? 'var(--accent-border)' : 'var(--border)',
                 borderRadius: 'var(--radius-md)', padding: '14px 8px', textAlign: 'center',
               }}>
-                <div style={{ fontSize: 20, marginBottom: 6 }}>{medaille(i)}</div>
-                <div style={{
-                  fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 22,
-                  color: i === 0 ? 'var(--accent)' : 'var(--text-1)',
-                }}>{m.points}</div>
-                <div style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 2 }}>pts</div>
+                <div style={{ fontSize: 20, marginBottom: 8 }}>{medaille(i)}</div>
+                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 8 }}>
+                  <Avatar url={m.profils?.avatar_url} pseudo={m.profils?.pseudo} taille={40} fontSize={13} />
+                </div>
+                <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 22, color: i === 0 ? 'var(--accent)' : 'var(--text-1)' }}>
+                  {m.points}
+                </div>
+                <div style={{ fontSize: 10, color: 'var(--text-3)' }}>pts</div>
                 <div style={{ fontSize: 12, color: 'var(--text-2)', marginTop: 6, fontWeight: 500 }}>
                   {m.profils?.pseudo || '—'}
                 </div>
@@ -103,20 +107,15 @@ function Classement() {
           {classement.map((m, i) => (
             <div key={m.user_id} style={{
               display: 'flex', alignItems: 'center', gap: 12,
-              background: 'var(--bg-1)', border: '1px solid var(--border)',
+              background: 'var(--bg-1)',
+              borderWidth: 1, borderStyle: 'solid', borderColor: 'var(--border)',
               borderRadius: 'var(--radius-sm)', padding: '10px 14px',
             }}>
               <span style={{
                 fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 16,
                 color: i < 3 ? 'var(--accent)' : 'var(--text-3)', minWidth: 22, textAlign: 'center',
               }}>#{i + 1}</span>
-              <div style={{
-                width: 30, height: 30, borderRadius: '50%',
-                background: 'var(--bg-2)', display: 'flex', alignItems: 'center',
-                justifyContent: 'center', fontSize: 11, fontWeight: 600, color: 'var(--accent)',
-              }}>
-                {(m.profils?.pseudo || '?').slice(0, 2).toUpperCase()}
-              </div>
+              <Avatar url={m.profils?.avatar_url} pseudo={m.profils?.pseudo} taille={32} fontSize={11} />
               <span style={{ flex: 1, fontSize: 14, color: 'var(--text-1)', fontWeight: 500 }}>
                 {m.profils?.pseudo || 'Inconnu'}
               </span>

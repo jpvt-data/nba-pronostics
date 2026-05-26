@@ -8,8 +8,7 @@ import Groupes      from './pages/Groupes'
 import Classement   from './pages/Classement'
 import MesPronos    from './pages/MesPronos'
 import MatchDetail  from './pages/MatchDetail'
-import Calendrier   from './pages/Calendrier'
-import Profil       from './pages/Profil'
+import Calendrier from './pages/Calendrier'
 import PopupChangelog from './components/PopupChangelog'
 import { NoSpoilProvider } from './context/NoSpoilContext'
 
@@ -24,7 +23,7 @@ function App() {
 
   if (session === undefined) return null
 
-  const prive   = (el) => session ? el : <Navigate to="/connexion" />
+  const prive = (el) => session ? el : <Navigate to="/connexion" />
   const public_ = (el) => !session ? el : <Navigate to="/accueil" />
 
   return (
@@ -40,7 +39,6 @@ function App() {
           <Route path="/groupes"         element={prive(<Groupes />)} />
           <Route path="/match/:espn_id"  element={prive(<MatchDetail />)} />
           <Route path="/calendrier"      element={prive(<Calendrier />)} />
-          <Route path="/profil"          element={prive(<Profil />)} />
           <Route path="*"                element={<Navigate to={session ? '/accueil' : '/connexion'} />} />
         </Routes>
       </BrowserRouter>

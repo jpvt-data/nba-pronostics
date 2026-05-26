@@ -1,17 +1,17 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import { Home, Trophy, BarChart2, Menu, X, Swords, LogOut, Calendar, Sparkles, EyeOff } from 'lucide-react'
+import { Home, Trophy, BarChart2, Menu, X, Swords, LogOut, Calendar, Sparkles, EyeOff, UserCircle } from 'lucide-react'
 import PopupChangelog from './PopupChangelog'
 import { useNoSpoil } from '../context/NoSpoilContext'
+import { Avatar } from '../pages/Profil'
 
 const LIENS = [
-  { chemin: '/accueil',    label: 'Board',     Icone: Home },
+  { chemin: '/accueil',    label: 'Board',      Icone: Home },
   { chemin: '/classement', label: 'Classement', Icone: Trophy },
   { chemin: '/mes-pronos', label: 'Mes stats',  Icone: BarChart2 },
 ]
 
-/* ── styles partagés ── */
 const navBase = {
   position: 'fixed',
   left: 0, right: 0,
@@ -22,9 +22,24 @@ const navBase = {
 function Navigation() {
   const navigate  = useNavigate()
   const location  = useLocation()
-  const [ouvert, setOuvert] = useState(false)
+  const [ouvert, setOuvert]   = useState(false)
   const [changelogOuvert, setChangelogOuvert] = useState(false)
+  const [profil, setProfil]   = useState(null)
   const { noSpoil, toggleNoSpoil } = useNoSpoil()
+
+  useEffect(() => {
+    const chargerProfil = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      const { data } = await supabase
+        .from('profils')
+        .select('pseudo, avatar_url')
+        .eq('id', user.id)
+        .single()
+      setProfil(data)
+    }
+    chargerProfil()
+  }, [])
 
   const deconnecter = async () => { await supabase.auth.signOut(); setOuvert(false) }
   const aller = (chemin) => { navigate(chemin); setOuvert(false) }
@@ -44,7 +59,7 @@ function Navigation() {
         position: 'fixed', top: 0, height: '100%', width: 260,
         right: ouvert ? 0 : '-300px',
         background: 'var(--bg-1)',
-        borderLeft: `1px solid var(--border)`,
+        borderLeft: '1px solid var(--border)',
         zIndex: 200,
         transition: 'right 0.25s ease',
         padding: '1.25rem 1rem',
@@ -52,41 +67,56 @@ function Navigation() {
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
           <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Menu</span>
-          <button
-            onClick={() => setOuvert(false)}
-            style={{ background: 'none', borderWidth: 0, color: 'var(--text-3)', cursor: 'pointer', padding: 4 }}
-          >
+          <button onClick={() => setOuvert(false)} style={{ background: 'none', borderWidth: 0, color: 'var(--text-3)', cursor: 'pointer', padding: 4 }}>
             <X size={18} />
           </button>
         </div>
 
+        {/* Profil dans le hamburger */}
         <button
-          onClick={() => aller('/groupes')}
+          onClick={() => aller('/profil')}
           style={{
-            display: 'flex', alignItems: 'center', gap: 10,
-            background: 'none', borderWidth: 0, color: 'var(--text-2)',
-            fontSize: 14, cursor: 'pointer',
-            paddingTop: '0.75rem', paddingBottom: '0.75rem',
-            paddingLeft: '0.5rem', paddingRight: '0.5rem',
-            borderRadius: 'var(--radius-sm)',
+            display: 'flex', alignItems: 'center', gap: 12,
+            background: location.pathname === '/profil' ? 'var(--accent-dim)' : 'var(--bg-2)',
+            borderWidth: 1, borderStyle: 'solid',
+            borderColor: location.pathname === '/profil' ? 'var(--accent-border)' : 'var(--border)',
+            borderRadius: 'var(--radius-md)',
+            padding: '10px 12px',
+            cursor: 'pointer', marginBottom: '1rem', width: '100%',
+            textAlign: 'left',
           }}
         >
-          <Swords size={18} strokeWidth={1.5} /> Ligues
+          <Avatar url={profil?.avatar_url} pseudo={profil?.pseudo} taille={36} fontSize={13} />
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-1)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {profil?.pseudo || '—'}
+            </div>
+            <div style={{ fontSize: 11, color: 'var(--text-3)' }}>Mon profil</div>
+          </div>
         </button>
 
-        <button
-          onClick={() => aller('/calendrier')}
-          style={{
-            display: 'flex', alignItems: 'center', gap: 10,
-            background: 'none', borderWidth: 0, color: 'var(--text-2)',
-            fontSize: 14, cursor: 'pointer',
-            paddingTop: '0.75rem', paddingBottom: '0.75rem',
-            paddingLeft: '0.5rem', paddingRight: '0.5rem',
-            borderRadius: 'var(--radius-sm)',
-          }}
-        >
-          <Calendar size={18} strokeWidth={1.5} /> Calendrier
-        </button>
+        {/* Séparateur */}
+        <div style={{ borderTopWidth: 1, borderTopStyle: 'solid', borderTopColor: 'var(--border)', marginBottom: '0.75rem' }} />
+
+        {[
+          { chemin: '/groupes',    label: 'Ligues',     Icone: Swords },
+          { chemin: '/calendrier', label: 'Calendrier', Icone: Calendar },
+        ].map(({ chemin, label, Icone }) => (
+          <button
+            key={chemin}
+            onClick={() => aller(chemin)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 10,
+              background: 'none', borderWidth: 0, color: 'var(--text-2)',
+              fontSize: 14, cursor: 'pointer',
+              paddingTop: '0.75rem', paddingBottom: '0.75rem',
+              paddingLeft: '0.5rem', paddingRight: '0.5rem',
+              borderRadius: 'var(--radius-sm)',
+            }}
+          >
+            <Icone size={18} strokeWidth={1.5} /> {label}
+          </button>
+        ))}
 
         <button
           onClick={toggleNoSpoil}
@@ -135,19 +165,12 @@ function Navigation() {
         </div>
       </div>
 
-      {/* ── DESKTOP — barre top complète ── */}
-      <nav
-        className="nav-desktop-full"
-        style={{
-          ...navBase,
-          top: 0,
-          height: 52,
-          borderBottomWidth: 1, borderBottomStyle: 'solid', borderBottomColor: 'var(--border)',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '0 20px',
-        }}
-      >
+      {/* ── DESKTOP — barre top ── */}
+      <nav className="nav-desktop-full" style={{
+        ...navBase, top: 0, height: 52,
+        borderBottomWidth: 1, borderBottomStyle: 'solid', borderBottomColor: 'var(--border)',
+        alignItems: 'center', justifyContent: 'space-between', padding: '0 20px',
+      }}>
         <span
           onClick={() => navigate('/accueil')}
           style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 17, letterSpacing: '0.08em', color: '#fff', display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}
@@ -155,62 +178,58 @@ function Navigation() {
           <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--accent)', display: 'inline-block' }} />
           NBA PRONOS
         </span>
-
         <div style={{ display: 'flex', gap: 4 }}>
           {LIENS.map(({ chemin, label, Icone }) => {
             const actif = location.pathname === chemin
             return (
-              <button
-                key={chemin}
-                onClick={() => aller(chemin)}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 6,
-                  background: 'none', borderWidth: 0,
-                  color: actif ? 'var(--text-1)' : 'var(--text-3)',
-                  fontWeight: actif ? 600 : 400,
-                  fontSize: 13, cursor: 'pointer',
-                  paddingTop: 5, paddingBottom: 5,
-                  paddingLeft: 12, paddingRight: 12,
-                  borderRadius: 'var(--radius-sm)',
-                  /* indicateur actif : underline bas uniquement */
-                  boxShadow: actif ? 'inset 0 -2px 0 var(--accent)' : 'none',
-                }}
-              >
+              <button key={chemin} onClick={() => aller(chemin)} style={{
+                display: 'flex', alignItems: 'center', gap: 6,
+                background: 'none', borderWidth: 0,
+                color: actif ? 'var(--text-1)' : 'var(--text-3)',
+                fontWeight: actif ? 600 : 400, fontSize: 13, cursor: 'pointer',
+                paddingTop: 5, paddingBottom: 5, paddingLeft: 12, paddingRight: 12,
+                borderRadius: 'var(--radius-sm)',
+                boxShadow: actif ? 'inset 0 -2px 0 var(--accent)' : 'none',
+              }}>
                 <Icone size={15} strokeWidth={actif ? 2 : 1.5} />
                 {label}
               </button>
             )
           })}
         </div>
-
-        <button
-          onClick={() => setOuvert(!ouvert)}
-          style={{
-            background: 'none',
-            borderWidth: 1, borderStyle: 'solid', borderColor: 'var(--border)',
-            color: 'var(--text-3)',
-            paddingTop: 6, paddingBottom: 6, paddingLeft: 10, paddingRight: 10,
-            borderRadius: 'var(--radius-sm)', cursor: 'pointer',
-            display: 'flex', alignItems: 'center',
-          }}
-        >
-          <Menu size={16} strokeWidth={1.5} />
-        </button>
+        {/* Avatar cliquable vers profil côté desktop */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <button
+            onClick={() => navigate('/profil')}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 8,
+              background: 'none', borderWidth: 1, borderStyle: 'solid', borderColor: 'var(--border)',
+              borderRadius: 'var(--radius-sm)', padding: '4px 10px 4px 6px',
+              cursor: 'pointer',
+            }}
+          >
+            <Avatar url={profil?.avatar_url} pseudo={profil?.pseudo} taille={24} fontSize={9} />
+            <span style={{ fontSize: 12, color: 'var(--text-2)', fontWeight: 500 }}>{profil?.pseudo || '—'}</span>
+          </button>
+          <button
+            onClick={() => setOuvert(!ouvert)}
+            style={{
+              background: 'none', borderWidth: 1, borderStyle: 'solid', borderColor: 'var(--border)',
+              color: 'var(--text-3)', paddingTop: 6, paddingBottom: 6, paddingLeft: 10, paddingRight: 10,
+              borderRadius: 'var(--radius-sm)', cursor: 'pointer', display: 'flex', alignItems: 'center',
+            }}
+          >
+            <Menu size={16} strokeWidth={1.5} />
+          </button>
+        </div>
       </nav>
 
-      {/* ── MOBILE — barre logo top (fine, 40px) ── */}
-      <nav
-        className="nav-mobile-logo"
-        style={{
-          ...navBase,
-          top: 0,
-          height: 40,
-          borderBottomWidth: 1, borderBottomStyle: 'solid', borderBottomColor: 'var(--border)',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '0 16px',
-        }}
-      >
+      {/* ── MOBILE — barre logo top ── */}
+      <nav className="nav-mobile-logo" style={{
+        ...navBase, top: 0, height: 40,
+        borderBottomWidth: 1, borderBottomStyle: 'solid', borderBottomColor: 'var(--border)',
+        alignItems: 'center', justifyContent: 'space-between', padding: '0 16px',
+      }}>
         <span
           onClick={() => navigate('/accueil')}
           style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 15, letterSpacing: '0.08em', color: '#fff', display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}
@@ -220,49 +239,54 @@ function Navigation() {
         </span>
         <button
           onClick={() => setOuvert(!ouvert)}
-          style={{
-            background: 'none', borderWidth: 0,
-            color: 'var(--text-3)', cursor: 'pointer',
-            display: 'flex', alignItems: 'center', padding: 4,
-          }}
+          style={{ background: 'none', borderWidth: 0, color: 'var(--text-3)', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: 4 }}
         >
           <Menu size={18} strokeWidth={1.5} />
         </button>
       </nav>
 
       {/* ── MOBILE — bottom nav ── */}
-      <nav
-        className="nav-mobile-bot"
-        style={{
-          ...navBase,
-          bottom: 0,
-          height: 60,
-          borderTopWidth: 1, borderTopStyle: 'solid', borderTopColor: 'var(--border)',
-          alignItems: 'stretch',
-        }}
-      >
+      <nav className="nav-mobile-bot" style={{
+        ...navBase, bottom: 0, height: 60,
+        borderTopWidth: 1, borderTopStyle: 'solid', borderTopColor: 'var(--border)',
+        alignItems: 'stretch',
+      }}>
         {LIENS.map(({ chemin, label, Icone }) => {
           const actif = location.pathname === chemin
           return (
-            <button
-              key={chemin}
-              onClick={() => aller(chemin)}
-              style={{
-                flex: 1, height: '100%',
-                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3,
-                background: 'none', borderWidth: 0,
-                color: actif ? 'var(--text-1)' : 'var(--text-3)',
-                fontSize: 10, fontWeight: 500, cursor: 'pointer',
-                /* indicateur actif : ligne en haut */
-                boxShadow: actif ? 'inset 0 2px 0 var(--accent)' : 'none',
-              }}
-            >
+            <button key={chemin} onClick={() => aller(chemin)} style={{
+              flex: 1, height: '100%',
+              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3,
+              background: 'none', borderWidth: 0,
+              color: actif ? 'var(--text-1)' : 'var(--text-3)',
+              fontSize: 10, fontWeight: 500, cursor: 'pointer',
+              boxShadow: actif ? 'inset 0 2px 0 var(--accent)' : 'none',
+            }}>
               <Icone size={22} strokeWidth={actif ? 2 : 1.5} />
               {label}
             </button>
           )
         })}
+        {/* Avatar dans la bottom nav mobile */}
+        <button
+          onClick={() => aller('/profil')}
+          style={{
+            flex: 1, height: '100%',
+            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3,
+            background: 'none', borderWidth: 0,
+            color: location.pathname === '/profil' ? 'var(--text-1)' : 'var(--text-3)',
+            fontSize: 10, fontWeight: 500, cursor: 'pointer',
+            boxShadow: location.pathname === '/profil' ? 'inset 0 2px 0 var(--accent)' : 'none',
+          }}
+        >
+          {profil?.avatar_url
+            ? <img src={profil.avatar_url} alt={profil.pseudo} style={{ width: 22, height: 22, borderRadius: '50%', objectFit: 'cover' }} />
+            : <UserCircle size={22} strokeWidth={1.5} />
+          }
+          Profil
+        </button>
       </nav>
+
       {changelogOuvert && (
         <PopupChangelog forceOuvert onFermer={() => setChangelogOuvert(false)} />
       )}

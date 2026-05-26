@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import Navigation from '../components/Navigation'
+import { Avatar } from '../pages/Profil'
 
 const formaterDate = (dateStr) =>
   new Date(dateStr).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' })
@@ -9,12 +10,23 @@ const formaterDate = (dateStr) =>
 function MesPronos() {
   const [pronos, setPronos]  = useState([])
   const [stats, setStats]    = useState({ total: 0, corrects: 0, incorrects: 0 })
+  const [profil, setProfil]  = useState(null)
   const [charg, setCharg]    = useState(true)
   const navigate             = useNavigate()
 
   useEffect(() => {
     const init = async () => {
       const { data: { user } } = await supabase.auth.getUser()
+
+      // Profil
+      const { data: p } = await supabase
+        .from('profils')
+        .select('pseudo, avatar_url')
+        .eq('id', user.id)
+        .single()
+      setProfil(p)
+
+      // Pronos
       const { data } = await supabase
         .from('pronos')
         .select('equipe_choisie, resultat, points_gagnes, cree_le, matchs(espn_id, date_match, equipe_domicile, equipe_exterieur, statut)')
@@ -35,8 +47,8 @@ function MesPronos() {
     : 0
 
   const couleurResultat = (r) => {
-    if (r === 'correct')    return { bg: 'var(--success-dim)', border: 'rgba(34,197,94,0.3)',  txt: 'var(--success)' }
-    if (r === 'incorrect')  return { bg: 'var(--danger-dim)',  border: 'rgba(239,68,68,0.3)',  txt: 'var(--danger)'  }
+    if (r === 'correct')   return { bg: 'var(--success-dim)', border: 'rgba(34,197,94,0.3)',  txt: 'var(--success)' }
+    if (r === 'incorrect') return { bg: 'var(--danger-dim)',  border: 'rgba(239,68,68,0.3)',  txt: 'var(--danger)'  }
     return { bg: 'transparent', border: 'var(--border)', txt: 'var(--text-3)' }
   }
 
@@ -44,7 +56,17 @@ function MesPronos() {
     <>
       <Navigation />
       <main style={{ flex: 1, padding: '20px 16px' }}>
-        <h2 style={{ marginBottom: 20 }}>Mes stats</h2>
+
+        {/* Header avec avatar */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
+          <Avatar url={profil?.avatar_url} pseudo={profil?.pseudo} taille={44} fontSize={15} />
+          <div>
+            <h2 style={{ margin: 0, lineHeight: 1.2 }}>Mes stats</h2>
+            {profil?.pseudo && (
+              <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 2 }}>{profil.pseudo}</div>
+            )}
+          </div>
+        </div>
 
         {/* Stats globales */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginBottom: 28 }}>
@@ -74,7 +96,6 @@ function MesPronos() {
             const c = couleurResultat(p.resultat)
             const m = p.matchs
             const cliquable = !!m?.espn_id
-
             return (
               <div
                 key={i}
@@ -96,16 +117,13 @@ function MesPronos() {
                     {m ? formaterDate(m.date_match) : ''} · → {p.equipe_choisie}
                   </div>
                 </div>
-
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
                   <span style={{ fontSize: 12, fontWeight: 600, color: c.txt }}>
                     {p.resultat === 'correct'    && `+${p.points_gagnes} pt`}
                     {p.resultat === 'incorrect'  && 'Raté'}
                     {p.resultat === 'en_attente' && 'En attente'}
                   </span>
-                  {cliquable && (
-                    <span style={{ fontSize: 14, color: 'var(--text-3)' }}>›</span>
-                  )}
+                  {cliquable && <span style={{ fontSize: 14, color: 'var(--text-3)' }}>›</span>}
                 </div>
               </div>
             )
