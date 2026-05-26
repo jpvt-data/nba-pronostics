@@ -1,6 +1,12 @@
 // Changelog NBA Pronostics — une entrée par version/feature
 export const CHANGELOG = [
   {
+  version: 'v0.7',
+  date: '2026-05-27',
+  titre: 'Stats & classement enrichis',
+  desc: 'Le classement affiche maintenant les pronos corrects, ratés et le taux de réussite de chaque joueur. Clique sur n\'importe quel joueur pour voir ses stats détaillées. Les pronos en attente des autres sont masqués — le suspense reste entier jusqu\'au tip-off. La page Ligues trie automatiquement les ligues actives en haut et les terminées en bas.',
+},
+{
   version: 'v0.6',
   date: '2026-05-26',
   titre: 'Profil utilisateur',
@@ -83,4 +89,4 @@ export const CHANGELOG = [
 ]
 
 // Version courante de l'app — à incrémenter à chaque déploiement avec nouveautés
-export const VERSION_COURANTE = 'v0.6'
+export const VERSION_COURANTE = 'v0.7'
