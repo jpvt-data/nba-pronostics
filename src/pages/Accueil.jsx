@@ -71,7 +71,7 @@ function Accueil() {
               }}
             >
               {noSpoil ? <Eye size={12} /> : <EyeOff size={12} />}
-              {noSpoil ? 'Spoilers' : 'No Spoil'}
+              {noSpoil ? 'No Spoil — actif' : 'No Spoil'}
             </button>
           </div>
           <p style={{ fontSize: 13, color: 'var(--text-3)', marginBottom: 0 }}>
