@@ -67,35 +67,43 @@ function Accueil() {
       <Navigation />
       <main style={{ flex: 1 }}>
 
-        {/* ── Header ── */}
-        <div style={{ padding: GUTTER }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <h2 style={{ margin: 0 }}>Pronostique. Clashe. Règne.</h2>
-              <Zap size={20} color="var(--accent)" strokeWidth={2} fill="var(--accent)" />
-            </div>
-            <button
-              onClick={toggleNoSpoil}
-              title={noSpoil ? 'No Spoil actif — cliquer pour désactiver' : 'Activer le mode No Spoil'}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 5,
-                padding: '5px 10px',
-                background: noSpoil ? 'rgba(99,102,241,0.15)' : 'transparent',
-                borderWidth: 1, borderStyle: 'solid',
-                borderColor: noSpoil ? 'rgba(99,102,241,0.4)' : 'var(--border)',
-                borderRadius: 'var(--radius-sm)', cursor: 'pointer',
-                fontSize: 11, fontWeight: 600,
-                color: noSpoil ? 'var(--accent)' : 'var(--text-3)',
-              }}
-            >
-              {noSpoil ? <Eye size={12} /> : <EyeOff size={12} />}
-              {noSpoil ? 'No Spoil — actif' : 'No Spoil'}
-            </button>
-          </div>
-          <p style={{ fontSize: 13, color: 'var(--text-3)', marginBottom: 0, lineHeight: 1.6}}>
-            Suis la saison NBA, pronostique chaque match avant le tip-off et compare tes résultats avec tes potes. Classements, stats perso, fiches match détaillées — tout ce qu'il faut pour savoir qui prédit le mieux… et qui la ramène pour rien.
-          </p>
+      {/* ── Header ── */}
+      <div style={{ padding: GUTTER }}>
+        {/* Ligne 1 : titre + éclair */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+          <h2 style={{ margin: 0 }}>Bonjour {pseudo || ''}</h2>
+          <Zap size={20} color="var(--accent)" strokeWidth={2} fill="var(--accent)" />
         </div>
+
+        {/* Ligne 2 : accroche + No Spoil alignés */}
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 8 }}>
+          <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-2)', margin: 0, lineHeight: 1.4 }}>
+            Pronostique. Clashe. Règne.
+          </p>
+          <button
+            onClick={toggleNoSpoil}
+            title={noSpoil ? 'No Spoil actif — cliquer pour désactiver' : 'Activer le mode No Spoil'}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 5,
+              padding: '5px 10px', flexShrink: 0,
+              background: noSpoil ? 'rgba(99,102,241,0.15)' : 'transparent',
+              borderWidth: 1, borderStyle: 'solid',
+              borderColor: noSpoil ? 'rgba(99,102,241,0.4)' : 'var(--border)',
+              borderRadius: 'var(--radius-sm)', cursor: 'pointer',
+              fontSize: 11, fontWeight: 600,
+              color: noSpoil ? 'var(--accent)' : 'var(--text-3)',
+            }}
+          >
+            {noSpoil ? <Eye size={12} /> : <EyeOff size={12} />}
+            {noSpoil ? 'No Spoil' : 'No Spoil'}
+          </button>
+        </div>
+
+        {/* Description */}
+        <p style={{ fontSize: 13, color: 'var(--text-3)', margin: 0, lineHeight: 1.6 }}>
+          Suis la saison NBA, pronostique chaque match avant le tip-off et compare tes résultats avec tes potes. Classements, stats perso, fiches match détaillées — tout ce qu'il faut pour savoir qui prédit le mieux… et qui la ramène pour rien.
+        </p>
+      </div>
 
         <div style={SEP} />
 
