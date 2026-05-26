@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase'
 import { recupererDetailMatch } from '../services/espn'
 import Navigation from '../components/Navigation'
 import { ChevronLeft } from 'lucide-react'
+import { useNoSpoil } from '../context/NoSpoilContext'
 
 const estVerrouille = (dateStr, statut) => {
   if (statut === 'STATUS_FINAL' || statut === 'STATUS_IN_PROGRESS') return true
@@ -29,6 +30,7 @@ function MatchDetail() {
   const [prono, setProno]  = useState(null)
   const [resultat, setRes] = useState(null)
   const [charg, setCharg]  = useState(true)
+  const { noSpoil }        = useNoSpoil()
   const [erreur, setErr]   = useState(false)
 
   useEffect(() => {
@@ -190,12 +192,12 @@ function MatchDetail() {
             <div style={{ textAlign:'center', minWidth:72, padding:'0 4px' }}>
               {(termine || enCours) && ext.score != null
                 ? <>
-                    <div style={{ fontFamily:'var(--font-display)', fontWeight:700, fontSize:36, color:'var(--text-1)', lineHeight:1, whiteSpace:'nowrap' }}>
-                      {ext.score}–{dom.score}
+                    <div style={{ fontFamily:'var(--font-display)', fontWeight:700, fontSize:noSpoil && termine ? 22 : 36, color: noSpoil && termine ? 'var(--text-3)' : 'var(--text-1)', lineHeight:1, whiteSpace:'nowrap' }}>
+                      {noSpoil && termine ? '🙈' : `${ext.score}–${dom.score}`}
                     </div>
                     <div style={{ fontSize:10, marginTop:4, fontWeight: enCours ? 600 : 400,
                       color: enCours ? 'var(--success)' : 'var(--text-3)' }}>
-                      {enCours ? `Q${match.periode} ${match.clock}` : 'Final'}
+                      {enCours ? `Q${match.periode} ${match.clock}` : (noSpoil ? 'Terminé' : 'Final')}
                     </div>
                   </>
                 : <>
