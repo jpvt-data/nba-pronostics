@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import { Home, Trophy, BarChart2, Menu, X, Users, LogOut, Calendar, Sparkles, EyeOff } from 'lucide-react'
+import { Home, Trophy, BarChart2, Menu, X, Swords, LogOut, Calendar, Sparkles, EyeOff } from 'lucide-react'
 import PopupChangelog from './PopupChangelog'
 import { useNoSpoil } from '../context/NoSpoilContext'
 
@@ -71,7 +71,7 @@ function Navigation() {
             borderRadius: 'var(--radius-sm)',
           }}
         >
-          <Users size={18} strokeWidth={1.5} /> Groupes
+          <Swords size={18} strokeWidth={1.5} /> Ligues
         </button>
 
         <button

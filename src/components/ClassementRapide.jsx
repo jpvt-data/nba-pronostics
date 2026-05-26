@@ -1,10 +1,13 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import { useNavigate } from 'react-router-dom'
+import { Swords } from 'lucide-react'
 
 function ClassementRapide({ userId }) {
   const [groupeActif, setGroupeActif] = useState(null)
   const [classement, setClassement]   = useState([])
   const [monRang, setMonRang]         = useState(null)
+  const navigate                      = useNavigate()
 
   useEffect(() => {
     const init = async () => {
@@ -31,8 +34,25 @@ function ClassementRapide({ userId }) {
   return (
     <div style={{ marginBottom: '1.5rem' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-        <h3>{groupeActif.nom}</h3>
-        {monRang > 0 && <span style={{ fontSize: 12, color: 'var(--text-3)' }}>Tu es #{monRang}</span>}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <Swords size={15} color="var(--accent)" strokeWidth={2} />
+          <h3 style={{ margin: 0 }}>Ligue en cours</h3>
+        </div>
+        <button
+          onClick={() => navigate('/groupes')}
+          style={{
+            fontSize: 11, color: 'var(--accent)',
+            background: 'none', borderWidth: 0,
+            cursor: 'pointer', padding: 0,
+            textDecoration: 'underline',
+          }}
+        >
+          Voir les ligues →
+        </button>
+      </div>
+      <div style={{ fontSize: 12, color: 'var(--text-3)', marginBottom: 8, display: 'flex', justifyContent: 'space-between' }}>
+        <span>{groupeActif.nom}</span>
+        {monRang > 0 && <span>Tu es #{monRang}</span>}
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
