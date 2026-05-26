@@ -3,21 +3,23 @@ import { supabase } from '../lib/supabase'
 
 const TYPES_SAISON = [
   { value: '',  label: 'Toutes (ligue générale)' },
-  { value: '2', label: 'Saison régulière' },
-  { value: '3', label: 'Playoffs' },
-  { value: '4', label: 'NBA Cup' },
+  { value: '1', label: '1 — Pré-saison' },
+  { value: '2', label: '2 — Saison régulière' },
+  { value: '3', label: '3 — Playoffs' },
+  { value: '4', label: '4 — NBA Cup' },
+  { value: '5', label: '5 — International (JO, matchs monde...)' },
 ]
 
 const ANNEE_COURANTE = new Date().getFullYear()
 const ANNEES = [ANNEE_COURANTE - 1, ANNEE_COURANTE, ANNEE_COURANTE + 1]
 
 function CreerGroupe({ onSuccess }) {
-  const [nom, setNom]             = useState('')
-  const [dateFin, setDateFin]     = useState('')
-  const [typeSaison, setType]     = useState('')
-  const [saison, setSaison]       = useState(String(ANNEE_COURANTE))
-  const [erreur, setErreur]       = useState(null)
-  const [charg, setCharg]         = useState(false)
+  const [nom, setNom]         = useState('')
+  const [dateFin, setDateFin] = useState('')
+  const [typeSaison, setType] = useState('')
+  const [saison, setSaison]   = useState(String(ANNEE_COURANTE))
+  const [erreur, setErreur]   = useState(null)
+  const [charg, setCharg]     = useState(false)
 
   const gererCreation = async () => {
     setCharg(true); setErreur(null)
@@ -30,7 +32,7 @@ function CreerGroupe({ onSuccess }) {
         date_fin:        dateFin || null,
         code_invitation: null,
         type_saison:     typeSaison ? parseInt(typeSaison) : null,
-        saison:          typeSaison ? parseInt(saison) : null,
+        saison:          parseInt(saison),
       })
     if (error) { setErreur('Erreur lors de la création'); setCharg(false); return }
     onSuccess()
@@ -59,21 +61,19 @@ function CreerGroupe({ onSuccess }) {
           </select>
         </div>
 
-        {typeSaison && (
-          <div>
-            <label style={S.label}>Saison ESPN</label>
-            <select value={saison} onChange={e => setSaison(e.target.value)} style={S.input}>
-              {ANNEES.map(a => (
-                <option key={a} value={String(a)}>
-                  {a - 1}-{String(a).slice(2)} (ESPN {a})
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
+        <div>
+          <label style={S.label}>Saison ESPN</label>
+          <select value={saison} onChange={e => setSaison(e.target.value)} style={S.input}>
+            {ANNEES.map(a => (
+              <option key={a} value={String(a)}>
+                {a - 1}-{String(a).slice(2)} (ESPN {a})
+              </option>
+            ))}
+          </select>
+        </div>
 
         <div>
-          <label style={S.label}>Date de fin (optionnelle)</label>
+          <label style={S.label}>Date de clôture (optionnelle — ferme automatiquement la ligue)</label>
           <input
             type="date"
             value={dateFin}
