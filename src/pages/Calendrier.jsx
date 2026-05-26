@@ -70,7 +70,6 @@ function Calendrier() {
       try {
         const res  = await fetch(`${BASE_URL}/scoreboard?dates=${cle}&limit=50`)
         const data = await res.json()
-        const typeSaison = data.season?.type
         nouveau[cle] = (data.events || []).map(evt => {
           const comp = evt.competitions[0]
           const dom  = comp.competitors.find(c => c.homeAway === 'home')
@@ -79,7 +78,7 @@ function Calendrier() {
             espn_id:   evt.id,
             date:      evt.date,
             statut:    comp.status.type.name,
-            typeSaison,
+            typeSaison: evt.season?.type ?? null,
             domicile:  { trigramme: dom.team.abbreviation, logo: dom.team.logo, score: dom.score ?? null },
             exterieur: { trigramme: ext.team.abbreviation, logo: ext.team.logo, score: ext.score ?? null },
           }
@@ -91,7 +90,6 @@ function Calendrier() {
   }, [cache])
 
   useEffect(() => { chargerDates(datesVue()) }, [dateRef, vue])
-  useEffect(() => { setCache({}) }, [filtreType])
 
   const naviguer = (dir) => {
     const pas = vue === '1j' ? 1 : vue === '3j' ? 3 : vue === '7j' ? 7 : 30

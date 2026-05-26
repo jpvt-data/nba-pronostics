@@ -30,10 +30,10 @@ export const recupererMatchs3Jours = async () => {
           espn_id:        evt.id,
           date:           evt.date,
           statut:         comp.status.type.name,
-          saison,
-          typeSaison,
-          saisonNum,
-          typeSaisonNum,
+          saison:         evt.season?.year ? `${evt.season.year - 1}-${String(evt.season.year).slice(2)}` : null,
+          typeSaison:     TYPE_SAISON[evt.season?.type] || null,
+          saisonNum:      evt.season?.year ?? null,
+          typeSaisonNum:  evt.season?.type ?? null,
           stade:          venue?.fullName || null,
           ville:          venue?.address?.city || null,
           domicile: {
@@ -136,9 +136,6 @@ export const recupererDetailMatch = async (espnId) => {
     const seriePlayoff = data.seasonseries?.find(s => s.type === 'playoff')
     const serieRegular = data.seasonseries?.find(s => s.type === 'season')
     const serie        = seriePlayoff || serieRegular || null
-
-    const saisonNum     = saison?.year ?? null
-    const typeSaisonNum = saison?.type ?? null
 
     return {
       espn_id:        comp.id,
