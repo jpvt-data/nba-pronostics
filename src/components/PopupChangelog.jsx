@@ -84,8 +84,8 @@ function PopupChangelog({ forceOuvert = false, onFermer }) {
         </div>
 
         {/* Logo Swish League */}
-        <div style={{ textAlign: 'center', padding: '1rem 1.25rem 0' }}>
-            <img src={swishLogo} alt="Swish League" style={{ height: 64, width: 'auto' }} />
+        <div style={{ textAlign: 'center', padding: '1.25rem 1.25rem 0' }}>
+            <img src={swishLogo} alt="Swish League" style={{ height: 100, width: 'auto', margin: '0 auto', display: 'block' }} />
         </div>
 
         {/* Encart No Spoil */}
