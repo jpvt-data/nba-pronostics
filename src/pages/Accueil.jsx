@@ -34,7 +34,7 @@ const BanniereImage = ({ url, hauteur = 70 }) => (
   <div style={{
     margin: '20px 0 0',
     height: hauteur,
-    backgroundImage: `linear-gradient(to right, rgba(13,13,18,0.95), rgba(13,13,18,0.75), rgba(13,13,18,0.95)), url(${url})`,
+    backgroundImage: `linear-gradient(to right, rgba(13,13,18,0.75), rgba(13,13,18,0.35), rgba(13,13,18,0.75)), url(${url})`,
     backgroundSize: 'cover',
     backgroundPosition: 'center',
     backgroundRepeat: 'no-repeat',
@@ -109,8 +109,6 @@ function Accueil() {
         <div style={{
           padding: GUTTER,
           background: 'linear-gradient(160deg, rgba(99,102,241,0.08) 0%, transparent 60%)',
-          borderBottomWidth: 1, borderBottomStyle: 'solid',
-          borderBottomColor: 'rgba(99,102,241,0.15)',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
             <h2 style={{ margin: 0 }}>Bonjour {pseudo || ''}</h2>
@@ -149,7 +147,7 @@ function Accueil() {
         </div>
 
         {/* ── Bannière parquet ── */}
-        <BanniereImage url="https://images.unsplash.com/photo-1546519638-68e109498ffc?w=800&q=60" />
+        <BanniereImage url="https://images.unsplash.com/photo-1546519638-68e109498ffc?w=800&q=60" hauteur={110} />
 
         {/* ── Bande matchs ── */}
         <div style={{ padding: '20px 16px 8px' }}>
@@ -189,7 +187,7 @@ function Accueil() {
 
         {/* ── Bannière tribune ── */}
         {!chargement && (
-          <BanniereImage url="https://images.unsplash.com/photo-1504450758481-7338eba7524a?w=800&q=60" />
+        <BanniereImage url="https://images.unsplash.com/photo-1504450758481-7338eba7524a?w=800&q=60" hauteur={110} />
         )}
 
         {!chargement && user && (
