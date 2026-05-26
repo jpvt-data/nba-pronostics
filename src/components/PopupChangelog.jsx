@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { X, Zap } from 'lucide-react'
 import { CHANGELOG, VERSION_COURANTE } from '../data/changelog'
 
-const DEV = import.meta.env.DEV
+const DEV = import.meta.env.MODE !== 'production'
 const CLE_STORAGE = `popup_vu_${VERSION_COURANTE}`
 
 function PopupChangelog({ forceOuvert = false, onFermer }) {
