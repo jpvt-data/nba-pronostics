@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { X, Zap, EyeOff, Eye } from 'lucide-react'
 import { CHANGELOG, VERSION_COURANTE } from '../data/changelog'
 import { useNoSpoil } from '../context/NoSpoilContext'
+import swishLogo from '../assets/swish_league_logo.png'
 
 const DEV = import.meta.env.MODE !== 'production'
 const CLE_STORAGE = `popup_vu_${VERSION_COURANTE}`
@@ -80,6 +81,11 @@ function PopupChangelog({ forceOuvert = false, onFermer }) {
           >
             <X size={18} />
           </button>
+        </div>
+
+        {/* Logo Swish League */}
+        <div style={{ textAlign: 'center', padding: '1rem 1.25rem 0' }}>
+            <img src={swishLogo} alt="Swish League" style={{ height: 64, width: 'auto' }} />
         </div>
 
         {/* Encart No Spoil */}
