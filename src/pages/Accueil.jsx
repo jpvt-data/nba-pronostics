@@ -29,7 +29,21 @@ const LabelSection = ({ children }) => (
   </h3>
 )
 
-/* ── Séparateur avec ligne en dégradé ── */
+/* ── Bannière image subtile ── */
+const BanniereImage = ({ url, hauteur = 70 }) => (
+  <div style={{
+    margin: '20px 0 0',
+    height: hauteur,
+    backgroundImage: `linear-gradient(to right, rgba(13,13,18,0.95), rgba(13,13,18,0.75), rgba(13,13,18,0.95)), url(${url})`,
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    backgroundRepeat: 'no-repeat',
+    borderTopWidth: 1, borderTopStyle: 'solid', borderTopColor: 'rgba(99,102,241,0.2)',
+    borderBottomWidth: 1, borderBottomStyle: 'solid', borderBottomColor: 'rgba(99,102,241,0.2)',
+  }} />
+)
+
+/* ── Séparateur simple ── */
 const Sep = () => (
   <div style={{
     margin: '20px 16px 0',
@@ -91,20 +105,17 @@ function Accueil() {
       <Navigation />
       <main style={{ flex: 1 }}>
 
-        {/* ── Header avec fond gradient subtil ── */}
+        {/* ── Header ── */}
         <div style={{
           padding: GUTTER,
           background: 'linear-gradient(160deg, rgba(99,102,241,0.08) 0%, transparent 60%)',
           borderBottomWidth: 1, borderBottomStyle: 'solid',
           borderBottomColor: 'rgba(99,102,241,0.15)',
         }}>
-          {/* Ligne 1 : titre + éclair */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
             <h2 style={{ margin: 0 }}>Bonjour {pseudo || ''}</h2>
             <Zap size={20} color="var(--accent)" strokeWidth={2} fill="var(--accent)" />
           </div>
-
-          {/* Ligne 2 : accroche + No Spoil */}
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 8 }}>
             <p style={{
               fontSize: 14, fontWeight: 600, margin: 0, lineHeight: 1.4,
@@ -130,14 +141,15 @@ function Accueil() {
               No Spoil
             </button>
           </div>
-
-          {/* Description */}
           <p style={{ fontSize: 13, color: 'var(--text-3)', margin: '16px 0 0', lineHeight: 1.6 }}>
             Suis la saison NBA, pronostique chaque match avant le tip-off et compare tes résultats avec tes potes.
             <br /><br />
             Classements, stats perso, fiches match détaillées — tout ce qu'il faut pour savoir qui prédit le mieux… et qui la ramène pour rien.
           </p>
         </div>
+
+        {/* ── Bannière parquet ── */}
+        <BanniereImage url="https://images.unsplash.com/photo-1546519638-68e109498ffc?w=800&q=60" />
 
         {/* ── Bande matchs ── */}
         <div style={{ padding: '20px 16px 8px' }}>
@@ -160,7 +172,6 @@ function Accueil() {
                 borderRadius: 'var(--radius-sm)',
                 paddingTop: 5, paddingBottom: 5, paddingLeft: 12, paddingRight: 12,
                 cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
-                transition: 'border-color 0.15s, color 0.15s',
               }}
               onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--accent-border)'; e.currentTarget.style.color = 'var(--accent)' }}
               onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--text-3)' }}
@@ -176,12 +187,14 @@ function Accueil() {
           </p>
         )}
 
-        {!chargement && <Sep />}
+        {/* ── Bannière tribune ── */}
+        {!chargement && (
+          <BanniereImage url="https://images.unsplash.com/photo-1504450758481-7338eba7524a?w=800&q=60" />
+        )}
 
         {!chargement && user && (
           <div style={{ display: 'flex', flexDirection: 'column' }}>
 
-            {/* Classement rapide */}
             <div style={{ padding: '20px 16px 0' }}>
               <LabelSection>Ligue en cours</LabelSection>
             </div>
@@ -191,7 +204,6 @@ function Accueil() {
 
             <Sep />
 
-            {/* Pronos en attente */}
             <div style={{ padding: '20px 16px 0' }}>
               <LabelSection>Pronos en attente</LabelSection>
             </div>
@@ -201,7 +213,6 @@ function Accueil() {
 
             <Sep />
 
-            {/* Runs des potes */}
             <div style={{ padding: '20px 16px 0' }}>
               <LabelSection>Runs des potes</LabelSection>
             </div>
