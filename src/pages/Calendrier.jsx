@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Navigation from '../components/Navigation'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { useNoSpoil } from '../context/NoSpoilContext'
 
 const BASE_URL = 'https://site.api.espn.com/apis/site/v2/sports/basketball/nba'
 
@@ -268,6 +269,7 @@ function Calendrier() {
 
 /* ── Carte match ── */
 function CarteMatch({ match, compact, onClick }) {
+  const { noSpoil } = useNoSpoil()
   const termine = match.statut === 'STATUS_FINAL'
   const enCours = match.statut === 'STATUS_IN_PROGRESS'
   return (
@@ -298,7 +300,7 @@ function CarteMatch({ match, compact, onClick }) {
           </span>
           {(termine || enCours) && eq.score != null && (
             <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: compact ? 11 : 13, color: 'var(--text-2)', flexShrink: 0 }}>
-              {eq.score}
+              {noSpoil && termine ? '—' : eq.score}
             </span>
           )}
         </div>
