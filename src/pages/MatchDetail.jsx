@@ -161,7 +161,7 @@ function MatchDetail() {
         </div>
 
         {/* Série */}
-        {match.serie?.summary && (
+        {match.serie?.summary && !noSpoil && (
           <div style={{ textAlign:'center', fontSize:13, fontWeight:600, color:'var(--accent)', marginBottom:12 }}>
             {match.serie.description && (
               <span style={{ color:'var(--text-3)', fontWeight:400, marginRight:6 }}>{match.serie.description} ·</span>
