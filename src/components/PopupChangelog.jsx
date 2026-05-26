@@ -15,10 +15,7 @@ function PopupChangelog({ forceOuvert = false, onFermer }) {
       setVisible(true)
       return
     }
-    // Affiche une seule fois par version
-    if (DEV || !localStorage.getItem(CLE_STORAGE)) {
-      setVisible(true)
-    }
+    setVisible(true) // temporaire — affiche toujours
   }, [forceOuvert])
 
   const fermer = () => {
