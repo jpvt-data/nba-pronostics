@@ -187,7 +187,7 @@ function Accueil() {
 
         {/* ── Bannière ballons ── */}
         {!chargement && (
-        <BanniereImage url="https://images.unsplash.com/photo-1574623452334-1e0ac2b3ccb4?w=800&q=60" hauteur={110} />
+        <BanniereImage url="https://images.unsplash.com/photo-1519861531473-9200262188bf?w=800&q=60" hauteur={110} />
         )}
 
         {!chargement && user && (
