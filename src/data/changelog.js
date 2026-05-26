@@ -1,6 +1,14 @@
 // Changelog NBA Pronostics — une entrée par version/feature
 export const CHANGELOG = [
   {
+    version: 'v0.5',
+    date: '2026-05-26',
+    titre: 'Ligues — nouvelle organisation',
+    desc: 'Les groupes deviennent des Ligues. Tu vois toutes les ligues disponibles et tu rejoins en un clic — plus de code d\'invitation. Chaque ligue est liée à un type de compétition ESPN (Playoffs, Saison régulière...) et une saison. Les points sont calculés uniquement sur les matchs correspondants. Accès depuis le menu hamburger → Ligues.',
+    lien: '/groupes',
+    labelLien: 'Voir les ligues',
+  },
+  {
     version: 'v0.4',
     date: '2026-05-26',
     titre: 'Mode No Spoil',
@@ -67,4 +75,4 @@ export const CHANGELOG = [
 ]
 
 // Version courante de l'app — à incrémenter à chaque déploiement avec nouveautés
-export const VERSION_COURANTE = 'v0.4'
+export const VERSION_COURANTE = 'v0.5'
