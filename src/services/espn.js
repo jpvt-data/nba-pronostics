@@ -15,10 +15,6 @@ export const recupererMatchs3Jours = async () => {
     try {
       const res  = await fetch(`${BASE_URL}/scoreboard?dates=${formaterDate(date)}`)
       const data = await res.json()
-      const saisonNum  = data.season?.year ?? null
-      const typeSaisonNum = data.season?.type ?? null
-      const saison     = saisonNum ? `${saisonNum - 1}-${String(saisonNum).slice(2)}` : null
-      const typeSaison = TYPE_SAISON[typeSaisonNum] || null
 
       ;(data.events || []).forEach(evt => {
         const comp  = evt.competitions[0]
@@ -73,6 +69,9 @@ export const recupererDetailMatch = async (espnId) => {
     const compExt = comp.competitors?.find(c => c.homeAway === 'away')
     const boxDom  = boxTeams.find(t => t.homeAway === 'home')
     const boxExt  = boxTeams.find(t => t.homeAway === 'away')
+
+    const saisonNum     = saison?.year ?? null
+    const typeSaisonNum = saison?.type ?? null
 
     const extraireStats = (boxTeam) => {
       if (!boxTeam?.statistics) return {}
