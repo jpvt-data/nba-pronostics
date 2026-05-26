@@ -22,7 +22,7 @@ const LabelSection = ({ children }) => (
     WebkitTextFillColor: 'transparent',
     backgroundClip: 'text',
     letterSpacing: '0.1em',
-    fontSize: 11,
+    fontSize: 13,
     fontWeight: 700,
   }}>
     {children}
