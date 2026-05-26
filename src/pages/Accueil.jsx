@@ -150,7 +150,13 @@ function Accueil() {
         <BanniereImage url="https://images.unsplash.com/photo-1504450758481-7338eba7524a?w=800&q=60" hauteur={110} />
 
         {/* ── Bande matchs ── */}
-        <div style={{ padding: '20px 16px 8px' }}>
+        <div style={{
+          margin: '20px 16px 0',
+          borderRadius: 'var(--radius-lg)',
+          background: 'linear-gradient(160deg, rgba(99,102,241,0.08) 0%, transparent 60%)',
+          borderWidth: 1, borderStyle: 'solid', borderColor: 'rgba(99,102,241,0.08)',
+          padding: '16px 16px 8px',
+        }}>
           <LabelSection>Prochains matchs</LabelSection>
           <p style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 4 }}>
             Clique sur une affiche pour pronostiquer et voir le détail
@@ -191,31 +197,45 @@ function Accueil() {
         )}
 
         {!chargement && user && (
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: '12px 16px 20px' }}>
 
-            <div style={{ padding: '20px 16px 0' }}>
+            {/* Ligue en cours */}
+            <div style={{
+              borderRadius: 'var(--radius-lg)',
+              background: 'linear-gradient(160deg, rgba(99,102,241,0.08) 0%, transparent 60%)',
+              borderWidth: 1, borderStyle: 'solid', borderColor: 'rgba(99,102,241,0.08)',
+              padding: '16px',
+            }}>
               <LabelSection>Ligue en cours</LabelSection>
-            </div>
-            <div style={{ padding: '8px 16px 0' }}>
-              <ClassementRapide userId={user.id} />
+              <div style={{ marginTop: 8 }}>
+                <ClassementRapide userId={user.id} />
+              </div>
             </div>
 
-            <Sep />
-
-            <div style={{ padding: '20px 16px 0' }}>
+            {/* Pronos en attente */}
+            <div style={{
+              borderRadius: 'var(--radius-lg)',
+              background: 'linear-gradient(160deg, rgba(99,102,241,0.08) 0%, transparent 60%)',
+              borderWidth: 1, borderStyle: 'solid', borderColor: 'rgba(99,102,241,0.08)',
+              padding: '16px',
+            }}>
               <LabelSection>Pronos en attente</LabelSection>
-            </div>
-            <div style={{ padding: '8px 16px 0' }}>
-              <PronosAttente userId={user.id} />
+              <div style={{ marginTop: 8 }}>
+                <PronosAttente userId={user.id} />
+              </div>
             </div>
 
-            <Sep />
-
-            <div style={{ padding: '20px 16px 0' }}>
+            {/* Runs des potes */}
+            <div style={{
+              borderRadius: 'var(--radius-lg)',
+              background: 'linear-gradient(160deg, rgba(99,102,241,0.08) 0%, transparent 60%)',
+              borderWidth: 1, borderStyle: 'solid', borderColor: 'rgba(99,102,241,0.08)',
+              padding: '16px',
+            }}>
               <LabelSection>Runs des potes</LabelSection>
-            </div>
-            <div style={{ padding: '8px 16px 20px' }}>
-              <RunsPotes userId={user.id} />
+              <div style={{ marginTop: 8 }}>
+                <RunsPotes userId={user.id} />
+              </div>
             </div>
 
           </div>
