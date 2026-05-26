@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import { Home, Trophy, BarChart2, Menu, X, Users, LogOut, Calendar, Sparkles } from 'lucide-react'
+import { Home, Trophy, BarChart2, Menu, X, Users, LogOut, Calendar, Sparkles, EyeOff } from 'lucide-react'
 import PopupChangelog from './PopupChangelog'
+import { useNoSpoil } from '../context/NoSpoilContext'
 
 const LIENS = [
   { chemin: '/accueil',    label: 'Board',     Icone: Home },
@@ -23,6 +24,7 @@ function Navigation() {
   const location  = useLocation()
   const [ouvert, setOuvert] = useState(false)
   const [changelogOuvert, setChangelogOuvert] = useState(false)
+  const { noSpoil, toggleNoSpoil } = useNoSpoil()
 
   const deconnecter = async () => { await supabase.auth.signOut(); setOuvert(false) }
   const aller = (chemin) => { navigate(chemin); setOuvert(false) }
@@ -84,6 +86,23 @@ function Navigation() {
           }}
         >
           <Calendar size={18} strokeWidth={1.5} /> Calendrier
+        </button>
+
+        <button
+          onClick={toggleNoSpoil}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 10,
+            background: noSpoil ? 'rgba(99,102,241,0.1)' : 'none',
+            borderWidth: noSpoil ? 1 : 0, borderStyle: 'solid', borderColor: 'rgba(99,102,241,0.3)',
+            color: noSpoil ? 'var(--accent)' : 'var(--text-2)',
+            fontSize: 14, cursor: 'pointer',
+            paddingTop: '0.75rem', paddingBottom: '0.75rem',
+            paddingLeft: '0.5rem', paddingRight: '0.5rem',
+            borderRadius: 'var(--radius-sm)', width: '100%', textAlign: 'left',
+          }}
+        >
+          <EyeOff size={18} strokeWidth={1.5} />
+          {noSpoil ? 'No Spoil — actif' : 'No Spoil'}
         </button>
 
         <button

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { useNoSpoil } from '../context/NoSpoilContext'
 
 const formaterHeure = (dateStr) =>
   new Date(dateStr).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
@@ -10,7 +11,8 @@ const formaterJour = (dateStr) =>
 
 function BandeMatchs({ matchs, userId }) {
   const navigate = useNavigate()
-  const [pronos, setPronos] = useState({}) // { espn_id: equipe_choisie }
+  const { noSpoil } = useNoSpoil()
+  const [pronos, setPronos] = useState({})
 
   useEffect(() => {
     const charger = async () => {
@@ -52,6 +54,7 @@ function BandeMatchs({ matchs, userId }) {
                 padding: '10px 10px 8px',
                 width: 150, flexShrink: 0,
                 cursor: 'pointer',
+                opacity: noSpoil && termine ? 0.5 : 1,
               }}
             >
               {/* Date / heure */}
@@ -73,7 +76,7 @@ function BandeMatchs({ matchs, userId }) {
                   }}>{eq.trigramme}</span>
                   {(termine || enCours) && eq.score != null && (
                     <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 14, color: 'var(--text-2)' }}>
-                      {eq.score}
+                      {noSpoil && termine ? '—' : eq.score}
                     </span>
                   )}
                 </div>
@@ -82,7 +85,7 @@ function BandeMatchs({ matchs, userId }) {
               {/* Statut + prono */}
               <div style={{ marginTop: 6, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ fontSize: 10, fontWeight: 600, color: enCours ? 'var(--success)' : 'var(--text-3)' }}>
-                  {enCours ? '● Live' : termine ? 'Terminé' : ''}
+                  {enCours ? '● Live' : termine ? (noSpoil ? '🙈' : 'Terminé') : ''}
                 </span>
                 {pronoActuel && (
                   <span style={{ fontSize: 10, color: 'var(--accent)', fontWeight: 600 }}>
