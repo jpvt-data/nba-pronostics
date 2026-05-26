@@ -15,7 +15,9 @@ function PopupChangelog({ forceOuvert = false, onFermer }) {
       setVisible(true)
       return
     }
-    setVisible(true) // temporaire — affiche toujours
+    // Supprime la clé à chaque chargement en dev pour toujours voir le popup
+    localStorage.removeItem(CLE_STORAGE)
+    setVisible(true)
   }, [forceOuvert])
 
   const fermer = () => {
