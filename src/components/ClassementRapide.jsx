@@ -39,7 +39,7 @@ function ClassementRapide({ userId }) {
           <h3 style={{ margin: 0 }}>Ligue en cours</h3>
         </div>
         <button
-          onClick={() => navigate('/groupes')}
+          onClick={() => navigate('/classement')}
           style={{
             fontSize: 11, color: 'var(--accent)',
             background: 'none', borderWidth: 0,
@@ -47,7 +47,7 @@ function ClassementRapide({ userId }) {
             textDecoration: 'underline',
           }}
         >
-          Voir les ligues →
+          Détails →
         </button>
       </div>
       <div style={{ fontSize: 12, color: 'var(--text-3)', marginBottom: 8, display: 'flex', justifyContent: 'space-between' }}>
