@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import { Home, Trophy, BarChart2, Menu, X, Users, LogOut } from 'lucide-react'
+import { Home, Trophy, BarChart2, Menu, X, Users, LogOut, Calendar } from 'lucide-react'
 
 const LIENS = [
   { chemin: '/accueil',    label: 'Board',     Icone: Home },
@@ -68,6 +68,20 @@ function Navigation() {
           }}
         >
           <Users size={18} strokeWidth={1.5} /> Groupes
+        </button>
+
+        <button
+          onClick={() => aller('/calendrier')}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 10,
+            background: 'none', borderWidth: 0, color: 'var(--text-2)',
+            fontSize: 14, cursor: 'pointer',
+            paddingTop: '0.75rem', paddingBottom: '0.75rem',
+            paddingLeft: '0.5rem', paddingRight: '0.5rem',
+            borderRadius: 'var(--radius-sm)',
+          }}
+        >
+          <Calendar size={18} strokeWidth={1.5} /> Calendrier
         </button>
 
         <div style={{ marginTop: 'auto', borderTopWidth: 1, borderTopStyle: 'solid', borderTopColor: 'var(--border)', paddingTop: '1rem' }}>

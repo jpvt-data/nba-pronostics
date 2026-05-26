@@ -7,7 +7,8 @@ import BandeMatchs from '../components/BandeMatchs'
 import ClassementRapide from '../components/ClassementRapide'
 import PronosAttente from '../components/PronosAttente'
 import RunsPotes from '../components/RunsPotes'
-import { Zap } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { Zap, Calendar } from 'lucide-react'
 
 const GUTTER = '20px 16px'
 const SEP = { borderTopWidth: 1, borderTopStyle: 'solid', borderTopColor: 'var(--border)', margin: '20px 16px 0' }
@@ -17,6 +18,7 @@ function Accueil() {
   const [user, setUser]        = useState(null)
   const [pseudo, setPseudo]    = useState(null)
   const [chargement, setCharg] = useState(true)
+  const navigate = useNavigate()
 
   useEffect(() => {
     const init = async () => {
@@ -70,6 +72,24 @@ function Accueil() {
         </div>
 
         {!chargement && <BandeMatchs matchs={matchs} userId={user?.id} />}
+        {!chargement && (
+          <div style={{ padding: '10px 16px 0', display: 'flex', justifyContent: 'flex-end' }}>
+            <button
+              onClick={() => navigate('/calendrier')}
+              style={{
+                fontSize: 12, color: 'var(--text-3)',
+                background: 'none',
+                borderWidth: 1, borderStyle: 'solid', borderColor: 'var(--border)',
+                borderRadius: 'var(--radius-sm)',
+                paddingTop: 5, paddingBottom: 5, paddingLeft: 12, paddingRight: 12,
+                cursor: 'pointer',
+                display: 'flex', alignItems: 'center', gap: 6,
+              }}
+            >
+              <Calendar size={13} strokeWidth={1.5} /> Calendrier complet
+            </button>
+          </div>
+        )}
 
         {chargement && (
           <p style={{ color: 'var(--text-3)', fontSize: 13, textAlign: 'center', padding: '2rem 0' }}>

@@ -8,6 +8,7 @@ import Groupes      from './pages/Groupes'
 import Classement   from './pages/Classement'
 import MesPronos    from './pages/MesPronos'
 import MatchDetail  from './pages/MatchDetail'
+import Calendrier from './pages/Calendrier'
 
 function App() {
   const [session, setSession] = useState(undefined)
@@ -33,6 +34,7 @@ function App() {
         <Route path="/mes-pronos"      element={prive(<MesPronos />)} />
         <Route path="/groupes"         element={prive(<Groupes />)} />
         <Route path="/match/:espn_id"  element={prive(<MatchDetail />)} />
+        <Route path="/calendrier"      element={prive(<Calendrier />)} />
         <Route path="*"                element={<Navigate to={session ? '/accueil' : '/connexion'} />} />
       </Routes>
     </BrowserRouter>
