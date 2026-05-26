@@ -6,12 +6,6 @@ import { useNoSpoil } from '../context/NoSpoilContext'
 
 const BASE_URL = 'https://site.api.espn.com/apis/site/v2/sports/basketball/nba'
 
-const EQUIPES_NBA = [
-  'ATL','BOS','BKN','CHA','CHI','CLE','DAL','DEN','DET','GSW',
-  'HOU','IND','LAC','LAL','MEM','MIA','MIL','MIN','NOP','NY',
-  'OKC','ORL','PHI','PHX','POR','SAC','SAS','TOR','UTA','WAS'
-]
-
 const formaterDateESPN  = (d) => d.toISOString().slice(0, 10).replace(/-/g, '')
 const formaterJourCourt = (d) => d.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' })
 const formaterHeure     = (s) => new Date(s).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
@@ -34,9 +28,30 @@ const memeJour = (a, b) =>
   a.getMonth()    === b.getMonth()    &&
   a.getDate()     === b.getDate()
 
+/* ── Label section charte Accueil ── */
+const LabelSection = ({ children }) => (
+  <h3 style={{
+    display: 'inline-block',
+    background: 'linear-gradient(90deg, var(--accent), var(--orange))',
+    WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
+    letterSpacing: '0.1em', fontSize: 13, fontWeight: 700,
+  }}>{children}</h3>
+)
+
+/* ── Bannière image ── */
+const BanniereImage = ({ url, hauteur = 110 }) => (
+  <div style={{
+    margin: '0', height: hauteur,
+    backgroundImage: `linear-gradient(to right, rgba(13,13,18,0.75), rgba(13,13,18,0.35), rgba(13,13,18,0.75)), url(${url})`,
+    backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat',
+    borderTopWidth: 1, borderTopStyle: 'solid', borderTopColor: 'rgba(99,102,241,0.2)',
+    borderBottomWidth: 1, borderBottomStyle: 'solid', borderBottomColor: 'rgba(99,102,241,0.2)',
+  }} />
+)
+
 function Calendrier() {
   const navigate                    = useNavigate()
-  const [vue, setVue] = useState('7j')
+  const [vue, setVue]               = useState('7j')
   const [dateRef, setDateRef]       = useState(() => { const d = new Date(); d.setHours(0,0,0,0); return d })
   const [cache, setCache]           = useState({})
   const [chargement, setCharg]      = useState(false)
@@ -75,12 +90,12 @@ function Calendrier() {
           const dom  = comp.competitors.find(c => c.homeAway === 'home')
           const ext  = comp.competitors.find(c => c.homeAway === 'away')
           return {
-            espn_id:   evt.id,
-            date:      evt.date,
-            statut:    comp.status.type.name,
+            espn_id:    evt.id,
+            date:       evt.date,
+            statut:     comp.status.type.name,
             typeSaison: evt.season?.type ?? null,
-            domicile:  { trigramme: dom.team.abbreviation, logo: dom.team.logo, score: dom.score ?? null },
-            exterieur: { trigramme: ext.team.abbreviation, logo: ext.team.logo, score: ext.score ?? null },
+            domicile:   { trigramme: dom.team.abbreviation, logo: dom.team.logo, score: dom.score ?? null },
+            exterieur:  { trigramme: ext.team.abbreviation, logo: ext.team.logo, score: ext.score ?? null },
           }
         })
       } catch { nouveau[cle] = [] }
@@ -111,15 +126,10 @@ function Calendrier() {
     })
   }, [cache, filtreType, filtreEquipe])
 
-  // Clic jour vue MOIS : >= 2 → zoom 1j / = 1 → fiche match
   const clicJourMois = useCallback((date) => {
     const matchs = matchsDate(date)
-    if (matchs.length >= 2) {
-      setDateRef(date)
-      setVue('1j')
-    } else if (matchs.length === 1) {
-      navigate(`/match/${matchs[0].espn_id}`)
-    }
+    if (matchs.length >= 2) { setDateRef(date); setVue('1j') }
+    else if (matchs.length === 1) navigate(`/match/${matchs[0].espn_id}`)
   }, [matchsDate, navigate])
 
   const dates   = datesVue()
@@ -136,10 +146,25 @@ function Calendrier() {
   return (
     <>
       <Navigation />
-      <main style={{ flex: 1, padding: '16px 0 32px' }}>
+      <main style={{ flex: 1 }}>
 
-        <div style={{ padding: '0 16px', marginBottom: 16 }}>
-          <h2 style={{ marginBottom: 16 }}>Calendrier NBA</h2>
+        {/* ── Header plein bord — même style que Classement ── */}
+        <div style={{
+          padding: '20px 16px',
+          background: 'linear-gradient(160deg, rgba(99,102,241,0.08) 0%, transparent 60%)',
+        }}>
+          <h2 style={{ margin: '0 0 8px' }}>Calendrier NBA</h2>
+          <p style={{ fontSize: 13, color: 'var(--text-3)', lineHeight: 1.6, margin: 0 }}>
+            Tous les matchs de la saison — passés et à venir.
+            Filtre par équipe, navigue entre les vues, clique sur un match pour voir le détail et pronostiquer.
+          </p>
+        </div>
+
+        {/* ── Bannière terrain NBA ── */}
+        <BanniereImage url="https://images.unsplash.com/photo-1533923156502-be31530547c4?w=800&q=60" />
+
+        {/* ── Contrôles ── */}
+        <div style={{ padding: '16px 16px 0' }}>
 
           {/* Sélecteur vue */}
           <div style={{ display: 'flex', gap: 4, marginBottom: 12 }}>
@@ -174,7 +199,7 @@ function Calendrier() {
           </div>
 
           {/* Filtres */}
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 16 }}>
             <select value={filtreType} onChange={e => setFiltreType(e.target.value)} style={S.select}>
               <option value="tous">Tous types</option>
               <option value="1">Pré-saison</option>
@@ -192,6 +217,7 @@ function Calendrier() {
               )].sort().map(e => <option key={e} value={e}>{e}</option>)}
             </select>
           </div>
+
         </div>
 
         {chargement && (
@@ -202,19 +228,13 @@ function Calendrier() {
 
         {/* ── Vue MOIS ── */}
         {vue === 'mois' && (
-          <div style={{ padding: '0 16px', overflow: 'hidden', width: '100%' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2, marginBottom: 4, width: '100%' }}>
+          <div style={{ padding: '0 16px 24px', overflow: 'hidden', width: '100%' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2, marginBottom: 4 }}>
               {['L','M','M','J','V','S','D'].map((j, i) => (
                 <div key={i} style={{ fontSize: 10, color: 'var(--text-3)', textAlign: 'center', fontWeight: 600 }}>{j}</div>
               ))}
             </div>
-            <GrilleMois
-              dates={dates}
-              matchsDate={matchsDate}
-              aujourd={aujourd}
-              navigate={navigate}
-              onClicJour={clicJourMois}
-            />
+            <GrilleMois dates={dates} matchsDate={matchsDate} aujourd={aujourd} navigate={navigate} onClicJour={clicJourMois} />
           </div>
         )}
 
@@ -224,7 +244,7 @@ function Calendrier() {
             display: 'grid',
             gridTemplateColumns: `repeat(${dates.length}, 1fr)`,
             gap: vue === '7j' ? 2 : 8,
-            padding: '0 16px',
+            padding: '0 16px 24px',
             alignItems: 'start',
             width: '100%',
             overflow: 'hidden',
@@ -277,14 +297,12 @@ function CarteMatch({ match, compact, onClick }) {
   const enCours = match.statut === 'STATUS_IN_PROGRESS'
   return (
     <div onClick={onClick} style={{
-      background: 'var(--bg-1)',
+      background: 'linear-gradient(160deg, rgba(99,102,241,0.06) 0%, transparent 60%)',
       borderWidth: 1, borderStyle: 'solid',
-      borderColor: enCours ? 'rgba(34,197,94,0.3)' : 'var(--border)',
+      borderColor: enCours ? 'rgba(34,197,94,0.3)' : 'rgba(99,102,241,0.08)',
       borderRadius: 'var(--radius-sm)',
       padding: compact ? '5px 6px' : '8px 10px',
-      cursor: 'pointer',
-      minWidth: 0,
-      overflow: 'hidden',
+      cursor: 'pointer', minWidth: 0, overflow: 'hidden',
     }}>
       <div style={{ fontSize: 9, color: enCours ? 'var(--success)' : 'var(--text-3)', fontWeight: enCours ? 700 : 400, marginBottom: 4 }}>
         {enCours ? '● Live' : termine ? 'Final' : formaterHeure(match.date)}
@@ -292,13 +310,7 @@ function CarteMatch({ match, compact, onClick }) {
       {[match.exterieur, match.domicile].map((eq, i) => (
         <div key={eq.trigramme} style={{ display: 'flex', alignItems: 'center', gap: compact ? 3 : 5, paddingTop: i === 1 ? 2 : 0, minWidth: 0 }}>
           <img src={eq.logo} alt={eq.trigramme} style={{ width: compact ? 14 : 18, height: compact ? 14 : 18, objectFit: 'contain', flexShrink: 0 }} />
-          <span style={{
-            fontFamily: 'var(--font-display)', fontWeight: 700,
-            fontSize: compact ? 11 : 13,
-            color: 'var(--text-1)', flex: 1,
-            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-            minWidth: 0,
-          }}>
+          <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: compact ? 11 : 13, color: 'var(--text-1)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>
             {eq.trigramme}
           </span>
           {(termine || enCours) && eq.score != null && (
@@ -321,10 +333,9 @@ function GrilleMois({ dates, matchsDate, aujourd, navigate, onClicJour }) {
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2, width: '100%' }}>
       {Array.from({ length: padding }, (_, i) => <div key={`pad-${i}`} style={{ minWidth: 0 }} />)}
       {dates.map(date => {
-        const matchs   = matchsDate(date)
-        const estAuj   = memeJour(date, aujourd)
+        const matchs    = matchsDate(date)
+        const estAuj    = memeJour(date, aujourd)
         const cliquable = matchs.length >= 1
-
         return (
           <div
             key={date.toISOString()}
@@ -333,12 +344,10 @@ function GrilleMois({ dates, matchsDate, aujourd, navigate, onClicJour }) {
               else if (matchs.length === 1) navigate(`/match/${matchs[0].espn_id}`)
             }}
             style={{
-              minHeight: 52,
-              minWidth: 0,
-              overflow: 'hidden',
-              background: estAuj ? 'var(--accent-dim)' : 'var(--bg-1)',
+              minHeight: 52, minWidth: 0, overflow: 'hidden',
+              background: estAuj ? 'var(--accent-dim)' : 'linear-gradient(160deg, rgba(99,102,241,0.05) 0%, transparent 80%)',
               borderWidth: 1, borderStyle: 'solid',
-              borderColor: estAuj ? 'var(--accent-border)' : 'var(--border)',
+              borderColor: estAuj ? 'var(--accent-border)' : 'rgba(99,102,241,0.08)',
               borderRadius: 'var(--radius-sm)',
               padding: '4px 3px',
               cursor: cliquable ? 'pointer' : 'default',
@@ -348,21 +357,12 @@ function GrilleMois({ dates, matchsDate, aujourd, navigate, onClicJour }) {
               {date.getDate()}
             </div>
             {matchs.slice(0, 3).map(m => (
-              <div key={m.espn_id} style={{
-                fontSize: 9, fontWeight: 600,
-                color: m.statut === 'STATUS_IN_PROGRESS' ? 'var(--success)' : 'var(--text-2)',
-                marginBottom: 1,
-                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-              }}>
+              <div key={m.espn_id} style={{ fontSize: 9, fontWeight: 600, color: m.statut === 'STATUS_IN_PROGRESS' ? 'var(--success)' : 'var(--text-2)', marginBottom: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {m.exterieur.trigramme}@{m.domicile.trigramme}
               </div>
             ))}
-            {matchs.length > 3 && (
-              <div style={{ fontSize: 9, color: 'var(--text-3)' }}>+{matchs.length - 3}</div>
-            )}
-            {matchs.length === 0 && (
-              <div style={{ fontSize: 9, color: 'var(--border)', textAlign: 'center' }}>–</div>
-            )}
+            {matchs.length > 3 && <div style={{ fontSize: 9, color: 'var(--text-3)' }}>+{matchs.length - 3}</div>}
+            {matchs.length === 0 && <div style={{ fontSize: 9, color: 'var(--border)', textAlign: 'center' }}>–</div>}
           </div>
         )
       })}

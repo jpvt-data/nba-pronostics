@@ -202,7 +202,7 @@ function Profil() {
         </div>
 
         {/* ── Bannière ballon ── */}
-        <BanniereImage url="https://images.unsplash.com/photo-1577471488278-16eec37ffcc2?w=800&q=60" />
+        <BanniereImage url="https://images.unsplash.com/photo-1627627256672-027a4613d028?w=800&q=60" />
 
         {/* ── Blocs éditables + stats + ligues ── */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: '16px 16px 24px' }}>
