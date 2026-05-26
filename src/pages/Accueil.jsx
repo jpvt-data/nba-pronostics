@@ -100,8 +100,10 @@ function Accueil() {
         </div>
 
         {/* Description */}
-        <p style={{ fontSize: 13, color: 'var(--text-3)', margin: 0, lineHeight: 1.6 }}>
-          Suis la saison NBA, pronostique chaque match avant le tip-off et compare tes résultats avec tes potes. Classements, stats perso, fiches match détaillées — tout ce qu'il faut pour savoir qui prédit le mieux… et qui la ramène pour rien.
+        <p style={{ fontSize: 13, color: 'var(--text-3)', margin: '16px 0 0', lineHeight: 1.6 }}>
+          Suis la saison NBA, pronostique chaque match avant le tip-off et compare tes résultats avec tes potes.
+          <br /><br />
+          Classements, stats perso, fiches match détaillées — tout ce qu'il faut pour savoir qui prédit le mieux… et qui la ramène pour rien.
         </p>
       </div>
 
