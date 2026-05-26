@@ -96,7 +96,7 @@ function MatchDetail() {
   const CarteEquipe = ({ eq, align }) => {
     const selec    = prono === eq.trigramme
     const gagnant  = termine && eq.winner
-    const perdant  = termine && !eq.winner && (dom.score != null || ext.score != null)
+    const perdant  = !noSpoil && termine && !eq.winner && (dom.score != null || ext.score != null)
     const cliquable = !verrou
 
     return (
@@ -131,7 +131,7 @@ function MatchDetail() {
         {selec && !termine && (
           <span style={{ fontSize:11, color:'var(--accent)', fontWeight:600, marginTop:2 }}>✓ Mon prono</span>
         )}
-        {selec && termine && (
+        {selec && termine && !noSpoil && (
           <span style={{
             fontSize:11, fontWeight:700, marginTop:2,
             color: resultat==='correct' ? 'var(--success)' : resultat==='incorrect' ? 'var(--danger)' : 'var(--text-3)',
