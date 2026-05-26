@@ -71,7 +71,7 @@ function Accueil() {
         <div style={{ padding: GUTTER }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <h2 style={{ margin: 0 }}>Bonjour {pseudo || ''}</h2>
+              <h2 style={{ margin: 0 }}>Pronostique. Clashe. Règne.</h2>
               <Zap size={20} color="var(--accent)" strokeWidth={2} fill="var(--accent)" />
             </div>
             <button
@@ -92,8 +92,8 @@ function Accueil() {
               {noSpoil ? 'No Spoil — actif' : 'No Spoil'}
             </button>
           </div>
-          <p style={{ fontSize: 13, color: 'var(--text-3)', marginBottom: 0 }}>
-            Tes pronos, ton classement, les runs de tes potes.
+          <p style={{ fontSize: 13, color: 'var(--text-3)', marginBottom: 0, lineHeight: 1.6}}>
+            Suis la saison NBA, pronostique chaque match avant le tip-off et compare tes résultats avec tes potes. Classements, stats perso, fiches match détaillées — tout ce qu'il faut pour savoir qui prédit le mieux… et qui la ramène pour rien.
           </p>
         </div>
 
