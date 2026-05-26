@@ -146,8 +146,8 @@ function Accueil() {
           </p>
         </div>
 
-        {/* ── Bannière parquet ── */}
-        <BanniereImage url="https://images.unsplash.com/photo-1546519638-68e109498ffc?w=800&q=60" hauteur={110} />
+        {/* ── Bannière tribune 1 ── */}
+        <BanniereImage url="https://images.unsplash.com/photo-1504450758481-7338eba7524a?w=800&q=60" hauteur={110} />
 
         {/* ── Bande matchs ── */}
         <div style={{ padding: '20px 16px 8px' }}>
@@ -185,9 +185,9 @@ function Accueil() {
           </p>
         )}
 
-        {/* ── Bannière tribune ── */}
+        {/* ── Bannière ballons ── */}
         {!chargement && (
-        <BanniereImage url="https://images.unsplash.com/photo-1504450758481-7338eba7524a?w=800&q=60" hauteur={110} />
+        <BanniereImage url="https://images.unsplash.com/photo-1574623452334-1e0ac2b3ccb4?w=800&q=60" hauteur={110} />
         )}
 
         {!chargement && user && (
