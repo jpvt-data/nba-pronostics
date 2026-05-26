@@ -5,6 +5,7 @@ import { Home, Trophy, BarChart2, Menu, X, Swords, LogOut, Calendar, Sparkles, E
 import PopupChangelog from './PopupChangelog'
 import { useNoSpoil } from '../context/NoSpoilContext'
 import { Avatar } from '../pages/Profil'
+import swishLogo from '../assets/swish_league_logo.png'
 
 const LIENS = [
   { chemin: '/accueil',    label: 'Board',      Icone: Home },
@@ -171,13 +172,12 @@ function Navigation() {
         borderBottomWidth: 1, borderBottomStyle: 'solid', borderBottomColor: 'var(--border)',
         alignItems: 'center', justifyContent: 'space-between', padding: '0 20px',
       }}>
-        <span
-          onClick={() => navigate('/accueil')}
-          style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 17, letterSpacing: '0.08em', color: '#fff', display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}
-        >
-          <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--accent)', display: 'inline-block' }} />
-          NBA PRONOS
-        </span>
+        <div onClick={() => navigate('/accueil')} style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+          <img src={swishLogo} alt="Swish League" style={{ height: 36, width: 'auto' }} />
+          <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 17, letterSpacing: '0.08em', color: '#fff' }}>
+            SWISH LEAGUE
+          </span>
+        </div>
         <div style={{ display: 'flex', gap: 4 }}>
           {LIENS.map(({ chemin, label, Icone }) => {
             const actif = location.pathname === chemin
@@ -230,13 +230,12 @@ function Navigation() {
         borderBottomWidth: 1, borderBottomStyle: 'solid', borderBottomColor: 'var(--border)',
         alignItems: 'center', justifyContent: 'space-between', padding: '0 16px',
       }}>
-        <span
-          onClick={() => navigate('/accueil')}
-          style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 15, letterSpacing: '0.08em', color: '#fff', display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}
-        >
-          <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--accent)', display: 'inline-block' }} />
-          NBA PRONOS
-        </span>
+        <div onClick={() => navigate('/accueil')} style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
+          <img src={swishLogo} alt="Swish League" style={{ height: 28, width: 'auto' }} />
+          <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 15, letterSpacing: '0.08em', color: '#fff' }}>
+            SWISH LEAGUE
+          </span>
+        </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <button
             onClick={() => navigate('/profil')}
