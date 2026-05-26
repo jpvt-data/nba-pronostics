@@ -91,6 +91,7 @@ function Calendrier() {
   }, [cache])
 
   useEffect(() => { chargerDates(datesVue()) }, [dateRef, vue])
+  useEffect(() => { setCache({}) }, [filtreType])
 
   const naviguer = (dir) => {
     const pas = vue === '1j' ? 1 : vue === '3j' ? 3 : vue === '7j' ? 7 : 30
@@ -104,7 +105,7 @@ function Calendrier() {
   const matchsDate = useCallback((date) => {
     const liste = cache[formaterDateESPN(date)] || []
     return liste.filter(m => {
-      if (filtreType !== 'tous' && m.typeSaison !== parseInt(filtreType)) return false
+      if (filtreType !== 'tous' && parseInt(m.typeSaison) !== parseInt(filtreType)) return false
       if (filtreEquipe !== 'toutes' &&
           m.domicile.trigramme  !== filtreEquipe &&
           m.exterieur.trigramme !== filtreEquipe) return false
