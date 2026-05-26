@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { X, Zap } from 'lucide-react'
+import { X, Zap, EyeOff, Eye } from 'lucide-react'
 import { CHANGELOG, VERSION_COURANTE } from '../data/changelog'
+import { useNoSpoil } from '../context/NoSpoilContext'
 
 const DEV = import.meta.env.MODE !== 'production'
 const CLE_STORAGE = `popup_vu_${VERSION_COURANTE}`
@@ -9,6 +10,7 @@ const CLE_STORAGE = `popup_vu_${VERSION_COURANTE}`
 function PopupChangelog({ forceOuvert = false, onFermer }) {
   const [visible, setVisible] = useState(false)
   const navigate = useNavigate()
+  const { noSpoil, toggleNoSpoil } = useNoSpoil()
 
   useEffect(() => {
     if (forceOuvert) {
@@ -77,6 +79,43 @@ function PopupChangelog({ forceOuvert = false, onFermer }) {
             style={{ background: 'none', border: 'none', color: '#4a4a6a', cursor: 'pointer', padding: 4 }}
           >
             <X size={18} />
+          </button>
+        </div>
+
+        {/* Encart No Spoil */}
+        <div style={{
+          margin: '1rem 1.25rem 0',
+          padding: '0.75rem 1rem',
+          background: noSpoil ? 'rgba(99,102,241,0.1)' : 'var(--bg-2, #1a1a2e)',
+          borderWidth: 1, borderStyle: 'solid',
+          borderColor: noSpoil ? 'rgba(99,102,241,0.4)' : '#1e1e2e',
+          borderRadius: 10,
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
+        }}>
+          <div>
+            <div style={{ fontSize: 12, fontWeight: 600, color: '#e8e8f0', marginBottom: 2 }}>
+              Mode No Spoil
+            </div>
+            <div style={{ fontSize: 11, color: '#9090b0', lineHeight: 1.4 }}>
+              Masque les scores des matchs terminés pour ne pas gâcher ta rediff.
+            </div>
+          </div>
+          <button
+            onClick={toggleNoSpoil}
+            style={{
+              flexShrink: 0,
+              display: 'flex', alignItems: 'center', gap: 6,
+              padding: '6px 12px',
+              background: noSpoil ? '#6366f1' : 'transparent',
+              borderWidth: 1, borderStyle: 'solid',
+              borderColor: noSpoil ? '#6366f1' : '#2a2a3e',
+              borderRadius: 8, cursor: 'pointer',
+              fontSize: 12, fontWeight: 600,
+              color: noSpoil ? '#fff' : '#9090b0',
+            }}
+          >
+            {noSpoil ? <Eye size={13} /> : <EyeOff size={13} />}
+            {noSpoil ? 'Actif' : 'Inactif'}
           </button>
         </div>
 

@@ -8,7 +8,8 @@ import ClassementRapide from '../components/ClassementRapide'
 import PronosAttente from '../components/PronosAttente'
 import RunsPotes from '../components/RunsPotes'
 import { useNavigate } from 'react-router-dom'
-import { Zap, Calendar } from 'lucide-react'
+import { Zap, Calendar, EyeOff, Eye } from 'lucide-react'
+import { useNoSpoil } from '../context/NoSpoilContext'
 
 const GUTTER = '20px 16px'
 const SEP = { borderTopWidth: 1, borderTopStyle: 'solid', borderTopColor: 'var(--border)', margin: '20px 16px 0' }
@@ -19,6 +20,7 @@ function Accueil() {
   const [pseudo, setPseudo]    = useState(null)
   const [chargement, setCharg] = useState(true)
   const navigate = useNavigate()
+  const { noSpoil, toggleNoSpoil } = useNoSpoil()
 
   useEffect(() => {
     const init = async () => {
@@ -49,11 +51,28 @@ function Accueil() {
 
         {/* ── Header ── */}
         <div style={{ padding: GUTTER }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-            <h2 style={{ margin: 0 }}>
-              Bonjour {pseudo || ''}
-            </h2>
-            <Zap size={20} color="var(--accent)" strokeWidth={2} fill="var(--accent)" />
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <h2 style={{ margin: 0 }}>Bonjour {pseudo || ''}</h2>
+              <Zap size={20} color="var(--accent)" strokeWidth={2} fill="var(--accent)" />
+            </div>
+            <button
+              onClick={toggleNoSpoil}
+              title={noSpoil ? 'No Spoil actif — cliquer pour désactiver' : 'Activer le mode No Spoil'}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 5,
+                padding: '5px 10px',
+                background: noSpoil ? 'rgba(99,102,241,0.15)' : 'transparent',
+                borderWidth: 1, borderStyle: 'solid',
+                borderColor: noSpoil ? 'rgba(99,102,241,0.4)' : 'var(--border)',
+                borderRadius: 'var(--radius-sm)', cursor: 'pointer',
+                fontSize: 11, fontWeight: 600,
+                color: noSpoil ? 'var(--accent)' : 'var(--text-3)',
+              }}
+            >
+              {noSpoil ? <Eye size={12} /> : <EyeOff size={12} />}
+              {noSpoil ? 'Spoilers' : 'No Spoil'}
+            </button>
           </div>
           <p style={{ fontSize: 13, color: 'var(--text-3)', marginBottom: 0 }}>
             Tes pronos, ton classement, les runs de tes potes.
