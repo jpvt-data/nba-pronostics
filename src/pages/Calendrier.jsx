@@ -185,7 +185,11 @@ function Calendrier() {
             </select>
             <select value={filtreEquipe} onChange={e => setFiltreEq(e.target.value)} style={S.select}>
               <option value="toutes">Toutes équipes</option>
-              {EQUIPES_NBA.map(e => <option key={e} value={e}>{e}</option>)}
+              {[...new Set(
+                Object.values(cache).flat()
+                  .flatMap(m => [m.domicile.trigramme, m.exterieur.trigramme])
+                  .filter(Boolean)
+              )].sort().map(e => <option key={e} value={e}>{e}</option>)}
             </select>
           </div>
         </div>
