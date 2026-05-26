@@ -1,6 +1,14 @@
 // Changelog NBA Pronostics — une entrée par version/feature
 export const CHANGELOG = [
   {
+  version: 'v0.6',
+  date: '2026-05-26',
+  titre: 'Profil utilisateur',
+  desc: 'Chaque joueur a maintenant son profil : photo uploadable, pseudo et bio modifiables en un clic. Ton avatar apparaît partout — classement, stats, navigation. Accès depuis l\'avatar en haut à droite (desktop) ou en haut à gauche du hamburger (mobile).',
+  lien: '/profil',
+  labelLien: 'Mon profil',
+},
+{
     version: 'v0.5',
     date: '2026-05-26',
     titre: 'Ligues — nouvelle organisation',
@@ -75,4 +83,4 @@ export const CHANGELOG = [
 ]
 
 // Version courante de l'app — à incrémenter à chaque déploiement avec nouveautés
-export const VERSION_COURANTE = 'v0.5'
+export const VERSION_COURANTE = 'v0.6'
