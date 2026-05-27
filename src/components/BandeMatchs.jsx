@@ -17,12 +17,17 @@ function BandeMatchs({ matchs, userId }) {
   useEffect(() => {
     const charger = async () => {
       if (!userId) return
+      const espnIds = matchs.map(m => m.espn_id)
       const { data } = await supabase
         .from('pronos')
         .select('equipe_choisie, matchs(espn_id)')
         .eq('user_id', userId)
       const idx = {}
-      data?.forEach(p => { if (p.matchs) idx[p.matchs.espn_id] = p.equipe_choisie })
+      // filtre côté client — on ne garde que les matchs actuellement affichés
+      data?.forEach(p => {
+        if (p.matchs && espnIds.includes(p.matchs.espn_id))
+          idx[p.matchs.espn_id] = p.equipe_choisie
+      })
       setPronos(idx)
     }
     charger()
