@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { Home, Trophy, BarChart2, Menu, X, Swords, LogOut, Calendar, Sparkles, EyeOff, UserCircle } from 'lucide-react'
 import PopupChangelog from './PopupChangelog'
 import { useNoSpoil } from '../context/NoSpoilContext'
-import { Avatar } from '../pages/Profil'
+import { useProfil } from '../context/ProfilContext'
+import { Avatar } from '../components/Avatar'
 import swishLogo from '../assets/swish_league_logo.png'
 
 const LIENS = [
@@ -25,22 +26,8 @@ function Navigation() {
   const location  = useLocation()
   const [ouvert, setOuvert]   = useState(false)
   const [changelogOuvert, setChangelogOuvert] = useState(false)
-  const [profil, setProfil]   = useState(null)
   const { noSpoil, toggleNoSpoil } = useNoSpoil()
-
-  useEffect(() => {
-    const chargerProfil = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
-      const { data } = await supabase
-        .from('profils')
-        .select('pseudo, avatar_url')
-        .eq('id', user.id)
-        .single()
-      setProfil(data)
-    }
-    chargerProfil()
-  }, [])
+  const { profil } = useProfil()
 
   const deconnecter = async () => { await supabase.auth.signOut(); setOuvert(false) }
   const aller = (chemin) => { navigate(chemin); setOuvert(false) }

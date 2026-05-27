@@ -12,6 +12,7 @@ import Calendrier   from './pages/Calendrier'
 import Profil       from './pages/Profil'
 import PopupChangelog from './components/PopupChangelog'
 import { NoSpoilProvider } from './context/NoSpoilContext'
+import { ProfilProvider } from './context/ProfilContext'
 
 function App() {
   const [session, setSession] = useState(undefined)
@@ -29,6 +30,7 @@ function App() {
 
   return (
     <NoSpoilProvider>
+      <ProfilProvider>
       <BrowserRouter>
         {session && <PopupChangelog />}
         <Routes>
@@ -44,6 +46,7 @@ function App() {
           <Route path="*"                element={<Navigate to={session ? '/accueil' : '/connexion'} />} />
         </Routes>
       </BrowserRouter>
+      </ProfilProvider>
     </NoSpoilProvider>
   )
 }
