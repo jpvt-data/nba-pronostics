@@ -3,7 +3,7 @@ const BASE_WEB = 'https://site.web.api.espn.com/apis/site/v2/sports/basketball/n
 
 const formaterDate = (date) => date.toISOString().slice(0, 10).replace(/-/g, '')
 
-const TYPE_SAISON = { 1: 'Pré-saison', 2: 'Saison régulière', 3: 'Playoffs', 4: 'NBA Cup' }
+const TYPE_SAISON = { 1: 'Pré-saison', 2: 'Saison régulière', 3: 'Playoffs', 5: 'International' }
 
 export const recupererMatchs3Jours = async () => {
   const matchs = []
@@ -203,7 +203,7 @@ export const recupererDetailMatch = async (espnId) => {
 
 export const recupererGagnant = async (espnId) => {
   try {
-    const res  = await fetch(`${BASE_URL}/summary?event=${espnId}`)
+    const res  = await fetch(`${BASE_WEB}/summary?event=${espnId}`)
     const data = await res.json()
     const comp = data.header?.competitions?.[0]
     if (!comp || comp.status?.type?.name !== 'STATUS_FINAL') return null
