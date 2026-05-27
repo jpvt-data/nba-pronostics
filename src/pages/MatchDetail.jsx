@@ -270,7 +270,7 @@ function MatchDetail() {
 
         {(dom.stats?.fg || ext.stats?.fg) && (
           <div style={{ ...BLOC }}>
-            <LabelSection>Stats moyennes saison</LabelSection>
+            <LabelSection>{termine ? 'Stats du match' : 'Stats moyennes saison'}</LabelSection>
             <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
               {STATS_LABELS.map(({ key, label }) => {
                 const vE = ext.stats?.[key]; const vD = dom.stats?.[key]

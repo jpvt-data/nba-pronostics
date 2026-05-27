@@ -72,20 +72,37 @@ export const recupererDetailMatch = async (espnId) => {
 
     const saisonNum     = saison?.year ?? null
     const typeSaisonNum = saison?.type ?? null
+    const termine       = comp.status?.type?.name === 'STATUS_FINAL'
 
-    const extraireStats = (boxTeam) => {
+    const extraireStats = (boxTeam, termine) => {
       if (!boxTeam?.statistics) return {}
       const idx = {}
       boxTeam.statistics.forEach(s => { idx[s.name] = s.displayValue })
-      return {
-        pts: idx['avgPoints']              || null,
-        fg:  idx['fieldGoalPct']           || null,
-        tp:  idx['threePointFieldGoalPct'] || null,
-        reb: idx['avgRebounds']            || null,
-        ast: idx['avgAssists']             || null,
-        blk: idx['avgBlocks']              || null,
-        stl: idx['avgSteals']             || null,
-        to:  idx['avgTotalTurnovers']      || null,
+      
+      if (termine) {
+        // Stats réelles du match
+        return {
+          pts: idx['points']                                              || null,
+          fg:  idx['fieldGoalPct']                                        || null,
+          tp:  idx['threePointFieldGoalPct']                              || null,
+          reb: idx['totalRebounds']                                       || null,
+          ast: idx['assists']                                             || null,
+          blk: idx['blocks']                                              || null,
+          stl: idx['steals']                                              || null,
+          to:  idx['turnovers']                                           || null,
+        }
+      } else {
+        // Stats moyennes saison (match à venir)
+        return {
+          pts: idx['avgPoints']              || null,
+          fg:  idx['fieldGoalPct']           || null,
+          tp:  idx['threePointFieldGoalPct'] || null,
+          reb: idx['avgRebounds']            || null,
+          ast: idx['avgAssists']             || null,
+          blk: idx['avgBlocks']              || null,
+          stl: idx['avgSteals']              || null,
+          to:  idx['avgTotalTurnovers']      || null,
+        }
       }
     }
 
@@ -159,8 +176,8 @@ export const recupererDetailMatch = async (espnId) => {
         logo:      boxDom?.team?.logo || null,
         score:     compDom?.score ?? null,
         winner:    compDom?.winner ?? false,
-        periodes:  compDom?.linescores?.map(p => p.value) || [],
-        stats:     extraireStats(boxDom),
+        periodes:  compDom?.linescores?.map(p => p.displayValue ?? p.value) || [],
+        stats:     extraireStats(boxDom, termine),
         leaders:   extraireLeaders(leadersDom),
         l5:        extraireL5(l5Dom),
         blessés:   extraireBlessés(injDom),
@@ -171,8 +188,8 @@ export const recupererDetailMatch = async (espnId) => {
         logo:      boxExt?.team?.logo || null,
         score:     compExt?.score ?? null,
         winner:    compExt?.winner ?? false,
-        periodes:  compExt?.linescores?.map(p => p.value) || [],
-        stats:     extraireStats(boxExt),
+        periodes:  compExt?.linescores?.map(p => p.displayValue ?? p.value) || [],
+        stats:     extraireStats(boxExt, termine),
         leaders:   extraireLeaders(leadersExt),
         l5:        extraireL5(l5Ext),
         blessés:   extraireBlessés(injExt),
