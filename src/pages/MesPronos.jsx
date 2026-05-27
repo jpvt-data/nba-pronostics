@@ -66,8 +66,11 @@ function MesPronos() {
       const incorrects = termines.filter(p => p.resultat === 'incorrect').length
       setStats({ total: termines.length, corrects, incorrects })
 
-      // Forme récente — 5 derniers pronos terminés
-      setForme(termines.slice(0, 5))
+      // Forme récente — 5 derniers pronos terminés, triés par date de match
+      const terminesTries = [...termines].sort(
+        (a, b) => new Date(b.matchs?.date_match) - new Date(a.matchs?.date_match)
+      )
+      setForme(terminesTries.slice(0, 5))
 
       setCharg(false)
     }
