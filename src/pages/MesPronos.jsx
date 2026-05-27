@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import Navigation from '../components/Navigation'
-import { Avatar } from '../pages/Profil'
+import { Avatar } from '../components/Avatar'
 
 const formaterDate = (dateStr) =>
   new Date(dateStr).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' })
