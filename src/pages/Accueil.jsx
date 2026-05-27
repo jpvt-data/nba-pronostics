@@ -62,7 +62,6 @@ function Accueil() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 
-    // Upsert le match en cache
     const { data: matchDB } = await supabase
       .from('matchs')
       .upsert({
@@ -77,11 +76,9 @@ function Accueil() {
       .select().single()
     if (!matchDB) return
 
-    // Ligues actives correspondant au type du match
     const liguesCibles = await recupererLiguesCibles(user.id, match.typeSaisonNum ?? null)
 
     if (liguesCibles.length > 0) {
-      // Un prono par ligue correspondante
       await Promise.all(liguesCibles.map(m =>
         supabase.from('pronos').upsert({
           user_id:        user.id,
@@ -92,7 +89,6 @@ function Accueil() {
         }, { onConflict: 'user_id,match_id,groupe_id' })
       ))
     } else {
-      // Aucune ligue correspondante — prono sans groupe
       await supabase.from('pronos').upsert({
         user_id:        user.id,
         match_id:       matchDB.id,
@@ -102,6 +98,9 @@ function Accueil() {
       }, { onConflict: 'user_id,match_id,groupe_id' })
     }
   }
+
+  // Type de saison détecté depuis le premier match ESPN disponible
+  const typeSaisonActuel = matchs[0]?.typeSaisonNum ?? null
 
   return (
     <>
@@ -193,7 +192,8 @@ function Accueil() {
           <BanniereImage url="https://images.unsplash.com/photo-1519861531473-9200262188bf?w=800&q=60" hauteur={110} />
         )}
 
-        {!chargement && <StandingsNBA />}
+        {/* Standings uniquement en saison régulière (type 2) */}
+        {!chargement && <StandingsNBA typeSaison={typeSaisonActuel} />}
 
         {!chargement && user && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: '12px 16px 20px' }}>

@@ -16,11 +16,14 @@ const parseEquipe = (entree, rang) => {
   }
 }
 
-export default function StandingsNBA() {
+export default function StandingsNBA({ typeSaison }) {
   const [donnees, setDonnees]       = useState({ est: [], ouest: [] })
   const [onglet, setOnglet]         = useState('est')
   const [chargement, setChargement] = useState(true)
   const [erreur, setErreur]         = useState(false)
+
+  // Affiché uniquement en saison régulière (type ESPN = 2)
+  if (typeSaison !== 2) return null
 
   useEffect(() => {
     const controller = new AbortController()
@@ -61,7 +64,6 @@ export default function StandingsNBA() {
       borderWidth: 1, borderStyle: 'solid', borderColor: 'rgba(99,102,241,0.08)',
       padding: '16px 16px 12px',
     }}>
-      {/* Titre */}
       <h3 style={{
         display: 'inline-block',
         background: 'linear-gradient(90deg, var(--accent), var(--orange))',
@@ -69,7 +71,6 @@ export default function StandingsNBA() {
         letterSpacing: '0.1em', fontSize: 13, fontWeight: 700, margin: 0,
       }}>Classement NBA</h3>
 
-      {/* Tabs Est / Ouest */}
       <div style={{ display: 'flex', gap: 8, marginTop: 12, marginBottom: 10 }}>
         {['est', 'ouest'].map(tab => (
           <button
@@ -90,7 +91,6 @@ export default function StandingsNBA() {
         ))}
       </div>
 
-      {/* Liste */}
       {chargement ? (
         <p style={{ fontSize: 12, color: 'var(--text-3)', margin: '8px 0' }}>Chargement…</p>
       ) : (
