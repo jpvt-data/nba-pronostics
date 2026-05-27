@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import Navigation from '../components/Navigation'
-import { Avatar } from '../pages/Profil'
+import { Avatar } from '../components/Avatar'
 
 const LabelSection = ({ children }) => (
   <h3 style={{
