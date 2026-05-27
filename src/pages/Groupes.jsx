@@ -37,6 +37,7 @@ function Groupes() {
   const [charg, setCharg]     = useState(true)
   const [userId, setUserId]   = useState(null)
   const [creerOuvert, setCreerOuvert] = useState(false)
+  const [ligueEnModif, setLigueEnModif] = useState(null)
 
   const charger = async () => {
     const { data: { user } } = await supabase.auth.getUser()
@@ -73,6 +74,13 @@ function Groupes() {
     const m = membres[groupeId]
     if (!m) return
     await supabase.from('membres_groupe').update({ actif: false }).eq('id', m.id)
+    charger()
+  }
+
+  const supprimer = async (groupeId) => {
+    if (!confirm('Supprimer cette ligue ? Cette action est irréversible.')) return
+    await supabase.from('membres_groupe').delete().eq('groupe_id', groupeId)
+    await supabase.from('groupes').delete().eq('id', groupeId)
     charger()
   }
 
@@ -139,6 +147,16 @@ function Groupes() {
                 Quitter
               </button>
             )}
+            {userId === ADMIN_ID && (
+              <>
+                <button onClick={() => setLigueEnModif(ligue)} style={{ fontSize: 11, color: 'var(--accent)', background: 'none', borderWidth: 1, borderStyle: 'solid', borderColor: 'var(--accent-border)', borderRadius: 'var(--radius-sm)', paddingTop: 5, paddingBottom: 5, paddingLeft: 10, paddingRight: 10, cursor: 'pointer' }}>
+                  Modifier
+                </button>
+                <button onClick={() => supprimer(ligue.id)} style={{ fontSize: 11, color: 'var(--danger)', background: 'none', borderWidth: 1, borderStyle: 'solid', borderColor: 'rgba(239,68,68,0.3)', borderRadius: 'var(--radius-sm)', paddingTop: 5, paddingBottom: 5, paddingLeft: 10, paddingRight: 10, cursor: 'pointer' }}>
+                  Supprimer
+                </button>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -146,84 +164,92 @@ function Groupes() {
   }
 
   return (
-    <>
-      <Navigation />
-      <main style={{ flex: 1 }}>
+      <>
+        <Navigation />
+        <main style={{ flex: 1 }}>
 
-        {/* ── Header plein bord ── */}
-        <div style={{
-          padding: '20px 16px',
-          background: 'linear-gradient(160deg, rgba(99,102,241,0.08) 0%, transparent 60%)',
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-            <h2 style={{ margin: 0 }}>Ligues</h2>
-            {userId === ADMIN_ID && (
-              <button
-                onClick={() => setCreerOuvert(v => !v)}
-                style={{
-                  fontSize: 12, fontWeight: 600,
-                  background: creerOuvert ? 'var(--accent-dim)' : 'transparent',
-                  borderWidth: 1, borderStyle: 'solid',
-                  borderColor: creerOuvert ? 'var(--accent-border)' : 'var(--border)',
-                  borderRadius: 'var(--radius-sm)',
-                  color: creerOuvert ? 'var(--accent)' : 'var(--text-2)',
-                  paddingTop: 6, paddingBottom: 6, paddingLeft: 12, paddingRight: 12,
-                  cursor: 'pointer',
-                }}
-              >
-                + Nouvelle ligue
-              </button>
-            )}
+          {/* ── Header plein bord ── */}
+          <div style={{
+            padding: '20px 16px',
+            background: 'linear-gradient(160deg, rgba(99,102,241,0.08) 0%, transparent 60%)',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+              <h2 style={{ margin: 0 }}>Ligues</h2>
+              {userId === ADMIN_ID && (
+                <button
+                  onClick={() => { setCreerOuvert(v => !v); setLigueEnModif(null) }}
+                  style={{
+                    fontSize: 12, fontWeight: 600,
+                    background: creerOuvert ? 'var(--accent-dim)' : 'transparent',
+                    borderWidth: 1, borderStyle: 'solid',
+                    borderColor: creerOuvert ? 'var(--accent-border)' : 'var(--border)',
+                    borderRadius: 'var(--radius-sm)',
+                    color: creerOuvert ? 'var(--accent)' : 'var(--text-2)',
+                    paddingTop: 6, paddingBottom: 6, paddingLeft: 12, paddingRight: 12,
+                    cursor: 'pointer',
+                  }}
+                >
+                  + Nouvelle ligue
+                </button>
+              )}
+            </div>
+            <p style={{ fontSize: 13, color: 'var(--text-3)', margin: 0, lineHeight: 1.6 }}>
+              Rejoins une ligue pour entrer en compétition avec tes potes. Chaque ligue a sa propre période — pronos comptabilisés uniquement pendant la ligue active.
+            </p>
           </div>
-          <p style={{ fontSize: 13, color: 'var(--text-3)', margin: 0, lineHeight: 1.6 }}>
-            Rejoins une ligue pour entrer en compétition avec tes potes. Chaque ligue a sa propre période — pronos comptabilisés uniquement pendant la ligue active.
-          </p>
-        </div>
 
-        {/* ── Bannière ── */}
-        <BanniereImage url="https://images.unsplash.com/photo-1563506644863-444710df1e03?w=800&q=60" />
+          {/* ── Bannière ── */}
+          <BanniereImage url="https://images.unsplash.com/photo-1563506644863-444710df1e03?w=800&q=60" />
 
-        {/* ── Formulaire création (admin) ── */}
-        {creerOuvert && userId === ADMIN_ID && (
-          <div style={{ padding: '16px 16px 0' }}>
-            <CreerGroupe onSuccess={() => { setCreerOuvert(false); charger() }} />
-          </div>
-        )}
+          {/* ── Formulaire création (admin) ── */}
+          {creerOuvert && userId === ADMIN_ID && (
+            <div style={{ padding: '16px 16px 0' }}>
+              <CreerGroupe onSuccess={() => { setCreerOuvert(false); charger() }} />
+            </div>
+          )}
 
-        {charg && <p style={{ color: 'var(--text-3)', fontSize: 13, padding: '2rem', textAlign: 'center' }}>Chargement…</p>}
+          {/* ── Formulaire modification (admin) ── */}
+          {ligueEnModif && userId === ADMIN_ID && (
+            <div style={{ padding: '16px 16px 0' }}>
+              <CreerGroupe
+                ligueExistante={ligueEnModif}
+                onSuccess={() => { setLigueEnModif(null); charger() }}
+              />
+            </div>
+          )}
 
-        {!charg && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: '16px 16px 24px' }}>
+          {charg && <p style={{ color: 'var(--text-3)', fontSize: 13, padding: '2rem', textAlign: 'center' }}>Chargement…</p>}
 
-            {/* Ligues actives */}
-            {liguesActives.length > 0 && (
-              <div style={{ ...BLOC }}>
-                <LabelSection>En cours</LabelSection>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 12 }}>
-                  {liguesActives.map(ligue => <CarteLigue key={ligue.id} ligue={ligue} />)}
+          {!charg && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: '16px 16px 24px' }}>
+
+              {liguesActives.length > 0 && (
+                <div style={{ ...BLOC }}>
+                  <LabelSection>En cours</LabelSection>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 12 }}>
+                    {liguesActives.map(ligue => <CarteLigue key={ligue.id} ligue={ligue} />)}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* Ligues terminées */}
-            {liguesTerminees.length > 0 && (
-              <div style={{ ...BLOC, opacity: 0.8 }}>
-                <LabelSection>Terminées</LabelSection>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 12 }}>
-                  {liguesTerminees.map(ligue => <CarteLigue key={ligue.id} ligue={ligue} />)}
+              {liguesTerminees.length > 0 && (
+                <div style={{ ...BLOC, opacity: 0.8 }}>
+                  <LabelSection>Terminées</LabelSection>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 12 }}>
+                    {liguesTerminees.map(ligue => <CarteLigue key={ligue.id} ligue={ligue} />)}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {ligues.length === 0 && (
-              <p style={{ color: 'var(--text-3)', fontSize: 13, textAlign: 'center' }}>Aucune ligue disponible pour l'instant.</p>
-            )}
-          </div>
-        )}
+              {ligues.length === 0 && (
+                <p style={{ color: 'var(--text-3)', fontSize: 13, textAlign: 'center' }}>Aucune ligue disponible pour l'instant.</p>
+              )}
+            </div>
+          )}
 
-      </main>
-    </>
-  )
-}
-
+        </main>
+      </>
+    )
+  }
+  
 export default Groupes
