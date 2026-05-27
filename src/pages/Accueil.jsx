@@ -8,6 +8,7 @@ import BandeMatchs from '../components/BandeMatchs'
 import ClassementRapide from '../components/ClassementRapide'
 import PronosAttente from '../components/PronosAttente'
 import RunsPotes from '../components/RunsPotes'
+import StandingsNBA from '../components/StandingsNBA'
 import { useNavigate } from 'react-router-dom'
 import { Zap, Calendar, EyeOff, Eye } from 'lucide-react'
 import { useNoSpoil } from '../context/NoSpoilContext'
@@ -191,6 +192,8 @@ function Accueil() {
         {!chargement && (
           <BanniereImage url="https://images.unsplash.com/photo-1519861531473-9200262188bf?w=800&q=60" hauteur={110} />
         )}
+
+        {!chargement && <StandingsNBA />}
 
         {!chargement && user && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: '12px 16px 20px' }}>
