@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react'
 
-const URL_STANDINGS = 'https://site.api.espn.com/apis/site/v2/sports/basketball/nba/standings'
+const URL_STANDINGS = 'https://site.api.espn.com/apis/v2/sports/basketball/nba/standings?season=2026&seasontype=2'
 
-// Extrait rang, logo, trigramme, victoires, défaites depuis l'entrée ESPN
 const parseEquipe = (entree, rang) => {
   const equipe = entree.team
   const stats  = entree.stats || []
@@ -11,32 +10,30 @@ const parseEquipe = (entree, rang) => {
   return {
     rang,
     logo:      equipe.logos?.[0]?.href ?? null,
-    trigramme: equipe.abbreviation ?? equipe.shortDisplayName ?? '???',
+    trigramme: equipe.abbreviation ?? '???',
     nom:       equipe.displayName ?? '',
     bilan:     `${wins}-${losses}`,
   }
 }
 
 export default function StandingsNBA() {
-  const [donnees, setDonnees]         = useState({ est: [], ouest: [] })
-  const [onglet, setOnglet]           = useState('est')
-  const [chargement, setChargement]   = useState(true)
-  const [erreur, setErreur]           = useState(false)
+  const [donnees, setDonnees]       = useState({ est: [], ouest: [] })
+  const [onglet, setOnglet]         = useState('est')
+  const [chargement, setChargement] = useState(true)
+  const [erreur, setErreur]         = useState(false)
 
   useEffect(() => {
     const controller = new AbortController()
     fetch(URL_STANDINGS, { signal: controller.signal })
       .then(r => r.json())
       .then(data => {
-        // ESPN retourne children[] avec les 2 conférences
         const conferences = data.children ?? []
         const est   = []
         const ouest = []
 
         conferences.forEach(conf => {
-          const nom       = conf.name ?? ''
-          const equipes   = conf.standings?.entries ?? []
-          const liste     = equipes.map((e, i) => parseEquipe(e, i + 1))
+          const nom   = conf.name ?? ''
+          const liste = (conf.standings?.entries ?? []).map((e, i) => parseEquipe(e, i + 1))
           if (nom.toLowerCase().includes('east')) est.push(...liste)
           else ouest.push(...liste)
         })
@@ -83,10 +80,9 @@ export default function StandingsNBA() {
               padding: '4px 12px',
               borderRadius: 'var(--radius-sm)',
               borderWidth: 1, borderStyle: 'solid',
-              background:    onglet === tab ? 'rgba(99,102,241,0.18)' : 'transparent',
-              borderColor:   onglet === tab ? 'rgba(99,102,241,0.5)'  : 'var(--border)',
-              color:         onglet === tab ? 'var(--accent)'          : 'var(--text-3)',
-              transition: 'all 0.15s',
+              background:  onglet === tab ? 'rgba(99,102,241,0.18)' : 'transparent',
+              borderColor: onglet === tab ? 'rgba(99,102,241,0.5)'  : 'var(--border)',
+              color:       onglet === tab ? 'var(--accent)'          : 'var(--text-3)',
             }}
           >
             {tab === 'est' ? 'Conférence Est' : 'Conférence Ouest'}
@@ -106,31 +102,25 @@ export default function StandingsNBA() {
               borderRadius: 'var(--radius-sm)',
               background: eq.rang <= 6 ? 'rgba(99,102,241,0.06)' : 'transparent',
             }}>
-              {/* Rang */}
               <span style={{
                 width: 18, textAlign: 'right', flexShrink: 0,
                 fontSize: 11, fontWeight: 700,
                 color: eq.rang <= 6 ? 'var(--accent)' : 'var(--text-3)',
               }}>{eq.rang}</span>
 
-              {/* Logo */}
               {eq.logo
                 ? <img src={eq.logo} alt={eq.trigramme} style={{ width: 20, height: 20, objectFit: 'contain', flexShrink: 0 }} />
                 : <span style={{ width: 20, flexShrink: 0 }} />
               }
 
-              {/* Trigramme + nom */}
               <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-1)', minWidth: 36 }}>{eq.trigramme}</span>
               <span style={{ fontSize: 11, color: 'var(--text-3)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{eq.nom}</span>
-
-              {/* Bilan */}
               <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-2)', flexShrink: 0 }}>{eq.bilan}</span>
             </div>
           ))}
         </div>
       )}
 
-      {/* Légende playoff */}
       <p style={{ fontSize: 10, color: 'var(--text-3)', margin: '10px 0 0' }}>
         <span style={{ color: 'var(--accent)' }}>■</span> Top 6 — qualifiés playoffs directs
       </p>
