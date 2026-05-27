@@ -5,57 +5,70 @@ const formaterDate = (date) => date.toISOString().slice(0, 10).replace(/-/g, '')
 
 const TYPE_SAISON = { 1: 'Pré-saison', 2: 'Saison régulière', 3: 'Playoffs', 5: 'International' }
 
+// Fetch avec timeout — abandonne après 8s pour éviter le freeze si ESPN lag
+const fetchAvecTimeout = (url, ms = 8000) => {
+  const ctrl = new AbortController()
+  const id   = setTimeout(() => ctrl.abort(), ms)
+  return fetch(url, { signal: ctrl.signal }).finally(() => clearTimeout(id))
+}
+
 export const recupererMatchs3Jours = async () => {
-  const matchs = []
   const aujourdhui = new Date()
 
-  for (let i = 0; i < 3; i++) {
-    const date = new Date(aujourdhui)
-    date.setDate(aujourdhui.getDate() + i)
-    try {
-      const res  = await fetch(`${BASE_URL}/scoreboard?dates=${formaterDate(date)}`)
-      const data = await res.json()
+  // Prépare les 3 dates et lance les fetch en parallèle
+  const dates = [0, 1, 2].map(i => {
+    const d = new Date(aujourdhui)
+    d.setDate(aujourdhui.getDate() + i)
+    return formaterDate(d)
+  })
 
-      ;(data.events || []).forEach(evt => {
-        const comp  = evt.competitions[0]
-        const dom   = comp.competitors.find(c => c.homeAway === 'home')
-        const ext   = comp.competitors.find(c => c.homeAway === 'away')
-        const venue = comp.venue
+  const resultats = await Promise.allSettled(
+    dates.map(d => fetchAvecTimeout(`${BASE_URL}/scoreboard?dates=${d}`).then(r => r.json()))
+  )
 
-        matchs.push({
-          espn_id:        evt.id,
-          date:           evt.date,
-          statut:         comp.status.type.name,
-          saison:         evt.season?.year ? `${evt.season.year - 1}-${String(evt.season.year).slice(2)}` : null,
-          typeSaison:     TYPE_SAISON[evt.season?.type] || null,
-          saisonNum:      evt.season?.year ?? null,
-          typeSaisonNum:  evt.season?.type ?? null,
-          stade:          venue?.fullName || null,
-          ville:          venue?.address?.city || null,
-          domicile: {
-            nom:       dom.team.displayName,
-            trigramme: dom.team.abbreviation,
-            logo:      dom.team.logo,
-            score:     dom.score ?? null,
-          },
-          exterieur: {
-            nom:       ext.team.displayName,
-            trigramme: ext.team.abbreviation,
-            logo:      ext.team.logo,
-            score:     ext.score ?? null,
-          },
-        })
-      })
-    } catch (err) {
-      console.error('Erreur ESPN scoreboard:', err)
+  const matchs = []
+  resultats.forEach((res, i) => {
+    if (res.status === 'rejected') {
+      console.error(`Erreur ESPN scoreboard J+${i}:`, res.reason)
+      return
     }
-  }
+    ;(res.value.events || []).forEach(evt => {
+      const comp  = evt.competitions[0]
+      const dom   = comp.competitors.find(c => c.homeAway === 'home')
+      const ext   = comp.competitors.find(c => c.homeAway === 'away')
+      const venue = comp.venue
+
+      matchs.push({
+        espn_id:        evt.id,
+        date:           evt.date,
+        statut:         comp.status.type.name,
+        saison:         evt.season?.year ? `${evt.season.year - 1}-${String(evt.season.year).slice(2)}` : null,
+        typeSaison:     TYPE_SAISON[evt.season?.type] || null,
+        saisonNum:      evt.season?.year ?? null,
+        typeSaisonNum:  evt.season?.type ?? null,
+        stade:          venue?.fullName || null,
+        ville:          venue?.address?.city || null,
+        domicile: {
+          nom:       dom.team.displayName,
+          trigramme: dom.team.abbreviation,
+          logo:      dom.team.logo,
+          score:     dom.score ?? null,
+        },
+        exterieur: {
+          nom:       ext.team.displayName,
+          trigramme: ext.team.abbreviation,
+          logo:      ext.team.logo,
+          score:     ext.score ?? null,
+        },
+      })
+    })
+  })
   return matchs
 }
 
 export const recupererDetailMatch = async (espnId) => {
   try {
-    const res  = await fetch(`${BASE_WEB}/summary?event=${espnId}`)
+    const res  = await fetchAvecTimeout(`${BASE_WEB}/summary?event=${espnId}`)
     const data = await res.json()
 
     const comp     = data.header?.competitions?.[0]
@@ -82,14 +95,14 @@ export const recupererDetailMatch = async (espnId) => {
       if (termine) {
         // Stats réelles du match
         return {
-          pts: idx['points']                                              || null,
-          fg:  idx['fieldGoalPct']                                        || null,
-          tp:  idx['threePointFieldGoalPct']                              || null,
-          reb: idx['totalRebounds']                                       || null,
-          ast: idx['assists']                                             || null,
-          blk: idx['blocks']                                              || null,
-          stl: idx['steals']                                              || null,
-          to:  idx['turnovers']                                           || null,
+          pts: idx['points']                 || null,
+          fg:  idx['fieldGoalPct']           || null,
+          tp:  idx['threePointFieldGoalPct'] || null,
+          reb: idx['totalRebounds']          || null,
+          ast: idx['assists']                || null,
+          blk: idx['blocks']                 || null,
+          stl: idx['steals']                 || null,
+          to:  idx['turnovers']              || null,
         }
       } else {
         // Stats moyennes saison (match à venir)
@@ -203,7 +216,7 @@ export const recupererDetailMatch = async (espnId) => {
 
 export const recupererGagnant = async (espnId) => {
   try {
-    const res  = await fetch(`${BASE_WEB}/summary?event=${espnId}`)
+    const res  = await fetchAvecTimeout(`${BASE_WEB}/summary?event=${espnId}`)
     const data = await res.json()
     const comp = data.header?.competitions?.[0]
     if (!comp || comp.status?.type?.name !== 'STATUS_FINAL') return null
