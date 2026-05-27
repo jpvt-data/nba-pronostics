@@ -13,44 +13,43 @@ import { useNoSpoil } from '../context/NoSpoilContext'
 
 const GUTTER = '20px 16px'
 
-/* ── Label de section avec dégradé accent → orange ── */
 const LabelSection = ({ children }) => (
   <h3 style={{
     display: 'inline-block',
     background: 'linear-gradient(90deg, var(--accent), var(--orange))',
-    WebkitBackgroundClip: 'text',
-    WebkitTextFillColor: 'transparent',
-    backgroundClip: 'text',
-    letterSpacing: '0.1em',
-    fontSize: 13,
-    fontWeight: 700,
-  }}>
-    {children}
-  </h3>
+    WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
+    letterSpacing: '0.1em', fontSize: 13, fontWeight: 700,
+  }}>{children}</h3>
 )
 
-/* ── Bannière image subtile ── */
 const BanniereImage = ({ url, hauteur = 70 }) => (
   <div style={{
-    margin: '20px 0 0',
-    height: hauteur,
+    margin: '20px 0 0', height: hauteur,
     backgroundImage: `linear-gradient(to right, rgba(13,13,18,0.75), rgba(13,13,18,0.35), rgba(13,13,18,0.75)), url(${url})`,
-    backgroundSize: 'cover',
-    backgroundPosition: 'center',
-    backgroundRepeat: 'no-repeat',
+    backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat',
     borderTopWidth: 1, borderTopStyle: 'solid', borderTopColor: 'rgba(99,102,241,0.2)',
     borderBottomWidth: 1, borderBottomStyle: 'solid', borderBottomColor: 'rgba(99,102,241,0.2)',
   }} />
 )
 
-/* ── Séparateur simple ── */
-const Sep = () => (
-  <div style={{
-    margin: '20px 16px 0',
-    height: 1,
-    background: 'linear-gradient(90deg, var(--accent-border), transparent)',
-  }} />
-)
+/* ── Récupère les ligues actives correspondant au type du match ── */
+const recupererLiguesCibles = async (userId, typeSaisonMatch) => {
+  const { data: ligues } = await supabase
+    .from('membres_groupe')
+    .select('groupe_id, groupes(type_saison, saison, date_fin)')
+    .eq('user_id', userId)
+    .eq('actif', true)
+
+  return (ligues || []).filter(m => {
+    // Ligue fermée → on ignore
+    const dateFin = m.groupes?.date_fin
+    if (dateFin && new Date(dateFin) < new Date()) return false
+    // Ligue générale (type_saison null) → compte tous les matchs
+    // Sinon doit correspondre au type du match
+    const typeLigue = m.groupes?.type_saison
+    return typeLigue === null || typeLigue === typeSaisonMatch
+  })
+}
 
 function Accueil() {
   const [matchs, setMatchs]    = useState([])
@@ -79,6 +78,8 @@ function Accueil() {
   const faireProno = async (match, equipeChoisie) => {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
+
+    // Upsert le match en cache
     const { data: matchDB } = await supabase
       .from('matchs')
       .upsert({
@@ -92,12 +93,31 @@ function Accueil() {
       }, { onConflict: 'espn_id' })
       .select().single()
     if (!matchDB) return
-    await supabase.from('pronos').upsert({
-      user_id:        user.id,
-      match_id:       matchDB.id,
-      equipe_choisie: equipeChoisie,
-      resultat:       'en_attente',
-    }, { onConflict: 'user_id,match_id' })
+
+    // Ligues actives correspondant au type du match
+    const liguesCibles = await recupererLiguesCibles(user.id, match.typeSaisonNum ?? null)
+
+    if (liguesCibles.length > 0) {
+      // Un prono par ligue correspondante
+      await Promise.all(liguesCibles.map(m =>
+        supabase.from('pronos').upsert({
+          user_id:        user.id,
+          match_id:       matchDB.id,
+          equipe_choisie: equipeChoisie,
+          resultat:       'en_attente',
+          groupe_id:      m.groupe_id,
+        }, { onConflict: 'user_id,match_id,groupe_id' })
+      ))
+    } else {
+      // Aucune ligue correspondante — prono sans groupe
+      await supabase.from('pronos').upsert({
+        user_id:        user.id,
+        match_id:       matchDB.id,
+        equipe_choisie: equipeChoisie,
+        resultat:       'en_attente',
+        groupe_id:      null,
+      }, { onConflict: 'user_id,match_id,groupe_id' })
+    }
   }
 
   return (
@@ -146,10 +166,8 @@ function Accueil() {
           </p>
         </div>
 
-        {/* ── Bannière tribune 1 ── */}
         <BanniereImage url="https://images.unsplash.com/photo-1504450758481-7338eba7524a?w=800&q=60" hauteur={110} />
 
-        {/* ── Bande matchs ── */}
         <div style={{
           margin: '20px 16px 0',
           borderRadius: 'var(--radius-lg)',
@@ -170,8 +188,7 @@ function Accueil() {
             <button
               onClick={() => navigate('/calendrier')}
               style={{
-                fontSize: 12, color: 'var(--text-3)',
-                background: 'none',
+                fontSize: 12, color: 'var(--text-3)', background: 'none',
                 borderWidth: 1, borderStyle: 'solid', borderColor: 'var(--border)',
                 borderRadius: 'var(--radius-sm)',
                 paddingTop: 5, paddingBottom: 5, paddingLeft: 12, paddingRight: 12,
@@ -186,58 +203,27 @@ function Accueil() {
         )}
 
         {chargement && (
-          <p style={{ color: 'var(--text-3)', fontSize: 13, textAlign: 'center', padding: '2rem 0' }}>
-            Chargement…
-          </p>
+          <p style={{ color: 'var(--text-3)', fontSize: 13, textAlign: 'center', padding: '2rem 0' }}>Chargement…</p>
         )}
 
-        {/* ── Bannière ballons ── */}
         {!chargement && (
-        <BanniereImage url="https://images.unsplash.com/photo-1519861531473-9200262188bf?w=800&q=60" hauteur={110} />
+          <BanniereImage url="https://images.unsplash.com/photo-1519861531473-9200262188bf?w=800&q=60" hauteur={110} />
         )}
 
         {!chargement && user && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: '12px 16px 20px' }}>
-
-            {/* Ligue en cours */}
-            <div style={{
-              borderRadius: 'var(--radius-lg)',
-              background: 'linear-gradient(160deg, rgba(99,102,241,0.08) 0%, transparent 60%)',
-              borderWidth: 1, borderStyle: 'solid', borderColor: 'rgba(99,102,241,0.08)',
-              padding: '16px',
-            }}>
+            <div style={{ borderRadius: 'var(--radius-lg)', background: 'linear-gradient(160deg, rgba(99,102,241,0.08) 0%, transparent 60%)', borderWidth: 1, borderStyle: 'solid', borderColor: 'rgba(99,102,241,0.08)', padding: '16px' }}>
               <LabelSection>Ligue en cours</LabelSection>
-              <div style={{ marginTop: 8 }}>
-                <ClassementRapide userId={user.id} />
-              </div>
+              <div style={{ marginTop: 8 }}><ClassementRapide userId={user.id} /></div>
             </div>
-
-            {/* Pronos en attente */}
-            <div style={{
-              borderRadius: 'var(--radius-lg)',
-              background: 'linear-gradient(160deg, rgba(99,102,241,0.08) 0%, transparent 60%)',
-              borderWidth: 1, borderStyle: 'solid', borderColor: 'rgba(99,102,241,0.08)',
-              padding: '16px',
-            }}>
+            <div style={{ borderRadius: 'var(--radius-lg)', background: 'linear-gradient(160deg, rgba(99,102,241,0.08) 0%, transparent 60%)', borderWidth: 1, borderStyle: 'solid', borderColor: 'rgba(99,102,241,0.08)', padding: '16px' }}>
               <LabelSection>Pronos en attente</LabelSection>
-              <div style={{ marginTop: 8 }}>
-                <PronosAttente userId={user.id} />
-              </div>
+              <div style={{ marginTop: 8 }}><PronosAttente userId={user.id} /></div>
             </div>
-
-            {/* Runs des potes */}
-            <div style={{
-              borderRadius: 'var(--radius-lg)',
-              background: 'linear-gradient(160deg, rgba(99,102,241,0.08) 0%, transparent 60%)',
-              borderWidth: 1, borderStyle: 'solid', borderColor: 'rgba(99,102,241,0.08)',
-              padding: '16px',
-            }}>
+            <div style={{ borderRadius: 'var(--radius-lg)', background: 'linear-gradient(160deg, rgba(99,102,241,0.08) 0%, transparent 60%)', borderWidth: 1, borderStyle: 'solid', borderColor: 'rgba(99,102,241,0.08)', padding: '16px' }}>
               <LabelSection>Runs des potes</LabelSection>
-              <div style={{ marginTop: 8 }}>
-                <RunsPotes userId={user.id} />
-              </div>
+              <div style={{ marginTop: 8 }}><RunsPotes userId={user.id} /></div>
             </div>
-
           </div>
         )}
 

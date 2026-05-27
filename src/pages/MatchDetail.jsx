@@ -34,6 +34,22 @@ const BLOC = {
   padding: '16px', marginBottom: 12,
 }
 
+/* ── Récupère les ligues actives correspondant au type du match ── */
+const recupererLiguesCibles = async (userId, typeSaisonMatch) => {
+  const { data: ligues } = await supabase
+    .from('membres_groupe')
+    .select('groupe_id, groupes(type_saison, saison, date_fin)')
+    .eq('user_id', userId)
+    .eq('actif', true)
+
+  return (ligues || []).filter(m => {
+    const dateFin = m.groupes?.date_fin
+    if (dateFin && new Date(dateFin) < new Date()) return false
+    const typeLigue = m.groupes?.type_saison
+    return typeLigue === null || typeLigue === typeSaisonMatch
+  })
+}
+
 function MatchDetail() {
   const { espn_id } = useParams()
   const navigate    = useNavigate()
@@ -63,15 +79,42 @@ function MatchDetail() {
 
   const faireProno = async (equipe) => {
     if (!match || estVerrouille(match.date, match.statut)) return
+
+    // Upsert le match en cache
     const { data: matchDB } = await supabase.from('matchs').upsert({
-      espn_id: match.espn_id, date_match: match.date,
-      equipe_domicile: match.domicile.trigramme, equipe_exterieur: match.exterieur.trigramme,
-      statut: match.statut, type_saison: match.typeSaisonNum ?? null, saison: match.saisonNum ?? null,
+      espn_id:          match.espn_id,
+      date_match:       match.date,
+      equipe_domicile:  match.domicile.trigramme,
+      equipe_exterieur: match.exterieur.trigramme,
+      statut:           match.statut,
+      type_saison:      match.typeSaisonNum ?? null,
+      saison:           match.saisonNum ?? null,
     }, { onConflict: 'espn_id' }).select().single()
     if (!matchDB) return
-    await supabase.from('pronos').upsert({
-      user_id: user.id, match_id: matchDB.id, equipe_choisie: equipe, resultat: 'en_attente',
-    }, { onConflict: 'user_id,match_id' })
+
+    // Ligues actives correspondant au type du match
+    const liguesCibles = await recupererLiguesCibles(user.id, match.typeSaisonNum ?? null)
+
+    if (liguesCibles.length > 0) {
+      await Promise.all(liguesCibles.map(m =>
+        supabase.from('pronos').upsert({
+          user_id:        user.id,
+          match_id:       matchDB.id,
+          equipe_choisie: equipe,
+          resultat:       'en_attente',
+          groupe_id:      m.groupe_id,
+        }, { onConflict: 'user_id,match_id,groupe_id' })
+      ))
+    } else {
+      await supabase.from('pronos').upsert({
+        user_id:        user.id,
+        match_id:       matchDB.id,
+        equipe_choisie: equipe,
+        resultat:       'en_attente',
+        groupe_id:      null,
+      }, { onConflict: 'user_id,match_id,groupe_id' })
+    }
+
     setProno(equipe); setRes('en_attente')
   }
 
@@ -97,8 +140,8 @@ function MatchDetail() {
   const nbPeriodes = Math.max(dom.periodes?.length || 0, ext.periodes?.length || 0)
 
   const CarteEquipe = ({ eq, align }) => {
-    const selec    = prono === eq.trigramme
-    const perdant  = !noSpoil && termine && !eq.winner && (dom.score != null || ext.score != null)
+    const selec     = prono === eq.trigramme
+    const perdant   = !noSpoil && termine && !eq.winner && (dom.score != null || ext.score != null)
     const cliquable = !verrou
     return (
       <button onClick={() => cliquable && faireProno(eq.trigramme)} disabled={!cliquable} style={{
@@ -119,6 +162,7 @@ function MatchDetail() {
         <span style={{ fontSize:11, color:'var(--text-3)', textAlign:'center' }}>{eq.nom}</span>
         <span style={{ fontSize:10, color:'var(--text-3)' }}>{align === 'ext' ? 'Extérieur' : 'Domicile'}</span>
         {selec && !termine && <span style={{ fontSize:11, color:'var(--accent)', fontWeight:600, marginTop:2 }}>✓ Mon prono</span>}
+        {/* Bug No Spoil fix : résultat masqué si noSpoil actif */}
         {selec && termine && !noSpoil && (
           <span style={{ fontSize:11, fontWeight:700, marginTop:2, color: resultat==='correct' ? 'var(--success)' : resultat==='incorrect' ? 'var(--danger)' : 'var(--text-3)' }}>
             {resultat==='correct' ? '✓ Correct' : resultat==='incorrect' ? '✗ Raté' : '⏳'}
@@ -137,14 +181,12 @@ function MatchDetail() {
           <ChevronLeft size={16} /> Retour
         </button>
 
-        {/* Badges */}
         <div style={{ display:'flex', gap:6, marginBottom:14, flexWrap:'wrap' }}>
           {match.saison     && <span style={S.badge}>{match.saison}</span>}
           {match.typeSaison && <span style={{ ...S.badge, background:'var(--accent-dim)', color:'var(--accent)', borderColor:'var(--accent-border)' }}>{match.typeSaison}</span>}
           {enCours && <span style={{ ...S.badge, background:'rgba(34,197,94,0.1)', color:'var(--success)', borderColor:'rgba(34,197,94,0.3)' }}>● Live — Q{match.periode} {match.clock}</span>}
         </div>
 
-        {/* Série */}
         {match.serie?.summary && !noSpoil && (
           <div style={{ textAlign:'center', fontSize:13, fontWeight:600, color:'var(--accent)', marginBottom:12 }}>
             {match.serie.description && <span style={{ color:'var(--text-3)', fontWeight:400, marginRight:6 }}>{match.serie.description} ·</span>}
@@ -152,7 +194,6 @@ function MatchDetail() {
           </div>
         )}
 
-        {/* ── Affiche principale ── */}
         <div style={{ ...BLOC }}>
           {!verrou && !prono && <div style={{ textAlign:'center', fontSize:12, color:'var(--text-3)', marginBottom:12 }}>Clique sur une équipe pour pronostiquer</div>}
           {!verrou && prono  && <div style={{ textAlign:'center', fontSize:12, color:'var(--text-3)', marginBottom:12 }}>Tu peux encore changer d'avis !</div>}
@@ -178,7 +219,6 @@ function MatchDetail() {
             <CarteEquipe eq={dom} align="dom" />
           </div>
 
-          {/* Scores par période */}
           {nbPeriodes > 0 && (
             <div style={{ marginTop:16, borderTopWidth:1, borderTopStyle:'solid', borderTopColor:'rgba(99,102,241,0.1)', paddingTop:12, overflowX:'auto' }}>
               <div style={{ display:'grid', gridTemplateColumns:`72px repeat(${nbPeriodes}, 1fr)`, gap:4, fontSize:11, textAlign:'center' }}>
@@ -187,12 +227,12 @@ function MatchDetail() {
                   <div key={i} style={{ color:'var(--text-3)' }}>{i < 4 ? `Q${i+1}` : `OT${i-3}`}</div>
                 ))}
                 {[ext, dom].map(eq => (
-                  <>{/* eslint-disable-next-line react/jsx-key */}
-                    <div key={eq.trigramme+'-l'} style={{ color:'var(--text-2)', fontWeight:600, textAlign:'left' }}>{eq.trigramme}</div>
+                  <React.Fragment key={eq.trigramme}>
+                    <div style={{ color:'var(--text-2)', fontWeight:600, textAlign:'left' }}>{eq.trigramme}</div>
                     {Array.from({ length: nbPeriodes }, (_, i) => (
                       <div key={i} style={{ fontFamily:'var(--font-display)', fontWeight:600, fontSize:13, color:'var(--text-1)' }}>{eq.periodes?.[i] ?? '–'}</div>
                     ))}
-                  </>
+                  </React.Fragment>
                 ))}
               </div>
             </div>
@@ -205,13 +245,11 @@ function MatchDetail() {
           )}
         </div>
 
-        {/* Lieu + date */}
         <div style={{ fontSize:12, color:'var(--text-3)', textAlign:'center', margin:'4px 0 12px', lineHeight:1.7 }}>
           {dateStr} à {heureStr}
           {match.stade && <><br />{match.stade}{match.ville ? ` · ${match.ville}` : ''}</>}
         </div>
 
-        {/* Forme L5 */}
         {(ext.l5?.length > 0 || dom.l5?.length > 0) && (
           <div style={{ ...BLOC }}>
             <LabelSection>Forme récente</LabelSection>
@@ -230,7 +268,6 @@ function MatchDetail() {
           </div>
         )}
 
-        {/* Stats */}
         {(dom.stats?.fg || ext.stats?.fg) && (
           <div style={{ ...BLOC }}>
             <LabelSection>Stats moyennes saison</LabelSection>
@@ -255,7 +292,6 @@ function MatchDetail() {
           </div>
         )}
 
-        {/* Leaders */}
         {(dom.leaders?.length > 0 || ext.leaders?.length > 0) && (
           <div style={{ ...BLOC }}>
             <LabelSection>Leaders</LabelSection>
@@ -282,7 +318,6 @@ function MatchDetail() {
           </div>
         )}
 
-        {/* Blessés */}
         {(dom.blessés?.length > 0 || ext.blessés?.length > 0) && (
           <div style={{ ...BLOC }}>
             <LabelSection>Blessés / Absents</LabelSection>
