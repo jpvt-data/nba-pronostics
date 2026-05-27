@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { recupererMatchs3Jours } from '../services/espn'
+import { recupererLiguesCibles } from '../services/ligues'
 import { calculerPoints } from '../services/points'
 import Navigation from '../components/Navigation'
 import BandeMatchs from '../components/BandeMatchs'
@@ -31,25 +32,6 @@ const BanniereImage = ({ url, hauteur = 70 }) => (
     borderBottomWidth: 1, borderBottomStyle: 'solid', borderBottomColor: 'rgba(99,102,241,0.2)',
   }} />
 )
-
-/* ── Récupère les ligues actives correspondant au type du match ── */
-const recupererLiguesCibles = async (userId, typeSaisonMatch) => {
-  const { data: ligues } = await supabase
-    .from('membres_groupe')
-    .select('groupe_id, groupes(type_saison, saison, date_fin)')
-    .eq('user_id', userId)
-    .eq('actif', true)
-
-  return (ligues || []).filter(m => {
-    // Ligue fermée → on ignore
-    const dateFin = m.groupes?.date_fin
-    if (dateFin && new Date(dateFin) < new Date()) return false
-    // Ligue générale (type_saison null) → compte tous les matchs
-    // Sinon doit correspondre au type du match
-    const typeLigue = m.groupes?.type_saison
-    return typeLigue === null || typeLigue === typeSaisonMatch
-  })
-}
 
 function Accueil() {
   const [matchs, setMatchs]    = useState([])

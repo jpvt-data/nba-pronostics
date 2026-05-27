@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { recupererLiguesCibles } from '../services/ligues'
 import { recupererDetailMatch } from '../services/espn'
 import Navigation from '../components/Navigation'
 import { ChevronLeft } from 'lucide-react'
@@ -32,22 +33,6 @@ const BLOC = {
   background: 'linear-gradient(160deg, rgba(99,102,241,0.08) 0%, transparent 60%)',
   borderWidth: 1, borderStyle: 'solid', borderColor: 'rgba(99,102,241,0.08)',
   padding: '16px', marginBottom: 12,
-}
-
-/* ── Récupère les ligues actives correspondant au type du match ── */
-const recupererLiguesCibles = async (userId, typeSaisonMatch) => {
-  const { data: ligues } = await supabase
-    .from('membres_groupe')
-    .select('groupe_id, groupes(type_saison, saison, date_fin)')
-    .eq('user_id', userId)
-    .eq('actif', true)
-
-  return (ligues || []).filter(m => {
-    const dateFin = m.groupes?.date_fin
-    if (dateFin && new Date(dateFin) < new Date()) return false
-    const typeLigue = m.groupes?.type_saison
-    return typeLigue === null || typeLigue === typeSaisonMatch
-  })
 }
 
 function MatchDetail() {
