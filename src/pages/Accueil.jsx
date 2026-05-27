@@ -9,6 +9,7 @@ import ClassementRapide from '../components/ClassementRapide'
 import PronosAttente from '../components/PronosAttente'
 import RunsPotes from '../components/RunsPotes'
 import StandingsNBA from '../components/StandingsNBA'
+import SeriesPlayoffs from '../components/SeriesPlayoffs'
 import { useNavigate } from 'react-router-dom'
 import { Zap, Calendar, EyeOff, Eye } from 'lucide-react'
 import { useNoSpoil } from '../context/NoSpoilContext'
@@ -192,8 +193,9 @@ function Accueil() {
           <BanniereImage url="https://images.unsplash.com/photo-1519861531473-9200262188bf?w=800&q=60" hauteur={110} />
         )}
 
-        {/* Standings uniquement en saison régulière (type 2) */}
+        {/* Standings saison régulière (type 2) ou séries playoffs (type 3) */}
         {!chargement && <StandingsNBA typeSaison={typeSaisonActuel} />}
+        {!chargement && <SeriesPlayoffs typeSaison={typeSaisonActuel} />}
 
         {!chargement && user && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: '12px 16px 20px' }}>
