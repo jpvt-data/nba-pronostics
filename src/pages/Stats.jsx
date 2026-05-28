@@ -624,40 +624,51 @@ function FicheJoueur({ joueur, equipe, onRetour }) {
   const [chargement, setChargement] = useState(true)
   const couleur = equipe ? couleurEquipe(equipe.couleur) : couleurEquipe(joueur.equipeCouleur)
 
-  useEffect(() => {
+    useEffect(() => {
     setChargement(true)
-    Promise.allSettled([
-      fetchAvecTimeout(`${BASE}/athletes/${joueur.id}`).then(r => r.json()),
-      fetchAvecTimeout(`${BASE_WEB}/athletes/${joueur.id}/stats`).then(r => r.json()),
-    ]).then(([resProfil, resStats]) => {
-      if (resProfil.status === 'fulfilled') {
-        const a = resProfil.value.athlete ?? resProfil.value
-        setProfil({
-          nom:        a.fullName ?? joueur.nom,
-          photo:      a.headshot?.href ?? joueur.photo ?? null,
-          numero:     a.jersey ?? joueur.numero ?? '—',
-          position:   a.position?.displayName ?? joueur.positionFull ?? '—',
-          age:        a.age ?? joueur.age ?? '—',
-          taille:     a.displayHeight ?? joueur.taille ?? '—',
-          poids:      a.displayWeight ?? joueur.poids ?? '—',
-          experience: a.experience?.years != null ? `${a.experience.years} ans` : '—',
-        })
-      }
-      if (resStats.status === 'fulfilled') {
-        const categs  = resStats.value.splits?.categories ?? []
-        const general = categs.find(c => ['general', 'Total'].includes(c.name)) ?? categs[0]
-        const entries = general?.stats ?? []
-        const v = (n) => entries.find(s => s.name === n)?.displayValue ?? '—'
-        setStats({
-          pts: v('avgPoints'), reb: v('avgRebounds'), ast: v('avgAssists'),
-          stl: v('avgSteals'), blk: v('avgBlocks'), fg: v('fieldGoalPct'),
-          fg3: v('threePointFieldGoalPct'), ft: v('freeThrowPct'),
-          gp: v('gamesPlayed'), min: v('avgMinutes'),
-        })
-      }
-      setChargement(false)
+    // Suppression de l'appel athletes/{id} (CORS bloqué)
+    // Les données de base viennent du roster (joueur prop)
+    setProfil({
+        nom:        joueur.nom,
+        photo:      joueur.photo ?? null,
+        numero:     joueur.numero ?? '—',
+        position:   joueur.positionFull ?? joueur.position ?? '—',
+        age:        joueur.age ?? '—',
+        taille:     joueur.taille ?? '—',
+        poids:      joueur.poids ?? '—',
+        experience: '—',
     })
-  }, [joueur.id])
+
+    // Stats via site.web.api.espn.com (CORS OK)
+    fetchAvecTimeout(`${BASE_WEB}/athletes/${joueur.id}/stats`)
+        .then(r => r.json())
+        .then(data => {
+        // Structure : categories[0] = averages, names[] + statistics[0].stats[] en parallèle
+        const catAvg = (data.categories ?? []).find(c => c.name === 'averages')
+        if (catAvg) {
+            const names  = catAvg.names ?? []
+            const vals   = catAvg.statistics?.[0]?.stats ?? catAvg.totals ?? []
+            const v = (n) => {
+            const idx = names.indexOf(n)
+            return idx !== -1 ? vals[idx] : '—'
+            }
+            setStats({
+            pts: v('avgPoints'),
+            reb: v('avgRebounds'),
+            ast: v('avgAssists'),
+            stl: v('avgSteals'),
+            blk: v('avgBlocks'),
+            min: v('avgMinutes'),
+            fg:  v('fieldGoalPct'),
+            fg3: v('threePointFieldGoalPct'),
+            ft:  v('freeThrowPct'),
+            gp:  v('gamesPlayed'),
+            })
+        }
+        setChargement(false)
+        })
+        .catch(() => setChargement(false))
+    }, [joueur.id])
 
   const statItems = stats ? [
     { label: 'PPG', val: stats.pts }, { label: 'RPG', val: stats.reb },
