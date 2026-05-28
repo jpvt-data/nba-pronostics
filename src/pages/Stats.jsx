@@ -866,53 +866,79 @@ function FicheJoueur({ joueur, equipe, onRetour }) {
       {!chargement && gameLog.length > 0 && (
         <>
           <LabelSection>Derniers matchs</LabelSection>
-          <div style={{ overflowX: 'auto', marginTop: 10, WebkitOverflowScrolling: 'touch' }}>
-            {/* En-tête */}
-            <div style={{
-              display: 'grid', gridTemplateColumns: '52px 44px 28px 36px 36px 36px 36px 44px 44px',
-              gap: 2, padding: '4px 6px',
-              fontSize: 9, fontWeight: 700, color: 'var(--text-3)',
-              textTransform: 'uppercase', letterSpacing: '0.05em',
-              minWidth: 360,
-            }}>
-              <span>Date</span>
-              <span>Adv</span>
-              <span style={{ textAlign: 'center' }}>R</span>
-              <span style={{ textAlign: 'center' }}>MIN</span>
-              <span style={{ textAlign: 'center' }}>PTS</span>
-              <span style={{ textAlign: 'center' }}>REB</span>
-              <span style={{ textAlign: 'center' }}>AST</span>
-              <span style={{ textAlign: 'center' }}>FG%</span>
-              <span style={{ textAlign: 'center' }}>3P%</span>
-            </div>
 
-            {/* Lignes */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 360 }}>
-              {gameLog.map((l, i) => (
-                <div key={l.eventId} style={{
-                  display: 'grid', gridTemplateColumns: '52px 44px 28px 36px 36px 36px 36px 44px 44px',
-                  gap: 2, padding: '5px 6px',
-                  background: i % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'transparent',
-                  borderRadius: 'var(--radius-sm)',
-                  alignItems: 'center',
-                }}>
-                  <span style={{ fontSize: 11, color: 'var(--text-3)' }}>{formaterDate(l.date)}</span>
-                  <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-2)' }}>
-                    {l.atVs === '@' ? '@' : 'vs'} {l.adversaire}
-                  </span>
-                  <span style={{
-                    fontSize: 11, fontWeight: 700, textAlign: 'center',
-                    color: l.resultat === 'W' ? 'var(--success)' : 'var(--danger)',
-                  }}>{l.resultat}</span>
-                  <span style={{ fontSize: 11, color: 'var(--text-3)', textAlign: 'center' }}>{l.min}</span>
-                  <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--text-1)', textAlign: 'center', fontFamily: 'var(--font-display)' }}>{l.pts}</span>
-                  <span style={{ fontSize: 11, color: 'var(--text-2)', textAlign: 'center' }}>{l.reb}</span>
-                  <span style={{ fontSize: 11, color: 'var(--text-2)', textAlign: 'center' }}>{l.ast}</span>
-                  <span style={{ fontSize: 11, color: 'var(--text-3)', textAlign: 'center' }}>{l.fg}</span>
-                  <span style={{ fontSize: 11, color: 'var(--text-3)', textAlign: 'center' }}>{l.tp}</span>
-                </div>
-              ))}
-            </div>
+          {/*
+            Stratégie colonnes sticky mobile :
+            - Col 0 (Date) + Col 1 (Adv+R) : sticky à gauche, fond opaque
+            - Col 2-6 (stats) : scroll horizontal, largeur égale
+            On utilise un tableau HTML natif pour pouvoir faire sticky sur mobile
+          */}
+          <div style={{ marginTop: 10, overflowX: 'auto', WebkitOverflowScrolling: 'touch', borderRadius: 'var(--radius-md)', borderWidth: 1, borderStyle: 'solid', borderColor: 'var(--border)' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed', minWidth: 480 }}>
+              <colgroup>
+                <col style={{ width: 52 }} /> {/* Date — sticky */}
+                <col style={{ width: 56 }} /> {/* Adv — sticky */}
+                <col style={{ width: 28 }} /> {/* W/L — sticky */}
+                <col /> <col /> <col /> <col /> <col /> <col />  {/* stats égales */}
+              </colgroup>
+
+              {/* En-tête */}
+              <thead>
+                <tr style={{ borderBottomWidth: 1, borderBottomStyle: 'solid', borderBottomColor: 'var(--border)' }}>
+                  {[
+                    { label: 'Date',  sticky: true,  align: 'left'   },
+                    { label: 'Adv',   sticky: true,  align: 'left'   },
+                    { label: 'R',     sticky: true,  align: 'center' },
+                    { label: 'MIN',   sticky: false, align: 'center' },
+                    { label: 'PTS',   sticky: false, align: 'center' },
+                    { label: 'REB',   sticky: false, align: 'center' },
+                    { label: 'AST',   sticky: false, align: 'center' },
+                    { label: 'FG%',   sticky: false, align: 'center' },
+                    { label: '3P%',   sticky: false, align: 'center' },
+                  ].map(({ label, sticky, align }, ci) => (
+                    <th key={label} style={{
+                      fontSize: 9, fontWeight: 700, color: 'var(--text-3)',
+                      textTransform: 'uppercase', letterSpacing: '0.06em',
+                      padding: '7px 6px', textAlign: align,
+                      background: 'var(--bg-1)',
+                      position: sticky ? 'sticky' : 'static',
+                      left: sticky ? [0, 52, 108][ci] : 'auto',
+                      zIndex: sticky ? 2 : 'auto',
+                    }}>{label}</th>
+                  ))}
+                </tr>
+              </thead>
+
+              {/* Corps */}
+              <tbody>
+                {gameLog.map((l, i) => {
+                  const bg = i % 2 === 0 ? 'var(--bg-1)' : 'var(--bg-0)'
+                  return (
+                    <tr key={l.eventId} style={{ borderBottomWidth: i < gameLog.length - 1 ? 1 : 0, borderBottomStyle: 'solid', borderBottomColor: 'rgba(255,255,255,0.04)' }}>
+                      {/* Date — sticky */}
+                      <td style={{ fontSize: 11, color: 'var(--text-3)', padding: '6px 6px', background: bg, position: 'sticky', left: 0, zIndex: 1 }}>
+                        {formaterDate(l.date)}
+                      </td>
+                      {/* Adversaire — sticky */}
+                      <td style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-2)', padding: '6px 4px', background: bg, position: 'sticky', left: 52, zIndex: 1 }}>
+                        {l.atVs === '@' ? '@' : 'vs'} {l.adversaire}
+                      </td>
+                      {/* Résultat — sticky */}
+                      <td style={{ fontSize: 11, fontWeight: 800, textAlign: 'center', padding: '6px 4px', background: bg, position: 'sticky', left: 108, zIndex: 1, color: l.resultat === 'W' ? 'var(--success)' : 'var(--danger)' }}>
+                        {l.resultat}
+                      </td>
+                      {/* Stats */}
+                      <td style={{ fontSize: 11, color: 'var(--text-3)', textAlign: 'center', padding: '6px 4px' }}>{l.min}</td>
+                      <td style={{ fontSize: 13, fontWeight: 800, color: 'var(--text-1)', textAlign: 'center', padding: '6px 4px', fontFamily: 'var(--font-display)' }}>{l.pts}</td>
+                      <td style={{ fontSize: 11, color: 'var(--text-2)', textAlign: 'center', padding: '6px 4px' }}>{l.reb}</td>
+                      <td style={{ fontSize: 11, color: 'var(--text-2)', textAlign: 'center', padding: '6px 4px' }}>{l.ast}</td>
+                      <td style={{ fontSize: 11, color: 'var(--text-3)', textAlign: 'center', padding: '6px 4px' }}>{l.fg}</td>
+                      <td style={{ fontSize: 11, color: 'var(--text-3)', textAlign: 'center', padding: '6px 4px' }}>{l.tp}</td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
           </div>
 
           {/* Légende */}
