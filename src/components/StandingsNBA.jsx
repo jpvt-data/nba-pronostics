@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 const URL_STANDINGS = 'https://site.api.espn.com/apis/v2/sports/basketball/nba/standings?season=2026&seasontype=2'
 
@@ -21,8 +22,8 @@ export default function StandingsNBA({ typeSaison }) {
   const [onglet, setOnglet]         = useState('est')
   const [chargement, setChargement] = useState(true)
   const [erreur, setErreur]         = useState(false)
+  const navigate = useNavigate()
 
-  // Affiché uniquement en saison régulière (type ESPN = 2)
   if (typeSaison !== 2) return null
 
   useEffect(() => {
@@ -54,7 +55,8 @@ export default function StandingsNBA({ typeSaison }) {
 
   if (erreur || (!chargement && donnees.est.length === 0 && donnees.ouest.length === 0)) return null
 
-  const liste = onglet === 'est' ? donnees.est : donnees.ouest
+  // TOP 5 uniquement pour le Board
+  const liste = (onglet === 'est' ? donnees.est : donnees.ouest).slice(0, 5)
 
   return (
     <div style={{
@@ -64,12 +66,26 @@ export default function StandingsNBA({ typeSaison }) {
       borderWidth: 1, borderStyle: 'solid', borderColor: 'rgba(99,102,241,0.08)',
       padding: '16px 16px 12px',
     }}>
-      <h3 style={{
-        display: 'inline-block',
-        background: 'linear-gradient(90deg, var(--accent), var(--orange))',
-        WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
-        letterSpacing: '0.1em', fontSize: 13, fontWeight: 700, margin: 0,
-      }}>Classement NBA</h3>
+      {/* En-tête : titre + lien "Voir tout" */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <h3 style={{
+          display: 'inline-block',
+          background: 'linear-gradient(90deg, var(--accent), var(--orange))',
+          WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
+          letterSpacing: '0.1em', fontSize: 13, fontWeight: 700, margin: 0,
+        }}>Classement NBA</h3>
+
+        <button
+          onClick={() => navigate('/stats')}
+          style={{
+            background: 'none', border: 'none', cursor: 'pointer',
+            fontSize: 11, fontWeight: 600, color: 'var(--accent)',
+            padding: 0,
+          }}
+        >
+          Voir tout →
+        </button>
+      </div>
 
       <div style={{ display: 'flex', gap: 8, marginTop: 12, marginBottom: 10 }}>
         {['est', 'ouest'].map(tab => (
@@ -121,9 +137,21 @@ export default function StandingsNBA({ typeSaison }) {
         </div>
       )}
 
-      <p style={{ fontSize: 10, color: 'var(--text-3)', margin: '10px 0 0' }}>
-        <span style={{ color: 'var(--accent)' }}>■</span> Top 6 — qualifiés playoffs directs
-      </p>
+      {/* Légende + lien complémentaire */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 10 }}>
+        <p style={{ fontSize: 10, color: 'var(--text-3)', margin: 0 }}>
+          <span style={{ color: 'var(--accent)' }}>■</span> Top 6 — qualifiés playoffs directs
+        </p>
+        <button
+          onClick={() => navigate('/stats')}
+          style={{
+            background: 'none', border: 'none', cursor: 'pointer',
+            fontSize: 10, color: 'var(--text-3)', padding: 0,
+          }}
+        >
+          Classement complet →
+        </button>
+      </div>
     </div>
   )
 }
