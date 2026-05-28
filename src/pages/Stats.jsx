@@ -1,13 +1,13 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import Navigation from '../components/Navigation'
-import { BanniereImage, LabelSection, Bloc } from '../components/UI'
+import { BanniereImage, LabelSection } from '../components/UI'
 import { Search, ChevronRight, ArrowLeft } from 'lucide-react'
 
 // ── Constantes ESPN ──────────────────────────────────────────────────────────
-const BASE      = 'https://site.api.espn.com/apis/site/v2/sports/basketball/nba'
-const BASE_WEB  = 'https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba'
-const URL_STANDINGS = 'https://site.api.espn.com/apis/v2/sports/basketball/nba/standings?season=2026&seasontype=2'
-const TIMEOUT   = 8000
+const BASE     = 'https://site.api.espn.com/apis/site/v2/sports/basketball/nba'
+const BASE_V2  = 'https://site.api.espn.com/apis/v2/sports/basketball/nba'
+const BASE_WEB = 'https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba'
+const TIMEOUT  = 8000
 
 const fetchAvecTimeout = (url) => {
   const ctrl = new AbortController()
@@ -15,10 +15,9 @@ const fetchAvecTimeout = (url) => {
   return fetch(url, { signal: ctrl.signal }).finally(() => clearTimeout(timer))
 }
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
 const couleurEquipe = (hex) => hex ? `#${hex}` : 'var(--accent)'
 
-// Logo avec fallback initiales
+// ── Composants visuels ───────────────────────────────────────────────────────
 function LogoEquipe({ url, trigramme, taille = 32, couleur }) {
   const [erreur, setErreur] = useState(false)
   if (url && !erreur) {
@@ -35,7 +34,6 @@ function LogoEquipe({ url, trigramme, taille = 32, couleur }) {
   )
 }
 
-// Photo joueur avec fallback
 function PhotoJoueur({ url, nom, taille = 48 }) {
   const [erreur, setErreur] = useState(false)
   if (url && !erreur) {
@@ -52,56 +50,136 @@ function PhotoJoueur({ url, nom, taille = 48 }) {
   )
 }
 
+// Badge clincher (z = conf, y = div, x = playoff, xp = play-in, pb = play-in berth, e = éliminé, * = meilleur bilan)
+function BadgeClincher({ val }) {
+  if (!val) return null
+  const MAP = {
+    'z':  { label: 'z', title: 'Conf. clinchée',     color: '#6366f1' },
+    'y':  { label: 'y', title: 'Division clinchée',   color: '#22c55e' },
+    'x':  { label: 'x', title: 'Playoffs clinchés',   color: '#22c55e' },
+    'xp': { label: 'xp', title: 'Play-in qualifié',   color: '#f97316' },
+    'pb': { label: 'pb', title: 'Play-in berth',      color: '#f97316' },
+    'e':  { label: 'e', title: 'Éliminé',             color: '#ef4444' },
+    '*':  { label: '*', title: 'Meilleur bilan NBA',  color: '#fbbf24' },
+  }
+  const b = MAP[val]
+  if (!b) return null
+  return (
+    <span title={b.title} style={{
+      fontSize: 9, fontWeight: 800, color: b.color,
+      background: `${b.color}20`,
+      borderRadius: 3, paddingLeft: 3, paddingRight: 3, paddingTop: 1, paddingBottom: 1,
+      marginLeft: 4, flexShrink: 0,
+    }}>{b.label}</span>
+  )
+}
+
+// ── Parser standings ─────────────────────────────────────────────────────────
+const parseEquipe = (e) => {
+  const eq    = e.team
+  const stats = e.stats || []
+  const v     = (n) => stats.find(s => s.name === n)?.value ?? null
+  const dv    = (n) => stats.find(s => s.name === n)?.displayValue ?? '—'
+  const sum   = (n) => stats.find(s => s.name === n)?.summary ?? '—'
+  return {
+    id:         eq.id,
+    trigramme:  eq.abbreviation,
+    nom:        eq.displayName,
+    nomCourt:   eq.shortDisplayName,
+    logo:       eq.logos?.[0]?.href ?? null,
+    logoSombre: eq.logos?.[1]?.href ?? eq.logos?.[0]?.href ?? null,
+    couleur:    eq.color ?? null,
+    seed:       v('playoffSeed') ?? 99,           // rang officiel ESPN
+    wins:       v('wins') ?? 0,
+    losses:     v('losses') ?? 0,
+    pct:        dv('winPercent'),
+    gb:         dv('gamesBehind'),
+    domicile:   sum('Home'),
+    exterieur:  sum('Road'),
+    conference: sum('vs. Conf.'),
+    l10:        sum('Last Ten Games'),
+    serie:      dv('streak'),
+    diff:       dv('differential'),
+    clincher:   dv('clincher'),
+  }
+}
+
 // ── ONGLET CLASSEMENTS ───────────────────────────────────────────────────────
-function OngletClassements() {
-  const [donnees, setDonnees]       = useState({ est: [], ouest: [] })
+function OngletClassements({ onEquipeClick }) {
+  const [donnees, setDonnees]       = useState({ est: [], ouest: [], saisons: [] })
   const [onglet, setOnglet]         = useState('est')
+  const [saison, setSaison]         = useState(2026)
   const [chargement, setChargement] = useState(true)
   const [erreur, setErreur]         = useState(false)
+  const [labelSaison, setLabelSaison] = useState('2025-26')
 
-  useEffect(() => {
-    fetchAvecTimeout(URL_STANDINGS)
+  const charger = (annee) => {
+    setChargement(true)
+    setErreur(false)
+    fetchAvecTimeout(`${BASE_V2}/standings?season=${annee}&seasontype=2`)
       .then(r => r.json())
       .then(data => {
+        // Saisons disponibles (depuis la première réponse seulement)
+        const saisonsDispos = (data.seasons ?? [])
+          .filter(s => s.types?.some(t => t.id === '2' && t.hasStandings))
+          .map(s => ({ year: s.year, label: s.displayName }))
+          .sort((a, b) => b.year - a.year)
+
         const conferences = data.children ?? []
         const est = [], ouest = []
         conferences.forEach(conf => {
           const nom   = conf.name ?? ''
-          const liste = (conf.standings?.entries ?? []).map((e, i) => {
-            const eq    = e.team
-            const stats = e.stats || []
-            const v = (n) => stats.find(s => s.name === n)?.value ?? '?'
-            return {
-              rang:       i + 1,
-              id:         eq.id,
-              logo:       eq.logos?.[0]?.href ?? null,
-              trigramme:  eq.abbreviation ?? '???',
-              nom:        eq.displayName ?? '',
-              couleur:    eq.color ?? null,
-              bilan:      `${v('wins')}-${v('losses')}`,
-              domicile:   stats.find(s => s.name === 'Home')?.displayValue ?? '?',
-              exterieur:  stats.find(s => s.name === 'Road')?.displayValue ?? '?',
-              serie:      stats.find(s => s.name === 'streak')?.displayValue ?? '?',
-              pct:        stats.find(s => s.name === 'winPercent')?.displayValue ?? '?',
-            }
-          })
+          const liste = (conf.standings?.entries ?? [])
+            .map(parseEquipe)
+            .sort((a, b) => a.seed - b.seed) // tri par seed officiel ESPN
           if (nom.toLowerCase().includes('east')) est.push(...liste)
           else ouest.push(...liste)
         })
-        setDonnees({ est, ouest })
+
+        // Label saison affiché
+        const meta = data.season ?? {}
+        setLabelSaison(meta.displayName ?? `${annee}`)
+        setDonnees({ est, ouest, saisons: saisonsDispos })
         setChargement(false)
       })
       .catch(() => { setErreur(true); setChargement(false) })
-  }, [])
+  }
+
+  useEffect(() => { charger(saison) }, [saison])
 
   const liste = onglet === 'est' ? donnees.est : donnees.ouest
 
   return (
     <div>
-      <LabelSection>Classement NBA</LabelSection>
+      {/* Titre + saison */}
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap', marginBottom: 12 }}>
+        <LabelSection>Classement NBA</LabelSection>
+        <span style={{ fontSize: 12, color: 'var(--text-3)' }}>Saison {labelSaison}</span>
+      </div>
+
+      {/* Sélecteur saison */}
+      <div style={{ marginBottom: 12 }}>
+        <select
+          value={saison}
+          onChange={e => setSaison(Number(e.target.value))}
+          style={{
+            fontSize: 12, fontWeight: 600, color: 'var(--text-1)',
+            background: 'var(--bg-1)',
+            borderWidth: 1, borderStyle: 'solid', borderColor: 'var(--border)',
+            borderRadius: 'var(--radius-sm)', padding: '6px 10px', cursor: 'pointer',
+          }}
+        >
+          {donnees.saisons.length > 0
+            ? donnees.saisons.map(s => (
+                <option key={s.year} value={s.year}>{s.label}</option>
+              ))
+            : <option value={2026}>2025-26</option>
+          }
+        </select>
+      </div>
 
       {/* Onglets conférence */}
-      <div style={{ display: 'flex', gap: 8, margin: '12px 0' }}>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
         {['est', 'ouest'].map(tab => (
           <button key={tab} onClick={() => setOnglet(tab)} style={{
             fontSize: 12, fontWeight: 700, cursor: 'pointer',
@@ -122,70 +200,90 @@ function OngletClassements() {
 
       {!chargement && !erreur && (
         <>
-          {/* En-tête colonnes */}
+          {/* En-tête colonnes — masquées sur mobile étroit */}
           <div style={{
             display: 'grid',
-            gridTemplateColumns: '28px 28px 1fr 52px 60px 60px 48px',
+            gridTemplateColumns: '24px 24px 1fr 56px 44px 60px 60px 48px',
             gap: 4, padding: '4px 8px',
             fontSize: 10, fontWeight: 700, color: 'var(--text-3)',
             textTransform: 'uppercase', letterSpacing: '0.05em',
           }}>
-            <span>#</span>
-            <span />
+            <span>#</span><span />
             <span>Équipe</span>
             <span style={{ textAlign: 'center' }}>Bilan</span>
+            <span style={{ textAlign: 'center' }}>GB</span>
             <span style={{ textAlign: 'center' }}>Dom.</span>
             <span style={{ textAlign: 'center' }}>Ext.</span>
             <span style={{ textAlign: 'center' }}>Série</span>
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-            {liste.map((eq, idx) => (
-              <div key={eq.trigramme} style={{
-                display: 'grid',
-                gridTemplateColumns: '28px 28px 1fr 52px 60px 60px 48px',
-                gap: 4, alignItems: 'center',
-                padding: '7px 8px',
-                borderRadius: 'var(--radius-sm)',
-                background: eq.rang <= 6
-                  ? `linear-gradient(90deg, rgba(99,102,241,0.08), transparent)`
-                  : idx % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'transparent',
-                borderLeftWidth: eq.rang <= 6 ? 2 : 0,
-                borderLeftStyle: 'solid',
-                borderLeftColor: couleurEquipe(eq.couleur),
-              }}>
-                <span style={{
-                  fontSize: 11, fontWeight: 700, textAlign: 'center',
-                  color: eq.rang <= 6 ? 'var(--accent)' : 'var(--text-3)',
-                }}>{eq.rang}</span>
+            {liste.map((eq, idx) => {
+              const couleur = couleurEquipe(eq.couleur)
+              const playoff = eq.seed <= 6
+              const playIn  = eq.seed === 7 || eq.seed === 8
+              return (
+                <button
+                  key={eq.id}
+                  onClick={() => onEquipeClick(eq)}
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: '24px 24px 1fr 56px 44px 60px 60px 48px',
+                    gap: 4, alignItems: 'center',
+                    padding: '7px 8px',
+                    borderRadius: 'var(--radius-sm)',
+                    background: playoff
+                      ? `linear-gradient(90deg, ${couleur}12, transparent)`
+                      : playIn
+                        ? 'rgba(249,115,22,0.04)'
+                        : idx % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'transparent',
+                    borderWidth: 0,
+                    borderLeftWidth: playoff ? 2 : playIn ? 1 : 0,
+                    borderLeftStyle: 'solid',
+                    borderLeftColor: playoff ? couleur : 'rgba(249,115,22,0.4)',
+                    cursor: 'pointer', textAlign: 'left', width: '100%',
+                  }}
+                >
+                  <span style={{
+                    fontSize: 11, fontWeight: 700, textAlign: 'center',
+                    color: playoff ? 'var(--accent)' : 'var(--text-3)',
+                  }}>{eq.seed}</span>
 
-                <LogoEquipe url={eq.logo} trigramme={eq.trigramme} taille={22} couleur={couleurEquipe(eq.couleur)} />
+                  <LogoEquipe url={eq.logo} trigramme={eq.trigramme} taille={20} couleur={couleur} />
 
-                <div style={{ minWidth: 0 }}>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-1)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    {eq.trigramme}
+                  <div style={{ minWidth: 0, display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-1)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {eq.trigramme}
+                    </span>
+                    <BadgeClincher val={eq.clincher} />
                   </div>
-                  <div style={{ fontSize: 10, color: 'var(--text-3)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    {eq.nom}
-                  </div>
-                </div>
 
-                <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--text-1)', textAlign: 'center', fontFamily: 'var(--font-display)' }}>
-                  {eq.bilan}
-                </span>
-                <span style={{ fontSize: 11, color: 'var(--text-2)', textAlign: 'center' }}>{eq.domicile}</span>
-                <span style={{ fontSize: 11, color: 'var(--text-2)', textAlign: 'center' }}>{eq.exterieur}</span>
-                <span style={{ fontSize: 11, textAlign: 'center',
-                  color: eq.serie?.startsWith('W') ? 'var(--success)' : eq.serie?.startsWith('L') ? 'var(--danger)' : 'var(--text-3)',
-                  fontWeight: 700,
-                }}>{eq.serie}</span>
-              </div>
-            ))}
+                  <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--text-1)', textAlign: 'center', fontFamily: 'var(--font-display)' }}>
+                    {eq.wins}-{eq.losses}
+                  </span>
+                  <span style={{ fontSize: 11, color: 'var(--text-3)', textAlign: 'center' }}>{eq.gb}</span>
+                  <span style={{ fontSize: 10, color: 'var(--text-2)', textAlign: 'center' }}>{eq.domicile}</span>
+                  <span style={{ fontSize: 10, color: 'var(--text-2)', textAlign: 'center' }}>{eq.exterieur}</span>
+                  <span style={{ fontSize: 11, fontWeight: 700, textAlign: 'center',
+                    color: eq.serie?.startsWith('W') ? 'var(--success)' : eq.serie?.startsWith('L') ? 'var(--danger)' : 'var(--text-3)',
+                  }}>{eq.serie}</span>
+                </button>
+              )
+            })}
           </div>
 
-          <p style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 10 }}>
-            <span style={{ color: 'var(--accent)' }}>■</span> Top 6 — qualifiés playoffs directs
-          </p>
+          {/* Légende */}
+          <div style={{ display: 'flex', gap: 16, marginTop: 10, flexWrap: 'wrap' }}>
+            <span style={{ fontSize: 10, color: 'var(--text-3)' }}>
+              <span style={{ color: 'var(--accent)' }}>■</span> Top 6 — playoffs directs
+            </span>
+            <span style={{ fontSize: 10, color: 'var(--text-3)' }}>
+              <span style={{ color: 'rgba(249,115,22,0.8)' }}>■</span> 7-8 — Play-in
+            </span>
+            <span style={{ fontSize: 10, color: 'var(--text-3)' }}>
+              z conf · y div · x playoff · xp play-in · e éliminé · * meilleur bilan
+            </span>
+          </div>
         </>
       )}
     </div>
@@ -193,79 +291,64 @@ function OngletClassements() {
 }
 
 // ── ONGLET ÉQUIPES ───────────────────────────────────────────────────────────
-function OngletEquipes() {
-  const [equipes, setEquipes]       = useState([])
-  const [chargement, setChargement] = useState(true)
-  const [erreur, setErreur]         = useState(false)
-  const [equipeChoisie, setEquipeChoisie] = useState(null)
+// Les équipes sont extraites depuis standings → pas d'appel teams?limit=30
+function OngletEquipes({ equipesStandings, equipeInitiale, onEquipeClick }) {
+  const [equipeChoisie, setEquipeChoisie] = useState(equipeInitiale ?? null)
 
+  // Mise à jour si equipeInitiale change (clic depuis standings)
   useEffect(() => {
-    fetchAvecTimeout(`${BASE}/teams?limit=30`)
-      .then(r => r.json())
-      .then(data => {
-        const liste = (data.sports?.[0]?.leagues?.[0]?.teams ?? []).map(({ team: t }) => ({
-          id:            t.id,
-          trigramme:     t.abbreviation,
-          nom:           t.displayName,
-          nomCourt:      t.shortDisplayName,
-          couleur:       t.color ?? null,
-          couleurAlt:    t.alternateColor ?? null,
-          logo:          t.logos?.[0]?.href ?? null,
-          logoSombre:    t.logos?.[1]?.href ?? t.logos?.[0]?.href ?? null,
-        }))
-        // Tri alphabétique
-        liste.sort((a, b) => a.nom.localeCompare(b.nom))
-        setEquipes(liste)
-        setChargement(false)
-      })
-      .catch(() => { setErreur(true); setChargement(false) })
-  }, [])
+    if (equipeInitiale) setEquipeChoisie(equipeInitiale)
+  }, [equipeInitiale])
 
   if (equipeChoisie) {
     return <FicheEquipe equipe={equipeChoisie} onRetour={() => setEquipeChoisie(null)} />
   }
 
+  // Grille des équipes (triées alphabétiquement)
+  const liste = [...equipesStandings].sort((a, b) => a.nom.localeCompare(b.nom))
+
   return (
     <div>
       <LabelSection>30 Franchises NBA</LabelSection>
-
-      {chargement && <p style={{ color: 'var(--text-3)', fontSize: 13, marginTop: 12 }}>Chargement…</p>}
-      {erreur && <p style={{ color: 'var(--danger)', fontSize: 13, marginTop: 12 }}>Erreur ESPN</p>}
-
-      {!chargement && !erreur && (
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))',
-          gap: 10, marginTop: 12,
-        }}>
-          {equipes.map(eq => {
-            const couleur = couleurEquipe(eq.couleur)
-            return (
-              <button
-                key={eq.id}
-                onClick={() => setEquipeChoisie(eq)}
-                style={{
-                  background: `linear-gradient(135deg, ${couleur}18, ${couleur}06)`,
-                  borderWidth: 1, borderStyle: 'solid', borderColor: `${couleur}40`,
-                  borderRadius: 'var(--radius-md)',
-                  padding: '14px 12px',
-                  cursor: 'pointer',
-                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
-                  transition: 'transform 0.15s, border-color 0.15s',
-                }}
-                onMouseEnter={e => { e.currentTarget.style.borderColor = couleur; e.currentTarget.style.transform = 'translateY(-2px)' }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor = `${couleur}40`; e.currentTarget.style.transform = 'translateY(0)' }}
-              >
-                <LogoEquipe url={eq.logoSombre} trigramme={eq.trigramme} taille={44} couleur={couleur} />
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--text-1)', letterSpacing: '0.05em' }}>{eq.trigramme}</div>
-                  <div style={{ fontSize: 10, color: 'var(--text-3)', lineHeight: 1.3, marginTop: 2 }}>{eq.nomCourt}</div>
-                </div>
-              </button>
-            )
-          })}
-        </div>
-      )}
+      {liste.length === 0
+        ? <p style={{ color: 'var(--text-3)', fontSize: 13, marginTop: 12 }}>
+            Charge d'abord l'onglet Classements pour obtenir la liste des équipes.
+          </p>
+        : (
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))',
+            gap: 10, marginTop: 12,
+          }}>
+            {liste.map(eq => {
+              const couleur = couleurEquipe(eq.couleur)
+              return (
+                <button
+                  key={eq.id}
+                  onClick={() => setEquipeChoisie(eq)}
+                  style={{
+                    background: `linear-gradient(135deg, ${couleur}18, ${couleur}06)`,
+                    borderWidth: 1, borderStyle: 'solid', borderColor: `${couleur}40`,
+                    borderRadius: 'var(--radius-md)',
+                    padding: '14px 10px',
+                    cursor: 'pointer',
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
+                    transition: 'transform 0.15s, border-color 0.15s',
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor = couleur; e.currentTarget.style.transform = 'translateY(-2px)' }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = `${couleur}40`; e.currentTarget.style.transform = 'translateY(0)' }}
+                >
+                  <LogoEquipe url={eq.logoSombre} trigramme={eq.trigramme} taille={44} couleur={couleur} />
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--text-1)', letterSpacing: '0.05em' }}>{eq.trigramme}</div>
+                    <div style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 2 }}>{eq.nomCourt}</div>
+                  </div>
+                </button>
+              )
+            })}
+          </div>
+        )
+      }
     </div>
   )
 }
@@ -287,14 +370,10 @@ function FicheEquipe({ equipe, onRetour }) {
       fetchAvecTimeout(`${BASE}/teams/${equipe.id}/injuries`).then(r => r.json()),
     ]).then(([resRoster, resBlessés]) => {
       if (resRoster.status === 'fulfilled') {
-        const athletes = resRoster.value.athletes ?? []
-        // Roster ESPN : tableau de groupes par position
-        const joueurs = athletes.flatMap(groupe =>
+        const joueurs = (resRoster.value.athletes ?? []).flatMap(groupe =>
           (groupe.items ?? []).map(j => ({
             id:       j.id,
             nom:      j.fullName,
-            prenom:   j.firstName,
-            nomFam:   j.lastName,
             numero:   j.jersey ?? '—',
             position: j.position?.abbreviation ?? '?',
             photo:    j.headshot?.href ?? null,
@@ -305,8 +384,7 @@ function FicheEquipe({ equipe, onRetour }) {
         setRoster(joueurs)
       }
       if (resBlessés.status === 'fulfilled') {
-        const injuries = resBlessés.value.injuries ?? []
-        setBlessés(injuries.map(b => ({
+        setBlessés((resBlessés.value.injuries ?? []).map(b => ({
           id:     b.athlete?.id,
           nom:    b.athlete?.displayName ?? '?',
           statut: b.status ?? '?',
@@ -323,7 +401,6 @@ function FicheEquipe({ equipe, onRetour }) {
 
   return (
     <div>
-      {/* Bouton retour */}
       <button onClick={onRetour} style={{
         display: 'flex', alignItems: 'center', gap: 6,
         background: 'none', borderWidth: 0, color: 'var(--text-3)',
@@ -346,14 +423,17 @@ function FicheEquipe({ equipe, onRetour }) {
           <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--text-1)', fontFamily: 'var(--font-display)', letterSpacing: '0.05em' }}>
             {equipe.nom}
           </div>
-          <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 2 }}>{equipe.trigramme}</div>
+          <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 2 }}>
+            {equipe.trigramme}
+            {equipe.wins != null && ` · ${equipe.wins}-${equipe.losses} (${equipe.pct})`}
+          </div>
         </div>
       </div>
 
       {/* Onglets */}
       <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
         {[
-          { val: 'roster', label: 'Effectif' },
+          { val: 'roster',  label: 'Effectif' },
           { val: 'blessés', label: `Blessés${blessés.length > 0 ? ` (${blessés.length})` : ''}` },
         ].map(({ val, label }) => (
           <button key={val} onClick={() => setOnglet(val)} style={{
@@ -370,7 +450,6 @@ function FicheEquipe({ equipe, onRetour }) {
 
       {chargement && <p style={{ color: 'var(--text-3)', fontSize: 13 }}>Chargement…</p>}
 
-      {/* Roster */}
       {!chargement && onglet === 'roster' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           {roster.map(j => (
@@ -378,8 +457,7 @@ function FicheEquipe({ equipe, onRetour }) {
               display: 'flex', alignItems: 'center', gap: 12,
               background: 'var(--bg-1)', borderWidth: 1, borderStyle: 'solid', borderColor: 'var(--border)',
               borderRadius: 'var(--radius-md)', padding: '8px 12px',
-              cursor: 'pointer', textAlign: 'left',
-              transition: 'border-color 0.15s',
+              cursor: 'pointer', textAlign: 'left', transition: 'border-color 0.15s',
             }}
             onMouseEnter={e => e.currentTarget.style.borderColor = `${couleur}60`}
             onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}
@@ -397,7 +475,6 @@ function FicheEquipe({ equipe, onRetour }) {
         </div>
       )}
 
-      {/* Blessés */}
       {!chargement && onglet === 'blessés' && (
         <div>
           {blessés.length === 0
@@ -433,32 +510,15 @@ function FicheEquipe({ equipe, onRetour }) {
 }
 
 // ── ONGLET JOUEURS ───────────────────────────────────────────────────────────
-function OngletJoueurs() {
-  const [equipes, setEquipes]       = useState([])
+function OngletJoueurs({ equipesStandings }) {
   const [equipeChoisie, setEquipeChoisie] = useState(null)
-  const [recherche, setRecherche]   = useState('')
-  const [roster, setRoster]         = useState([])
-  const [chargement, setChargement] = useState(false)
-  const [joueurChoisi, setJoueurChoisi] = useState(null)
-  const [chargementEquipes, setChargementEquipes] = useState(true)
+  const [recherche, setRecherche]         = useState('')
+  const [roster, setRoster]               = useState([])
+  const [chargement, setChargement]       = useState(false)
+  const [joueurChoisi, setJoueurChoisi]   = useState(null)
 
-  // Charger la liste des équipes pour le sélecteur
-  useEffect(() => {
-    fetchAvecTimeout(`${BASE}/teams?limit=30`)
-      .then(r => r.json())
-      .then(data => {
-        const liste = (data.sports?.[0]?.leagues?.[0]?.teams ?? []).map(({ team: t }) => ({
-          id: t.id, trigramme: t.abbreviation, nom: t.displayName,
-          couleur: t.color ?? null, logo: t.logos?.[0]?.href ?? null,
-        }))
-        liste.sort((a, b) => a.nom.localeCompare(b.nom))
-        setEquipes(liste)
-        setChargementEquipes(false)
-      })
-      .catch(() => setChargementEquipes(false))
-  }, [])
+  const liste = [...equipesStandings].sort((a, b) => a.nom.localeCompare(b.nom))
 
-  // Charger le roster quand une équipe est choisie
   useEffect(() => {
     if (!equipeChoisie) return
     setChargement(true)
@@ -493,15 +553,12 @@ function OngletJoueurs() {
     <div>
       <LabelSection>Joueurs NBA</LabelSection>
 
-      {/* Sélecteur équipe */}
       <div style={{ marginTop: 12, marginBottom: 12 }}>
-        <label style={{ fontSize: 11, color: 'var(--text-3)', fontWeight: 700, display: 'block', marginBottom: 6 }}>
-          ÉQUIPE
-        </label>
+        <label style={{ fontSize: 11, color: 'var(--text-3)', fontWeight: 700, display: 'block', marginBottom: 6 }}>ÉQUIPE</label>
         <select
           value={equipeChoisie?.id ?? ''}
           onChange={e => {
-            const eq = equipes.find(x => x.id === e.target.value)
+            const eq = liste.find(x => x.id === e.target.value)
             setEquipeChoisie(eq ?? null)
             setRecherche('')
           }}
@@ -509,18 +566,16 @@ function OngletJoueurs() {
             width: '100%', fontSize: 13, fontWeight: 600,
             color: 'var(--text-1)', background: 'var(--bg-1)',
             borderWidth: 1, borderStyle: 'solid', borderColor: 'var(--border)',
-            borderRadius: 'var(--radius-sm)', padding: '8px 12px',
-            cursor: 'pointer',
+            borderRadius: 'var(--radius-sm)', padding: '8px 12px', cursor: 'pointer',
           }}
         >
           <option value="">— Choisir une équipe —</option>
-          {equipes.map(eq => (
+          {liste.map(eq => (
             <option key={eq.id} value={eq.id}>{eq.nom} ({eq.trigramme})</option>
           ))}
         </select>
       </div>
 
-      {/* Recherche dans le roster */}
       {equipeChoisie && (
         <div style={{ position: 'relative', marginBottom: 12 }}>
           <Search size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-3)' }} />
@@ -539,7 +594,6 @@ function OngletJoueurs() {
         </div>
       )}
 
-      {chargementEquipes && <p style={{ color: 'var(--text-3)', fontSize: 13 }}>Chargement…</p>}
       {chargement && <p style={{ color: 'var(--text-3)', fontSize: 13 }}>Chargement du roster…</p>}
 
       {!chargement && equipeChoisie && (
@@ -551,8 +605,7 @@ function OngletJoueurs() {
                 display: 'flex', alignItems: 'center', gap: 12,
                 background: 'var(--bg-1)', borderWidth: 1, borderStyle: 'solid', borderColor: 'var(--border)',
                 borderRadius: 'var(--radius-md)', padding: '8px 12px',
-                cursor: 'pointer', textAlign: 'left',
-                transition: 'border-color 0.15s',
+                cursor: 'pointer', textAlign: 'left', transition: 'border-color 0.15s',
               }}
               onMouseEnter={e => e.currentTarget.style.borderColor = `${couleur}60`}
               onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}
@@ -574,7 +627,7 @@ function OngletJoueurs() {
         </div>
       )}
 
-      {!equipeChoisie && !chargementEquipes && (
+      {!equipeChoisie && (
         <p style={{ color: 'var(--text-3)', fontSize: 13 }}>Sélectionne une équipe pour voir son roster.</p>
       )}
     </div>
@@ -583,8 +636,8 @@ function OngletJoueurs() {
 
 // ── FICHE JOUEUR ─────────────────────────────────────────────────────────────
 function FicheJoueur({ joueur, equipe, onRetour }) {
-  const [profil, setProfil]   = useState(null)
-  const [stats, setStats]     = useState(null)
+  const [profil, setProfil]         = useState(null)
+  const [stats, setStats]           = useState(null)
   const [chargement, setChargement] = useState(true)
 
   const couleur = equipe ? couleurEquipe(equipe.couleur) : 'var(--accent)'
@@ -598,35 +651,32 @@ function FicheJoueur({ joueur, equipe, onRetour }) {
       if (resProfil.status === 'fulfilled') {
         const a = resProfil.value.athlete ?? resProfil.value
         setProfil({
-          nom:       a.fullName ?? joueur.nom,
-          photo:     a.headshot?.href ?? joueur.photo ?? null,
-          numero:    a.jersey ?? joueur.numero ?? '—',
-          position:  a.position?.displayName ?? joueur.position ?? '—',
-          age:       a.age ?? '—',
-          taille:    a.displayHeight ?? '—',
-          poids:     a.displayWeight ?? '—',
-          experience: a.experience?.years ?? '—',
+          nom:        a.fullName ?? joueur.nom,
+          photo:      a.headshot?.href ?? joueur.photo ?? null,
+          numero:     a.jersey ?? joueur.numero ?? '—',
+          position:   a.position?.displayName ?? joueur.position ?? '—',
+          age:        a.age ?? '—',
+          taille:     a.displayHeight ?? '—',
+          poids:      a.displayWeight ?? '—',
+          experience: a.experience?.years != null ? `${a.experience.years} ans` : '—',
         })
       }
       if (resStats.status === 'fulfilled') {
-        // Structure ESPN stats : categories avec splits
-        const splits = resStats.value.splits
-        const categs = splits?.categories ?? []
-        const general = categs.find(c => c.name === 'general' || c.displayName?.toLowerCase().includes('général'))
-          ?? categs[0]
+        const categs  = resStats.value.splits?.categories ?? []
+        const general = categs.find(c => ['general', 'Total'].includes(c.name)) ?? categs[0]
         const entries = general?.stats ?? []
         const v = (n) => entries.find(s => s.name === n)?.displayValue ?? '—'
         setStats({
-          pts:  v('avgPoints'),
-          reb:  v('avgRebounds'),
-          ast:  v('avgAssists'),
-          stl:  v('avgSteals'),
-          blk:  v('avgBlocks'),
-          fg:   v('fieldGoalPct'),
-          fg3:  v('threePointFieldGoalPct'),
-          ft:   v('freeThrowPct'),
-          gp:   v('gamesPlayed'),
-          min:  v('avgMinutes'),
+          pts: v('avgPoints'),
+          reb: v('avgRebounds'),
+          ast: v('avgAssists'),
+          stl: v('avgSteals'),
+          blk: v('avgBlocks'),
+          fg:  v('fieldGoalPct'),
+          fg3: v('threePointFieldGoalPct'),
+          ft:  v('freeThrowPct'),
+          gp:  v('gamesPlayed'),
+          min: v('avgMinutes'),
         })
       }
       setChargement(false)
@@ -634,16 +684,16 @@ function FicheJoueur({ joueur, equipe, onRetour }) {
   }, [joueur.id])
 
   const statItems = stats ? [
-    { label: 'PPG',   val: stats.pts },
-    { label: 'RPG',   val: stats.reb },
-    { label: 'APG',   val: stats.ast },
-    { label: 'SPG',   val: stats.stl },
-    { label: 'BPG',   val: stats.blk },
-    { label: 'Min',   val: stats.min },
-    { label: 'FG%',   val: stats.fg },
-    { label: '3P%',   val: stats.fg3 },
-    { label: 'FT%',   val: stats.ft },
-    { label: 'Matchs', val: stats.gp },
+    { label: 'PPG', val: stats.pts },
+    { label: 'RPG', val: stats.reb },
+    { label: 'APG', val: stats.ast },
+    { label: 'SPG', val: stats.stl },
+    { label: 'BPG', val: stats.blk },
+    { label: 'Min', val: stats.min },
+    { label: 'FG%', val: stats.fg },
+    { label: '3P%', val: stats.fg3 },
+    { label: 'FT%', val: stats.ft },
+    { label: 'MJ',  val: stats.gp },
   ] : []
 
   return (
@@ -657,7 +707,6 @@ function FicheJoueur({ joueur, equipe, onRetour }) {
         {equipe ? `Retour — ${equipe.trigramme}` : 'Retour'}
       </button>
 
-      {/* Header joueur */}
       <div style={{
         display: 'flex', gap: 16, alignItems: 'flex-start',
         padding: '16px 20px',
@@ -677,13 +726,13 @@ function FicheJoueur({ joueur, equipe, onRetour }) {
           {profil && (
             <div style={{ display: 'flex', gap: 12, marginTop: 8, flexWrap: 'wrap' }}>
               {[
-                { label: 'Âge', val: profil.age },
+                { label: 'Âge',    val: profil.age },
                 { label: 'Taille', val: profil.taille },
-                { label: 'Poids', val: profil.poids },
-                { label: 'Exp.', val: profil.experience !== '—' ? `${profil.experience} ans` : '—' },
+                { label: 'Poids',  val: profil.poids },
+                { label: 'Exp.',   val: profil.experience },
               ].map(({ label, val }) => (
                 <div key={label} style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: 11, color: 'var(--text-3)' }}>{label}</div>
+                  <div style={{ fontSize: 10, color: 'var(--text-3)' }}>{label}</div>
                   <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-1)' }}>{val}</div>
                 </div>
               ))}
@@ -694,9 +743,8 @@ function FicheJoueur({ joueur, equipe, onRetour }) {
 
       {chargement && <p style={{ color: 'var(--text-3)', fontSize: 13 }}>Chargement des stats…</p>}
 
-      {/* Stats saison */}
       {!chargement && stats && (
-        <div>
+        <>
           <LabelSection>Stats saison</LabelSection>
           <div style={{
             display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)',
@@ -714,11 +762,11 @@ function FicheJoueur({ joueur, equipe, onRetour }) {
               </div>
             ))}
           </div>
-        </div>
+        </>
       )}
 
       {!chargement && !stats && (
-        <p style={{ color: 'var(--text-3)', fontSize: 13 }}>Stats indisponibles.</p>
+        <p style={{ color: 'var(--text-3)', fontSize: 13 }}>Stats indisponibles pour cette saison.</p>
       )}
     </div>
   )
@@ -732,21 +780,31 @@ const ONGLETS = [
 ]
 
 export default function Stats() {
-  const [onglet, setOnglet] = useState('classements')
+  const [onglet, setOnglet]             = useState('classements')
+  const [equipesStandings, setEquipesStandings] = useState([])  // partagées entre onglets
+  const [equipeViaClassement, setEquipeViaClassement] = useState(null)
+
+  // Réception des équipes depuis OngletClassements via callback
+  // (les équipes sont parsées lors du chargement standings)
+  const handleEquipesChargées = (equipes) => {
+    if (equipes.length > 0 && equipesStandings.length === 0) {
+      setEquipesStandings(equipes)
+    }
+  }
+
+  // Clic équipe depuis standings → switch onglet Équipes + ouvre la fiche
+  const handleEquipeClick = (eq) => {
+    setEquipeViaClassement(eq)
+    setOnglet('equipes')
+  }
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg-0)', paddingBottom: 80 }}>
       <Navigation />
 
-      {/* Header plein bord */}
-      <div className="nav-desktop-full nav-mobile-logo" style={{ paddingTop: 52 }}>
-        {/* spacer desktop */}
-      </div>
-      <div style={{ height: 52, display: 'none' }} className="nav-desktop-spacer" />
-
-      {/* Espaceur pour la nav */}
-      <div style={{ height: 52 }} className="nav-desktop-full" />
-      <div style={{ height: 40 }} className="nav-mobile-logo" />
+      {/* Espaceurs nav */}
+      <div className="nav-desktop-full" style={{ height: 52 }} />
+      <div className="nav-mobile-logo" style={{ height: 40 }} />
 
       <BanniereImage
         src="https://images.unsplash.com/photo-1504450758481-7338eba7524a?w=800&q=60"
@@ -762,8 +820,8 @@ export default function Stats() {
 
       {/* Onglets principaux */}
       <div style={{
-        display: 'flex', gap: 0,
-        margin: '0 16px 0',
+        display: 'flex',
+        marginLeft: 16, marginRight: 16,
         borderBottomWidth: 1, borderBottomStyle: 'solid', borderBottomColor: 'var(--border)',
       }}>
         {ONGLETS.map(({ val, label }) => (
@@ -778,12 +836,203 @@ export default function Stats() {
         ))}
       </div>
 
-      {/* Contenu onglet */}
+      {/* Contenu */}
       <div style={{ padding: '16px 16px 0' }}>
-        {onglet === 'classements' && <OngletClassements />}
-        {onglet === 'equipes'     && <OngletEquipes />}
-        {onglet === 'joueurs'     && <OngletJoueurs />}
+        {onglet === 'classements' && (
+          <OngletClassementsAvecSync
+            onEquipeClick={handleEquipeClick}
+            onEquipesChargées={handleEquipesChargées}
+          />
+        )}
+        {onglet === 'equipes' && (
+          <OngletEquipes
+            equipesStandings={equipesStandings}
+            equipeInitiale={equipeViaClassement}
+            onEquipeClick={handleEquipeClick}
+          />
+        )}
+        {onglet === 'joueurs' && (
+          <OngletJoueurs equipesStandings={equipesStandings} />
+        )}
       </div>
+    </div>
+  )
+}
+
+// Wrapper OngletClassements qui expose les équipes parsées vers le parent
+function OngletClassementsAvecSync({ onEquipeClick, onEquipesChargées }) {
+  const [donnees, setDonnees]         = useState({ est: [], ouest: [], saisons: [] })
+  const [onglet, setOnglet]           = useState('est')
+  const [saison, setSaison]           = useState(2026)
+  const [chargement, setChargement]   = useState(true)
+  const [erreur, setErreur]           = useState(false)
+  const [labelSaison, setLabelSaison] = useState('2025-26')
+
+  const charger = (annee) => {
+    setChargement(true)
+    setErreur(false)
+    fetchAvecTimeout(`${BASE_V2}/standings?season=${annee}&seasontype=2`)
+      .then(r => r.json())
+      .then(data => {
+        const saisonsDispos = (data.seasons ?? [])
+          .filter(s => s.types?.some(t => t.id === '2' && t.hasStandings))
+          .map(s => ({ year: s.year, label: s.displayName }))
+          .sort((a, b) => b.year - a.year)
+
+        const conferences = data.children ?? []
+        const est = [], ouest = []
+        conferences.forEach(conf => {
+          const nom   = conf.name ?? ''
+          const liste = (conf.standings?.entries ?? [])
+            .map(parseEquipe)
+            .sort((a, b) => a.seed - b.seed)
+          if (nom.toLowerCase().includes('east')) est.push(...liste)
+          else ouest.push(...liste)
+        })
+
+        const meta = data.season ?? {}
+        setLabelSaison(meta.displayName ?? `${annee}`)
+        setDonnees({ est, ouest, saisons: saisonsDispos })
+
+        // Remonte les équipes au parent (pour Équipes + Joueurs)
+        onEquipesChargées([...est, ...ouest])
+        setChargement(false)
+      })
+      .catch(() => { setErreur(true); setChargement(false) })
+  }
+
+  useEffect(() => { charger(saison) }, [saison])
+
+  const liste = onglet === 'est' ? donnees.est : donnees.ouest
+
+  return (
+    <div>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap', marginBottom: 12 }}>
+        <LabelSection>Classement NBA</LabelSection>
+        <span style={{ fontSize: 12, color: 'var(--text-3)' }}>Saison {labelSaison}</span>
+      </div>
+
+      <div style={{ marginBottom: 12 }}>
+        <select
+          value={saison}
+          onChange={e => setSaison(Number(e.target.value))}
+          style={{
+            fontSize: 12, fontWeight: 600, color: 'var(--text-1)',
+            background: 'var(--bg-1)',
+            borderWidth: 1, borderStyle: 'solid', borderColor: 'var(--border)',
+            borderRadius: 'var(--radius-sm)', padding: '6px 10px', cursor: 'pointer',
+          }}
+        >
+          {donnees.saisons.length > 0
+            ? donnees.saisons.map(s => <option key={s.year} value={s.year}>{s.label}</option>)
+            : <option value={2026}>2025-26</option>
+          }
+        </select>
+      </div>
+
+      <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+        {['est', 'ouest'].map(tab => (
+          <button key={tab} onClick={() => setOnglet(tab)} style={{
+            fontSize: 12, fontWeight: 700, cursor: 'pointer',
+            paddingTop: 6, paddingBottom: 6, paddingLeft: 16, paddingRight: 16,
+            borderRadius: 'var(--radius-sm)',
+            borderWidth: 1, borderStyle: 'solid',
+            background:  onglet === tab ? 'rgba(99,102,241,0.18)' : 'transparent',
+            borderColor: onglet === tab ? 'rgba(99,102,241,0.5)'  : 'var(--border)',
+            color:       onglet === tab ? 'var(--accent)'          : 'var(--text-3)',
+          }}>
+            {tab === 'est' ? 'Conférence Est' : 'Conférence Ouest'}
+          </button>
+        ))}
+      </div>
+
+      {chargement && <p style={{ color: 'var(--text-3)', fontSize: 13 }}>Chargement…</p>}
+      {erreur && <p style={{ color: 'var(--danger)', fontSize: 13 }}>Erreur ESPN</p>}
+
+      {!chargement && !erreur && (
+        <>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: '24px 24px 1fr 56px 44px 60px 60px 48px',
+            gap: 4, padding: '4px 8px',
+            fontSize: 10, fontWeight: 700, color: 'var(--text-3)',
+            textTransform: 'uppercase', letterSpacing: '0.05em',
+          }}>
+            <span>#</span><span />
+            <span>Équipe</span>
+            <span style={{ textAlign: 'center' }}>Bilan</span>
+            <span style={{ textAlign: 'center' }}>GB</span>
+            <span style={{ textAlign: 'center' }}>Dom.</span>
+            <span style={{ textAlign: 'center' }}>Ext.</span>
+            <span style={{ textAlign: 'center' }}>Série</span>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+            {liste.map((eq, idx) => {
+              const couleur = couleurEquipe(eq.couleur)
+              const playoff = eq.seed <= 6
+              const playIn  = eq.seed === 7 || eq.seed === 8
+              return (
+                <button
+                  key={eq.id}
+                  onClick={() => onEquipeClick(eq)}
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: '24px 24px 1fr 56px 44px 60px 60px 48px',
+                    gap: 4, alignItems: 'center',
+                    padding: '7px 8px',
+                    borderRadius: 'var(--radius-sm)',
+                    background: playoff
+                      ? `linear-gradient(90deg, ${couleur}12, transparent)`
+                      : playIn ? 'rgba(249,115,22,0.04)' : idx % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'transparent',
+                    borderWidth: 0,
+                    borderLeftWidth: playoff ? 2 : playIn ? 1 : 0,
+                    borderLeftStyle: 'solid',
+                    borderLeftColor: playoff ? couleur : 'rgba(249,115,22,0.4)',
+                    cursor: 'pointer', textAlign: 'left', width: '100%',
+                  }}
+                >
+                  <span style={{
+                    fontSize: 11, fontWeight: 700, textAlign: 'center',
+                    color: playoff ? 'var(--accent)' : 'var(--text-3)',
+                  }}>{eq.seed}</span>
+
+                  <LogoEquipe url={eq.logo} trigramme={eq.trigramme} taille={20} couleur={couleur} />
+
+                  <div style={{ minWidth: 0, display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-1)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {eq.trigramme}
+                    </span>
+                    <BadgeClincher val={eq.clincher} />
+                  </div>
+
+                  <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--text-1)', textAlign: 'center', fontFamily: 'var(--font-display)' }}>
+                    {eq.wins}-{eq.losses}
+                  </span>
+                  <span style={{ fontSize: 11, color: 'var(--text-3)', textAlign: 'center' }}>{eq.gb}</span>
+                  <span style={{ fontSize: 10, color: 'var(--text-2)', textAlign: 'center' }}>{eq.domicile}</span>
+                  <span style={{ fontSize: 10, color: 'var(--text-2)', textAlign: 'center' }}>{eq.exterieur}</span>
+                  <span style={{ fontSize: 11, fontWeight: 700, textAlign: 'center',
+                    color: eq.serie?.startsWith('W') ? 'var(--success)' : eq.serie?.startsWith('L') ? 'var(--danger)' : 'var(--text-3)',
+                  }}>{eq.serie}</span>
+                </button>
+              )
+            })}
+          </div>
+
+          <div style={{ display: 'flex', gap: 16, marginTop: 10, flexWrap: 'wrap' }}>
+            <span style={{ fontSize: 10, color: 'var(--text-3)' }}>
+              <span style={{ color: 'var(--accent)' }}>■</span> Top 6 — playoffs directs
+            </span>
+            <span style={{ fontSize: 10, color: 'var(--text-3)' }}>
+              <span style={{ color: 'rgba(249,115,22,0.8)' }}>■</span> 7-8 — Play-in
+            </span>
+            <span style={{ fontSize: 10, color: 'var(--text-3)' }}>
+              z conf · y div · x playoff · xp play-in · e éliminé · * meilleur bilan
+            </span>
+          </div>
+        </>
+      )}
     </div>
   )
 }
