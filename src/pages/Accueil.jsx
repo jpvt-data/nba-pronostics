@@ -13,6 +13,7 @@ import SeriesPlayoffs from '../components/SeriesPlayoffs'
 import { useNavigate } from 'react-router-dom'
 import { Zap, Calendar, EyeOff, Eye } from 'lucide-react'
 import { useNoSpoil } from '../context/NoSpoilContext'
+import NewsNBA from '../components/NewsNBA'
 
 const GUTTER = '20px 16px'
 
@@ -196,6 +197,8 @@ function Accueil() {
         {/* Standings saison régulière (type 2) ou séries playoffs (type 3) */}
         {!chargement && <StandingsNBA typeSaison={typeSaisonActuel} />}
         {!chargement && <SeriesPlayoffs typeSaison={typeSaisonActuel} />}
+        {/* News NBA — masquées si No Spoil actif */}
+        {!chargement && <NewsNBA typeSaison={typeSaisonActuel} />}
 
         {!chargement && user && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: '12px 16px 20px' }}>
