@@ -151,7 +151,7 @@ function Colonne({ label, series, noSpoil, d, hTotale }) {
         textTransform: 'uppercase', letterSpacing: '0.08em',
         textAlign: 'center', height: d.labelH,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        whiteSpace: 'pre-line', lineHeight: 1.2, marginBottom: 10,
+        whiteSpace: 'pre-line', lineHeight: 1.2, marginBottom: 10, wordBreak: 'break-word', textAlign: 'center', maxWidth: d.w,
       }}>{label}</div>
       <div style={{
         display: 'flex', flexDirection: 'column',
