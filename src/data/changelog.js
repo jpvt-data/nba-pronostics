@@ -1,20 +1,36 @@
 // Changelog NBA Pronostics — une entrée par version/feature
 export const CHANGELOG = [
   {
-  version: 'v0.7',
-  date: '2026-05-27',
-  titre: 'Stats & classement enrichis',
-  desc: 'Le classement affiche maintenant les pronos corrects, ratés et le taux de réussite de chaque joueur. Clique sur n\'importe quel joueur pour voir ses stats détaillées. Les pronos en attente des autres sont masqués — le suspense reste entier jusqu\'au tip-off. La page Ligues trie automatiquement les ligues actives en haut et les terminées en bas.',
-},
-{
-  version: 'v0.6',
-  date: '2026-05-26',
-  titre: 'Profil utilisateur',
-  desc: 'Chaque joueur a maintenant son profil : photo uploadable, pseudo et bio modifiables en un clic. Ton avatar apparaît partout — classement, stats, navigation. Accès depuis l\'avatar en haut à droite (desktop) ou en haut à gauche du hamburger (mobile).',
-  lien: '/profil',
-  labelLien: 'Mon profil',
-},
-{
+    version: 'v0.9',
+    date: '2026-05-28',
+    titre: 'Séries Playoffs & Actu NBA sur le Board',
+    desc: 'Le Board affiche maintenant les séries playoffs en cours avec le score de chaque confrontation (ex: OKC mène 3-1). En saison régulière, le classement Est/Ouest apparaît à la place. Un bloc Actu NBA affiche les 5 dernières news ESPN — masquées automatiquement en mode No Spoil.',
+    lien: '/accueil',
+    labelLien: 'Voir le Board',
+  },
+  {
+    version: 'v0.8',
+    date: '2026-05-28',
+    titre: 'Classement général & stats par ligue',
+    desc: 'Le classement affiche maintenant un podium par ligue avec les stats filtrées sur cette ligue, plus un classement général toutes ligues confondues. Dans Mes stats, un nouveau bloc détaille tes performances ligue par ligue — points, corrects, ratés, taux de réussite.',
+    lien: '/classement',
+    labelLien: 'Classement',
+  },
+  {
+    version: 'v0.7',
+    date: '2026-05-27',
+    titre: 'Stats & classement enrichis',
+    desc: 'Le classement affiche maintenant les pronos corrects, ratés et le taux de réussite de chaque joueur. Clique sur n\'importe quel joueur pour voir ses stats détaillées. Les pronos en attente des autres sont masqués — le suspense reste entier jusqu\'au tip-off. La page Ligues trie automatiquement les ligues actives en haut et les terminées en bas.',
+  },
+  {
+    version: 'v0.6',
+    date: '2026-05-26',
+    titre: 'Profil utilisateur',
+    desc: 'Chaque joueur a maintenant son profil : photo uploadable, pseudo et bio modifiables en un clic. Ton avatar apparaît partout — classement, stats, navigation. Accès depuis l\'avatar en haut à droite (desktop) ou en haut à gauche du hamburger (mobile).',
+    lien: '/profil',
+    labelLien: 'Mon profil',
+  },
+  {
     version: 'v0.5',
     date: '2026-05-26',
     titre: 'Ligues — nouvelle organisation',
@@ -89,4 +105,4 @@ export const CHANGELOG = [
 ]
 
 // Version courante de l'app — à incrémenter à chaque déploiement avec nouveautés
-export const VERSION_COURANTE = 'v0.7'
+export const VERSION_COURANTE = 'v0.9'
