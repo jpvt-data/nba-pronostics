@@ -46,7 +46,7 @@ const formatSummary = (summary, terminee) => {
 const DIM = {
   normal:  { w: 80,  h: 20, logo: 12, fsTri: 9,  fsScore: 10, gap: 10, fsSum: 8,  fsLabel: 7,  labelH: 18, sumH: 12 },
   compact: { w: 56,  h: 15, logo: 10, fsTri: 8,  fsScore: 9,  gap: 6,  fsSum: 7,  fsLabel: 6,  labelH: 16, sumH: 10 },
-  ultra:   { w: 40,  h: 12, logo: 8,  fsTri: 7,  fsScore: 8,  gap: 5,  fsSum: 6,  fsLabel: 5,  labelH: 14, sumH: 9  },
+  ultra:   { w: 40,  h: 12, logo: 8,  fsTri: 7,  fsScore: 8,  gap: 4,  fsSum: 6,  fsLabel: 5,  labelH: 14, sumH: 9  },
 }
 
 // Hauteur d'un matchup (2 cartes + gap interne 2px + summary)
