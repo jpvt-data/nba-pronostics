@@ -13,6 +13,7 @@ import Profil       from './pages/Profil'
 import PopupChangelog from './components/PopupChangelog'
 import { NoSpoilProvider } from './context/NoSpoilContext'
 import { ProfilProvider } from './context/ProfilContext'
+import Stats from './pages/Stats'
 
 function App() {
   const [session, setSession] = useState(undefined)
@@ -43,6 +44,7 @@ function App() {
           <Route path="/match/:espn_id"  element={prive(<MatchDetail />)} />
           <Route path="/calendrier"      element={prive(<Calendrier />)} />
           <Route path="/profil"          element={prive(<Profil />)} />
+          <Route path="/stats"           element={prive(<Stats />)} />
           <Route path="*"                element={<Navigate to={session ? '/accueil' : '/connexion'} />} />
         </Routes>
       </BrowserRouter>
