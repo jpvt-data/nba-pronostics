@@ -101,7 +101,7 @@ function CarteEquipe({ equipe, gagnante, noSpoil, compact }) {
   )
 }
 
-// ── Matchup (2 équipes) ───────────────────────────────────────────────────────
+// ── Matchup  (2 équipes) ───────────────────────────────────────────────────────
 function Matchup({ serie, noSpoil, compact }) {
   if (!serie) return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
