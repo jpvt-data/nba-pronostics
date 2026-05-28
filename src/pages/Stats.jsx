@@ -688,26 +688,19 @@ function FicheJoueur({ joueur, equipe, onRetour }) {
     fetchAvecTimeout(`${BASE_WEB}/athletes/${joueur.id}/stats?season=2026&seasontype=2`)
         .then(r => r.json())
         .then(data => {
-        // Structure : categories[0] = averages, names[] + statistics[0].stats[] en parallèle
         const catAvg = (data.categories ?? []).find(c => c.name === 'averages')
         if (catAvg) {
             const names  = catAvg.names ?? []
-            const vals   = catAvg.statistics?.[0]?.stats ?? catAvg.totals ?? []
-            const v = (n) => {
-            const idx = names.indexOf(n)
-            return idx !== -1 ? vals[idx] : '—'
-            }
+            // Prendre la saison 2026, fallback sur la dernière entrée
+            const statRow = catAvg.statistics?.find(s => s.season?.year === 2026)
+            ?? catAvg.statistics?.[catAvg.statistics.length - 1]
+            const vals = statRow?.stats ?? []
+            const v = (n) => { const i = names.indexOf(n); return i !== -1 ? vals[i] : '—' }
             setStats({
-            pts: v('avgPoints'),
-            reb: v('avgRebounds'),
-            ast: v('avgAssists'),
-            stl: v('avgSteals'),
-            blk: v('avgBlocks'),
-            min: v('avgMinutes'),
-            fg:  v('fieldGoalPct'),
-            fg3: v('threePointFieldGoalPct'),
-            ft:  v('freeThrowPct'),
-            gp:  v('gamesPlayed'),
+            pts: v('avgPoints'), reb: v('avgRebounds'), ast: v('avgAssists'),
+            stl: v('avgSteals'), blk: v('avgBlocks'), min: v('avgMinutes'),
+            fg:  v('fieldGoalPct'), fg3: v('threePointFieldGoalPct'),
+            ft:  v('freeThrowPct'), gp:  v('gamesPlayed'),
             })
         }
         setChargement(false)
