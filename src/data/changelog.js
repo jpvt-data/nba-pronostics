@@ -1,6 +1,14 @@
 // Changelog NBA Pronostics — une entrée par version/feature
 export const CHANGELOG = [
-  {
+{
+  version: "v1.1",
+  date: "2026-05-28",
+  titre: "Bracket Playoffs NBA",
+  desc: "Un bracket visuel complet des playoffs NBA s'affiche sur le Board pendant les playoffs. Tous les rounds sont représentés : 1er tour, demi-finales de conférence, finales de conférence et Finales NBA. Les scores de chaque série sont affichés avec le résultat final. Compatible No Spoil — les scores sont masqués si le mode est actif.",
+  lien: "/accueil",
+  labelLien: "Voir le Board",
+},
+{
   version: "v1.1",
   date: "2026-05-28",
   titre: "Prédiction ESPN dans les fiches match",

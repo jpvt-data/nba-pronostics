@@ -165,12 +165,12 @@ function Accueil() {
           <p style={{ color: 'var(--text-3)', fontSize: 13, textAlign: 'center', padding: '2rem 0' }}>Chargement…</p>
         )}
 
-        {!chargement && (
-          <BanniereImage url="https://images.unsplash.com/photo-1519861531473-9200262188bf?w=800&q=60" hauteur={110} />
-        )}
 
         {!chargement && <StandingsNBA typeSaison={typeSaisonActuel} />}
         {!chargement && typeSaisonActuel === 3 && <BracketPlayoffs saison={2026} />}
+        {!chargement && (
+          <BanniereImage url="https://images.unsplash.com/photo-1519861531473-9200262188bf?w=800&q=60" hauteur={110} />
+        )}
         {!chargement && <NewsNBA typeSaison={typeSaisonActuel} />}
 
         {!chargement && user && (
