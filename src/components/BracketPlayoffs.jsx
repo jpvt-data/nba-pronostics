@@ -19,7 +19,6 @@ const fetchAvecTimeout = (url) => {
   return fetch(url, { signal: ctrl.signal }).finally(() => clearTimeout(timer))
 }
 
-// Plages de 7 jours sur avril-juin — robuste quelle que soit l'année
 const plagesPlayoffs = (saison) => {
   const plages = []
   const debut  = new Date(`${saison}-04-01`)
@@ -35,31 +34,35 @@ const plagesPlayoffs = (saison) => {
   return plages
 }
 
-// Formate le summary ESPN en version courte : "SA wins series 4-1" → "4-1 ✓"
 const formatSummary = (summary, terminee) => {
   if (!summary) return ''
-  // Extraire le score (ex: "4-1", "3-2")
   const match = summary.match(/(\d+-\d+)/)
   const score = match ? match[1] : ''
   if (terminee) return score ? `${score} ✓` : '✓'
-  // En cours : "OKC leads series 3-2" → "3-2"
   return score
 }
 
 // ── Carte équipe ──────────────────────────────────────────────────────────────
-function CarteEquipe({ equipe, gagnante, noSpoil, compact }) {
+function CarteEquipe({ equipe, gagnante, noSpoil, compact, ultra }) {
   const [imgErr, setImgErr] = useState(false)
+
+  // Tailles selon le mode
+  const pad      = ultra ? '2px 4px'  : compact ? '3px 6px'  : '5px 8px'
+  const minW     = ultra ? 50         : compact ? 70          : 90
+  const logoSize = ultra ? 10         : compact ? 12          : 14
+  const logoBlur = ultra ? 20         : compact ? 24          : 30
+  const fsTri    = ultra ? 8          : compact ? 9           : 10
+  const fsScore  = ultra ? 9          : compact ? 10          : 11
 
   if (!equipe) return (
     <div style={{
-      display: 'flex', alignItems: 'center', gap: 4,
-      padding: compact ? '3px 6px' : '5px 8px',
-      borderRadius: 5, minWidth: compact ? 70 : 90,
+      display: 'flex', alignItems: 'center', gap: 3,
+      padding: pad, borderRadius: 5, minWidth: minW,
       background: 'rgba(255,255,255,0.03)',
       borderWidth: 1, borderStyle: 'solid', borderColor: 'rgba(255,255,255,0.06)',
     }}>
-      <div style={{ width: 12, height: 12, borderRadius: '50%', background: 'var(--bg-2)', flexShrink: 0 }} />
-      <span style={{ fontSize: 9, color: 'var(--text-3)', fontStyle: 'italic' }}>TBD</span>
+      <div style={{ width: logoSize, height: logoSize, borderRadius: '50%', background: 'var(--bg-2)', flexShrink: 0 }} />
+      {!ultra && <span style={{ fontSize: 8, color: 'var(--text-3)', fontStyle: 'italic' }}>TBD</span>}
     </div>
   )
 
@@ -68,13 +71,10 @@ function CarteEquipe({ equipe, gagnante, noSpoil, compact }) {
 
   return (
     <div style={{
-      display: 'flex', alignItems: 'center', gap: 4,
-      padding: compact ? '3px 6px' : '5px 8px',
-      borderRadius: 5, minWidth: compact ? 70 : 90,
+      display: 'flex', alignItems: 'center', gap: 3,
+      padding: pad, borderRadius: 5, minWidth: minW,
       position: 'relative', overflow: 'hidden',
-      background: estGagnant
-        ? `linear-gradient(90deg, ${couleur}28, ${couleur}10)`
-        : 'rgba(255,255,255,0.04)',
+      background: estGagnant ? `linear-gradient(90deg, ${couleur}28, ${couleur}10)` : 'rgba(255,255,255,0.04)',
       borderWidth: 1, borderStyle: 'solid',
       borderColor: estGagnant ? `${couleur}60` : 'rgba(255,255,255,0.08)',
     }}>
@@ -82,26 +82,26 @@ function CarteEquipe({ equipe, gagnante, noSpoil, compact }) {
       {equipe.logo && !imgErr && (
         <img src={equipe.logo} alt="" aria-hidden="true" style={{
           position: 'absolute', right: -4, top: '50%', transform: 'translateY(-50%)',
-          width: compact ? 24 : 30, height: compact ? 24 : 30,
+          width: logoBlur, height: logoBlur,
           objectFit: 'contain', opacity: 0.07, filter: 'blur(2px)', pointerEvents: 'none',
         }} />
       )}
       {/* Logo net */}
       {equipe.logo && !imgErr
         ? <img src={equipe.logo} alt={equipe.trigramme} onError={() => setImgErr(true)}
-            style={{ width: compact ? 12 : 14, height: compact ? 12 : 14, objectFit: 'contain', flexShrink: 0, position: 'relative' }} />
-        : <div style={{ width: compact ? 12 : 14, height: compact ? 12 : 14, borderRadius: '50%', background: couleur, flexShrink: 0 }} />
+            style={{ width: logoSize, height: logoSize, objectFit: 'contain', flexShrink: 0, position: 'relative' }} />
+        : <div style={{ width: logoSize, height: logoSize, borderRadius: '50%', background: couleur, flexShrink: 0 }} />
       }
       {/* Trigramme */}
       <span style={{
-        fontSize: compact ? 9 : 10, fontWeight: 800,
+        fontSize: fsTri, fontWeight: 800,
         fontFamily: 'var(--font-display)', letterSpacing: '0.04em',
         color: estGagnant ? 'var(--text-1)' : 'var(--text-2)',
         flex: 1, position: 'relative',
       }}>{equipe.trigramme}</span>
       {/* Score wins */}
       <span style={{
-        fontSize: compact ? 10 : 11, fontWeight: 900,
+        fontSize: fsScore, fontWeight: 900,
         fontFamily: 'var(--font-display)',
         color: estGagnant ? couleur : 'var(--text-3)',
         position: 'relative', flexShrink: 0, minWidth: 8, textAlign: 'right',
@@ -110,24 +110,24 @@ function CarteEquipe({ equipe, gagnante, noSpoil, compact }) {
   )
 }
 
-// ── Matchup (2 équipes + score série) ────────────────────────────────────────
-function Matchup({ serie, noSpoil, compact }) {
+// ── Matchup ───────────────────────────────────────────────────────────────────
+function Matchup({ serie, noSpoil, compact, ultra }) {
   if (!serie) return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-      <CarteEquipe equipe={null} noSpoil={noSpoil} compact={compact} />
-      <CarteEquipe equipe={null} noSpoil={noSpoil} compact={compact} />
+      <CarteEquipe equipe={null} noSpoil={noSpoil} compact={compact} ultra={ultra} />
+      <CarteEquipe equipe={null} noSpoil={noSpoil} compact={compact} ultra={ultra} />
     </div>
   )
 
   const { exterieur, domicile, terminee, summary } = serie
-  const gExt    = terminee && exterieur.wins > domicile.wins
-  const gDom    = terminee && domicile.wins > exterieur.wins
+  const gExt     = terminee && exterieur.wins > domicile.wins
+  const gDom     = terminee && domicile.wins > exterieur.wins
   const scoreAff = !noSpoil ? formatSummary(summary, terminee) : ''
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-      <CarteEquipe equipe={exterieur} gagnante={gExt} noSpoil={noSpoil} compact={compact} />
-      <CarteEquipe equipe={domicile}  gagnante={gDom} noSpoil={noSpoil} compact={compact} />
+      <CarteEquipe equipe={exterieur} gagnante={gExt} noSpoil={noSpoil} compact={compact} ultra={ultra} />
+      <CarteEquipe equipe={domicile}  gagnante={gDom} noSpoil={noSpoil} compact={compact} ultra={ultra} />
       {scoreAff && (
         <span style={{
           fontSize: 8, paddingLeft: 2, marginTop: 1, fontWeight: 700,
@@ -139,19 +139,19 @@ function Matchup({ serie, noSpoil, compact }) {
 }
 
 // ── Colonne d'un round ────────────────────────────────────────────────────────
-function ColonneRound({ label, series, noSpoil, compact }) {
+function ColonneRound({ label, series, noSpoil, compact, ultra }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
       <div style={{
-        fontSize: 7, fontWeight: 800, color: 'var(--text-3)',
+        fontSize: ultra ? 6 : 7, fontWeight: 800, color: 'var(--text-3)',
         textTransform: 'uppercase', letterSpacing: '0.08em',
         textAlign: 'center', marginBottom: 6, lineHeight: 1.3,
         whiteSpace: 'pre-line',
       }}>{label}</div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, flex: 1, justifyContent: 'space-evenly' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: ultra ? 8 : 10, flex: 1, justifyContent: 'space-evenly' }}>
         {series.length > 0
-          ? series.map((s, i) => <Matchup key={i} serie={s} noSpoil={noSpoil} compact={compact} />)
-          : <Matchup serie={null} noSpoil={noSpoil} compact={compact} />
+          ? series.map((s, i) => <Matchup key={i} serie={s} noSpoil={noSpoil} compact={compact} ultra={ultra} />)
+          : <Matchup serie={null} noSpoil={noSpoil} compact={compact} ultra={ultra} />
         }
       </div>
     </div>
@@ -164,6 +164,17 @@ export default function BracketPlayoffs({ saison = 2026 }) {
   const [bracket, setBracket] = useState(null)
   const [charg, setCharg]     = useState(true)
   const [erreur, setErreur]   = useState(false)
+  const [largeur, setLargeur] = useState(window.innerWidth)
+
+  // Détection largeur écran
+  useEffect(() => {
+    const onResize = () => setLargeur(window.innerWidth)
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [])
+
+  const mobile = largeur < 500
+  const ultra  = largeur < 380
 
   useEffect(() => {
     const charger = async () => {
@@ -180,7 +191,6 @@ export default function BracketPlayoffs({ saison = 2026 }) {
           ),
         ])
 
-        // Couleurs + logos + conférences depuis standings
         const mapInfos  = {}
         const confEst   = new Set()
         const confOuest = new Set()
@@ -198,10 +208,8 @@ export default function BracketPlayoffs({ saison = 2026 }) {
           })
         })
 
-        // Tous les events de toutes les plages
         const tousEvents = dataBoards.flatMap(d => d.events ?? [])
 
-        // Déduplication — dernière occurrence = wins les plus récents
         const mapSeries = new Map()
         tousEvents.forEach(evt => {
           const comp   = evt.competitions?.[0]
@@ -240,7 +248,6 @@ export default function BracketPlayoffs({ saison = 2026 }) {
           })
         })
 
-        // Grouper par conférence + round
         const ouest = { '1er tour': [], 'Demi-finales': [], 'Finales de conf.': [] }
         const est   = { '1er tour': [], 'Demi-finales': [], 'Finales de conf.': [] }
         let finale  = null
@@ -286,6 +293,14 @@ export default function BracketPlayoffs({ saison = 2026 }) {
     </p>
   )
 
+  const minW = ultra ? 370 : mobile ? 460 : 560
+  const gap  = ultra ? 4 : mobile ? 5 : 6
+  const cols = ultra
+    ? 'repeat(3, minmax(48px, 1fr)) minmax(55px, 70px) repeat(3, minmax(48px, 1fr))'
+    : mobile
+      ? 'repeat(3, minmax(62px, 1fr)) minmax(68px, 85px) repeat(3, minmax(62px, 1fr))'
+      : 'repeat(3, minmax(80px, 1fr)) minmax(80px, 100px) repeat(3, minmax(80px, 1fr))'
+
   return (
     <div>
       <div style={{ textAlign: 'center', marginBottom: 12 }}>
@@ -293,7 +308,8 @@ export default function BracketPlayoffs({ saison = 2026 }) {
           display: 'inline-block',
           background: 'linear-gradient(90deg, var(--accent), var(--orange))',
           WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
-          fontSize: 15, fontWeight: 900, fontFamily: 'var(--font-display)', letterSpacing: '0.12em',
+          fontSize: mobile ? 13 : 15, fontWeight: 900,
+          fontFamily: 'var(--font-display)', letterSpacing: '0.12em',
         }}>NBA PLAYOFFS {saison - 1}-{String(saison).slice(2)}</span>
         {noSpoil && (
           <div style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 4, fontStyle: 'italic' }}>
@@ -305,10 +321,11 @@ export default function BracketPlayoffs({ saison = 2026 }) {
       <div style={{ overflowX: 'auto', paddingBottom: 8 }}>
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(3, minmax(80px, 1fr)) minmax(80px, 100px) repeat(3, minmax(80px, 1fr))',
-          gap: 6,
-          minWidth: 560,
+          gridTemplateColumns: cols,
+          gap,
+          minWidth: minW,
           alignItems: 'center',
+          margin: '0 auto', // centrage
         }}>
           {/* OUEST : 1er tour → Finales conf */}
           {ORDRE_ROUNDS.map((round, i) => (
@@ -318,18 +335,19 @@ export default function BracketPlayoffs({ saison = 2026 }) {
               series={bracket.ouest[round]}
               noSpoil={noSpoil}
               compact={i > 0}
+              ultra={ultra || (mobile && i > 0)}
             />
           ))}
 
           {/* FINALES NBA */}
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, padding: '0 2px' }}>
             <div style={{
-              fontSize: 7, fontWeight: 900, letterSpacing: '0.12em',
+              fontSize: ultra ? 6 : 7, fontWeight: 900, letterSpacing: '0.12em',
               background: 'linear-gradient(90deg, var(--accent), var(--orange))',
               WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
               textAlign: 'center', whiteSpace: 'nowrap',
             }}>FINALES NBA</div>
-            <Matchup serie={bracket.finale} noSpoil={noSpoil} compact={false} />
+            <Matchup serie={bracket.finale} noSpoil={noSpoil} compact={false} ultra={ultra} />
           </div>
 
           {/* EST : Finales conf → 1er tour */}
@@ -340,6 +358,7 @@ export default function BracketPlayoffs({ saison = 2026 }) {
               series={bracket.est[round]}
               noSpoil={noSpoil}
               compact={i < 2}
+              ultra={ultra || (mobile && i < 2)}
             />
           ))}
         </div>
