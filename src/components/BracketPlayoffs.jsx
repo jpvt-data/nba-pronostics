@@ -5,8 +5,13 @@ const BASE    = 'https://site.api.espn.com/apis/site/v2/sports/basketball/nba'
 const BASE_V2 = 'https://site.api.espn.com/apis/v2/sports/basketball/nba'
 const TIMEOUT = 10000
 
-// Types ESPN → rounds playoffs
-const TYPE_ROUNDS = { '14': '1er tour', '15': 'Demi-finales', '16': 'Finales de conf.', '17': 'FINALE' }
+// Types ESPN → labels rounds playoffs
+const TYPE_ROUNDS = {
+  '14': '1er tour',
+  '15': 'Demi-finales',
+  '16': 'Finales de conf.',
+  '17': 'FINALE',
+}
 const ORDRE_ROUNDS = ['1er tour', 'Demi-finales', 'Finales de conf.']
 
 const fetchAvecTimeout = (url) => {
@@ -15,17 +20,24 @@ const fetchAvecTimeout = (url) => {
   return fetch(url, { signal: ctrl.signal }).finally(() => clearTimeout(timer))
 }
 
-// Génère tous les mois d'une saison NBA (oct N-1 → juillet N)
-const moisSaison = (saison) => {
-  const prev = saison - 1
-  return [
-    `${prev}1001-${prev}1031`, `${prev}1101-${prev}1130`, `${prev}1201-${prev}1231`,
-    `${saison}0101-${saison}0131`, `${saison}0201-${saison}0228`, `${saison}0301-${saison}0331`,
-    `${saison}0401-${saison}0430`, `${saison}0501-${saison}0531`, `${saison}0601-${saison}0630`,
-  ]
+// Génère des plages de 7 jours sur avril-juin de la saison
+// Robuste quelle que soit l'année de début des playoffs
+const plagesPlayoffs = (saison) => {
+  const plages = []
+  const debut  = new Date(`${saison}-04-01`)
+  const fin    = new Date(`${saison}-06-30`)
+  let cur      = new Date(debut)
+  while (cur <= fin) {
+    const d1 = cur.toISOString().slice(0, 10).replace(/-/g, '')
+    cur.setDate(cur.getDate() + 6)
+    const d2 = (cur > fin ? fin : new Date(cur)).toISOString().slice(0, 10).replace(/-/g, '')
+    plages.push(`${d1}-${d2}`)
+    cur.setDate(cur.getDate() + 1)
+  }
+  return plages
 }
 
-// ── Carte équipe ─────────────────────────────────────────────────────────────
+// ── Carte équipe ──────────────────────────────────────────────────────────────
 function CarteEquipe({ equipe, gagnante, noSpoil, compact }) {
   const [imgErr, setImgErr] = useState(false)
 
@@ -51,7 +63,9 @@ function CarteEquipe({ equipe, gagnante, noSpoil, compact }) {
       padding: compact ? '4px 8px' : '6px 10px',
       borderRadius: 6, minWidth: compact ? 80 : 110,
       position: 'relative', overflow: 'hidden',
-      background: estGagnant ? `linear-gradient(90deg, ${couleur}28, ${couleur}10)` : 'rgba(255,255,255,0.04)',
+      background: estGagnant
+        ? `linear-gradient(90deg, ${couleur}28, ${couleur}10)`
+        : 'rgba(255,255,255,0.04)',
       borderWidth: 1, borderStyle: 'solid',
       borderColor: estGagnant ? `${couleur}60` : 'rgba(255,255,255,0.08)',
     }}>
@@ -71,13 +85,15 @@ function CarteEquipe({ equipe, gagnante, noSpoil, compact }) {
       }
       {/* Trigramme */}
       <span style={{
-        fontSize: compact ? 10 : 11, fontWeight: 800, fontFamily: 'var(--font-display)',
-        letterSpacing: '0.04em', color: estGagnant ? 'var(--text-1)' : 'var(--text-2)',
+        fontSize: compact ? 10 : 11, fontWeight: 800,
+        fontFamily: 'var(--font-display)', letterSpacing: '0.04em',
+        color: estGagnant ? 'var(--text-1)' : 'var(--text-2)',
         flex: 1, position: 'relative',
       }}>{equipe.trigramme}</span>
       {/* Score wins */}
       <span style={{
-        fontSize: compact ? 11 : 13, fontWeight: 900, fontFamily: 'var(--font-display)',
+        fontSize: compact ? 11 : 13, fontWeight: 900,
+        fontFamily: 'var(--font-display)',
         color: estGagnant ? couleur : 'var(--text-3)',
         position: 'relative', flexShrink: 0, minWidth: 10, textAlign: 'right',
       }}>{noSpoil ? '?' : equipe.wins}</span>
@@ -93,6 +109,7 @@ function Matchup({ serie, noSpoil, compact }) {
       <CarteEquipe equipe={null} noSpoil={noSpoil} compact={compact} />
     </div>
   )
+
   const { exterieur, domicile, terminee, summary } = serie
   const gExt = terminee && exterieur.wins > domicile.wins
   const gDom = terminee && domicile.wins > exterieur.wins
@@ -103,8 +120,8 @@ function Matchup({ serie, noSpoil, compact }) {
       <CarteEquipe equipe={domicile}  gagnante={gDom} noSpoil={noSpoil} compact={compact} />
       {!noSpoil && summary && (
         <span style={{
-          fontSize: 9, color: terminee ? 'var(--success)' : 'var(--text-3)',
-          paddingLeft: 2, marginTop: 1,
+          fontSize: 9, paddingLeft: 2, marginTop: 1,
+          color: terminee ? 'var(--success)' : 'var(--text-3)',
         }}>{terminee ? '✓ ' : ''}{summary}</span>
       )}
     </div>
@@ -117,14 +134,15 @@ function ColonneRound({ label, series, noSpoil, compact }) {
     <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
       <div style={{
         fontSize: 8, fontWeight: 800, color: 'var(--text-3)',
-        textTransform: 'uppercase', letterSpacing: '0.1em',
+        textTransform: 'uppercase', letterSpacing: '0.08em',
         textAlign: 'center', marginBottom: 8, lineHeight: 1.3,
-        whiteSpace: 'nowrap',
+        whiteSpace: 'pre-line',
       }}>{label}</div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12, flex: 1, justifyContent: 'space-evenly' }}>
-        {series.map((s, i) => <Matchup key={i} serie={s} noSpoil={noSpoil} compact={compact} />)}
-        {/* Slots vides si moins de séries attendues */}
-        {series.length === 0 && <Matchup serie={null} noSpoil={noSpoil} compact={compact} />}
+        {series.length > 0
+          ? series.map((s, i) => <Matchup key={i} serie={s} noSpoil={noSpoil} compact={compact} />)
+          : <Matchup serie={null} noSpoil={noSpoil} compact={compact} />
+        }
       </div>
     </div>
   )
@@ -141,52 +159,46 @@ export default function BracketPlayoffs({ saison = 2026 }) {
     const charger = async () => {
       setCharg(true); setErreur(false)
       try {
-        // Fetch standings (couleurs) + tous les mois playoffs en parallèle
-        const mois = moisSaison(saison)
+        const plages = plagesPlayoffs(saison)
+
+        // Fetch standings (couleurs/logos) + toutes les plages en parallèle
         const [dataStandings, ...dataBoards] = await Promise.all([
           fetchAvecTimeout(`${BASE_V2}/standings?season=${saison}&seasontype=2`).then(r => r.json()),
-          ...mois.map(m =>
-            fetchAvecTimeout(`${BASE}/scoreboard?dates=${m}`)
+          ...plages.map(p =>
+            fetchAvecTimeout(`${BASE}/scoreboard?dates=${p}`)
               .then(r => r.json())
               .catch(() => ({ events: [] }))
           ),
         ])
 
-        // Map couleurs + logos depuis standings
+        // Couleurs + logos depuis standings
         const mapInfos = {}
-        ;(dataStandings.children ?? []).forEach(conf => {
-          ;(conf.standings?.entries ?? []).forEach(e => {
-            const eq = e.team
-            if (eq?.abbreviation) {
-              mapInfos[eq.abbreviation] = {
-                couleur: eq.color ?? null,
-                logo:    eq.logos?.[0]?.href ?? null,
-              }
-            }
-          })
-        })
-
-        // Conférences depuis standings
         const confEst   = new Set()
         const confOuest = new Set()
         ;(dataStandings.children ?? []).forEach(conf => {
           const estEst = conf.name?.toLowerCase().includes('east')
           ;(conf.standings?.entries ?? []).forEach(e => {
-            const tri = e.team?.abbreviation
-            if (tri) (estEst ? confEst : confOuest).add(tri)
+            const eq = e.team
+            if (!eq?.abbreviation) return
+            mapInfos[eq.abbreviation] = {
+              couleur: eq.color ?? null,
+              logo:    eq.logos?.[0]?.href ?? null,
+            }
+            if (estEst) confEst.add(eq.abbreviation)
+            else confOuest.add(eq.abbreviation)
           })
         })
 
-        // Tous les events de tous les mois
+        // Tous les events de toutes les plages
         const tousEvents = dataBoards.flatMap(d => d.events ?? [])
 
-        // Déduplication : clé = typeId + paire d'IDs triés
-        // On garde la dernière occurrence (la plus récente = wins à jour)
+        // Déduplication par clé typeId + paire d'IDs triés
+        // Map.set écrase → dernière occurrence = wins les plus récents
         const mapSeries = new Map()
         tousEvents.forEach(evt => {
           const comp  = evt.competitions?.[0]
-          const type  = comp?.type?.id
-          if (!TYPE_ROUNDS[type]) return                    // ignorer non-playoffs
+          const typeId = comp?.type?.id
+          if (!TYPE_ROUNDS[typeId]) return // ignorer non-playoffs
           const serie = comp?.series
           if (!serie || serie.type !== 'playoff') return
 
@@ -194,19 +206,17 @@ export default function BracketPlayoffs({ saison = 2026 }) {
           const away = comp.competitors?.find(c => c.homeAway === 'away')
           if (!home?.team || !away?.team) return
 
-          const ids = [home.team.id, away.team.id].sort()
-          const cle = `${type}-${ids.join('-')}`
-
+          const ids     = [home.team.id, away.team.id].sort()
+          const cle     = `${typeId}-${ids.join('-')}`
           const triHome = home.team.abbreviation
           const triAway = away.team.abbreviation
           const sHome   = serie.competitors?.find(c => c.id === home.team.id)
           const sAway   = serie.competitors?.find(c => c.id === away.team.id)
 
           mapSeries.set(cle, {
-            typeId:    type,
+            typeId,
             terminee:  serie.completed ?? false,
             summary:   serie.summary ?? '',
-            // away = extérieur, home = domicile
             exterieur: {
               trigramme: triAway,
               logo:      mapInfos[triAway]?.logo ?? away.team.logo ?? null,
@@ -222,18 +232,20 @@ export default function BracketPlayoffs({ saison = 2026 }) {
           })
         })
 
-        // Grouper par conférence et round
-        const ouest = { '1er tour': [], 'Demi-finales': [], 'Finales de conf.': [] }
-        const est   = { '1er tour': [], 'Demi-finales': [], 'Finales de conf.': [] }
-        let finale  = null
+        // Grouper par conférence + round
+        const ouest  = { '1er tour': [], 'Demi-finales': [], 'Finales de conf.': [] }
+        const est    = { '1er tour': [], 'Demi-finales': [], 'Finales de conf.': [] }
+        let finale   = null
 
         mapSeries.forEach(s => {
           const round = TYPE_ROUNDS[s.typeId]
           if (s.typeId === '17') { finale = s; return }
-          // Conférence = conf de l'équipe extérieure (ou domicile en fallback)
-          const conf = confEst.has(s.exterieur.trigramme) || confEst.has(s.domicile.trigramme) ? 'est' : 'ouest'
-          if (conf === 'est' && est[round])   est[round].push(s)
-          if (conf === 'ouest' && ouest[round]) ouest[round].push(s)
+          // Conférence : on regarde quelle conf contient l'une des deux équipes
+          const triExt = s.exterieur.trigramme
+          const triDom = s.domicile.trigramme
+          const isEst  = confEst.has(triExt) || confEst.has(triDom)
+          if (isEst && est[round])   est[round].push(s)
+          else if (ouest[round])     ouest[round].push(s)
         })
 
         setBracket({ ouest, est, finale })
@@ -257,7 +269,10 @@ export default function BracketPlayoffs({ saison = 2026 }) {
     </p>
   )
 
-  const aucuneDonnee = ORDRE_ROUNDS.every(r => bracket.ouest[r].length === 0 && bracket.est[r].length === 0) && !bracket.finale
+  const aucuneDonnee = ORDRE_ROUNDS.every(r =>
+    bracket.ouest[r].length === 0 && bracket.est[r].length === 0
+  ) && !bracket.finale
+
   if (aucuneDonnee) return (
     <p style={{ color: 'var(--text-3)', fontSize: 13, textAlign: 'center', padding: '24px 0' }}>
       Aucune donnée playoff disponible pour cette saison.
@@ -281,18 +296,17 @@ export default function BracketPlayoffs({ saison = 2026 }) {
         )}
       </div>
 
-      {/* Bracket scrollable horizontalement sur mobile */}
+      {/* Bracket — scroll horizontal sur mobile */}
       <div style={{ overflowX: 'auto', paddingBottom: 8 }}>
         <div style={{
           display: 'grid',
-          // Ouest 3 colonnes | Finale | Est 3 colonnes (ordre inversé)
-          gridTemplateColumns: 'repeat(3, minmax(110px, 1fr)) minmax(100px, 130px) repeat(3, minmax(110px, 1fr))',
-          gap: 8,
-          minWidth: 700,
+          gridTemplateColumns: 'repeat(3, minmax(100px, 1fr)) minmax(90px, 120px) repeat(3, minmax(100px, 1fr))',
+          gap: 6,
+          minWidth: 680,
           alignItems: 'center',
         }}>
 
-          {/* ── OUEST : 1er tour → Finales conf (gauche → centre) ── */}
+          {/* OUEST : 1er tour → Finales conf */}
           {ORDRE_ROUNDS.map((round, i) => (
             <ColonneRound
               key={`ouest-${round}`}
@@ -303,10 +317,10 @@ export default function BracketPlayoffs({ saison = 2026 }) {
             />
           ))}
 
-          {/* ── FINALES NBA (centre) ── */}
+          {/* FINALES NBA */}
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, padding: '0 4px' }}>
             <div style={{
-              fontSize: 8, fontWeight: 900, letterSpacing: '0.15em',
+              fontSize: 8, fontWeight: 900, letterSpacing: '0.12em',
               background: 'linear-gradient(90deg, var(--accent), var(--orange))',
               WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
               textAlign: 'center', whiteSpace: 'nowrap',
@@ -314,7 +328,7 @@ export default function BracketPlayoffs({ saison = 2026 }) {
             <Matchup serie={bracket.finale} noSpoil={noSpoil} compact={false} />
           </div>
 
-          {/* ── EST : Finales conf → 1er tour (centre → droite) ── */}
+          {/* EST : Finales conf → 1er tour */}
           {[...ORDRE_ROUNDS].reverse().map((round, i) => (
             <ColonneRound
               key={`est-${round}`}
