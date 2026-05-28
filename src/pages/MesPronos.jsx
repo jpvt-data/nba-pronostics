@@ -3,35 +3,20 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import Navigation from '../components/Navigation'
 import { Avatar } from '../components/Avatar'
+import { LabelSection, Bloc } from '../components/UI'
 
 const formaterDate = (dateStr) =>
   new Date(dateStr).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' })
 
-const LabelSection = ({ children }) => (
-  <h3 style={{
-    display: 'inline-block',
-    background: 'linear-gradient(90deg, var(--accent), var(--orange))',
-    WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
-    letterSpacing: '0.1em', fontSize: 13, fontWeight: 700,
-  }}>{children}</h3>
-)
-
-const BLOC = {
-  borderRadius: 'var(--radius-lg)',
-  background: 'linear-gradient(160deg, rgba(99,102,241,0.08) 0%, transparent 60%)',
-  borderWidth: 1, borderStyle: 'solid', borderColor: 'rgba(99,102,241,0.08)',
-  padding: '16px',
-}
-
 function MesPronos() {
-  const [pronos, setPronos]   = useState([])
-  const [stats, setStats]     = useState({ total: 0, corrects: 0, incorrects: 0 })
-  const [profil, setProfil]   = useState(null)
+  const [pronos, setPronos]      = useState([])
+  const [stats, setStats]        = useState({ total: 0, corrects: 0, incorrects: 0 })
+  const [profil, setProfil]      = useState(null)
   const [formeRecente, setForme] = useState([])
-  const [charg, setCharg]     = useState(true)
-  const [estMoi, setEstMoi]   = useState(true)
-  const navigate              = useNavigate()
-  const location              = useLocation()
+  const [charg, setCharg]        = useState(true)
+  const [estMoi, setEstMoi]      = useState(true)
+  const navigate                 = useNavigate()
+  const location                 = useLocation()
 
   useEffect(() => {
     const init = async () => {
@@ -41,15 +26,10 @@ function MesPronos() {
       const vuParMoi = cibleId === user.id
       setEstMoi(vuParMoi)
 
-      // Profil de la cible
       const { data: p } = await supabase
-        .from('profils')
-        .select('pseudo, avatar_url, description')
-        .eq('id', cibleId)
-        .single()
+        .from('profils').select('pseudo, avatar_url, description').eq('id', cibleId).single()
       setProfil(p)
 
-      // Pronos — si autre user : uniquement matchs terminés
       let query = supabase
         .from('pronos')
         .select('equipe_choisie, resultat, points_gagnes, cree_le, matchs(espn_id, date_match, equipe_domicile, equipe_exterieur, statut)')
@@ -61,25 +41,22 @@ function MesPronos() {
       const { data } = await query
       setPronos(data || [])
 
-      const termines  = data?.filter(p => p.resultat !== 'en_attente') || []
-      const corrects  = termines.filter(p => p.resultat === 'correct').length
+      const termines   = data?.filter(p => p.resultat !== 'en_attente') || []
+      const corrects   = termines.filter(p => p.resultat === 'correct').length
       const incorrects = termines.filter(p => p.resultat === 'incorrect').length
       setStats({ total: termines.length, corrects, incorrects })
 
-      // Forme récente — 5 derniers pronos terminés, triés par date de match
       const terminesTries = [...termines].sort(
         (a, b) => new Date(b.matchs?.date_match) - new Date(a.matchs?.date_match)
       )
       setForme(terminesTries.slice(0, 5))
-
       setCharg(false)
     }
     init()
   }, [location.search])
 
   const taux = stats.corrects + stats.incorrects > 0
-    ? Math.round(stats.corrects / (stats.corrects + stats.incorrects) * 100)
-    : 0
+    ? Math.round(stats.corrects / (stats.corrects + stats.incorrects) * 100) : 0
 
   const couleurResultat = (r) => {
     if (r === 'correct')   return { bg: 'var(--success-dim)', border: 'rgba(34,197,94,0.3)', txt: 'var(--success)' }
@@ -92,12 +69,8 @@ function MesPronos() {
       <Navigation />
       <main style={{ flex: 1 }}>
 
-        {/* ── Header profil ── */}
         <div style={{ padding: '20px 16px 0' }}>
-          <div style={{
-            ...BLOC,
-            display: 'flex', alignItems: 'flex-start', gap: 16,
-          }}>
+          <Bloc style={{ display: 'flex', alignItems: 'flex-start', gap: 16 }}>
             <Avatar url={profil?.avatar_url} pseudo={profil?.pseudo} taille={56} fontSize={18} />
             <div style={{ flex: 1, minWidth: 0 }}>
               <h2 style={{ margin: 0, lineHeight: 1.2 }}>{profil?.pseudo || '—'}</h2>
@@ -112,7 +85,7 @@ function MesPronos() {
                 </p>
               )}
             </div>
-          </div>
+          </Bloc>
         </div>
 
         {charg && <p style={{ color: 'var(--text-3)', fontSize: 13, padding: '2rem', textAlign: 'center' }}>Chargement…</p>}
@@ -120,8 +93,7 @@ function MesPronos() {
         {!charg && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: '12px 16px 24px' }}>
 
-            {/* ── Stats globales ── */}
-            <div style={{ ...BLOC }}>
+            <Bloc>
               <LabelSection>Stats</LabelSection>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginTop: 12 }}>
                 {[
@@ -136,11 +108,10 @@ function MesPronos() {
                   </div>
                 ))}
               </div>
-            </div>
+            </Bloc>
 
-            {/* ── Forme récente ── */}
             {formeRecente.length > 0 && (
-              <div style={{ ...BLOC }}>
+              <Bloc>
                 <LabelSection>Forme récente</LabelSection>
                 <div style={{ display: 'flex', gap: 6, marginTop: 12 }}>
                   {formeRecente.map((p, i) => (
@@ -157,11 +128,10 @@ function MesPronos() {
                     </div>
                   ))}
                 </div>
-              </div>
+              </Bloc>
             )}
 
-            {/* ── Historique ── */}
-            <div style={{ ...BLOC }}>
+            <Bloc>
               <LabelSection>Historique</LabelSection>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 12 }}>
                 {pronos.map((p, i) => {
@@ -175,8 +145,7 @@ function MesPronos() {
                       style={{
                         background: c.bg,
                         borderWidth: 1, borderStyle: 'solid', borderColor: c.border,
-                        borderRadius: 'var(--radius-sm)',
-                        padding: '10px 14px',
+                        borderRadius: 'var(--radius-sm)', padding: '10px 14px',
                         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                         cursor: cliquable ? 'pointer' : 'default',
                       }}
@@ -204,7 +173,7 @@ function MesPronos() {
                   <p style={{ color: 'var(--text-3)', fontSize: 13 }}>Aucun prono terminé pour l'instant.</p>
                 )}
               </div>
-            </div>
+            </Bloc>
 
           </div>
         )}

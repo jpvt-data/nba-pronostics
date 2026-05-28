@@ -10,31 +10,13 @@ import PronosAttente from '../components/PronosAttente'
 import RunsPotes from '../components/RunsPotes'
 import StandingsNBA from '../components/StandingsNBA'
 import SeriesPlayoffs from '../components/SeriesPlayoffs'
+import NewsNBA from '../components/NewsNBA'
+import { LabelSection, BanniereImage, Bloc } from '../components/UI'
 import { useNavigate } from 'react-router-dom'
 import { Zap, Calendar, EyeOff, Eye } from 'lucide-react'
 import { useNoSpoil } from '../context/NoSpoilContext'
-import NewsNBA from '../components/NewsNBA'
 
 const GUTTER = '20px 16px'
-
-const LabelSection = ({ children }) => (
-  <h3 style={{
-    display: 'inline-block',
-    background: 'linear-gradient(90deg, var(--accent), var(--orange))',
-    WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
-    letterSpacing: '0.1em', fontSize: 13, fontWeight: 700,
-  }}>{children}</h3>
-)
-
-const BanniereImage = ({ url, hauteur = 70 }) => (
-  <div style={{
-    margin: '20px 0 0', height: hauteur,
-    backgroundImage: `linear-gradient(to right, rgba(13,13,18,0.75), rgba(13,13,18,0.35), rgba(13,13,18,0.75)), url(${url})`,
-    backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat',
-    borderTopWidth: 1, borderTopStyle: 'solid', borderTopColor: 'rgba(99,102,241,0.2)',
-    borderBottomWidth: 1, borderBottomStyle: 'solid', borderBottomColor: 'rgba(99,102,241,0.2)',
-  }} />
-)
 
 function Accueil() {
   const [matchs, setMatchs]    = useState([])
@@ -101,7 +83,6 @@ function Accueil() {
     }
   }
 
-  // Type de saison détecté depuis le premier match ESPN disponible
   const typeSaisonActuel = matchs[0]?.typeSaisonNum ?? null
 
   return (
@@ -152,18 +133,12 @@ function Accueil() {
 
         <BanniereImage url="https://images.unsplash.com/photo-1504450758481-7338eba7524a?w=800&q=60" hauteur={110} />
 
-        <div style={{
-          margin: '20px 16px 0',
-          borderRadius: 'var(--radius-lg)',
-          background: 'linear-gradient(160deg, rgba(99,102,241,0.08) 0%, transparent 60%)',
-          borderWidth: 1, borderStyle: 'solid', borderColor: 'rgba(99,102,241,0.08)',
-          padding: '16px 16px 8px',
-        }}>
+        <Bloc style={{ margin: '20px 16px 0', padding: '16px 16px 8px' }}>
           <LabelSection>Prochains matchs</LabelSection>
           <p style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 4 }}>
             Clique sur une affiche pour pronostiquer et voir le détail
           </p>
-        </div>
+        </Bloc>
 
         {!chargement && <BandeMatchs matchs={matchs} userId={user?.id} onProno={faireProno} />}
 
@@ -194,26 +169,24 @@ function Accueil() {
           <BanniereImage url="https://images.unsplash.com/photo-1519861531473-9200262188bf?w=800&q=60" hauteur={110} />
         )}
 
-        {/* Standings saison régulière (type 2) ou séries playoffs (type 3) */}
         {!chargement && <StandingsNBA typeSaison={typeSaisonActuel} />}
         {!chargement && <SeriesPlayoffs typeSaison={typeSaisonActuel} />}
-        {/* News NBA — masquées si No Spoil actif */}
         {!chargement && <NewsNBA typeSaison={typeSaisonActuel} />}
 
         {!chargement && user && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: '12px 16px 20px' }}>
-            <div style={{ borderRadius: 'var(--radius-lg)', background: 'linear-gradient(160deg, rgba(99,102,241,0.08) 0%, transparent 60%)', borderWidth: 1, borderStyle: 'solid', borderColor: 'rgba(99,102,241,0.08)', padding: '16px' }}>
+            <Bloc>
               <LabelSection>Ligue en cours</LabelSection>
               <div style={{ marginTop: 8 }}><ClassementRapide userId={user.id} /></div>
-            </div>
-            <div style={{ borderRadius: 'var(--radius-lg)', background: 'linear-gradient(160deg, rgba(99,102,241,0.08) 0%, transparent 60%)', borderWidth: 1, borderStyle: 'solid', borderColor: 'rgba(99,102,241,0.08)', padding: '16px' }}>
+            </Bloc>
+            <Bloc>
               <LabelSection>Pronos en attente</LabelSection>
               <div style={{ marginTop: 8 }}><PronosAttente userId={user.id} /></div>
-            </div>
-            <div style={{ borderRadius: 'var(--radius-lg)', background: 'linear-gradient(160deg, rgba(99,102,241,0.08) 0%, transparent 60%)', borderWidth: 1, borderStyle: 'solid', borderColor: 'rgba(99,102,241,0.08)', padding: '16px' }}>
+            </Bloc>
+            <Bloc>
               <LabelSection>Runs des potes</LabelSection>
               <div style={{ marginTop: 8 }}><RunsPotes userId={user.id} /></div>
-            </div>
+            </Bloc>
           </div>
         )}
 

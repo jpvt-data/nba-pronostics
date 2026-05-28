@@ -3,32 +3,7 @@ import { supabase } from '../lib/supabase'
 import Navigation from '../components/Navigation'
 import { Camera, Check, X } from 'lucide-react'
 import { Avatar, couleurAvatar } from '../components/Avatar'
-
-const LabelSection = ({ children }) => (
-  <h3 style={{
-    display: 'inline-block',
-    background: 'linear-gradient(90deg, var(--accent), var(--orange))',
-    WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
-    letterSpacing: '0.1em', fontSize: 13, fontWeight: 700,
-  }}>{children}</h3>
-)
-
-const BanniereImage = ({ url, hauteur = 110 }) => (
-  <div style={{
-    margin: '20px 0 0', height: hauteur,
-    backgroundImage: `linear-gradient(to right, rgba(13,13,18,0.75), rgba(13,13,18,0.35), rgba(13,13,18,0.75)), url(${url})`,
-    backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat',
-    borderTopWidth: 1, borderTopStyle: 'solid', borderTopColor: 'rgba(99,102,241,0.2)',
-    borderBottomWidth: 1, borderBottomStyle: 'solid', borderBottomColor: 'rgba(99,102,241,0.2)',
-  }} />
-)
-
-const BLOC = {
-  borderRadius: 'var(--radius-lg)',
-  background: 'linear-gradient(160deg, rgba(99,102,241,0.08) 0%, transparent 60%)',
-  borderWidth: 1, borderStyle: 'solid', borderColor: 'rgba(99,102,241,0.08)',
-  padding: '16px',
-}
+import { LabelSection, BanniereImage, Bloc } from '../components/UI'
 
 function ChampEditable({ label, valeur, onSave, multiline = false, placeholder = '' }) {
   const [edit, setEdit]  = useState(false)
@@ -117,7 +92,7 @@ function Profil() {
     if (fichier.size > 2 * 1024 * 1024) { alert('Fichier trop lourd (max 2 Mo)'); return }
     setUpload(true)
     const { data: { user } } = await supabase.auth.getUser()
-    const ext = fichier.name.split('.').pop()
+    const ext    = fichier.name.split('.').pop()
     const chemin = `${user.id}.${ext}`
     const { error } = await supabase.storage.from('avatars').upload(chemin, fichier, { upsert: true, contentType: fichier.type })
     if (!error) {
@@ -147,10 +122,8 @@ function Profil() {
       <Navigation />
       <main style={{ flex: 1 }}>
 
-        {/* ── Bloc 1 : Header avatar — arrondi comme les autres ── */}
         <div style={{ padding: '20px 16px 0' }}>
-          <div style={{ ...BLOC, display: 'flex', alignItems: 'flex-start', gap: 20 }}>
-            {/* Avatar + bouton camera */}
+          <Bloc style={{ display: 'flex', alignItems: 'flex-start', gap: 20 }}>
             <div style={{ position: 'relative', flexShrink: 0 }}>
               {profil?.avatar_url
                 ? <img src={profil.avatar_url} alt={profil.pseudo} style={{ width: 72, height: 72, borderRadius: '50%', objectFit: 'cover', background: 'var(--bg-2)' }} />
@@ -164,7 +137,6 @@ function Profil() {
               </button>
               <input ref={inputFichier} type="file" accept="image/*" onChange={changerAvatar} style={{ display: 'none' }} />
             </div>
-            {/* Pseudo + date */}
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 22, color: 'var(--text-1)', marginBottom: 4 }}>
                 {profil?.pseudo}
@@ -173,25 +145,21 @@ function Profil() {
                 Membre depuis {new Date(profil?.cree_le).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}
               </div>
             </div>
-          </div>
+          </Bloc>
         </div>
 
-        {/* ── Bannière ballon ── */}
         <BanniereImage url="https://images.unsplash.com/photo-1627627256672-027a4613d028?w=800&q=60" />
 
-        {/* ── Blocs éditables + stats + ligues ── */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: '16px 16px 24px' }}>
 
-          {/* Infos éditables */}
-          <div style={{ ...BLOC, display: 'flex', flexDirection: 'column', gap: 20 }}>
+          <Bloc style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
             <LabelSection>Mon profil</LabelSection>
             <ChampEditable label="Pseudo" valeur={profil?.pseudo} placeholder="Ton pseudo" onSave={(v) => sauverChamp('pseudo', v)} />
             <div style={{ borderTopWidth: 1, borderTopStyle: 'solid', borderTopColor: 'rgba(99,102,241,0.1)' }} />
-            <ChampEditable label="Ta bio" valeur={profil?.description} placeholder="Dis un truc sur toi… ton équipe favorite, ton niveau de trash talk, etc." multiline onSave={(v) => sauverChamp('description', v)} />
-          </div>
+            <ChampEditable label="Ta bio" valeur={profil?.description} placeholder="Dis un truc sur toi…" multiline onSave={(v) => sauverChamp('description', v)} />
+          </Bloc>
 
-          {/* Stats pronos */}
-          <div style={{ ...BLOC }}>
+          <Bloc>
             <LabelSection>Stats pronos</LabelSection>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginTop: 12 }}>
               {[
@@ -206,11 +174,10 @@ function Profil() {
                 </div>
               ))}
             </div>
-          </div>
+          </Bloc>
 
-          {/* Ligues */}
           {ligues.length > 0 && (
-            <div style={{ ...BLOC }}>
+            <Bloc>
               <LabelSection>Mes ligues</LabelSection>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 12 }}>
                 {ligues.map((m, i) => {
@@ -229,7 +196,7 @@ function Profil() {
                   )
                 })}
               </div>
-            </div>
+            </Bloc>
           )}
 
         </div>

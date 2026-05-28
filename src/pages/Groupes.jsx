@@ -2,41 +2,16 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import Navigation from '../components/Navigation'
 import CreerGroupe from '../components/CreerGroupe'
+import { LabelSection, BanniereImage, Bloc } from '../components/UI'
 
 const ADMIN_ID = 'fa55d016-896c-4eb4-b48a-241d6be71ad0'
-
-const LabelSection = ({ children }) => (
-  <h3 style={{
-    display: 'inline-block',
-    background: 'linear-gradient(90deg, var(--accent), var(--orange))',
-    WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
-    letterSpacing: '0.1em', fontSize: 13, fontWeight: 700,
-  }}>{children}</h3>
-)
-
-const BanniereImage = ({ url, hauteur = 110 }) => (
-  <div style={{
-    margin: '0', height: hauteur,
-    backgroundImage: `linear-gradient(to right, rgba(13,13,18,0.75), rgba(13,13,18,0.35), rgba(13,13,18,0.75)), url(${url})`,
-    backgroundSize: 'cover', backgroundPosition: 'center',
-    borderTopWidth: 1, borderTopStyle: 'solid', borderTopColor: 'rgba(99,102,241,0.2)',
-    borderBottomWidth: 1, borderBottomStyle: 'solid', borderBottomColor: 'rgba(99,102,241,0.2)',
-  }} />
-)
-
-const BLOC = {
-  borderRadius: 'var(--radius-lg)',
-  background: 'linear-gradient(160deg, rgba(99,102,241,0.08) 0%, transparent 60%)',
-  borderWidth: 1, borderStyle: 'solid', borderColor: 'rgba(99,102,241,0.08)',
-  padding: '16px',
-}
 
 function Groupes() {
   const [ligues, setLigues]   = useState([])
   const [membres, setMembres] = useState({})
   const [charg, setCharg]     = useState(true)
   const [userId, setUserId]   = useState(null)
-  const [creerOuvert, setCreerOuvert] = useState(false)
+  const [creerOuvert, setCreerOuvert]   = useState(false)
   const [ligueEnModif, setLigueEnModif] = useState(null)
 
   const charger = async () => {
@@ -86,14 +61,8 @@ function Groupes() {
 
   const estFermee = (date_fin) => date_fin && new Date(date_fin) < new Date()
 
-  // Trier : actives d'abord, fermées en bas
-  const liguesTriees = [...ligues].sort((a, b) => {
-    const aFermee = estFermee(a.date_fin) ? 1 : 0
-    const bFermee = estFermee(b.date_fin) ? 1 : 0
-    return aFermee - bFermee
-  })
-
-  const liguesActives = liguesTriees.filter(l => !estFermee(l.date_fin))
+  const liguesTriees    = [...ligues].sort((a, b) => (estFermee(a.date_fin) ? 1 : 0) - (estFermee(b.date_fin) ? 1 : 0))
+  const liguesActives   = liguesTriees.filter(l => !estFermee(l.date_fin))
   const liguesTerminees = liguesTriees.filter(l => estFermee(l.date_fin))
 
   const CarteLigue = ({ ligue }) => {
@@ -126,7 +95,7 @@ function Groupes() {
             </div>
             {dateFin && (
               <div style={{ fontSize: 11, color: 'var(--text-3)' }}>
-                {fermee ? 'Terminée le' : 'Jusqu\'au'} {dateFin}
+                {fermee ? 'Terminée le' : "Jusqu'au"} {dateFin}
               </div>
             )}
             {dedans && membre?.points != null && (
@@ -164,92 +133,82 @@ function Groupes() {
   }
 
   return (
-      <>
-        <Navigation />
-        <main style={{ flex: 1 }}>
+    <>
+      <Navigation />
+      <main style={{ flex: 1 }}>
 
-          {/* ── Header plein bord ── */}
-          <div style={{
-            padding: '20px 16px',
-            background: 'linear-gradient(160deg, rgba(99,102,241,0.08) 0%, transparent 60%)',
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-              <h2 style={{ margin: 0 }}>Ligues</h2>
-              {userId === ADMIN_ID && (
-                <button
-                  onClick={() => { setCreerOuvert(v => !v); setLigueEnModif(null) }}
-                  style={{
-                    fontSize: 12, fontWeight: 600,
-                    background: creerOuvert ? 'var(--accent-dim)' : 'transparent',
-                    borderWidth: 1, borderStyle: 'solid',
-                    borderColor: creerOuvert ? 'var(--accent-border)' : 'var(--border)',
-                    borderRadius: 'var(--radius-sm)',
-                    color: creerOuvert ? 'var(--accent)' : 'var(--text-2)',
-                    paddingTop: 6, paddingBottom: 6, paddingLeft: 12, paddingRight: 12,
-                    cursor: 'pointer',
-                  }}
-                >
-                  + Nouvelle ligue
-                </button>
-              )}
-            </div>
-            <p style={{ fontSize: 13, color: 'var(--text-3)', margin: 0, lineHeight: 1.6 }}>
-              Rejoins une ligue pour entrer en compétition avec tes potes. Chaque ligue a sa propre période — pronos comptabilisés uniquement pendant la ligue active.
-            </p>
+        <div style={{
+          padding: '20px 16px',
+          background: 'linear-gradient(160deg, rgba(99,102,241,0.08) 0%, transparent 60%)',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+            <h2 style={{ margin: 0 }}>Ligues</h2>
+            {userId === ADMIN_ID && (
+              <button
+                onClick={() => { setCreerOuvert(v => !v); setLigueEnModif(null) }}
+                style={{
+                  fontSize: 12, fontWeight: 600,
+                  background: creerOuvert ? 'var(--accent-dim)' : 'transparent',
+                  borderWidth: 1, borderStyle: 'solid',
+                  borderColor: creerOuvert ? 'var(--accent-border)' : 'var(--border)',
+                  borderRadius: 'var(--radius-sm)',
+                  color: creerOuvert ? 'var(--accent)' : 'var(--text-2)',
+                  paddingTop: 6, paddingBottom: 6, paddingLeft: 12, paddingRight: 12,
+                  cursor: 'pointer',
+                }}
+              >
+                + Nouvelle ligue
+              </button>
+            )}
           </div>
+          <p style={{ fontSize: 13, color: 'var(--text-3)', margin: 0, lineHeight: 1.6 }}>
+            Rejoins une ligue pour entrer en compétition avec tes potes.
+          </p>
+        </div>
 
-          {/* ── Bannière ── */}
-          <BanniereImage url="https://images.unsplash.com/photo-1563506644863-444710df1e03?w=800&q=60" />
+        <BanniereImage url="https://images.unsplash.com/photo-1563506644863-444710df1e03?w=800&q=60" />
 
-          {/* ── Formulaire création (admin) ── */}
-          {creerOuvert && userId === ADMIN_ID && (
-            <div style={{ padding: '16px 16px 0' }}>
-              <CreerGroupe onSuccess={() => { setCreerOuvert(false); charger() }} />
-            </div>
-          )}
+        {creerOuvert && userId === ADMIN_ID && (
+          <div style={{ padding: '16px 16px 0' }}>
+            <CreerGroupe onSuccess={() => { setCreerOuvert(false); charger() }} />
+          </div>
+        )}
 
-          {/* ── Formulaire modification (admin) ── */}
-          {ligueEnModif && userId === ADMIN_ID && (
-            <div style={{ padding: '16px 16px 0' }}>
-              <CreerGroupe
-                ligueExistante={ligueEnModif}
-                onSuccess={() => { setLigueEnModif(null); charger() }}
-              />
-            </div>
-          )}
+        {ligueEnModif && userId === ADMIN_ID && (
+          <div style={{ padding: '16px 16px 0' }}>
+            <CreerGroupe ligueExistante={ligueEnModif} onSuccess={() => { setLigueEnModif(null); charger() }} />
+          </div>
+        )}
 
-          {charg && <p style={{ color: 'var(--text-3)', fontSize: 13, padding: '2rem', textAlign: 'center' }}>Chargement…</p>}
+        {charg && <p style={{ color: 'var(--text-3)', fontSize: 13, padding: '2rem', textAlign: 'center' }}>Chargement…</p>}
 
-          {!charg && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: '16px 16px 24px' }}>
-
-              {liguesActives.length > 0 && (
-                <div style={{ ...BLOC }}>
-                  <LabelSection>En cours</LabelSection>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 12 }}>
-                    {liguesActives.map(ligue => <CarteLigue key={ligue.id} ligue={ligue} />)}
-                  </div>
+        {!charg && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: '16px 16px 24px' }}>
+            {liguesActives.length > 0 && (
+              <Bloc>
+                <LabelSection>En cours</LabelSection>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 12 }}>
+                  {liguesActives.map(ligue => <CarteLigue key={ligue.id} ligue={ligue} />)}
                 </div>
-              )}
-
-              {liguesTerminees.length > 0 && (
-                <div style={{ ...BLOC, opacity: 0.8 }}>
-                  <LabelSection>Terminées</LabelSection>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 12 }}>
-                    {liguesTerminees.map(ligue => <CarteLigue key={ligue.id} ligue={ligue} />)}
-                  </div>
+              </Bloc>
+            )}
+            {liguesTerminees.length > 0 && (
+              <Bloc style={{ opacity: 0.8 }}>
+                <LabelSection>Terminées</LabelSection>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 12 }}>
+                  {liguesTerminees.map(ligue => <CarteLigue key={ligue.id} ligue={ligue} />)}
                 </div>
-              )}
+              </Bloc>
+            )}
+            {ligues.length === 0 && (
+              <p style={{ color: 'var(--text-3)', fontSize: 13, textAlign: 'center' }}>Aucune ligue disponible.</p>
+            )}
+          </div>
+        )}
 
-              {ligues.length === 0 && (
-                <p style={{ color: 'var(--text-3)', fontSize: 13, textAlign: 'center' }}>Aucune ligue disponible pour l'instant.</p>
-              )}
-            </div>
-          )}
+      </main>
+    </>
+  )
+}
 
-        </main>
-      </>
-    )
-  }
-  
 export default Groupes
