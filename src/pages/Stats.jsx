@@ -350,11 +350,12 @@ function FicheEquipe({ equipe, onRetour }) {
               .then(data => {
                 const catAvg = (data.categories ?? []).find(c => c.name === 'averages')
                 if (!catAvg) return { id: j.id, ppg: 0 }
-                const names = catAvg.names ?? []
-                const vals  = catAvg.statistics?.[0]?.stats ?? catAvg.totals ?? []
-                const idx   = names.indexOf('avgPoints')
-                const ppg   = idx !== -1 ? parseFloat(vals[idx]) || 0 : 0
-                return { id: j.id, ppg }
+                const names   = catAvg.names ?? []
+                const statRow = catAvg.statistics?.find(s => s.season?.year === 2026)
+                    ?? catAvg.statistics?.[catAvg.statistics.length - 1]
+                const vals = statRow?.stats ?? []
+                const idx  = names.indexOf('avgPoints')
+                return { id: j.id, ppg: idx !== -1 ? parseFloat(vals[idx]) || 0 : 0 }
               })
               .catch(() => ({ id: j.id, ppg: 0 }))
           )
