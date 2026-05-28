@@ -51,11 +51,28 @@ function BandeMatchs({ matchs, userId }) {
           const equipeProno = pronoActuel
             ? [match.domicile, match.exterieur].find(e => e.trigramme === pronoActuel)
             : null
-          const couleurBrute = equipeProno?.color || null
-          const couleur      = couleurBrute ? `#${couleurBrute}` : null
 
-          const borderColor = couleur
-            ? `${couleur}66`  // 40% opacité
+          // Vérifie si une couleur hex ESPN est trop sombre pour un dark theme
+          const estTropSombre = (hex) => {
+            if (!hex) return true
+            const h = hex.replace('#', '')
+            const r = parseInt(h.slice(0,2), 16)
+            const g = parseInt(h.slice(2,4), 16)
+            const b = parseInt(h.slice(4,6), 16)
+            // luminance perçue — seuil à 40
+            return (0.299*r + 0.587*g + 0.114*b) < 40
+          }
+
+          const couleurBrute     = equipeProno?.color         ? `#${equipeProno.color}`         : null
+          const couleurAlt       = equipeProno?.alternateColor ? `#${equipeProno.alternateColor}` : null
+          const couleur = !estTropSombre(couleurBrute)
+            ? couleurBrute
+            : !estTropSombre(couleurAlt)
+              ? couleurAlt
+              : 'var(--accent)'
+
+          const borderColor = pronoActuel
+            ? (couleur === 'var(--accent)' ? 'rgba(99,102,241,0.4)' : `${couleur}66`)
             : 'var(--border)'
 
           return (
@@ -63,8 +80,10 @@ function BandeMatchs({ matchs, userId }) {
               key={match.espn_id}
               onClick={() => navigate(`/match/${match.espn_id}`)}
               style={{
-                background: couleur
-                  ? `linear-gradient(160deg, ${couleur}18 0%, var(--bg-1) 65%)`
+                background: pronoActuel
+                  ? (couleur === 'var(--accent)'
+                      ? 'linear-gradient(160deg, rgba(99,102,241,0.1) 0%, var(--bg-1) 65%)'
+                      : `linear-gradient(160deg, ${couleur}18 0%, var(--bg-1) 65%)`)
                   : 'var(--bg-1)',
                 borderWidth: 1, borderStyle: 'solid', borderColor,
                 borderRadius: 'var(--radius-md)',
@@ -115,8 +134,8 @@ function BandeMatchs({ matchs, userId }) {
                 {pronoActuel && (
                   <span style={{
                     fontSize: 10, fontWeight: 700,
-                    color: couleur || 'var(--accent)',
-                    background: couleur ? `${couleur}22` : 'rgba(99,102,241,0.12)',
+                    color: couleur === 'var(--accent)' ? 'var(--accent)' : couleur,
+                    background: couleur === 'var(--accent)' ? 'rgba(99,102,241,0.12)' : `${couleur}22`,
                     borderRadius: 4,
                     paddingLeft: 6, paddingRight: 6, paddingTop: 2, paddingBottom: 2,
                   }}>
