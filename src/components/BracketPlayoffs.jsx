@@ -42,40 +42,27 @@ const formatSummary = (summary, terminee) => {
   return score
 }
 
-// ── Constantes de layout ──────────────────────────────────────────────────────
-// Hauteur fixe d'une carte équipe selon le mode
-const H_CARTE    = { normal: 26, compact: 22, ultra: 18 }
-// Hauteur fixe d'un matchup (2 cartes + gap 2px + summary 14px)
-const H_MATCHUP  = { normal: 26*2+2+14, compact: 22*2+2+12, ultra: 18*2+2+10 }
-// Gap entre matchups dans une colonne
-const GAP_MATCH  = { normal: 12, compact: 10, ultra: 8 }
-// Largeur fixe d'une carte
-const W_CARTE    = { normal: 96, compact: 76, ultra: 56 }
+// Dimensions fixes par mode
+const DIM = {
+  normal:  { w: 80,  h: 20, logo: 12, fsTri: 9,  fsScore: 10, gap: 10, fsSum: 8,  fsLabel: 7,  labelH: 18, sumH: 12 },
+  compact: { w: 64,  h: 17, logo: 10, fsTri: 8,  fsScore: 9,  gap: 8,  fsSum: 7,  fsLabel: 6,  labelH: 16, sumH: 10 },
+  ultra:   { w: 50,  h: 14, logo: 8,  fsTri: 7,  fsScore: 8,  gap: 6,  fsSum: 6,  fsLabel: 5,  labelH: 14, sumH: 9  },
+}
 
-// Hauteur totale d'une colonne avec N matchups
-const hauteurColonne = (n, mode) =>
-  n * H_MATCHUP[mode] + (n - 1) * GAP_MATCH[mode]
+// Hauteur d'un matchup (2 cartes + gap interne 2px + summary)
+const hMatchup = (d) => d.h * 2 + 2 + d.sumH
 
 // ── Carte équipe ──────────────────────────────────────────────────────────────
-function CarteEquipe({ equipe, gagnante, noSpoil, mode = 'normal' }) {
+function CarteEquipe({ equipe, gagnante, noSpoil, d }) {
   const [imgErr, setImgErr] = useState(false)
-  const h        = H_CARTE[mode]
-  const w        = W_CARTE[mode]
-  const logoSize = mode === 'ultra' ? 10 : mode === 'compact' ? 12 : 14
-  const fsTri    = mode === 'ultra' ? 8  : mode === 'compact' ? 9  : 10
-  const fsScore  = mode === 'ultra' ? 9  : mode === 'compact' ? 10 : 11
-
   if (!equipe) return (
     <div style={{
       display: 'flex', alignItems: 'center', gap: 3,
-      height: h, width: w, flexShrink: 0,
-      paddingLeft: 4, paddingRight: 4,
-      borderRadius: 4,
-      background: 'rgba(255,255,255,0.03)',
+      height: d.h, width: d.w, flexShrink: 0, paddingLeft: 4, paddingRight: 4,
+      borderRadius: 4, background: 'rgba(255,255,255,0.03)',
       borderWidth: 1, borderStyle: 'solid', borderColor: 'rgba(255,255,255,0.06)',
     }}>
-      <div style={{ width: logoSize, height: logoSize, borderRadius: '50%', background: 'var(--bg-2)', flexShrink: 0 }} />
-      {mode === 'normal' && <span style={{ fontSize: 8, color: 'var(--text-3)', fontStyle: 'italic' }}>TBD</span>}
+      <div style={{ width: d.logo, height: d.logo, borderRadius: '50%', background: 'var(--bg-2)', flexShrink: 0 }} />
     </div>
   )
 
@@ -85,38 +72,33 @@ function CarteEquipe({ equipe, gagnante, noSpoil, mode = 'normal' }) {
   return (
     <div style={{
       display: 'flex', alignItems: 'center', gap: 3,
-      height: h, width: w, flexShrink: 0,
-      paddingLeft: 4, paddingRight: 4,
-      borderRadius: 4,
-      position: 'relative', overflow: 'hidden',
+      height: d.h, width: d.w, flexShrink: 0, paddingLeft: 4, paddingRight: 4,
+      borderRadius: 4, position: 'relative', overflow: 'hidden',
       background: estGagnant ? `linear-gradient(90deg, ${couleur}28, ${couleur}10)` : 'rgba(255,255,255,0.04)',
       borderWidth: 1, borderStyle: 'solid',
       borderColor: estGagnant ? `${couleur}60` : 'rgba(255,255,255,0.08)',
     }}>
-      {/* Logo flouté */}
       {equipe.logo && !imgErr && (
         <img src={equipe.logo} alt="" aria-hidden="true" style={{
           position: 'absolute', right: -2, top: '50%', transform: 'translateY(-50%)',
-          width: h * 1.4, height: h * 1.4,
+          width: d.h * 1.6, height: d.h * 1.6,
           objectFit: 'contain', opacity: 0.07, filter: 'blur(2px)', pointerEvents: 'none',
         }} />
       )}
-      {/* Logo net */}
       {equipe.logo && !imgErr
         ? <img src={equipe.logo} alt={equipe.trigramme} onError={() => setImgErr(true)}
-            style={{ width: logoSize, height: logoSize, objectFit: 'contain', flexShrink: 0, position: 'relative' }} />
-        : <div style={{ width: logoSize, height: logoSize, borderRadius: '50%', background: couleur, flexShrink: 0 }} />
+            style={{ width: d.logo, height: d.logo, objectFit: 'contain', flexShrink: 0, position: 'relative' }} />
+        : <div style={{ width: d.logo, height: d.logo, borderRadius: '50%', background: couleur, flexShrink: 0 }} />
       }
       <span style={{
-        fontSize: fsTri, fontWeight: 800,
-        fontFamily: 'var(--font-display)', letterSpacing: '0.04em',
+        fontSize: d.fsTri, fontWeight: 800,
+        fontFamily: 'var(--font-display)', letterSpacing: '0.03em',
         color: estGagnant ? 'var(--text-1)' : 'var(--text-2)',
         flex: 1, position: 'relative',
         overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
       }}>{equipe.trigramme}</span>
       <span style={{
-        fontSize: fsScore, fontWeight: 900,
-        fontFamily: 'var(--font-display)',
+        fontSize: d.fsScore, fontWeight: 900, fontFamily: 'var(--font-display)',
         color: estGagnant ? couleur : 'var(--text-3)',
         position: 'relative', flexShrink: 0,
       }}>{noSpoil ? '?' : equipe.wins}</span>
@@ -125,15 +107,14 @@ function CarteEquipe({ equipe, gagnante, noSpoil, mode = 'normal' }) {
 }
 
 // ── Matchup ───────────────────────────────────────────────────────────────────
-function Matchup({ serie, noSpoil, mode = 'normal' }) {
+function Matchup({ serie, noSpoil, d }) {
   const scoreAff = serie && !noSpoil ? formatSummary(serie.summary, serie.terminee) : ''
-  const fsSum    = mode === 'ultra' ? 7 : 8
 
   if (!serie) return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-      <CarteEquipe equipe={null} noSpoil={noSpoil} mode={mode} />
-      <CarteEquipe equipe={null} noSpoil={noSpoil} mode={mode} />
-      <div style={{ height: fsSum + 4 }} />
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 2, height: hMatchup(d), flexShrink: 0 }}>
+      <CarteEquipe equipe={null} noSpoil={noSpoil} d={d} />
+      <CarteEquipe equipe={null} noSpoil={noSpoil} d={d} />
+      <div style={{ height: d.sumH }} />
     </div>
   )
 
@@ -142,13 +123,13 @@ function Matchup({ serie, noSpoil, mode = 'normal' }) {
   const gDom = terminee && domicile.wins > exterieur.wins
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-      <CarteEquipe equipe={exterieur} gagnante={gExt} noSpoil={noSpoil} mode={mode} />
-      <CarteEquipe equipe={domicile}  gagnante={gDom} noSpoil={noSpoil} mode={mode} />
-      <div style={{ height: fsSum + 4, display: 'flex', alignItems: 'center' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 2, height: hMatchup(d), flexShrink: 0 }}>
+      <CarteEquipe equipe={exterieur} gagnante={gExt} noSpoil={noSpoil} d={d} />
+      <CarteEquipe equipe={domicile}  gagnante={gDom} noSpoil={noSpoil} d={d} />
+      <div style={{ height: d.sumH, display: 'flex', alignItems: 'center' }}>
         {scoreAff && (
           <span style={{
-            fontSize: fsSum, fontWeight: 700, paddingLeft: 2,
+            fontSize: d.fsSum, fontWeight: 700, paddingLeft: 2,
             color: terminee ? 'var(--success)' : 'var(--orange)',
           }}>{scoreAff}</span>
         )}
@@ -157,30 +138,26 @@ function Matchup({ serie, noSpoil, mode = 'normal' }) {
   )
 }
 
-// ── Colonne : liste de matchups espacés uniformément ─────────────────────────
-function Colonne({ label, series, noSpoil, mode, hauteurTotale }) {
+// ── Colonne avec label et matchups ────────────────────────────────────────────
+function Colonne({ label, series, noSpoil, d, hTotale }) {
+  const hm  = hMatchup(d)
   const n   = series.length || 1
-  const gap = GAP_MATCH[mode]
+  const items = series.length > 0 ? series : [null]
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-      {/* Label */}
+    <div style={{ display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
       <div style={{
-        fontSize: mode === 'ultra' ? 6 : 7, fontWeight: 800, color: 'var(--text-3)',
+        fontSize: d.fsLabel, fontWeight: 800, color: 'var(--text-3)',
         textTransform: 'uppercase', letterSpacing: '0.08em',
-        textAlign: 'center', marginBottom: 6, lineHeight: 1.3,
-        whiteSpace: 'pre-line', height: 20, display: 'flex', alignItems: 'center', justifyContent: 'center',
+        textAlign: 'center', height: d.labelH,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        whiteSpace: 'pre-line', lineHeight: 1.2, marginBottom: 6,
       }}>{label}</div>
-      {/* Matchups espacés uniformément dans hauteurTotale */}
       <div style={{
         display: 'flex', flexDirection: 'column',
-        gap,
-        height: hauteurTotale,
-        justifyContent: 'space-evenly',
+        height: hTotale, justifyContent: 'space-evenly', gap: d.gap,
       }}>
-        {(series.length > 0 ? series : [null]).map((s, i) => (
-          <Matchup key={i} serie={s} noSpoil={noSpoil} mode={mode} />
-        ))}
+        {items.map((s, i) => <Matchup key={i} serie={s} noSpoil={noSpoil} d={d} />)}
       </div>
     </div>
   )
@@ -194,6 +171,7 @@ export default function BracketPlayoffs({ saison = 2026 }) {
   const [erreur, setErreur]   = useState(false)
   const [largeur, setLargeur] = useState(window.innerWidth)
   const scrollRef             = useRef(null)
+  const finaleRef             = useRef(null)
 
   useEffect(() => {
     const onResize = () => setLargeur(window.innerWidth)
@@ -201,12 +179,18 @@ export default function BracketPlayoffs({ saison = 2026 }) {
     return () => window.removeEventListener('resize', onResize)
   }, [])
 
-  const mode = largeur < 380 ? 'ultra' : largeur < 500 ? 'compact' : 'normal'
+  const mode = largeur < 380 ? 'ultra' : largeur < 520 ? 'compact' : 'normal'
+  const d    = DIM[mode]
 
+  // Centrer le scroll sur la colonne Finales NBA
   useEffect(() => {
-    if (!bracket || !scrollRef.current) return
-    const el      = scrollRef.current
-    el.scrollLeft = (el.scrollWidth - el.clientWidth) / 2
+    if (!bracket || !scrollRef.current || !finaleRef.current) return
+    const container = scrollRef.current
+    const el        = finaleRef.current
+    // Position du centre de l'élément finale par rapport au container
+    const elCenter  = el.offsetLeft + el.offsetWidth / 2
+    const conW      = container.clientWidth
+    container.scrollLeft = elCenter - conW / 2
   }, [bracket])
 
   useEffect(() => {
@@ -256,9 +240,7 @@ export default function BracketPlayoffs({ saison = 2026 }) {
           const sHome   = serie.competitors?.find(c => c.id === home.team.id)
           const sAway   = serie.competitors?.find(c => c.id === away.team.id)
           mapSeries.set(cle, {
-            typeId,
-            terminee:  serie.completed ?? false,
-            summary:   serie.summary ?? '',
+            typeId, terminee: serie.completed ?? false, summary: serie.summary ?? '',
             exterieur: { trigramme: triAway, logo: mapInfos[triAway]?.logo ?? away.team.logo ?? null, couleur: mapInfos[triAway]?.couleur ?? null, wins: sAway?.wins ?? 0 },
             domicile:  { trigramme: triHome, logo: mapInfos[triHome]?.logo ?? home.team.logo ?? null, couleur: mapInfos[triHome]?.couleur ?? null, wins: sHome?.wins ?? 0 },
           })
@@ -283,81 +265,68 @@ export default function BracketPlayoffs({ saison = 2026 }) {
     charger()
   }, [saison])
 
-  if (charg) return <p style={{ color: 'var(--text-3)', fontSize: 13, textAlign: 'center', padding: '24px 0' }}>Chargement du bracket…</p>
-  if (erreur || !bracket) return <p style={{ color: 'var(--danger)', fontSize: 13, textAlign: 'center', padding: '24px 0' }}>Impossible de charger le bracket.</p>
+  if (charg)          return <p style={{ color: 'var(--text-3)', fontSize: 13, textAlign: 'center', padding: '24px 0' }}>Chargement du bracket…</p>
+  if (erreur||!bracket) return <p style={{ color: 'var(--danger)', fontSize: 13, textAlign: 'center', padding: '24px 0' }}>Impossible de charger le bracket.</p>
 
   const aucuneDonnee = ORDRE_ROUNDS.every(r => bracket.ouest[r].length === 0 && bracket.est[r].length === 0) && !bracket.finale
-  if (aucuneDonnee) return <p style={{ color: 'var(--text-3)', fontSize: 13, textAlign: 'center', padding: '24px 0' }}>Aucune donnée playoff disponible.</p>
+  if (aucuneDonnee)   return <p style={{ color: 'var(--text-3)', fontSize: 13, textAlign: 'center', padding: '24px 0' }}>Aucune donnée playoff disponible.</p>
 
-  // Hauteur de référence = hauteur de la colonne 1er tour (4 matchups)
-  const n1   = Math.max(bracket.ouest['1er tour'].length, bracket.est['1er tour'].length, 1)
-  const n2   = Math.max(bracket.ouest['Demi-finales'].length, bracket.est['Demi-finales'].length, 1)
-  const n3   = Math.max(bracket.ouest['Finales de conf.'].length, bracket.est['Finales de conf.'].length, 1)
-  const gap  = GAP_MATCH[mode]
-  const hm   = H_MATCHUP[mode]
+  const hm      = hMatchup(d)
+  const n1      = Math.max(bracket.ouest['1er tour'].length,        bracket.est['1er tour'].length,        1)
+  const hTotale = n1 * hm + (n1 - 1) * d.gap
 
-  // Hauteur de chaque colonne = même hauteur totale pour toutes
-  const hTotale = n1 * hm + (n1 - 1) * gap
-
-  const colW = W_CARTE[mode] + 8 // largeur colonne = carte + padding
-  const colGap = mode === 'ultra' ? 6 : mode === 'compact' ? 8 : 12
-
-  // Hauteur finale NBA centrée au-dessus des finales de conf
-  const hFinaleCol = n3 * hm + (n3 - 1) * gap
+  const colGap = mode === 'ultra' ? 5 : mode === 'compact' ? 7 : 10
 
   return (
     <div>
-      <div style={{ textAlign: 'center', marginBottom: 12 }}>
+      <div style={{ textAlign: 'center', marginBottom: 10 }}>
         <span style={{
           display: 'inline-block',
           background: 'linear-gradient(90deg, var(--accent), var(--orange))',
           WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
-          fontSize: mode === 'normal' ? 15 : 13, fontWeight: 900,
+          fontSize: mode === 'normal' ? 14 : 12, fontWeight: 900,
           fontFamily: 'var(--font-display)', letterSpacing: '0.12em',
         }}>NBA PLAYOFFS {saison - 1}-{String(saison).slice(2)}</span>
-        {noSpoil && <div style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 4, fontStyle: 'italic' }}>🙈 No Spoil actif — scores masqués</div>}
+        {noSpoil && <div style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 3, fontStyle: 'italic' }}>🙈 No Spoil actif</div>}
       </div>
 
       <div ref={scrollRef} style={{ overflowX: 'auto', paddingBottom: 8 }}>
         <div style={{
-          display: 'flex', flexDirection: 'row',
-          alignItems: 'flex-start',
-          gap: colGap,
-          padding: '0 8px',
-          // Largeur minimale = 6 colonnes + colonne centrale + gaps
-          minWidth: colW * 6 + 120 + colGap * 6,
+          display: 'flex', flexDirection: 'row', alignItems: 'flex-start',
+          gap: colGap, padding: '0 8px',
         }}>
 
-          {/* ── OUEST : 1er tour, Demi-finales, Finales conf ── */}
-          <Colonne label={`OUEST\n1er tour`}    series={bracket.ouest['1er tour']}        noSpoil={noSpoil} mode={mode} hauteurTotale={hTotale} />
-          <Colonne label="Demi-finales"          series={bracket.ouest['Demi-finales']}    noSpoil={noSpoil} mode={mode} hauteurTotale={hTotale} />
-          <Colonne label="Finales de conf."      series={bracket.ouest['Finales de conf.']} noSpoil={noSpoil} mode={mode} hauteurTotale={hTotale} />
+          {/* OUEST */}
+          <Colonne label={`OUEST\n1er tour`}     series={bracket.ouest['1er tour']}         noSpoil={noSpoil} d={d} hTotale={hTotale} />
+          <Colonne label="Demi-finales"           series={bracket.ouest['Demi-finales']}     noSpoil={noSpoil} d={d} hTotale={hTotale} />
+          <Colonne label="Finales de conf."       series={bracket.ouest['Finales de conf.']} noSpoil={noSpoil} d={d} hTotale={hTotale} />
 
-          {/* ── CENTRE : Finales NBA au-dessus, Finales conf collées ── */}
-          <div style={{
-            display: 'flex', flexDirection: 'column',
-            alignItems: 'center', gap: 8,
-            paddingTop: 26, // compense le label des colonnes
+          {/* FINALES NBA — titre juste au-dessus des 2 cartes, aligné avec les finales conf */}
+          <div ref={finaleRef} style={{
+            display: 'flex', flexDirection: 'column', flexShrink: 0, alignItems: 'center',
           }}>
-            {/* Finales NBA */}
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-              <div style={{
-                fontSize: mode === 'ultra' ? 6 : 7, fontWeight: 900, letterSpacing: '0.12em',
-                background: 'linear-gradient(90deg, var(--accent), var(--orange))',
-                WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
-                textAlign: 'center', whiteSpace: 'nowrap', marginBottom: 4,
-              }}>FINALES NBA</div>
-              <Matchup serie={bracket.finale} noSpoil={noSpoil} mode={mode} />
+            {/* Label aligné avec les autres labels de colonnes */}
+            <div style={{
+              fontSize: d.fsLabel, fontWeight: 900, letterSpacing: '0.1em',
+              background: 'linear-gradient(90deg, var(--accent), var(--orange))',
+              WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
+              textAlign: 'center', height: d.labelH,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              whiteSpace: 'nowrap', marginBottom: 6,
+            }}>FINALES NBA</div>
+            {/* Colonne centrale : espace vide pour aligner les cartes avec les finales de conf */}
+            <div style={{
+              display: 'flex', flexDirection: 'column',
+              height: hTotale, justifyContent: 'center', alignItems: 'center',
+            }}>
+              <Matchup serie={bracket.finale} noSpoil={noSpoil} d={d} />
             </div>
-
-            {/* Séparateur */}
-            <div style={{ width: 1, flex: 1, background: 'rgba(99,102,241,0.15)' }} />
           </div>
 
-          {/* ── EST : Finales conf, Demi-finales, 1er tour ── */}
-          <Colonne label="Finales de conf."      series={bracket.est['Finales de conf.']}  noSpoil={noSpoil} mode={mode} hauteurTotale={hTotale} />
-          <Colonne label="Demi-finales"          series={bracket.est['Demi-finales']}      noSpoil={noSpoil} mode={mode} hauteurTotale={hTotale} />
-          <Colonne label={`EST\n1er tour`}       series={bracket.est['1er tour']}           noSpoil={noSpoil} mode={mode} hauteurTotale={hTotale} />
+          {/* EST */}
+          <Colonne label="Finales de conf."       series={bracket.est['Finales de conf.']}  noSpoil={noSpoil} d={d} hTotale={hTotale} />
+          <Colonne label="Demi-finales"           series={bracket.est['Demi-finales']}      noSpoil={noSpoil} d={d} hTotale={hTotale} />
+          <Colonne label={`EST\n1er tour`}        series={bracket.est['1er tour']}           noSpoil={noSpoil} d={d} hTotale={hTotale} />
 
         </div>
       </div>
