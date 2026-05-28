@@ -9,14 +9,15 @@ const formaterDate = (dateStr) =>
   new Date(dateStr).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' })
 
 function MesPronos() {
-  const [pronos, setPronos]      = useState([])
-  const [stats, setStats]        = useState({ total: 0, corrects: 0, incorrects: 0 })
-  const [profil, setProfil]      = useState(null)
-  const [formeRecente, setForme] = useState([])
-  const [charg, setCharg]        = useState(true)
-  const [estMoi, setEstMoi]      = useState(true)
-  const navigate                 = useNavigate()
-  const location                 = useLocation()
+  const [pronos, setPronos]        = useState([])
+  const [stats, setStats]          = useState({ total: 0, corrects: 0, incorrects: 0 })
+  const [statsLigues, setStatsLig] = useState([]) // [{ nom, points, corrects, incorrects }]
+  const [profil, setProfil]        = useState(null)
+  const [formeRecente, setForme]   = useState([])
+  const [charg, setCharg]          = useState(true)
+  const [estMoi, setEstMoi]        = useState(true)
+  const navigate                   = useNavigate()
+  const location                   = useLocation()
 
   useEffect(() => {
     const init = async () => {
@@ -30,9 +31,10 @@ function MesPronos() {
         .from('profils').select('pseudo, avatar_url, description').eq('id', cibleId).single()
       setProfil(p)
 
+      // Pronos complets
       let query = supabase
         .from('pronos')
-        .select('equipe_choisie, resultat, points_gagnes, cree_le, matchs(espn_id, date_match, equipe_domicile, equipe_exterieur, statut)')
+        .select('equipe_choisie, resultat, points_gagnes, cree_le, groupe_id, matchs(espn_id, date_match, equipe_domicile, equipe_exterieur, statut)')
         .eq('user_id', cibleId)
         .order('cree_le', { ascending: false })
 
@@ -50,13 +52,41 @@ function MesPronos() {
         (a, b) => new Date(b.matchs?.date_match) - new Date(a.matchs?.date_match)
       )
       setForme(terminesTries.slice(0, 5))
+
+      // Stats par ligue
+      const { data: membres } = await supabase
+        .from('membres_groupe')
+        .select('points, groupe_id, groupes(id, nom)')
+        .eq('user_id', cibleId)
+        .eq('actif', true)
+
+      if (membres?.length > 0) {
+        const groupeIds = membres.map(m => m.groupes.id)
+        const { data: pronosLigues } = await supabase
+          .from('pronos')
+          .select('groupe_id, resultat')
+          .eq('user_id', cibleId)
+          .in('groupe_id', groupeIds)
+          .neq('resultat', 'en_attente')
+
+        const ligueStats = {}
+        membres.forEach(m => {
+          ligueStats[m.groupes.id] = { nom: m.groupes.nom, points: m.points, corrects: 0, incorrects: 0 }
+        })
+        pronosLigues?.forEach(p => {
+          if (!ligueStats[p.groupe_id]) return
+          if (p.resultat === 'correct')   ligueStats[p.groupe_id].corrects++
+          if (p.resultat === 'incorrect') ligueStats[p.groupe_id].incorrects++
+        })
+        setStatsLig(Object.values(ligueStats).sort((a, b) => b.points - a.points))
+      }
+
       setCharg(false)
     }
     init()
   }, [location.search])
 
-  const taux = stats.corrects + stats.incorrects > 0
-    ? Math.round(stats.corrects / (stats.corrects + stats.incorrects) * 100) : 0
+  const taux = (c, i) => (c + i) > 0 ? Math.round(c / (c + i) * 100) : 0
 
   const couleurResultat = (r) => {
     if (r === 'correct')   return { bg: 'var(--success-dim)', border: 'rgba(34,197,94,0.3)', txt: 'var(--success)' }
@@ -93,14 +123,15 @@ function MesPronos() {
         {!charg && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: '12px 16px 24px' }}>
 
+            {/* ── Stats globales ── */}
             <Bloc>
-              <LabelSection>Stats</LabelSection>
+              <LabelSection>Stats globales</LabelSection>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginTop: 12 }}>
                 {[
                   { label: 'Total',    val: stats.total,      color: 'var(--text-1)'  },
                   { label: 'Corrects', val: stats.corrects,   color: 'var(--success)' },
                   { label: 'Ratés',    val: stats.incorrects, color: 'var(--danger)'  },
-                  { label: 'Réussite', val: `${taux}%`,       color: 'var(--accent)'  },
+                  { label: 'Réussite', val: `${taux(stats.corrects, stats.incorrects)}%`, color: 'var(--accent)' },
                 ].map(s => (
                   <div key={s.label} style={{ textAlign: 'center' }}>
                     <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 24, color: s.color }}>{s.val}</div>
@@ -110,6 +141,37 @@ function MesPronos() {
               </div>
             </Bloc>
 
+            {/* ── Stats par ligue ── */}
+            {statsLigues.length > 0 && (
+              <Bloc>
+                <LabelSection>Stats par ligue</LabelSection>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 12 }}>
+                  {statsLigues.map((l, i) => (
+                    <div key={i} style={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                      padding: '8px 12px', borderRadius: 'var(--radius-sm)', background: 'var(--bg-2)',
+                    }}>
+                      <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-1)', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {l.nom}
+                      </span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
+                        <span style={{ fontSize: 10, color: 'var(--text-3)', whiteSpace: 'nowrap' }}>
+                          <span style={{ color: 'var(--success)' }}>{l.corrects}✓</span>
+                          {' '}
+                          <span style={{ color: 'var(--danger)' }}>{l.incorrects}✗</span>
+                          {(l.corrects + l.incorrects) > 0 && <span> · {taux(l.corrects, l.incorrects)}%</span>}
+                        </span>
+                        <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 16, color: 'var(--accent)' }}>
+                          {l.points}<span style={{ fontSize: 10, color: 'var(--text-3)', marginLeft: 2 }}>pts</span>
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </Bloc>
+            )}
+
+            {/* ── Forme récente ── */}
             {formeRecente.length > 0 && (
               <Bloc>
                 <LabelSection>Forme récente</LabelSection>
@@ -131,6 +193,7 @@ function MesPronos() {
               </Bloc>
             )}
 
+            {/* ── Historique ── */}
             <Bloc>
               <LabelSection>Historique</LabelSection>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 12 }}>
