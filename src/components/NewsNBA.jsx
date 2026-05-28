@@ -42,12 +42,6 @@ export default function NewsNBA({ typeSaison }) {
       borderWidth: 1, borderStyle: 'solid', borderColor: 'rgba(99,102,241,0.08)',
       padding: '16px 16px 12px',
     }}>
-      <h3 style={{
-        display: 'inline-block',
-        background: 'linear-gradient(90deg, var(--accent), var(--orange))',
-        WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
-        letterSpacing: '0.1em', fontSize: 13, fontWeight: 700, margin: 0,
-      }}>Actu NBA</h3>
 
       {noSpoil ? (
         <div style={{

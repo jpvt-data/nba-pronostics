@@ -175,10 +175,13 @@ function Accueil() {
         {!chargement && (
           <BanniereImage url="https://images.unsplash.com/photo-1519861531473-9200262188bf?w=800&q=60" hauteur={110} />
         )}
-        {!chargement && <NewsNBA typeSaison={typeSaisonActuel} />}
 
         {!chargement && user && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 20, padding: '12px 16px 20px' }}>
+            <Bloc>
+              <LabelSection>Actu NBA</LabelSection>
+              <div style={{ marginTop: 8 }}><NewsNBA typeSaison={typeSaisonActuel} /></div>
+            </Bloc>
             <Bloc>
               <LabelSection>Ligue en cours</LabelSection>
               <div style={{ marginTop: 8 }}><ClassementRapide userId={user.id} /></div>
