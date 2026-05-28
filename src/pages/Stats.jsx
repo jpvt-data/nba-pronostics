@@ -698,56 +698,74 @@ function OngletJoueurs({ equipesStandings }) {
 
 
 // ── RADAR STATS ─────────────────────────────────────────────────────────────
-// Normalisation par rapport aux maximums NBA réalistes par catégorie
-const RADAR_AXES = [
-  { label: 'PTS', key: 'pts', max: 35 },
-  { label: 'REB', key: 'reb', max: 14 },
-  { label: 'AST', key: 'ast', max: 12 },
-  { label: 'FG%', key: 'fg',  max: 65 },
-  { label: '3P%', key: 'fg3', max: 50 },
+// Normalisation par rapport aux maximums NBA réalistes
+// inverse: true = moins est mieux (ex: turnovers)
+const RADARS = [
+  {
+    titre: 'Scoring',
+    axes: [
+      { label: 'PTS',  key: 'pts', max: 35,  inverse: false },
+      { label: 'MIN',  key: 'min', max: 40,  inverse: false },
+      { label: 'FT%',  key: 'ft',  max: 95,  inverse: false },
+      { label: '3P%',  key: 'fg3', max: 50,  inverse: false },
+      { label: 'FG%',  key: 'fg',  max: 65,  inverse: false },
+    ],
+  },
+  {
+    titre: 'Impact',
+    axes: [
+      { label: 'REB',  key: 'reb', max: 14,  inverse: false },
+      { label: 'AST',  key: 'ast', max: 12,  inverse: false },
+      { label: 'STL',  key: 'stl', max: 3,   inverse: false },
+      { label: 'BLK',  key: 'blk', max: 3,   inverse: false },
+      { label: 'TO↓',  key: 'to',  max: 5,   inverse: true  },
+    ],
+  },
 ]
 
-function RadarStats({ stats, couleur }) {
-  const SIZE    = 200          // taille SVG (carré)
-  const CX      = SIZE / 2     // centre X
-  const CY      = SIZE / 2     // centre Y
-  const R       = 78           // rayon max du radar
-  const N       = RADAR_AXES.length
-  const NIVEAUX = 4            // cercles de référence
+function RadarSingle({ titre, axes, stats, couleur }) {
+  // Desktop : grand SVG | Mobile : plus compact
+  const SIZE    = 240
+  const CX      = SIZE / 2
+  const CY      = SIZE / 2
+  const R       = 88
+  const N       = axes.length
+  const NIVEAUX = 4
 
-  // Angle de chaque axe — on commence à -90° (12h) et on tourne dans le sens horaire
-  const angle = (i) => (Math.PI * 2 * i) / N - Math.PI / 2
-
-  // Coordonnées d'un point sur un axe à un ratio donné (0-1)
-  const point = (i, ratio) => ({
+  const angle    = (i) => (Math.PI * 2 * i) / N - Math.PI / 2
+  const point    = (i, ratio) => ({
     x: CX + R * ratio * Math.cos(angle(i)),
     y: CY + R * ratio * Math.sin(angle(i)),
   })
-
-  // Valeurs normalisées (0-1) pour chaque axe
-  const valeurs = RADAR_AXES.map(ax => {
-    const raw = parseFloat(stats[ax.key])
-    if (isNaN(raw)) return 0
-    return Math.min(raw / ax.max, 1)
-  })
-
-  // Polygone données
-  const polyPoints = valeurs.map((v, i) => {
-    const p = point(i, v)
-    return `${p.x},${p.y}`
+  const gridPoly = (ratio) => axes.map((_, i) => {
+    const p = point(i, ratio); return `${p.x},${p.y}`
   }).join(' ')
 
-  // Polygone grille (cercle niveau k)
-  const gridPoly = (ratio) => RADAR_AXES.map((_, i) => {
-    const p = point(i, ratio)
-    return `${p.x},${p.y}`
+  const valeurs = axes.map(ax => {
+    const raw = parseFloat(stats?.[ax.key])
+    if (isNaN(raw)) return 0
+    const ratio = raw / ax.max
+    return Math.min(ax.inverse ? 1 - ratio : ratio, 1)
+  })
+
+  const polyPoints = valeurs.map((v, i) => {
+    const p = point(i, Math.max(v, 0.04)); return `${p.x},${p.y}`
   }).join(' ')
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', margin: '4px 0 20px' }}>
-      <svg width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`} style={{ overflow: 'visible' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}>
+      {/* Titre */}
+      <span style={{
+        fontSize: 11, fontWeight: 700, letterSpacing: '0.12em',
+        textTransform: 'uppercase', marginBottom: 6,
+        background: 'linear-gradient(90deg, var(--accent), var(--orange))',
+        WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
+      }}>{titre}</span>
 
-        {/* Cercles de référence */}
+      <svg width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`}
+        style={{ overflow: 'visible', maxWidth: '100%' }}>
+
+        {/* Grille */}
         {Array.from({ length: NIVEAUX }).map((_, k) => (
           <polygon key={k}
             points={gridPoly((k + 1) / NIVEAUX)}
@@ -758,20 +776,16 @@ function RadarStats({ stats, couleur }) {
         ))}
 
         {/* Axes */}
-        {RADAR_AXES.map((_, i) => {
+        {axes.map((_, i) => {
           const p = point(i, 1)
-          return (
-            <line key={i}
-              x1={CX} y1={CY} x2={p.x} y2={p.y}
-              stroke="rgba(255,255,255,0.08)" strokeWidth={1}
-            />
-          )
+          return <line key={i} x1={CX} y1={CY} x2={p.x} y2={p.y}
+            stroke="rgba(255,255,255,0.07)" strokeWidth={1} />
         })}
 
-        {/* Polygone données — remplissage couleur équipe */}
+        {/* Polygone données — fond transparent */}
         <polygon
           points={polyPoints}
-          fill={`${couleur}30`}
+          fill="transparent"
           stroke={couleur}
           strokeWidth={2}
           strokeLinejoin="round"
@@ -779,36 +793,56 @@ function RadarStats({ stats, couleur }) {
 
         {/* Points sur chaque axe */}
         {valeurs.map((v, i) => {
-          const p = point(i, v)
-          return (
-            <circle key={i} cx={p.x} cy={p.y} r={3}
-              fill={couleur} stroke="var(--bg-0)" strokeWidth={1.5}
-            />
-          )
+          const p = point(i, Math.max(v, 0.04))
+          return <circle key={i} cx={p.x} cy={p.y} r={3}
+            fill={couleur} stroke="var(--bg-1)" strokeWidth={1.5} />
         })}
 
-        {/* Labels axes */}
-        {RADAR_AXES.map((ax, i) => {
-          const p     = point(i, 1.22)
-          const pct   = parseFloat(stats[ax.key])
-          const label = isNaN(pct) ? '—' : ax.key.includes('%') ? `${pct}%` : pct
+        {/* Labels + valeurs */}
+        {axes.map((ax, i) => {
+          const p   = point(i, 1.32)
+          const raw = parseFloat(stats?.[ax.key])
+          const val = isNaN(raw) ? '—' : ax.label.includes('%') ? `${raw}%` : raw
           return (
             <g key={i}>
-              <text x={p.x} y={p.y - 2}
+              <text x={p.x} y={p.y - 4}
                 textAnchor="middle" dominantBaseline="auto"
                 fontSize={9} fontWeight={700} fill="var(--text-3)"
-                style={{ textTransform: 'uppercase', letterSpacing: '0.06em' }}
+                letterSpacing="0.05em"
               >{ax.label}</text>
-              <text x={p.x} y={p.y + 9}
+              <text x={p.x} y={p.y + 10}
                 textAnchor="middle" dominantBaseline="auto"
-                fontSize={10} fontWeight={800} fill="var(--text-1)"
+                fontSize={11} fontWeight={800} fill={couleur}
                 fontFamily="var(--font-display)"
-              >{label}</text>
+              >{val}</text>
             </g>
           )
         })}
 
       </svg>
+    </div>
+  )
+}
+
+function RadarStats({ stats, couleur }) {
+  return (
+    <div style={{
+      // Desktop : côte à côte | Mobile : l'un sous l'autre centré
+      display: 'flex',
+      flexWrap: 'wrap',
+      justifyContent: 'center',
+      gap: 16,
+      margin: '4px 0 20px',
+      padding: '16px 8px',
+      borderWidth: 1, borderStyle: 'solid', borderColor: 'var(--border)',
+      borderRadius: 'var(--radius-lg)',
+      background: 'transparent',
+    }}>
+      {RADARS.map(r => (
+        <div key={r.titre} style={{ flex: '1 1 240px', display: 'flex', justifyContent: 'center' }}>
+          <RadarSingle titre={r.titre} axes={r.axes} stats={stats} couleur={couleur} />
+        </div>
+      ))}
     </div>
   )
 }
@@ -857,6 +891,7 @@ function FicheJoueur({ joueur, equipe, onRetour }) {
             stl: v('avgSteals'), blk: v('avgBlocks'), min: v('avgMinutes'),
             fg:  v('fieldGoalPct'), fg3: v('threePointFieldGoalPct'),
             ft:  v('freeThrowPct'), gp:  v('gamesPlayed'),
+            to:  v('avgTotalTurnovers'),
           })
         }
       }
