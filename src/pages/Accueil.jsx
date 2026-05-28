@@ -97,7 +97,7 @@ function Accueil() {
           padding: GUTTER,
           paddingBottom: 12,
           background: 'linear-gradient(160deg, rgba(99,102,241,0.08) 0%, transparent 60%)',
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between', margin: '0 16px'
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between'
         }}>
           <div>
             <p style={{ fontSize: 12, color: 'var(--text-3)', marginBottom: 2 }}>
