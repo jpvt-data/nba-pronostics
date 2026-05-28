@@ -180,7 +180,7 @@ function Accueil() {
 
         {/* ── Bannière séparatrice communauté / NBA data ── */}
         {!chargement && (
-          <div style={{ margin: '16px 16px' }}>
+          <div style={{ margin: '25px 16px' }}>
             <BanniereImage url="https://images.unsplash.com/photo-1504450758481-7338eba7524a?w=800&q=60" hauteur={90} />
           </div>
         )}
