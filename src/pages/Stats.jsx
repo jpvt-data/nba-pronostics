@@ -914,6 +914,23 @@ function FicheJoueur({ joueur, equipe, onRetour }) {
               ))}
             </div>
           </div>
+
+          {/* Légende */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px 16px', marginTop: 10 }}>
+            {[
+              { k: 'MIN', v: 'Minutes' },
+              { k: 'PTS', v: 'Points' },
+              { k: 'REB', v: 'Rebonds' },
+              { k: 'AST', v: 'Passes décisives' },
+              { k: 'FG%', v: 'Réussite aux tirs' },
+              { k: '3P%', v: 'Réussite à 3 pts' },
+              { k: 'W/L', v: 'Victoire / Défaite' },
+            ].map(({ k, v }) => (
+              <span key={k} style={{ fontSize: 10, color: 'var(--text-3)' }}>
+                <span style={{ fontWeight: 700, color: 'var(--text-2)' }}>{k}</span> {v}
+              </span>
+            ))}
+          </div>
         </>
       )}
     </div>
