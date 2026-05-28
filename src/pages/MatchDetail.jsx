@@ -35,16 +35,21 @@ const BLOC = {
   padding: '16px', marginBottom: 12,
 }
 
+// Base URL pour les endpoints enrichis ESPN
+const BASE_CORE = 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/nba'
+
 function MatchDetail() {
   const { espn_id } = useParams()
   const navigate    = useNavigate()
   const { noSpoil } = useNoSpoil()
-  const [match, setMatch]  = useState(null)
-  const [user, setUser]    = useState(null)
-  const [prono, setProno]  = useState(null)
-  const [resultat, setRes] = useState(null)
-  const [charg, setCharg]  = useState(true)
-  const [erreur, setErr]   = useState(false)
+  const [match, setMatch]         = useState(null)
+  const [user, setUser]           = useState(null)
+  const [prono, setProno]         = useState(null)
+  const [resultat, setRes]        = useState(null)
+  const [charg, setCharg]         = useState(true)
+  const [erreur, setErr]          = useState(false)
+  const [prediction, setPrediction] = useState(null) // { extPct, domPct, equipePrediite }
+  const [probLive, setProbLive]     = useState(null)  // { extPct, domPct } win prob actuelle
 
   useEffect(() => {
     const init = async () => {
@@ -53,11 +58,57 @@ function MatchDetail() {
       const detail = await recupererDetailMatch(espn_id)
       if (!detail) { setErr(true); setCharg(false); return }
       setMatch(detail)
+
       const { data: tousLesPronos } = await supabase
         .from('pronos').select('equipe_choisie, resultat, matchs(espn_id)').eq('user_id', user.id)
       const found = tousLesPronos?.find(p => p.matchs?.espn_id === espn_id)
       if (found) { setProno(found.equipe_choisie); setRes(found.resultat) }
       setCharg(false)
+
+      // Fetch prédiction + win prob en parallèle (uniquement si match non terminé)
+      if (detail.statut !== 'STATUS_FINAL') {
+        const urlBase = `${BASE_CORE}/events/${espn_id}/competitions/${espn_id}`
+        const [resPred, resProb] = await Promise.allSettled([
+          fetch(`${urlBase}/predictor`).then(r => r.json()),
+          fetch(`${urlBase}/probabilities`).then(r => r.json()),
+        ])
+
+        // Game Predictor
+        if (resPred.status === 'fulfilled') {
+          try {
+            const pred = resPred.value
+            const hPct = pred.homeTeam?.gameProjection   // % victoire domicile
+            const aPct = pred.awayTeam?.gameProjection   // % victoire extérieur
+            const hName = detail.domicile.trigramme
+            const aName = detail.exterieur.trigramme
+            if (hPct != null && aPct != null) {
+              const equipePrediite = hPct >= aPct ? hName : aName
+              setPrediction({
+                domPct: Math.round(hPct),
+                extPct: Math.round(aPct),
+                equipePrediite,
+              })
+            }
+          } catch { /* silencieux */ }
+        }
+
+        // Win probability (dernier élément du tableau = probabilité actuelle)
+        if (resProb.status === 'fulfilled') {
+          try {
+            const items = resProb.value.items ?? []
+            if (items.length > 0) {
+              const dernier = items[items.length - 1]
+              const hPct = dernier.homeWinPercentage ?? dernier.homeTeamWinPercentage
+              if (hPct != null) {
+                setProbLive({
+                  domPct: Math.round(hPct * 100),
+                  extPct: Math.round((1 - hPct) * 100),
+                })
+              }
+            }
+          } catch { /* silencieux */ }
+        }
+      }
     }
     init()
   }, [espn_id])
@@ -65,7 +116,6 @@ function MatchDetail() {
   const faireProno = async (equipe) => {
     if (!match || estVerrouille(match.date, match.statut)) return
 
-    // Upsert le match en cache
     const { data: matchDB } = await supabase.from('matchs').upsert({
       espn_id:          match.espn_id,
       date_match:       match.date,
@@ -77,7 +127,6 @@ function MatchDetail() {
     }, { onConflict: 'espn_id' }).select().single()
     if (!matchDB) return
 
-    // Ligues actives correspondant au type du match
     const liguesCibles = await recupererLiguesCibles(user.id, match.typeSaisonNum ?? null)
 
     if (liguesCibles.length > 0) {
@@ -147,7 +196,6 @@ function MatchDetail() {
         <span style={{ fontSize:11, color:'var(--text-3)', textAlign:'center' }}>{eq.nom}</span>
         <span style={{ fontSize:10, color:'var(--text-3)' }}>{align === 'ext' ? 'Extérieur' : 'Domicile'}</span>
         {selec && !termine && <span style={{ fontSize:11, color:'var(--accent)', fontWeight:600, marginTop:2 }}>✓ Mon prono</span>}
-        {/* Bug No Spoil fix : résultat masqué si noSpoil actif */}
         {selec && termine && !noSpoil && (
           <span style={{ fontSize:11, fontWeight:700, marginTop:2, color: resultat==='correct' ? 'var(--success)' : resultat==='incorrect' ? 'var(--danger)' : 'var(--text-3)' }}>
             {resultat==='correct' ? '✓ Correct' : resultat==='incorrect' ? '✗ Raté' : '⏳'}
@@ -156,6 +204,11 @@ function MatchDetail() {
       </button>
     )
   }
+
+  // Données à afficher dans le bloc prédiction :
+  // En cours → win prob live en priorité, fallback predictor
+  // À venir  → predictor uniquement
+  const probAffichee = enCours && probLive ? probLive : prediction
 
   return (
     <>
@@ -234,6 +287,62 @@ function MatchDetail() {
           {dateStr} à {heureStr}
           {match.stade && <><br />{match.stade}{match.ville ? ` · ${match.ville}` : ''}</>}
         </div>
+
+        {/* ── BLOC PRÉDICTION ESPN ── visible uniquement avant/pendant le match ── */}
+        {!termine && probAffichee && (
+          <div style={{ ...BLOC }}>
+            <LabelSection>{enCours ? 'Probabilités en direct' : 'Prédiction avant match'}</LabelSection>
+
+            {/* Phrase intro contextuelle */}
+            <p style={{ fontSize:12, color:'var(--text-3)', margin:'0 0 14px', lineHeight:1.6 }}>
+              {enCours
+                ? `En ce moment, ESPN estime les chances de victoire de chaque équipe en fonction du déroulé du match.`
+                : `Avant le tip-off, ESPN calcule les probabilités de victoire de chaque équipe selon leur forme et les stats de la saison.`
+              }
+            </p>
+
+            {/* Trigrammes ext / dom */}
+            <div style={{ display:'flex', justifyContent:'space-between', marginBottom:6 }}>
+              <span style={{ fontSize:12, fontWeight:700, color:'var(--text-1)' }}>{ext.trigramme}</span>
+              <span style={{ fontSize:12, fontWeight:700, color:'var(--text-1)' }}>{dom.trigramme}</span>
+            </div>
+
+            {/* Barre de probabilité */}
+            <div style={{ display:'flex', borderRadius:4, overflow:'hidden', height:10, marginBottom:8 }}>
+              <div style={{
+                width: `${probAffichee.extPct}%`,
+                background: 'var(--accent)',
+                transition: 'width 0.4s ease',
+              }} />
+              <div style={{
+                width: `${probAffichee.domPct}%`,
+                background: 'var(--orange)',
+                transition: 'width 0.4s ease',
+              }} />
+            </div>
+
+            {/* Pourcentages */}
+            <div style={{ display:'flex', justifyContent:'space-between', marginBottom:14 }}>
+              <span style={{ fontSize:13, fontWeight:800, color:'var(--accent)', fontFamily:'var(--font-display)' }}>
+                {probAffichee.extPct}%
+              </span>
+              <span style={{ fontSize:13, fontWeight:800, color:'var(--orange)', fontFamily:'var(--font-display)' }}>
+                {probAffichee.domPct}%
+              </span>
+            </div>
+
+            {/* Phrase verdict — uniquement si predictor disponible (pas en live seul) */}
+            {prediction && (
+              <p style={{ fontSize:12, color:'var(--text-2)', margin:0, textAlign:'center', fontStyle:'italic' }}>
+                ESPN prédit une victoire des <strong style={{ color:'var(--text-1)' }}>{prediction.equipePrediite}</strong> ce soir.
+              </p>
+            )}
+
+            <p style={{ fontSize:10, color:'var(--text-3)', margin:'10px 0 0', textAlign:'right' }}>
+              Source : ESPN
+            </p>
+          </div>
+        )}
 
         {(ext.l5?.length > 0 || dom.l5?.length > 0) && (
           <div style={{ ...BLOC }}>
