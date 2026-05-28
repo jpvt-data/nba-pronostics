@@ -745,34 +745,34 @@ function FicheJoueur({ joueur, equipe, onRetour }) {
         }
       }
 
-      // Game log — on aplatit tous les mois de la saison régulière
+      // Game log — tous les seasonTypes (playoffs prioritaire si en cours)
       if (resLog.status === 'fulfilled') {
         const data      = resLog.value
-        const labels    = data.labels ?? []       // ordre des stats
-        const eventsMap = data.events ?? {}       // dict eventId → metadata
+        const labels    = data.labels ?? []   // ex: ["MIN","FG","FG%","3PT","3P%","FT","FT%","REB","AST","BLK",...]
+        const eventsMap = data.events ?? {}   // dict eventId → metadata
         const lignes    = []
 
-        // Parcourir seasonTypes (saison régulière = displayName contient "Regular")
+        const i = (nom) => labels.indexOf(nom)
+
         ;(data.seasonTypes ?? []).forEach(st => {
-          if (!st.displayName?.toLowerCase().includes('regular')) return
           ;(st.categories ?? []).forEach(cat => {
             ;(cat.events ?? []).forEach(ev => {
               const meta = eventsMap[ev.eventId]
               if (!meta) return
-              const idx = (nom) => labels.indexOf(nom)
+              const s = ev.stats
               lignes.push({
-                eventId:   ev.eventId,
-                date:      meta.gameDate,
-                atVs:      meta.atVs,            // "vs" ou "@"
+                eventId:    ev.eventId,
+                date:       meta.gameDate,
+                atVs:       meta.atVs,
                 adversaire: meta.opponent?.abbreviation ?? '?',
-                resultat:  meta.gameResult,      // "W" ou "L"
-                score:     meta.score,
-                min: ev.stats[idx('minutes')]               ?? '—',
-                pts: ev.stats[idx('points')]                ?? '—',
-                reb: ev.stats[idx('totalRebounds')]         ?? '—',
-                ast: ev.stats[idx('assists')]               ?? '—',
-                fg:  ev.stats[idx('fieldGoalPct')]          ?? '—',
-                tp:  ev.stats[idx('threePointPct')]         ?? '—',
+                resultat:   meta.gameResult,
+                score:      meta.score,
+                min: s[i('MIN')]  ?? '—',
+                pts: s[i('PTS')]  ?? '—',
+                reb: s[i('REB')]  ?? '—',
+                ast: s[i('AST')]  ?? '—',
+                fg:  s[i('FG%')] ?? '—',
+                tp:  s[i('3P%')] ?? '—',
               })
             })
           })
