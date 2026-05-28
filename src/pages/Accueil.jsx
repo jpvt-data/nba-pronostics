@@ -141,7 +141,7 @@ function Accueil() {
         </Bloc>
 
         {!chargement && (
-          <div style={{ marginTop: 16 }}>
+          <div style={{ marginTop: 10 }}>
             <BandeMatchs matchs={matchs} userId={user?.id} onProno={faireProno} />
           </div>
         )}

@@ -11,7 +11,7 @@ export const LabelSection = ({ children }) => (
 
 export const BanniereImage = ({ url, hauteur = 110 }) => (
   <div style={{
-    margin: '25px 0 25px', height: hauteur,
+    margin: '30px 0 30px', height: hauteur,
     backgroundImage: `linear-gradient(to right, rgba(13,13,18,0.75), rgba(13,13,18,0.35), rgba(13,13,18,0.75)), url(${url})`,
     backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat',
     borderTopWidth: 1, borderTopStyle: 'solid', borderTopColor: 'rgba(99,102,241,0.2)',
