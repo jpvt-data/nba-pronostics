@@ -179,14 +179,18 @@ function Accueil() {
         )}
 
         {/* ── Bannière séparatrice communauté / NBA data ── */}
-        {!chargement && <BanniereImage url="https://images.unsplash.com/photo-1504450758481-7338eba7524a?w=800&q=60" hauteur={90} />}
+        {!chargement && (
+          <div style={{ margin: '16px 16px' }}>
+            <BanniereImage url="https://images.unsplash.com/photo-1504450758481-7338eba7524a?w=800&q=60" hauteur={90} />
+          </div>
+        )}
 
         {/* ── NBA data — standings, bracket, actu ── */}
         {!chargement && <StandingsNBA typeSaison={typeSaisonActuel} />}
         {!chargement && typeSaisonActuel === 3 && <BracketPlayoffs saison={saisonActuelle} />}
 
         {!chargement && user && (
-          <div style={{ padding: '0 16px 20px' }}>
+          <div style={{ padding: '16px 16px 20px' }}>
             <Bloc>
               <LabelSection>Actu NBA</LabelSection>
               <div style={{ marginTop: 8 }}><NewsNBA typeSaison={typeSaisonActuel} /></div>
