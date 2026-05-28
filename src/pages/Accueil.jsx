@@ -13,7 +13,7 @@ import BracketPlayoffs from '../components/BracketPlayoffs'
 import NewsNBA from '../components/NewsNBA'
 import { LabelSection, BanniereImage, Bloc } from '../components/UI'
 import { useNavigate } from 'react-router-dom'
-import { Zap, Calendar, EyeOff, Eye } from 'lucide-react'
+import { Calendar, EyeOff, Eye } from 'lucide-react'
 import { useNoSpoil } from '../context/NoSpoilContext'
 import { SAISON_ESPN } from '../config'
 
@@ -85,7 +85,6 @@ function Accueil() {
   }
 
   const typeSaisonActuel = matchs[0]?.typeSaisonNum ?? null
-  // Saison ESPN du premier match — fallback sur la constante globale si matchs vides
   const saisonActuelle   = matchs[0]?.saisonNum ?? SAISON_ESPN
 
   return (
@@ -93,64 +92,57 @@ function Accueil() {
       <Navigation />
       <main style={{ flex: 1 }}>
 
-        {/* ──  Header  ── */}
+        {/* ── Header allégé — contexte utilisateur uniquement ── */}
         <div style={{
           padding: GUTTER,
+          paddingBottom: 12,
           background: 'linear-gradient(160deg, rgba(99,102,241,0.08) 0%, transparent 60%)',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-            <h2 style={{ margin: 0 }}>Bonjour {pseudo || ''}</h2>
-            <Zap size={20} color="var(--accent)" strokeWidth={2} fill="var(--accent)" />
-          </div>
-          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 8 }}>
-            <p style={{
-              fontSize: 14, fontWeight: 600, margin: 0, lineHeight: 1.4,
-              background: 'linear-gradient(90deg, var(--text-1), var(--text-2))',
-              WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
-            }}>
+          <div>
+            <p style={{ fontSize: 12, color: 'var(--text-3)', marginBottom: 2 }}>
               Pronostique. Clashe. Règne.
             </p>
-            <button
-              onClick={toggleNoSpoil}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 5,
-                padding: '5px 10px', flexShrink: 0,
-                background: noSpoil ? 'rgba(99,102,241,0.15)' : 'transparent',
-                borderWidth: 1, borderStyle: 'solid',
-                borderColor: noSpoil ? 'rgba(99,102,241,0.4)' : 'var(--border)',
-                borderRadius: 'var(--radius-sm)', cursor: 'pointer',
-                fontSize: 11, fontWeight: 600,
-                color: noSpoil ? 'var(--accent)' : 'var(--text-3)',
-              }}
-            >
-              {noSpoil ? <Eye size={12} /> : <EyeOff size={12} />}
-              No Spoil
-            </button>
+            <h2 style={{ margin: 0 }}>Bonjour {pseudo || ''} 👋</h2>
           </div>
-          <p style={{ fontSize: 13, color: 'var(--text-3)', margin: '16px 0 0', lineHeight: 1.6 }}>
-            Suis la saison NBA, pronostique chaque match avant le tip-off et compare tes résultats avec tes potes.
-            <br /><br />
-            Classements, stats perso, fiches match détaillées — tout ce qu'il faut pour savoir qui prédit le mieux… et qui la ramène pour rien.
-          </p>
+          <button
+            onClick={toggleNoSpoil}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 5,
+              padding: '5px 10px', flexShrink: 0,
+              background: noSpoil ? 'rgba(99,102,241,0.15)' : 'transparent',
+              borderWidth: 1, borderStyle: 'solid',
+              borderColor: noSpoil ? 'rgba(99,102,241,0.4)' : 'var(--border)',
+              borderRadius: 'var(--radius-sm)', cursor: 'pointer',
+              fontSize: 11, fontWeight: 600,
+              color: noSpoil ? 'var(--accent)' : 'var(--text-3)',
+            }}
+          >
+            {noSpoil ? <Eye size={12} /> : <EyeOff size={12} />}
+            No Spoil
+          </button>
         </div>
 
-        <BanniereImage url="https://images.unsplash.com/photo-1504450758481-7338eba7524a?w=800&q=60" hauteur={110} />
-
-        <Bloc style={{ margin: '20px 16px 0', padding: '16px 16px 8px' }}>
+        {/* ── Prochains matchs ── */}
+        <div style={{ padding: '16px 16px 0' }}>
           <LabelSection>Prochains matchs</LabelSection>
           <p style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 4 }}>
             Clique sur une affiche pour pronostiquer et voir le détail
           </p>
-        </Bloc>
+        </div>
+
+        {chargement && (
+          <p style={{ color: 'var(--text-3)', fontSize: 13, textAlign: 'center', padding: '2rem 0' }}>Chargement…</p>
+        )}
 
         {!chargement && (
-          <div style={{ marginTop: 10 }}>
+          <div style={{ marginTop: 8 }}>
             <BandeMatchs matchs={matchs} userId={user?.id} onProno={faireProno} />
           </div>
         )}
 
         {!chargement && (
-          <div style={{ padding: '10px 16px 0', display: 'flex', justifyContent: 'flex-end' }}>
+          <div style={{ padding: '4px 16px 0', display: 'flex', justifyContent: 'flex-end' }}>
             <button
               onClick={() => navigate('/calendrier')}
               style={{
@@ -168,22 +160,9 @@ function Accueil() {
           </div>
         )}
 
-        {chargement && (
-          <p style={{ color: 'var(--text-3)', fontSize: 13, textAlign: 'center', padding: '2rem 0' }}>Chargement…</p>
-        )}
-
-        {!chargement && <StandingsNBA typeSaison={typeSaisonActuel} />}
-        {!chargement && typeSaisonActuel === 3 && <BracketPlayoffs saison={saisonActuelle} />}
-        {!chargement && (
-          <BanniereImage url="https://images.unsplash.com/photo-1519861531473-9200262188bf?w=800&q=60" hauteur={110} />
-        )}
-
+        {/* ── Blocs communautaires — remontés avant NBA data ── */}
         {!chargement && user && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 20, padding: '12px 16px 20px' }}>
-            <Bloc>
-              <LabelSection>Actu NBA</LabelSection>
-              <div style={{ marginTop: 8 }}><NewsNBA typeSaison={typeSaisonActuel} /></div>
-            </Bloc>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16, padding: '16px 16px 0' }}>
             <Bloc>
               <LabelSection>Ligue en cours</LabelSection>
               <div style={{ marginTop: 8 }}><ClassementRapide userId={user.id} /></div>
@@ -195,6 +174,23 @@ function Accueil() {
             <Bloc>
               <LabelSection>Runs des potes</LabelSection>
               <div style={{ marginTop: 8 }}><RunsPotes userId={user.id} /></div>
+            </Bloc>
+          </div>
+        )}
+
+        {/* ── NBA data — standings, bracket, actu ── */}
+        {!chargement && <StandingsNBA typeSaison={typeSaisonActuel} />}
+        {!chargement && typeSaisonActuel === 3 && <BracketPlayoffs saison={saisonActuelle} />}
+
+        {!chargement && (
+          <BanniereImage url="https://images.unsplash.com/photo-1519861531473-9200262188bf?w=800&q=60" hauteur={110} />
+        )}
+
+        {!chargement && user && (
+          <div style={{ padding: '0 16px 20px' }}>
+            <Bloc>
+              <LabelSection>Actu NBA</LabelSection>
+              <div style={{ marginTop: 8 }}><NewsNBA typeSaison={typeSaisonActuel} /></div>
             </Bloc>
           </div>
         )}

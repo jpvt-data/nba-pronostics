@@ -15,12 +15,18 @@
   --success-dim: rgba(34, 197, 94, 0.1);
   --danger: #ef4444;
   --danger-dim: rgba(239, 68, 68, 0.1);
+  /* Streak / podium / moments importants */
+  --gold: #f59e0b;
+  --gold-dim: rgba(245, 158, 11, 0.12);
   --text-1: #e8e8f0;
   --text-2: #9090b0;
   --text-3: #8080a0;
   --radius-sm: 6px;
   --radius-md: 10px;
   --radius-lg: 14px;
+  /* Ombres pour séparation visuelle des cards */
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.5);
   --font-body: 'Inter', system-ui, sans-serif;
   --font-display: 'Barlow Condensed', system-ui, sans-serif;
 }
@@ -47,24 +53,21 @@ html, body {
   min-height: 100svh;
   display: flex;
   flex-direction: column;
-  /* pas de overflow:hidden ici — bloque le scroll horizontal de la bande */
 }
 
 h1 { font-family: var(--font-display); font-size: 26px; font-weight: 700; color: var(--text-1); letter-spacing: 0.02em; }
 h2 { font-family: var(--font-display); font-size: 20px; font-weight: 700; color: var(--text-1); letter-spacing: 0.02em; }
-h3 { font-size: 11px; font-weight: 600; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.1em; }
+h3 { font-size: 13px; font-weight: 700; color: var(--text-2); text-transform: uppercase; letter-spacing: 0.12em; }
 
 button { font-family: var(--font-body); cursor: pointer; }
 img { display: block; }
 
 /* ── NAVBAR DESKTOP (≥768px) ─────────────────────────── */
-/* navbar top fixe de 52px — on décale #root vers le bas */
 @media (min-width: 768px) {
   #root { padding-top: 52px; padding-bottom: 0; }
 }
 
 /* ── NAVBAR MOBILE (<768px) ──────────────────────────── */
-/* barre logo top 40px + bottom nav 60px */
 @media (max-width: 767px) {
   #root { padding-top: 40px; padding-bottom: 60px; }
 }
@@ -90,9 +93,8 @@ img { display: block; }
 }
 .scroll-x::-webkit-scrollbar { display: none; }
 
-/* ── PWA iOS — mode standalone (ajout en bas du fichier) ── */
+/* ── PWA iOS — mode standalone ── */
 @media (display-mode: standalone) {
-  /* évite le freeze scroll/touch au retour sur l'app */
   html, body {
     height: 100dvh;
     overflow: hidden;
@@ -100,7 +102,6 @@ img { display: block; }
   #root {
     height: 100dvh;
     overflow-y: auto;
-    /* padding top safe area pour le notch iPhone */
     padding-top: max(40px, env(safe-area-inset-top));
     padding-bottom: max(60px, env(safe-area-inset-bottom));
   }
