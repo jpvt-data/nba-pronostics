@@ -90,7 +90,7 @@ function Accueil() {
       <Navigation />
       <main style={{ flex: 1 }}>
 
-        {/* ── Header ── */}
+        {/* ──  Header  ── */}
         <div style={{
           padding: GUTTER,
           background: 'linear-gradient(160deg, rgba(99,102,241,0.08) 0%, transparent 60%)',
