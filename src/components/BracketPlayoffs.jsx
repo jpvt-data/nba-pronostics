@@ -46,12 +46,12 @@ const formatSummary = (summary, terminee) => {
 function CarteEquipe({ equipe, gagnante, noSpoil, compact, ultra }) {
   const [imgErr, setImgErr] = useState(false)
 
-  const pad      = ultra ? '2px 4px'  : compact ? '3px 6px'  : '5px 8px'
-  const w        = ultra ? 50         : compact ? 70          : 90
-  const logoSize = ultra ? 10         : compact ? 12          : 14
-  const logoBlur = ultra ? 20         : compact ? 24          : 30
-  const fsTri    = ultra ? 8          : compact ? 9           : 10
-  const fsScore  = ultra ? 9          : compact ? 10          : 11
+  const pad      = ultra ? '2px 4px' : compact ? '3px 6px' : '5px 8px'
+  const w        = ultra ? 50        : compact ? 70         : 90
+  const logoSize = ultra ? 10        : compact ? 12         : 14
+  const logoBlur = ultra ? 20        : compact ? 24         : 30
+  const fsTri    = ultra ? 8         : compact ? 9          : 10
+  const fsScore  = ultra ? 9         : compact ? 10         : 11
 
   if (!equipe) return (
     <div style={{
@@ -72,13 +72,12 @@ function CarteEquipe({ equipe, gagnante, noSpoil, compact, ultra }) {
     <div style={{
       display: 'flex', alignItems: 'center', gap: 3,
       padding: pad, borderRadius: 5,
-      width: w, flexShrink: 0, // largeur fixe
+      width: w, flexShrink: 0,
       position: 'relative', overflow: 'hidden',
       background: estGagnant ? `linear-gradient(90deg, ${couleur}28, ${couleur}10)` : 'rgba(255,255,255,0.04)',
       borderWidth: 1, borderStyle: 'solid',
       borderColor: estGagnant ? `${couleur}60` : 'rgba(255,255,255,0.08)',
     }}>
-      {/* Logo flouté arrière-plan */}
       {equipe.logo && !imgErr && (
         <img src={equipe.logo} alt="" aria-hidden="true" style={{
           position: 'absolute', right: -4, top: '50%', transform: 'translateY(-50%)',
@@ -86,13 +85,11 @@ function CarteEquipe({ equipe, gagnante, noSpoil, compact, ultra }) {
           objectFit: 'contain', opacity: 0.07, filter: 'blur(2px)', pointerEvents: 'none',
         }} />
       )}
-      {/* Logo net */}
       {equipe.logo && !imgErr
         ? <img src={equipe.logo} alt={equipe.trigramme} onError={() => setImgErr(true)}
             style={{ width: logoSize, height: logoSize, objectFit: 'contain', flexShrink: 0, position: 'relative' }} />
         : <div style={{ width: logoSize, height: logoSize, borderRadius: '50%', background: couleur, flexShrink: 0 }} />
       }
-      {/* Trigramme — tronqué si trop long */}
       <span style={{
         fontSize: fsTri, fontWeight: 800,
         fontFamily: 'var(--font-display)', letterSpacing: '0.04em',
@@ -100,7 +97,6 @@ function CarteEquipe({ equipe, gagnante, noSpoil, compact, ultra }) {
         flex: 1, position: 'relative',
         overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
       }}>{equipe.trigramme}</span>
-      {/* Score wins */}
       <span style={{
         fontSize: fsScore, fontWeight: 900,
         fontFamily: 'var(--font-display)',
@@ -142,14 +138,18 @@ function Matchup({ serie, noSpoil, compact, ultra }) {
 // ── Colonne d'un round ────────────────────────────────────────────────────────
 function ColonneRound({ label, series, noSpoil, compact, ultra }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <div style={{
         fontSize: ultra ? 6 : 7, fontWeight: 800, color: 'var(--text-3)',
         textTransform: 'uppercase', letterSpacing: '0.08em',
         textAlign: 'center', marginBottom: 6, lineHeight: 1.3,
         whiteSpace: 'pre-line',
       }}>{label}</div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: ultra ? 8 : 10, flex: 1, justifyContent: 'space-evenly' }}>
+      <div style={{
+        display: 'flex', flexDirection: 'column',
+        gap: ultra ? 8 : 10, flex: 1,
+        justifyContent: 'space-evenly',
+      }}>
         {series.length > 0
           ? series.map((s, i) => <Matchup key={i} serie={s} noSpoil={noSpoil} compact={compact} ultra={ultra} />)
           : <Matchup serie={null} noSpoil={noSpoil} compact={compact} ultra={ultra} />
@@ -161,12 +161,12 @@ function ColonneRound({ label, series, noSpoil, compact, ultra }) {
 
 // ── Composant principal ───────────────────────────────────────────────────────
 export default function BracketPlayoffs({ saison = 2026 }) {
-  const { noSpoil }             = useNoSpoil()
-  const [bracket, setBracket]   = useState(null)
-  const [charg, setCharg]       = useState(true)
-  const [erreur, setErreur]     = useState(false)
-  const [largeur, setLargeur]   = useState(window.innerWidth)
-  const scrollRef               = useRef(null)
+  const { noSpoil }           = useNoSpoil()
+  const [bracket, setBracket] = useState(null)
+  const [charg, setCharg]     = useState(true)
+  const [erreur, setErreur]   = useState(false)
+  const [largeur, setLargeur] = useState(window.innerWidth)
+  const scrollRef             = useRef(null)
 
   useEffect(() => {
     const onResize = () => setLargeur(window.innerWidth)
@@ -177,12 +177,11 @@ export default function BracketPlayoffs({ saison = 2026 }) {
   const mobile = largeur < 500
   const ultra  = largeur < 380
 
-  // Centrer le scroll sur les Finales NBA après chargement
+  // Centrer le scroll sur les Finales NBA
   useEffect(() => {
     if (!bracket || !scrollRef.current) return
-    const el       = scrollRef.current
-    const milieu   = (el.scrollWidth - el.clientWidth) / 2
-    el.scrollLeft  = milieu
+    const el      = scrollRef.current
+    el.scrollLeft = (el.scrollWidth - el.clientWidth) / 2
   }, [bracket])
 
   useEffect(() => {
@@ -262,11 +261,11 @@ export default function BracketPlayoffs({ saison = 2026 }) {
         let finale  = null
 
         mapSeries.forEach(s => {
-          const round  = TYPE_ROUNDS[s.typeId]
+          const round = TYPE_ROUNDS[s.typeId]
           if (s.typeId === '17') { finale = s; return }
-          const isEst  = confEst.has(s.exterieur.trigramme) || confEst.has(s.domicile.trigramme)
-          if (isEst && est[round])    est[round].push(s)
-          else if (ouest[round])      ouest[round].push(s)
+          const isEst = confEst.has(s.exterieur.trigramme) || confEst.has(s.domicile.trigramme)
+          if (isEst && est[round])   est[round].push(s)
+          else if (ouest[round])     ouest[round].push(s)
         })
 
         setBracket({ ouest, est, finale })
@@ -299,13 +298,9 @@ export default function BracketPlayoffs({ saison = 2026 }) {
     </p>
   )
 
-  const minW = ultra ? 370 : mobile ? 460 : 560
-  const gap  = ultra ? 4 : mobile ? 5 : 6
-  const cols = ultra
-    ? 'repeat(3, minmax(48px, 1fr)) minmax(55px, 70px) repeat(3, minmax(48px, 1fr))'
-    : mobile
-      ? 'repeat(3, minmax(62px, 1fr)) minmax(68px, 85px) repeat(3, minmax(62px, 1fr))'
-      : 'repeat(3, minmax(80px, 1fr)) minmax(80px, 100px) repeat(3, minmax(80px, 1fr))'
+  // Colonnes strictement égales en 1fr — pas de minmax pour éviter les inégalités
+  const minW = ultra ? 370 : mobile ? 460 : 580
+  const gap  = ultra ? 4 : mobile ? 5 : 8
 
   return (
     <div>
@@ -324,15 +319,17 @@ export default function BracketPlayoffs({ saison = 2026 }) {
         )}
       </div>
 
-      {/* Scroll centré sur les Finales NBA */}
       <div ref={scrollRef} style={{ overflowX: 'auto', paddingBottom: 8 }}>
         <div style={{
           display: 'grid',
-          gridTemplateColumns: cols,
+          // 7 colonnes strictement égales en 1fr
+          gridTemplateColumns: '1fr 1fr 1fr 1fr 1fr 1fr 1fr',
           gap,
           minWidth: minW,
-          alignItems: 'center',
+          alignItems: 'stretch', // toutes les colonnes à la même hauteur
         }}>
+
+          {/* OUEST : 1er tour → Finales conf */}
           {ORDRE_ROUNDS.map((round, i) => (
             <ColonneRound
               key={`ouest-${round}`}
@@ -344,7 +341,12 @@ export default function BracketPlayoffs({ saison = 2026 }) {
             />
           ))}
 
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, padding: '0 2px' }}>
+          {/* FINALES NBA — centrées haut/bas et gauche/droite */}
+          <div style={{
+            display: 'flex', flexDirection: 'column',
+            alignItems: 'center', justifyContent: 'center',
+            gap: 6, padding: '0 2px',
+          }}>
             <div style={{
               fontSize: ultra ? 6 : 7, fontWeight: 900, letterSpacing: '0.12em',
               background: 'linear-gradient(90deg, var(--accent), var(--orange))',
@@ -354,6 +356,7 @@ export default function BracketPlayoffs({ saison = 2026 }) {
             <Matchup serie={bracket.finale} noSpoil={noSpoil} compact={false} ultra={ultra} />
           </div>
 
+          {/* EST : Finales conf → 1er tour */}
           {[...ORDRE_ROUNDS].reverse().map((round, i) => (
             <ColonneRound
               key={`est-${round}`}
@@ -364,6 +367,7 @@ export default function BracketPlayoffs({ saison = 2026 }) {
               ultra={ultra || (mobile && i < 2)}
             />
           ))}
+
         </div>
       </div>
 
