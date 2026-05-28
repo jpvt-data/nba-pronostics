@@ -34,10 +34,6 @@ function ClassementRapide({ userId }) {
   return (
     <div style={{ marginBottom: '1.5rem' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <Swords size={15} color="var(--accent)" strokeWidth={2} />
-          <h3 style={{ margin: 0 }}>Ligue en cours</h3>
-        </div>
         <button
           onClick={() => navigate('/classement')}
           style={{

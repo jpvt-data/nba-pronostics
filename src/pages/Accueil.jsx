@@ -174,7 +174,7 @@ function Accueil() {
         {!chargement && <NewsNBA typeSaison={typeSaisonActuel} />}
 
         {!chargement && user && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: '12px 16px 20px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 20, padding: '12px 16px 20px' }}>
             <Bloc>
               <LabelSection>Ligue en cours</LabelSection>
               <div style={{ marginTop: 8 }}><ClassementRapide userId={user.id} /></div>
