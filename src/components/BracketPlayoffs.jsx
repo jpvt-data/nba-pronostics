@@ -290,7 +290,7 @@ export default function BracketPlayoffs({ saison = 2026 }) {
         {noSpoil && <div style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 3, fontStyle: 'italic' }}>🙈 No Spoil actif</div>}
       </div>
 
-      <div ref={scrollRef} style={{ overflowX: 'auto', paddingBottom: 8 }}>
+      <div ref={scrollRef} style={{ overflowX: 'auto', paddingBottom: 8, display: 'flex', justifyContent: 'center' }}>
         <div style={{
           display: 'flex', flexDirection: 'row', alignItems: 'flex-start',
           gap: colGap, padding: '0 8px',
