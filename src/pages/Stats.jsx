@@ -3,6 +3,7 @@ import Navigation from '../components/Navigation'
 import { BanniereImage, LabelSection } from '../components/UI'
 import { Search, ChevronRight, ArrowLeft } from 'lucide-react'
 import BracketPlayoffs from '../components/BracketPlayoffs'
+import { SAISON_ESPN } from '../config'
 
 const BASE     = 'https://site.api.espn.com/apis/site/v2/sports/basketball/nba'
 const BASE_V2  = 'https://site.api.espn.com/apis/v2/sports/basketball/nba'
@@ -377,13 +378,13 @@ function FicheEquipe({ equipe, onRetour }) {
         setChargementStats(true)
         Promise.allSettled(
           joueurs.map(j =>
-            fetchAvecTimeout(`${BASE_WEB}/athletes/${j.id}/stats?season=2026&seasontype=2`)
+            fetchAvecTimeout(`${BASE_WEB}/athletes/${j.id}/stats?season=${SAISON_ESPN}&seasontype=2`)
               .then(r => r.json())
               .then(data => {
                 const catAvg = (data.categories ?? []).find(c => c.name === 'averages')
                 if (!catAvg) return { id: j.id, ppg: 0 }
                 const names   = catAvg.names ?? []
-                const statRow = catAvg.statistics?.find(s => s.season?.year === 2026)
+                const statRow = catAvg.statistics?.find(s => s.season?.year === SAISON_ESPN)
                     ?? catAvg.statistics?.[catAvg.statistics.length - 1]
                 const vals = statRow?.stats ?? []
                 const idx  = names.indexOf('avgPoints')
@@ -718,14 +719,14 @@ function FicheJoueur({ joueur, equipe, onRetour }) {
     })
 
     // Stats via site.web.api.espn.com (CORS OK)
-    fetchAvecTimeout(`${BASE_WEB}/athletes/${joueur.id}/stats?season=2026&seasontype=2`)
+    fetchAvecTimeout(`${BASE_WEB}/athletes/${joueur.id}/stats?season=${SAISON_ESPN}&seasontype=2`)
         .then(r => r.json())
         .then(data => {
         const catAvg = (data.categories ?? []).find(c => c.name === 'averages')
         if (catAvg) {
             const names  = catAvg.names ?? []
             // Prendre la saison 2026, fallback sur la dernière entrée
-            const statRow = catAvg.statistics?.find(s => s.season?.year === 2026)
+            const statRow = catAvg.statistics?.find(s => s.season?.year === SAISON_ESPN)
             ?? catAvg.statistics?.[catAvg.statistics.length - 1]
             const vals = statRow?.stats ?? []
             const v = (n) => { const i = names.indexOf(n); return i !== -1 ? vals[i] : '—' }

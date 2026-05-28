@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { SAISON_ESPN } from '../config'
 
-const URL_STANDINGS = 'https://site.api.espn.com/apis/v2/sports/basketball/nba/standings?season=2026&seasontype=2'
+const URL_STANDINGS = `https://site.api.espn.com/apis/v2/sports/basketball/nba/standings?season=${SAISON_ESPN}&seasontype=2`
 
 const parseEquipe = (entree, rang) => {
   const equipe = entree.team

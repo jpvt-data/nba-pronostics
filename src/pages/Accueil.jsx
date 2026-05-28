@@ -15,6 +15,7 @@ import { LabelSection, BanniereImage, Bloc } from '../components/UI'
 import { useNavigate } from 'react-router-dom'
 import { Zap, Calendar, EyeOff, Eye } from 'lucide-react'
 import { useNoSpoil } from '../context/NoSpoilContext'
+import { SAISON_ESPN } from '../config'
 
 const GUTTER = '20px 16px'
 
@@ -84,6 +85,8 @@ function Accueil() {
   }
 
   const typeSaisonActuel = matchs[0]?.typeSaisonNum ?? null
+  // Saison ESPN du premier match — fallback sur la constante globale si matchs vides
+  const saisonActuelle   = matchs[0]?.saisonNum ?? SAISON_ESPN
 
   return (
     <>
@@ -169,9 +172,8 @@ function Accueil() {
           <p style={{ color: 'var(--text-3)', fontSize: 13, textAlign: 'center', padding: '2rem 0' }}>Chargement…</p>
         )}
 
-
         {!chargement && <StandingsNBA typeSaison={typeSaisonActuel} />}
-        {!chargement && typeSaisonActuel === 3 && <BracketPlayoffs saison={2026} />}
+        {!chargement && typeSaisonActuel === 3 && <BracketPlayoffs saison={saisonActuelle} />}
         {!chargement && (
           <BanniereImage url="https://images.unsplash.com/photo-1519861531473-9200262188bf?w=800&q=60" hauteur={110} />
         )}
