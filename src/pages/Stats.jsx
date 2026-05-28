@@ -696,51 +696,96 @@ function OngletJoueurs({ equipesStandings }) {
   )
 }
 
+
 // ── FICHE JOUEUR ─────────────────────────────────────────────────────────────
 function FicheJoueur({ joueur, equipe, onRetour }) {
   const [profil, setProfil]         = useState(null)
   const [stats, setStats]           = useState(null)
+  const [gameLog, setGameLog]       = useState([])
   const [chargement, setChargement] = useState(true)
   const couleur = equipe ? couleurEquipe(equipe.couleur) : couleurEquipe(joueur.equipeCouleur)
 
-    useEffect(() => {
+  useEffect(() => {
     setChargement(true)
-    // Suppression de l'appel athletes/{id} (CORS bloqué)
-    // Les données de base viennent du roster (joueur prop)
+    // Données de base depuis le roster (athletes/{id} CORS bloqué)
     setProfil({
-        nom:        joueur.nom,
-        photo:      joueur.photo ?? null,
-        numero:     joueur.numero ?? '—',
-        position:   joueur.positionFull ?? joueur.position ?? '—',
-        age:        joueur.age ?? '—',
-        taille:     joueur.taille ?? '—',
-        poids:      joueur.poids ?? '—',
-        experience: '—',
+      nom:        joueur.nom,
+      photo:      joueur.photo ?? null,
+      numero:     joueur.numero ?? '—',
+      position:   joueur.positionFull ?? joueur.position ?? '—',
+      age:        joueur.age ?? '—',
+      taille:     joueur.taille ?? '—',
+      poids:      joueur.poids ?? '—',
+      experience: '—',
     })
 
-    // Stats via site.web.api.espn.com (CORS OK)
-    fetchAvecTimeout(`${BASE_WEB}/athletes/${joueur.id}/stats?season=${SAISON_ESPN}&seasontype=2`)
-        .then(r => r.json())
-        .then(data => {
+    // Stats moyennes + game log en parallèle
+    Promise.allSettled([
+      fetchAvecTimeout(`${BASE_WEB}/athletes/${joueur.id}/stats?season=${SAISON_ESPN}&seasontype=2`)
+        .then(r => r.json()),
+      fetchAvecTimeout(`${BASE_WEB}/athletes/${joueur.id}/gamelog`)
+        .then(r => r.json()),
+    ]).then(([resStats, resLog]) => {
+      // Stats moyennes
+      if (resStats.status === 'fulfilled') {
+        const data   = resStats.value
         const catAvg = (data.categories ?? []).find(c => c.name === 'averages')
         if (catAvg) {
-            const names  = catAvg.names ?? []
-            // Prendre la saison 2026, fallback sur la dernière entrée
-            const statRow = catAvg.statistics?.find(s => s.season?.year === SAISON_ESPN)
+          const names   = catAvg.names ?? []
+          const statRow = catAvg.statistics?.find(s => s.season?.year === SAISON_ESPN)
             ?? catAvg.statistics?.[catAvg.statistics.length - 1]
-            const vals = statRow?.stats ?? []
-            const v = (n) => { const i = names.indexOf(n); return i !== -1 ? vals[i] : '—' }
-            setStats({
+          const vals = statRow?.stats ?? []
+          const v = (n) => { const i = names.indexOf(n); return i !== -1 ? vals[i] : '—' }
+          setStats({
             pts: v('avgPoints'), reb: v('avgRebounds'), ast: v('avgAssists'),
             stl: v('avgSteals'), blk: v('avgBlocks'), min: v('avgMinutes'),
             fg:  v('fieldGoalPct'), fg3: v('threePointFieldGoalPct'),
             ft:  v('freeThrowPct'), gp:  v('gamesPlayed'),
-            })
+          })
         }
-        setChargement(false)
+      }
+
+      // Game log — on aplatit tous les mois de la saison régulière
+      if (resLog.status === 'fulfilled') {
+        const data      = resLog.value
+        const labels    = data.labels ?? []       // ordre des stats
+        const eventsMap = data.events ?? {}       // dict eventId → metadata
+        const lignes    = []
+
+        // Parcourir seasonTypes (saison régulière = displayName contient "Regular")
+        ;(data.seasonTypes ?? []).forEach(st => {
+          if (!st.displayName?.toLowerCase().includes('regular')) return
+          ;(st.categories ?? []).forEach(cat => {
+            ;(cat.events ?? []).forEach(ev => {
+              const meta = eventsMap[ev.eventId]
+              if (!meta) return
+              const idx = (nom) => labels.indexOf(nom)
+              lignes.push({
+                eventId:   ev.eventId,
+                date:      meta.gameDate,
+                atVs:      meta.atVs,            // "vs" ou "@"
+                adversaire: meta.opponent?.abbreviation ?? '?',
+                resultat:  meta.gameResult,      // "W" ou "L"
+                score:     meta.score,
+                min: ev.stats[idx('minutes')]               ?? '—',
+                pts: ev.stats[idx('points')]                ?? '—',
+                reb: ev.stats[idx('totalRebounds')]         ?? '—',
+                ast: ev.stats[idx('assists')]               ?? '—',
+                fg:  ev.stats[idx('fieldGoalPct')]          ?? '—',
+                tp:  ev.stats[idx('threePointPct')]         ?? '—',
+              })
+            })
+          })
         })
-        .catch(() => setChargement(false))
-    }, [joueur.id])
+
+        // Tri chronologique inversé — matchs récents en premier
+        lignes.sort((a, b) => new Date(b.date) - new Date(a.date))
+        setGameLog(lignes.slice(0, 15))
+      }
+
+      setChargement(false)
+    })
+  }, [joueur.id])
 
   const statItems = stats ? [
     { label: 'PPG', val: stats.pts }, { label: 'RPG', val: stats.reb },
@@ -749,6 +794,8 @@ function FicheJoueur({ joueur, equipe, onRetour }) {
     { label: 'FG%', val: stats.fg },  { label: '3P%', val: stats.fg3 },
     { label: 'FT%', val: stats.ft },  { label: 'MJ',  val: stats.gp },
   ] : []
+
+  const formaterDate = (iso) => new Date(iso).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
 
   return (
     <div>
@@ -761,6 +808,7 @@ function FicheJoueur({ joueur, equipe, onRetour }) {
         {equipe ? `Retour — ${equipe.trigramme}` : joueur.equipeTri ? `Retour — ${joueur.equipeTri}` : 'Retour'}
       </button>
 
+      {/* En-tête joueur */}
       <div style={{
         display: 'flex', gap: 16, alignItems: 'flex-start', padding: '16px 20px',
         background: `linear-gradient(135deg, ${couleur}18, ${couleur}06)`,
@@ -795,10 +843,11 @@ function FicheJoueur({ joueur, equipe, onRetour }) {
 
       {chargement && <p style={{ color: 'var(--text-3)', fontSize: 13 }}>Chargement des stats…</p>}
 
+      {/* Stats moyennes saison */}
       {!chargement && stats && (
         <>
           <LabelSection>Stats saison</LabelSection>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 8, marginTop: 10 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 8, marginTop: 10, marginBottom: 20 }}>
             {statItems.map(({ label, val }) => (
               <div key={label} style={{
                 background: 'var(--bg-1)', borderWidth: 1, borderStyle: 'solid', borderColor: 'var(--border)',
@@ -811,7 +860,62 @@ function FicheJoueur({ joueur, equipe, onRetour }) {
           </div>
         </>
       )}
-      {!chargement && !stats && <p style={{ color: 'var(--text-3)', fontSize: 13 }}>Stats indisponibles.</p>}
+      {!chargement && !stats && <p style={{ color: 'var(--text-3)', fontSize: 13, marginBottom: 20 }}>Stats indisponibles.</p>}
+
+      {/* Game log — 15 derniers matchs */}
+      {!chargement && gameLog.length > 0 && (
+        <>
+          <LabelSection>Derniers matchs</LabelSection>
+          <div style={{ overflowX: 'auto', marginTop: 10, WebkitOverflowScrolling: 'touch' }}>
+            {/* En-tête */}
+            <div style={{
+              display: 'grid', gridTemplateColumns: '52px 44px 28px 36px 36px 36px 36px 44px 44px',
+              gap: 2, padding: '4px 6px',
+              fontSize: 9, fontWeight: 700, color: 'var(--text-3)',
+              textTransform: 'uppercase', letterSpacing: '0.05em',
+              minWidth: 360,
+            }}>
+              <span>Date</span>
+              <span>Adv</span>
+              <span style={{ textAlign: 'center' }}>R</span>
+              <span style={{ textAlign: 'center' }}>MIN</span>
+              <span style={{ textAlign: 'center' }}>PTS</span>
+              <span style={{ textAlign: 'center' }}>REB</span>
+              <span style={{ textAlign: 'center' }}>AST</span>
+              <span style={{ textAlign: 'center' }}>FG%</span>
+              <span style={{ textAlign: 'center' }}>3P%</span>
+            </div>
+
+            {/* Lignes */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 360 }}>
+              {gameLog.map((l, i) => (
+                <div key={l.eventId} style={{
+                  display: 'grid', gridTemplateColumns: '52px 44px 28px 36px 36px 36px 36px 44px 44px',
+                  gap: 2, padding: '5px 6px',
+                  background: i % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'transparent',
+                  borderRadius: 'var(--radius-sm)',
+                  alignItems: 'center',
+                }}>
+                  <span style={{ fontSize: 11, color: 'var(--text-3)' }}>{formaterDate(l.date)}</span>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-2)' }}>
+                    {l.atVs === '@' ? '@' : 'vs'} {l.adversaire}
+                  </span>
+                  <span style={{
+                    fontSize: 11, fontWeight: 700, textAlign: 'center',
+                    color: l.resultat === 'W' ? 'var(--success)' : 'var(--danger)',
+                  }}>{l.resultat}</span>
+                  <span style={{ fontSize: 11, color: 'var(--text-3)', textAlign: 'center' }}>{l.min}</span>
+                  <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--text-1)', textAlign: 'center', fontFamily: 'var(--font-display)' }}>{l.pts}</span>
+                  <span style={{ fontSize: 11, color: 'var(--text-2)', textAlign: 'center' }}>{l.reb}</span>
+                  <span style={{ fontSize: 11, color: 'var(--text-2)', textAlign: 'center' }}>{l.ast}</span>
+                  <span style={{ fontSize: 11, color: 'var(--text-3)', textAlign: 'center' }}>{l.fg}</span>
+                  <span style={{ fontSize: 11, color: 'var(--text-3)', textAlign: 'center' }}>{l.tp}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
     </div>
   )
 }
