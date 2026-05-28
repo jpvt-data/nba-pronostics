@@ -17,10 +17,9 @@ export default function NewsNBA({ typeSaison }) {
       .then(r => r.json())
       .then(data => {
         const articles = (data.articles ?? []).slice(0, 5).map(a => ({
-          titre:    a.headline ?? '',
-          resume:   a.description ?? null,
-          lien:     a.links?.web?.href ?? null,
-          image:    a.images?.[0]?.url ?? null,
+          titre:  a.headline ?? '',
+          resume: a.description ?? null,
+          lien:   a.links?.web?.href ?? null,
         }))
         setNews(articles)
         setChargement(false)
@@ -32,7 +31,6 @@ export default function NewsNBA({ typeSaison }) {
     return () => controller.abort()
   }, [typeSaison])
 
-  // Masqué hors saison
   if (typeSaison === null) return null
   if (erreur || (!chargement && news.length === 0)) return null
 
@@ -51,7 +49,6 @@ export default function NewsNBA({ typeSaison }) {
         letterSpacing: '0.1em', fontSize: 13, fontWeight: 700, margin: 0,
       }}>Actu NBA</h3>
 
-      {/* Mode No Spoil — masque les titres */}
       {noSpoil ? (
         <div style={{
           display: 'flex', alignItems: 'center', gap: 8,
@@ -71,7 +68,7 @@ export default function NewsNBA({ typeSaison }) {
             <p style={{ fontSize: 12, color: 'var(--text-3)', margin: 0 }}>Chargement…</p>
           ) : (
             news.map((article, i) => (
-              
+              <a
                 key={i}
                 href={article.lien ?? '#'}
                 target="_blank"
@@ -95,8 +92,6 @@ export default function NewsNBA({ typeSaison }) {
                   <span style={{
                     fontSize: 11, color: 'var(--text-3)', lineHeight: 1.4,
                     display: 'block', marginTop: 2,
-                    overflow: 'hidden', textOverflow: 'ellipsis',
-                    display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
                   }}>
                     {article.resume}
                   </span>
