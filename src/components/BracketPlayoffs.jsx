@@ -331,7 +331,7 @@ export default function BracketPlayoffs({ saison = 2026 }) {
         </div>
       </div>
 
-      <p style={{ fontSize: 10, color: 'var(--text-3)', textAlign: 'right', marginTop: 6, marginRight: 8 }}>
+      <p style={{ fontSize: 10, color: 'var(--text-3)', textAlign: 'right', marginTop: 6, marginRight: 20 }}>
         Source : ESPN · {saison - 1}-{String(saison).slice(2)}
       </p>
     </div>
