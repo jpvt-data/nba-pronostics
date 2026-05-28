@@ -49,16 +49,20 @@ export const recupererMatchs3Jours = async () => {
         stade:          venue?.fullName || null,
         ville:          venue?.address?.city || null,
         domicile: {
-          nom:       dom.team.displayName,
-          trigramme: dom.team.abbreviation,
-          logo:      dom.team.logo,
-          score:     dom.score ?? null,
+          nom:            dom.team.displayName,
+          trigramme:      dom.team.abbreviation,
+          logo:           dom.team.logo,
+          score:          dom.score ?? null,
+          color:          dom.team.color || null,
+          alternateColor: dom.team.alternateColor || null,
         },
         exterieur: {
-          nom:       ext.team.displayName,
-          trigramme: ext.team.abbreviation,
-          logo:      ext.team.logo,
-          score:     ext.score ?? null,
+          nom:            ext.team.displayName,
+          trigramme:      ext.team.abbreviation,
+          logo:           ext.team.logo,
+          score:          ext.score ?? null,
+          color:          ext.team.color || null,
+          alternateColor: ext.team.alternateColor || null,
         },
       })
     })
