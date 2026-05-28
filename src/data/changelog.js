@@ -1,5 +1,37 @@
 // Changelog NBA Pronostics — une entrée par version/feature
 export const CHANGELOG = [
+    {
+    version: "v1.0",
+    date: "2026-05-28",
+    titre: "Explorer — Stats NBA",
+    nouveautes: [
+      {
+        icon: "🏀",
+        titre: "Page Explorer",
+        description: "Nouvelle section accessible depuis la nav — classements NBA, fiches équipes et joueurs en un seul endroit."
+      },
+      {
+        icon: "🏆",
+        titre: "Classements historiques",
+        description: "Standings Est/Ouest avec sélecteur de saison depuis 2002. Colonnes PCT, GB, Dom., Ext., série en cours, badges de qualification."
+      },
+      {
+        icon: "👕",
+        titre: "Fiches équipes",
+        description: "30 franchises NBA avec logos et couleurs officielles. Roster trié par PPG, onglet blessés."
+      },
+      {
+        icon: "⭐",
+        titre: "Fiches joueurs",
+        description: "450+ joueurs avec photo, stats saison (PPG, REB, AST, FG%...). Recherche par nom ou filtre par équipe."
+      },
+      {
+        icon: "🔒",
+        titre: "Sécurité renforcée",
+        description: "Création de ligues désormais restreinte en base de données — plus seulement côté interface."
+      },
+    ]
+  },
   {
     version: 'v0.9',
     date: '2026-05-28',
@@ -105,4 +137,4 @@ export const CHANGELOG = [
 ]
 
 // Version courante de l'app — à incrémenter à chaque déploiement avec nouveautés
-export const VERSION_COURANTE = 'v0.9'
+export const VERSION_COURANTE = 'v1.0'
