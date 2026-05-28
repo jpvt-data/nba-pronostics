@@ -168,7 +168,11 @@ function Navigation() {
       }}>
         <div onClick={() => navigate('/accueil')} style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
           <img src={swishLogo} alt="Swish League" style={{ height: 36, width: 'auto' }} />
-          <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 17, letterSpacing: '0.08em', color: '#fff' }}>
+          <span style={{
+            fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 20, letterSpacing: '0.06em',
+            background: 'linear-gradient(90deg, var(--accent), var(--orange))',
+            WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
+          }}>
             SWISH LEAGUE
           </span>
         </div>
@@ -225,7 +229,11 @@ function Navigation() {
       }}>
         <div onClick={() => navigate('/accueil')} style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
           <img src={swishLogo} alt="Swish League" style={{ height: 28, width: 'auto' }} />
-          <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 15, letterSpacing: '0.08em', color: '#fff' }}>
+          <span style={{
+            fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 16, letterSpacing: '0.06em',
+            background: 'linear-gradient(90deg, var(--accent), var(--orange))',
+            WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
+          }}>
             SWISH LEAGUE
           </span>
         </div>
