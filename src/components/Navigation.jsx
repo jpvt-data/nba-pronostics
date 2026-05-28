@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import { Home, Trophy, BarChart2, Menu, X, Swords, LogOut, Calendar, Sparkles, EyeOff, UserCircle } from 'lucide-react'
+import { Home, Trophy, BarChart2, Menu, X, Swords, LogOut, Calendar, Sparkles, EyeOff, TrendingUp } from 'lucide-react'
 import PopupChangelog from './PopupChangelog'
 import { useNoSpoil } from '../context/NoSpoilContext'
 import { useProfil } from '../context/ProfilContext'
@@ -12,6 +12,7 @@ const LIENS = [
   { chemin: '/accueil',    label: 'Board',      Icone: Home },
   { chemin: '/classement', label: 'Classement', Icone: Trophy },
   { chemin: '/mes-pronos', label: 'Mes stats',  Icone: BarChart2 },
+  { chemin: '/stats',      label: 'Explorer',   Icone: TrendingUp },
 ]
 
 const navBase = {
@@ -22,9 +23,9 @@ const navBase = {
 }
 
 function Navigation() {
-  const navigate  = useNavigate()
-  const location  = useLocation()
-  const [ouvert, setOuvert]   = useState(false)
+  const navigate = useNavigate()
+  const location = useLocation()
+  const [ouvert, setOuvert] = useState(false)
   const [changelogOuvert, setChangelogOuvert] = useState(false)
   const { noSpoil, toggleNoSpoil } = useNoSpoil()
   const { profil } = useProfil()
@@ -86,7 +87,9 @@ function Navigation() {
         {/* Séparateur */}
         <div style={{ borderTopWidth: 1, borderTopStyle: 'solid', borderTopColor: 'var(--border)', marginBottom: '0.75rem' }} />
 
+        {/* Liens hamburger */}
         {[
+          { chemin: '/stats',      label: 'Explorer',   Icone: TrendingUp },
           { chemin: '/groupes',    label: 'Ligues',     Icone: Swords },
           { chemin: '/calendrier', label: 'Calendrier', Icone: Calendar },
         ].map(({ chemin, label, Icone }) => (
@@ -95,11 +98,15 @@ function Navigation() {
             onClick={() => aller(chemin)}
             style={{
               display: 'flex', alignItems: 'center', gap: 10,
-              background: 'none', borderWidth: 0, color: 'var(--text-2)',
+              background: location.pathname === chemin ? 'var(--accent-dim)' : 'none',
+              borderWidth: location.pathname === chemin ? 1 : 0,
+              borderStyle: 'solid',
+              borderColor: 'var(--accent-border)',
+              color: location.pathname === chemin ? 'var(--accent)' : 'var(--text-2)',
               fontSize: 14, cursor: 'pointer',
               paddingTop: '0.75rem', paddingBottom: '0.75rem',
               paddingLeft: '0.5rem', paddingRight: '0.5rem',
-              borderRadius: 'var(--radius-sm)',
+              borderRadius: 'var(--radius-sm)', width: '100%', textAlign: 'left',
             }}
           >
             <Icone size={18} strokeWidth={1.5} /> {label}
@@ -184,7 +191,6 @@ function Navigation() {
             )
           })}
         </div>
-        {/* Avatar cliquable vers profil côté desktop */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <button
             onClick={() => navigate('/profil')}
