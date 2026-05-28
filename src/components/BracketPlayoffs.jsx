@@ -279,7 +279,7 @@ export default function BracketPlayoffs({ saison = 2026 }) {
 
   return (
     <div>
-      <div style={{ textAlign: 'center', marginBottom: 10 }}>
+      <div style={{ textAlign: 'center', marginBottom: 30 }}>
         <span style={{
           display: 'inline-block',
           background: 'linear-gradient(90deg, var(--accent), var(--orange))',
