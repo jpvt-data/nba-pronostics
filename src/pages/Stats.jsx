@@ -757,13 +757,13 @@ function RadarSingle({ titre, axes, stats, couleur }) {
       {/* Titre */}
       <span style={{
         fontSize: 11, fontWeight: 700, letterSpacing: '0.12em',
-        textTransform: 'uppercase', marginBottom: 6,
+        textTransform: 'uppercase', marginBottom: 0,
         background: 'linear-gradient(90deg, var(--accent), var(--orange))',
         WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
       }}>{titre}</span>
 
       <svg width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`}
-        style={{ overflow: 'visible', maxWidth: '100%' }}>
+        style={{ overflow: 'visible', maxWidth: '100%', marginTop: 28 }}>
 
         {/* Grille */}
         {Array.from({ length: NIVEAUX }).map((_, k) => (
