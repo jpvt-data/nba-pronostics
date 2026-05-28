@@ -11,11 +11,12 @@ export const LabelSection = ({ children }) => (
 
 export const BanniereImage = ({ url, hauteur = 110 }) => (
   <div style={{
-    margin: '30px 0 30px', height: hauteur,
+    height: hauteur,
+    borderRadius: 'var(--radius-lg)',
     backgroundImage: `linear-gradient(to right, rgba(13,13,18,0.75), rgba(13,13,18,0.35), rgba(13,13,18,0.75)), url(${url})`,
     backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat',
-    borderTopWidth: 1, borderTopStyle: 'solid', borderTopColor: 'rgba(99,102,241,0.2)',
-    borderBottomWidth: 1, borderBottomStyle: 'solid', borderBottomColor: 'rgba(99,102,241,0.2)',
+    borderWidth: 1, borderStyle: 'solid', borderColor: 'rgba(99,102,241,0.15)',
+    overflow: 'hidden',
   }} />
 )
 

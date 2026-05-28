@@ -183,7 +183,9 @@ function Accueil() {
         {!chargement && typeSaisonActuel === 3 && <BracketPlayoffs saison={saisonActuelle} />}
 
         {!chargement && (
-          <BanniereImage url="https://images.unsplash.com/photo-1519861531473-9200262188bf?w=800&q=60" hauteur={110} />
+          <div style={{ margin: '20px 16px 0' }}>
+            <BanniereImage url="https://images.unsplash.com/photo-1504450758481-7338eba7524a?w=800&q=60" hauteur={80} />
+          </div>
         )}
 
         {!chargement && user && (
