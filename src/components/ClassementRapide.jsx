@@ -47,7 +47,7 @@ function ClassementRapide({ userId }) {
         </button>
       </div>
       <div style={{ fontSize: 12, color: 'var(--text-3)', marginBottom: 8, display: 'flex', justifyContent: 'space-between' }}>
-        <span>{groupeActif.nom}</span>
+        <h3 style={{ marginBottom: 10 }}>{groupeActif.nom}</h3>
         {monRang > 0 && <span>Tu es #{monRang}</span>}
       </div>
 
