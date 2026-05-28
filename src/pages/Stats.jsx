@@ -345,7 +345,7 @@ function FicheEquipe({ equipe, onRetour }) {
         setChargementStats(true)
         Promise.allSettled(
           joueurs.map(j =>
-            fetchAvecTimeout(`${BASE_WEB}/athletes/${j.id}/stats`)
+            fetchAvecTimeout(`${BASE_WEB}/athletes/${j.id}/stats?season=2026&seasontype=2`)
               .then(r => r.json())
               .then(data => {
                 const catAvg = (data.categories ?? []).find(c => c.name === 'averages')
@@ -685,7 +685,7 @@ function FicheJoueur({ joueur, equipe, onRetour }) {
     })
 
     // Stats via site.web.api.espn.com (CORS OK)
-    fetchAvecTimeout(`${BASE_WEB}/athletes/${joueur.id}/stats`)
+    fetchAvecTimeout(`${BASE_WEB}/athletes/${joueur.id}/stats?season=2026&seasontype=2`)
         .then(r => r.json())
         .then(data => {
         // Structure : categories[0] = averages, names[] + statistics[0].stats[] en parallèle
