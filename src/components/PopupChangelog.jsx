@@ -177,12 +177,14 @@ function PopupChangelog({ forceOuvert = false, onFermer }) {
             onClick={fermer}
             style={{
               width: '100%', padding: '0.6rem',
-              background: '#6366f1', border: 'none',
+              background: 'linear-gradient(90deg, var(--accent), var(--orange))',
+              border: 'none',
               borderRadius: 8, color: '#fff',
-              fontSize: 13, fontWeight: 600, cursor: 'pointer',
+              fontSize: 13, fontWeight: 700, cursor: 'pointer',
+              letterSpacing: '0.04em',
             }}
           >
-            C'est parti 🏀
+            C'est parti
           </button>
         </div>
       </div>
