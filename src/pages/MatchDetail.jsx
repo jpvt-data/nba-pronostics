@@ -69,15 +69,25 @@ function MatchDetail() {
           const resPred = await fetch(
             `${BASE_CORE}/events/${espn_id}/competitions/${espn_id}/predictor`
           ).then(r => r.json())
-          const hPct = resPred.homeTeam?.gameProjection
-          const aPct = resPred.awayTeam?.gameProjection
-          if (hPct != null && aPct != null) {
-            const equipePrediite = hPct >= aPct
+
+          // gameProjection est dans statistics[], pas directement sur l'objet
+          const trouverGP = (equipe) =>
+            equipe?.statistics?.find(s => s.name === 'gameProjection')?.value ?? null
+
+          const aPct = trouverGP(resPred.awayTeam)
+          const hPct = trouverGP(resPred.homeTeam)
+
+          // Si une seule valeur dispo, on déduit l'autre
+          const extVal = aPct ?? (hPct != null ? 100 - hPct : null)
+          const domVal = hPct ?? (aPct != null ? 100 - aPct : null)
+
+          if (extVal != null && domVal != null) {
+            const equipePrediite = domVal >= extVal
               ? detail.domicile.trigramme
               : detail.exterieur.trigramme
             setPrediction({
-              domPct: Math.round(hPct),
-              extPct: Math.round(aPct),
+              domPct: Math.round(domVal),
+              extPct: Math.round(extVal),
               equipePrediite,
             })
           }
