@@ -327,6 +327,7 @@ function FicheEquipe({ equipe, onRetour }) {
   const [roster, setRoster]         = useState([])
   const [blessés, setBlessés]       = useState([])
   const [chargement, setChargement] = useState(true)
+  const [chargementStats, setChargementStats] = useState(false)
   const [joueurChoisi, setJoueurChoisi] = useState(null)
 
   const couleur = couleurEquipe(equipe.couleur)
@@ -338,8 +339,36 @@ function FicheEquipe({ equipe, onRetour }) {
       fetchAvecTimeout(`${BASE}/teams/${equipe.id}/injuries`).then(r => r.json()),
     ]).then(([resRoster, resBlessés]) => {
       if (resRoster.status === 'fulfilled') {
-        // Structure directe : data.athletes[] (pas de groupes)
-        setRoster(parseRoster(resRoster.value, equipe))
+        const joueurs = parseRoster(resRoster.value, equipe)
+        setRoster(joueurs)
+        // Chargement stats en parallèle pour tri par PPG
+        setChargementStats(true)
+        Promise.allSettled(
+          joueurs.map(j =>
+            fetchAvecTimeout(`${BASE_WEB}/athletes/${j.id}/stats`)
+              .then(r => r.json())
+              .then(data => {
+                const catAvg = (data.categories ?? []).find(c => c.name === 'averages')
+                if (!catAvg) return { id: j.id, ppg: 0 }
+                const names = catAvg.names ?? []
+                const vals  = catAvg.statistics?.[0]?.stats ?? catAvg.totals ?? []
+                const idx   = names.indexOf('avgPoints')
+                const ppg   = idx !== -1 ? parseFloat(vals[idx]) || 0 : 0
+                return { id: j.id, ppg }
+              })
+              .catch(() => ({ id: j.id, ppg: 0 }))
+          )
+        ).then(resultats => {
+          const ppgMap = {}
+          resultats.forEach(r => {
+            if (r.status === 'fulfilled') ppgMap[r.value.id] = r.value.ppg
+          })
+          setRoster(prev =>
+            [...prev].sort((a, b) => (ppgMap[b.id] ?? 0) - (ppgMap[a.id] ?? 0))
+              .map(j => ({ ...j, ppg: ppgMap[j.id] ?? 0 }))
+          )
+          setChargementStats(false)
+        })
       }
       if (resBlessés.status === 'fulfilled') {
         setBlessés((resBlessés.value.injuries ?? []).map(b => ({
@@ -403,30 +432,46 @@ function FicheEquipe({ equipe, onRetour }) {
       {chargement && <p style={{ color: 'var(--text-3)', fontSize: 13 }}>Chargement…</p>}
 
       {!chargement && onglet === 'roster' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          {roster.length === 0
-            ? <p style={{ color: 'var(--text-3)', fontSize: 13 }}>Effectif indisponible.</p>
-            : roster.map(j => (
-              <button key={j.id} onClick={() => setJoueurChoisi(j)} style={{
-                display: 'flex', alignItems: 'center', gap: 12,
-                background: 'var(--bg-1)', borderWidth: 1, borderStyle: 'solid', borderColor: 'var(--border)',
-                borderRadius: 'var(--radius-md)', padding: '8px 12px',
-                cursor: 'pointer', textAlign: 'left', transition: 'border-color 0.15s',
-              }}
-              onMouseEnter={e => e.currentTarget.style.borderColor = `${couleur}60`}
-              onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}
-              >
-                <PhotoJoueur url={j.photo} nom={j.nom} taille={40} />
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-1)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    {j.nom}
+        <div>
+          {chargementStats && (
+            <p style={{ fontSize: 11, color: 'var(--text-3)', marginBottom: 8 }}>
+              Tri par PPG en cours…
+            </p>
+          )}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {roster.length === 0
+              ? <p style={{ color: 'var(--text-3)', fontSize: 13 }}>Effectif indisponible.</p>
+              : roster.map(j => (
+                <button key={j.id} onClick={() => setJoueurChoisi(j)} style={{
+                  display: 'flex', alignItems: 'center', gap: 12,
+                  background: 'var(--bg-1)', borderWidth: 1, borderStyle: 'solid', borderColor: 'var(--border)',
+                  borderRadius: 'var(--radius-md)', padding: '8px 12px',
+                  cursor: 'pointer', textAlign: 'left', transition: 'border-color 0.15s',
+                }}
+                onMouseEnter={e => e.currentTarget.style.borderColor = `${couleur}60`}
+                onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}
+                >
+                  <PhotoJoueur url={j.photo} nom={j.nom} taille={40} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-1)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {j.nom}
+                    </div>
+                    <div style={{ fontSize: 11, color: 'var(--text-3)' }}>#{j.numero} · {j.positionFull}</div>
                   </div>
-                  <div style={{ fontSize: 11, color: 'var(--text-3)' }}>#{j.numero} · {j.positionFull}</div>
-                </div>
-                <ChevronRight size={14} color="var(--text-3)" />
-              </button>
-            ))
-          }
+                  {/* PPG affiché si dispo */}
+                  {j.ppg > 0 && (
+                    <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                      <div style={{ fontSize: 14, fontWeight: 800, color: couleur, fontFamily: 'var(--font-display)' }}>
+                        {j.ppg.toFixed(1)}
+                      </div>
+                      <div style={{ fontSize: 9, color: 'var(--text-3)', fontWeight: 700 }}>PPG</div>
+                    </div>
+                  )}
+                  <ChevronRight size={14} color="var(--text-3)" />
+                </button>
+              ))
+            }
+          </div>
         </div>
       )}
 
