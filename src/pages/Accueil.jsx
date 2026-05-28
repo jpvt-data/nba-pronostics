@@ -9,7 +9,7 @@ import ClassementRapide from '../components/ClassementRapide'
 import PronosAttente from '../components/PronosAttente'
 import RunsPotes from '../components/RunsPotes'
 import StandingsNBA from '../components/StandingsNBA'
-import SeriesPlayoffs from '../components/SeriesPlayoffs'
+import BracketPlayoffs from '../components/BracketPlayoffs'
 import NewsNBA from '../components/NewsNBA'
 import { LabelSection, BanniereImage, Bloc } from '../components/UI'
 import { useNavigate } from 'react-router-dom'
@@ -170,7 +170,7 @@ function Accueil() {
         )}
 
         {!chargement && <StandingsNBA typeSaison={typeSaisonActuel} />}
-        {!chargement && <SeriesPlayoffs typeSaison={typeSaisonActuel} />}
+        {!chargement && typeSaisonActuel === 3 && <BracketPlayoffs saison={2026} />}
         {!chargement && <NewsNBA typeSaison={typeSaisonActuel} />}
 
         {!chargement && user && (
