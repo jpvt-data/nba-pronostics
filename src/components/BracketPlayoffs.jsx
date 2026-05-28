@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNoSpoil } from '../context/NoSpoilContext'
 
 const BASE    = 'https://site.api.espn.com/apis/site/v2/sports/basketball/nba'
@@ -46,9 +46,8 @@ const formatSummary = (summary, terminee) => {
 function CarteEquipe({ equipe, gagnante, noSpoil, compact, ultra }) {
   const [imgErr, setImgErr] = useState(false)
 
-  // Tailles selon le mode
   const pad      = ultra ? '2px 4px'  : compact ? '3px 6px'  : '5px 8px'
-  const minW     = ultra ? 50         : compact ? 70          : 90
+  const w        = ultra ? 50         : compact ? 70          : 90
   const logoSize = ultra ? 10         : compact ? 12          : 14
   const logoBlur = ultra ? 20         : compact ? 24          : 30
   const fsTri    = ultra ? 8          : compact ? 9           : 10
@@ -57,7 +56,7 @@ function CarteEquipe({ equipe, gagnante, noSpoil, compact, ultra }) {
   if (!equipe) return (
     <div style={{
       display: 'flex', alignItems: 'center', gap: 3,
-      padding: pad, borderRadius: 5, minWidth: minW,
+      padding: pad, borderRadius: 5, width: w, flexShrink: 0,
       background: 'rgba(255,255,255,0.03)',
       borderWidth: 1, borderStyle: 'solid', borderColor: 'rgba(255,255,255,0.06)',
     }}>
@@ -72,7 +71,8 @@ function CarteEquipe({ equipe, gagnante, noSpoil, compact, ultra }) {
   return (
     <div style={{
       display: 'flex', alignItems: 'center', gap: 3,
-      padding: pad, borderRadius: 5, minWidth: minW,
+      padding: pad, borderRadius: 5,
+      width: w, flexShrink: 0, // largeur fixe
       position: 'relative', overflow: 'hidden',
       background: estGagnant ? `linear-gradient(90deg, ${couleur}28, ${couleur}10)` : 'rgba(255,255,255,0.04)',
       borderWidth: 1, borderStyle: 'solid',
@@ -92,12 +92,13 @@ function CarteEquipe({ equipe, gagnante, noSpoil, compact, ultra }) {
             style={{ width: logoSize, height: logoSize, objectFit: 'contain', flexShrink: 0, position: 'relative' }} />
         : <div style={{ width: logoSize, height: logoSize, borderRadius: '50%', background: couleur, flexShrink: 0 }} />
       }
-      {/* Trigramme */}
+      {/* Trigramme — tronqué si trop long */}
       <span style={{
         fontSize: fsTri, fontWeight: 800,
         fontFamily: 'var(--font-display)', letterSpacing: '0.04em',
         color: estGagnant ? 'var(--text-1)' : 'var(--text-2)',
         flex: 1, position: 'relative',
+        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
       }}>{equipe.trigramme}</span>
       {/* Score wins */}
       <span style={{
@@ -141,7 +142,7 @@ function Matchup({ serie, noSpoil, compact, ultra }) {
 // ── Colonne d'un round ────────────────────────────────────────────────────────
 function ColonneRound({ label, series, noSpoil, compact, ultra }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+    <div style={{ display: 'flex', flexDirection: 'column' }}>
       <div style={{
         fontSize: ultra ? 6 : 7, fontWeight: 800, color: 'var(--text-3)',
         textTransform: 'uppercase', letterSpacing: '0.08em',
@@ -160,13 +161,13 @@ function ColonneRound({ label, series, noSpoil, compact, ultra }) {
 
 // ── Composant principal ───────────────────────────────────────────────────────
 export default function BracketPlayoffs({ saison = 2026 }) {
-  const { noSpoil }           = useNoSpoil()
-  const [bracket, setBracket] = useState(null)
-  const [charg, setCharg]     = useState(true)
-  const [erreur, setErreur]   = useState(false)
-  const [largeur, setLargeur] = useState(window.innerWidth)
+  const { noSpoil }             = useNoSpoil()
+  const [bracket, setBracket]   = useState(null)
+  const [charg, setCharg]       = useState(true)
+  const [erreur, setErreur]     = useState(false)
+  const [largeur, setLargeur]   = useState(window.innerWidth)
+  const scrollRef               = useRef(null)
 
-  // Détection largeur écran
   useEffect(() => {
     const onResize = () => setLargeur(window.innerWidth)
     window.addEventListener('resize', onResize)
@@ -175,6 +176,14 @@ export default function BracketPlayoffs({ saison = 2026 }) {
 
   const mobile = largeur < 500
   const ultra  = largeur < 380
+
+  // Centrer le scroll sur les Finales NBA après chargement
+  useEffect(() => {
+    if (!bracket || !scrollRef.current) return
+    const el       = scrollRef.current
+    const milieu   = (el.scrollWidth - el.clientWidth) / 2
+    el.scrollLeft  = milieu
+  }, [bracket])
 
   useEffect(() => {
     const charger = async () => {
@@ -255,9 +264,7 @@ export default function BracketPlayoffs({ saison = 2026 }) {
         mapSeries.forEach(s => {
           const round  = TYPE_ROUNDS[s.typeId]
           if (s.typeId === '17') { finale = s; return }
-          const triExt = s.exterieur.trigramme
-          const triDom = s.domicile.trigramme
-          const isEst  = confEst.has(triExt) || confEst.has(triDom)
+          const isEst  = confEst.has(s.exterieur.trigramme) || confEst.has(s.domicile.trigramme)
           if (isEst && est[round])    est[round].push(s)
           else if (ouest[round])      ouest[round].push(s)
         })
@@ -286,7 +293,6 @@ export default function BracketPlayoffs({ saison = 2026 }) {
   const aucuneDonnee = ORDRE_ROUNDS.every(r =>
     bracket.ouest[r].length === 0 && bracket.est[r].length === 0
   ) && !bracket.finale
-
   if (aucuneDonnee) return (
     <p style={{ color: 'var(--text-3)', fontSize: 13, textAlign: 'center', padding: '24px 0' }}>
       Aucune donnée playoff disponible pour cette saison.
@@ -318,16 +324,15 @@ export default function BracketPlayoffs({ saison = 2026 }) {
         )}
       </div>
 
-      <div style={{ overflowX: 'auto', paddingBottom: 8 }}>
+      {/* Scroll centré sur les Finales NBA */}
+      <div ref={scrollRef} style={{ overflowX: 'auto', paddingBottom: 8 }}>
         <div style={{
           display: 'grid',
           gridTemplateColumns: cols,
           gap,
           minWidth: minW,
           alignItems: 'center',
-          margin: '0 auto', // centrage
         }}>
-          {/* OUEST : 1er tour → Finales conf */}
           {ORDRE_ROUNDS.map((round, i) => (
             <ColonneRound
               key={`ouest-${round}`}
@@ -339,7 +344,6 @@ export default function BracketPlayoffs({ saison = 2026 }) {
             />
           ))}
 
-          {/* FINALES NBA */}
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, padding: '0 2px' }}>
             <div style={{
               fontSize: ultra ? 6 : 7, fontWeight: 900, letterSpacing: '0.12em',
@@ -350,7 +354,6 @@ export default function BracketPlayoffs({ saison = 2026 }) {
             <Matchup serie={bracket.finale} noSpoil={noSpoil} compact={false} ultra={ultra} />
           </div>
 
-          {/* EST : Finales conf → 1er tour */}
           {[...ORDRE_ROUNDS].reverse().map((round, i) => (
             <ColonneRound
               key={`est-${round}`}
