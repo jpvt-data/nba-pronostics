@@ -1,6 +1,22 @@
 // Changelog NBA Pronostics — une entrée par version/feature
 export const CHANGELOG = [
 {
+  version: "v1.2",
+  date: "2026-05-28",
+  titre: "Fiche joueur enrichie — Game log & Radars",
+  desc: "La fiche joueur affiche maintenant les 15 derniers matchs du joueur (date, adversaire, résultat, minutes, points, rebonds, passes, FG%, 3P%) avec colonnes fixes en scroll mobile. Deux radars statistiques côte à côte complètent la fiche : Scoring (PTS, MIN, FT%, 3P%, FG%) et Impact (REB, AST, STL, BLK, TO), aux couleurs de l'équipe du joueur.",
+  lien: "/stats",
+  labelLien: "Voir Explorer",
+},
+{
+  version: "v1.2",
+  date: "2026-05-28",
+  titre: "Bracket Playoffs dans Explorer",
+  desc: "Dans la page Explorer (onglet Classements), un toggle permet de basculer entre Saison régulière et Playoffs. En mode Playoffs, le bracket visuel complet s'affiche à la place des standings, avec sélecteur de saison pour naviguer dans l'historique.",
+  lien: "/stats",
+  labelLien: "Voir Explorer",
+},
+{
   version: "v1.1",
   date: "2026-05-28",
   titre: "Bracket Playoffs NBA",
@@ -145,4 +161,4 @@ export const CHANGELOG = [
 ]
 
 // Version courante de l'app — à incrémenter à chaque déploiement avec nouveautés
-export const VERSION_COURANTE = 'v1.1'
+export const VERSION_COURANTE = 'v1.2'
