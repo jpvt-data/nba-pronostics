@@ -140,7 +140,11 @@ function Accueil() {
           </p>
         </Bloc>
 
-        {!chargement && <BandeMatchs matchs={matchs} userId={user?.id} onProno={faireProno} />}
+        {!chargement && (
+          <div style={{ marginTop: 16 }}>
+            <BandeMatchs matchs={matchs} userId={user?.id} onProno={faireProno} />
+          </div>
+        )}
 
         {!chargement && (
           <div style={{ padding: '10px 16px 0', display: 'flex', justifyContent: 'flex-end' }}>
