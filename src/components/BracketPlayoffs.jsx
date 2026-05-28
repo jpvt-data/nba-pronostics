@@ -20,9 +20,12 @@ const fetchAvecTimeout = (url) => {
 }
 
 // Génère la plage de dates playoffs (1er avril → 30 juin de l'année saison)
-const plageDates = (saison) => {
-  const annee = saison - 1  // saison 2026 = playoffs printemps 2026
-  return `${annee}1201-${saison}0730`
+const plageMois = (saison) => {
+  return [
+    `${saison}0401-${saison}0430`,
+    `${saison}0501-${saison}0531`,
+    `${saison}0601-${saison}0630`,
+  ]
 }
 
 // Extrait la couleur hex depuis les standings ESPN
@@ -160,10 +163,13 @@ export default function BracketPlayoffs({ saison = 2026 }) {
       setCharg(true); setErreur(false)
       try {
         // Fetch standings pour les couleurs + fetch scoreboard playoffs en parallèle
-        const plage = plageDates(saison)
         const [dataStandings, dataBoard] = await Promise.all([
           fetchAvecTimeout(`${BASE_V2}/standings?season=${saison}&seasontype=2`).then(r => r.json()),
-          fetchAvecTimeout(`${BASE}/scoreboard?dates=${plage}&seasontype=3`).then(r => r.json()),
+          Promise.all(
+            plageMois(saison).map(p =>
+              fetchAvecTimeout(`${BASE}/scoreboard?dates=${p}&seasontype=3`).then(r => r.json())
+            )
+          ).then(resultats => ({ events: resultats.flatMap(r => r.events ?? []) })),
         ])
 
         // Extraire couleurs depuis standings
