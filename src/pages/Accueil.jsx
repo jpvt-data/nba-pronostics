@@ -179,7 +179,7 @@ function Accueil() {
         )}
 
         {/* ── NBA data — standings, bracket, actu ── */}
-        {!chargement && <StandingsNBA typeSaison={typeSaisonActuel} />}
+        {!chargement && <div style={{ marginTop: 24 }}><StandingsNBA typeSaison={typeSaisonActuel} /></div>}
         {!chargement && typeSaisonActuel === 3 && <BracketPlayoffs saison={saisonActuelle} />}
 
         {!chargement && (
