@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import Navigation from '../components/Navigation'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useNoSpoil } from '../context/NoSpoilContext'
+import { BanniereImage } from '../components/UI'
 
 const BASE_URL = 'https://site.api.espn.com/apis/site/v2/sports/basketball/nba'
 
@@ -27,27 +28,6 @@ const memeJour = (a, b) =>
   a.getFullYear() === b.getFullYear() &&
   a.getMonth()    === b.getMonth()    &&
   a.getDate()     === b.getDate()
-
-/* ── Label section charte Accueil ── */
-const LabelSection = ({ children }) => (
-  <h3 style={{
-    display: 'inline-block',
-    background: 'linear-gradient(90deg, var(--accent), var(--orange))',
-    WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
-    letterSpacing: '0.1em', fontSize: 13, fontWeight: 700,
-  }}>{children}</h3>
-)
-
-/* ── Bannière image ── */
-const BanniereImage = ({ url, hauteur = 110 }) => (
-  <div style={{
-    margin: '0', height: hauteur,
-    backgroundImage: `linear-gradient(to right, rgba(13,13,18,0.75), rgba(13,13,18,0.35), rgba(13,13,18,0.75)), url(${url})`,
-    backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat',
-    borderTopWidth: 1, borderTopStyle: 'solid', borderTopColor: 'rgba(99,102,241,0.2)',
-    borderBottomWidth: 1, borderBottomStyle: 'solid', borderBottomColor: 'rgba(99,102,241,0.2)',
-  }} />
-)
 
 function Calendrier() {
   const navigate                    = useNavigate()
@@ -148,7 +128,6 @@ function Calendrier() {
       <Navigation />
       <main style={{ flex: 1 }}>
 
-        {/* ── Header plein bord — même style que Classement ── */}
         <div style={{
           padding: '20px 16px',
           background: 'linear-gradient(160deg, rgba(99,102,241,0.08) 0%, transparent 60%)',
@@ -160,7 +139,6 @@ function Calendrier() {
           </p>
         </div>
 
-        {/* ── Bannière terrain NBA ── */}
         <BanniereImage url="https://images.unsplash.com/photo-1533923156502-be31530547c4?w=800&q=60" />
 
         {/* ── Contrôles ── */}
@@ -187,25 +165,22 @@ function Calendrier() {
           </div>
 
           {/* Navigation période */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
             <button onClick={() => naviguer(-1)} style={S.navBtn}><ChevronLeft size={16} /></button>
-            <div style={{ flex: 1, textAlign: 'center', fontSize: 13, fontWeight: 600, color: 'var(--text-1)' }}>
-              {titrePeriode()}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-1)' }}>{titrePeriode()}</span>
+              <button onClick={allerAujourdhui} style={{ ...S.navBtn, fontSize: 11, padding: '3px 8px' }}>Aujourd'hui</button>
             </div>
             <button onClick={() => naviguer(1)} style={S.navBtn}><ChevronRight size={16} /></button>
-            <button onClick={allerAujourdhui} style={{ ...S.navBtn, padding: '5px 10px', fontSize: 11 }}>
-              Auj.
-            </button>
           </div>
 
           {/* Filtres */}
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 16 }}>
+          <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
             <select value={filtreType} onChange={e => setFiltreType(e.target.value)} style={S.select}>
               <option value="tous">Tous types</option>
               <option value="1">Pré-saison</option>
-              <option value="2">Régulière</option>
+              <option value="2">Saison régulière</option>
               <option value="3">Playoffs</option>
-              <option value="4">NBA Cup</option>
               <option value="5">International</option>
             </select>
             <select value={filtreEquipe} onChange={e => setFiltreEq(e.target.value)} style={S.select}>
@@ -290,7 +265,6 @@ function Calendrier() {
   )
 }
 
-/* ── Carte match ── */
 function CarteMatch({ match, compact, onClick }) {
   const { noSpoil } = useNoSpoil()
   const termine = match.statut === 'STATUS_FINAL'
@@ -324,7 +298,6 @@ function CarteMatch({ match, compact, onClick }) {
   )
 }
 
-/* ── Grille mois ── */
 function GrilleMois({ dates, matchsDate, aujourd, navigate, onClicJour }) {
   const premierJour = dates[0].getDay()
   const padding     = premierJour === 0 ? 6 : premierJour - 1

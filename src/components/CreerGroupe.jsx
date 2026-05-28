@@ -6,7 +6,6 @@ const TYPES_SAISON = [
   { value: '1', label: '1 — Pré-saison' },
   { value: '2', label: '2 — Saison régulière' },
   { value: '3', label: '3 — Playoffs' },
-  { value: '4', label: '4 — NBA Cup' },
   { value: '5', label: '5 — International (JO, matchs monde...)' },
 ]
 
