@@ -697,6 +697,122 @@ function OngletJoueurs({ equipesStandings }) {
 }
 
 
+// ── RADAR STATS ─────────────────────────────────────────────────────────────
+// Normalisation par rapport aux maximums NBA réalistes par catégorie
+const RADAR_AXES = [
+  { label: 'PTS', key: 'pts', max: 35 },
+  { label: 'REB', key: 'reb', max: 14 },
+  { label: 'AST', key: 'ast', max: 12 },
+  { label: 'FG%', key: 'fg',  max: 65 },
+  { label: '3P%', key: 'fg3', max: 50 },
+]
+
+function RadarStats({ stats, couleur }) {
+  const SIZE    = 200          // taille SVG (carré)
+  const CX      = SIZE / 2     // centre X
+  const CY      = SIZE / 2     // centre Y
+  const R       = 78           // rayon max du radar
+  const N       = RADAR_AXES.length
+  const NIVEAUX = 4            // cercles de référence
+
+  // Angle de chaque axe — on commence à -90° (12h) et on tourne dans le sens horaire
+  const angle = (i) => (Math.PI * 2 * i) / N - Math.PI / 2
+
+  // Coordonnées d'un point sur un axe à un ratio donné (0-1)
+  const point = (i, ratio) => ({
+    x: CX + R * ratio * Math.cos(angle(i)),
+    y: CY + R * ratio * Math.sin(angle(i)),
+  })
+
+  // Valeurs normalisées (0-1) pour chaque axe
+  const valeurs = RADAR_AXES.map(ax => {
+    const raw = parseFloat(stats[ax.key])
+    if (isNaN(raw)) return 0
+    return Math.min(raw / ax.max, 1)
+  })
+
+  // Polygone données
+  const polyPoints = valeurs.map((v, i) => {
+    const p = point(i, v)
+    return `${p.x},${p.y}`
+  }).join(' ')
+
+  // Polygone grille (cercle niveau k)
+  const gridPoly = (ratio) => RADAR_AXES.map((_, i) => {
+    const p = point(i, ratio)
+    return `${p.x},${p.y}`
+  }).join(' ')
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', margin: '4px 0 20px' }}>
+      <svg width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`} style={{ overflow: 'visible' }}>
+
+        {/* Cercles de référence */}
+        {Array.from({ length: NIVEAUX }).map((_, k) => (
+          <polygon key={k}
+            points={gridPoly((k + 1) / NIVEAUX)}
+            fill="none"
+            stroke="rgba(255,255,255,0.06)"
+            strokeWidth={1}
+          />
+        ))}
+
+        {/* Axes */}
+        {RADAR_AXES.map((_, i) => {
+          const p = point(i, 1)
+          return (
+            <line key={i}
+              x1={CX} y1={CY} x2={p.x} y2={p.y}
+              stroke="rgba(255,255,255,0.08)" strokeWidth={1}
+            />
+          )
+        })}
+
+        {/* Polygone données — remplissage couleur équipe */}
+        <polygon
+          points={polyPoints}
+          fill={`${couleur}30`}
+          stroke={couleur}
+          strokeWidth={2}
+          strokeLinejoin="round"
+        />
+
+        {/* Points sur chaque axe */}
+        {valeurs.map((v, i) => {
+          const p = point(i, v)
+          return (
+            <circle key={i} cx={p.x} cy={p.y} r={3}
+              fill={couleur} stroke="var(--bg-0)" strokeWidth={1.5}
+            />
+          )
+        })}
+
+        {/* Labels axes */}
+        {RADAR_AXES.map((ax, i) => {
+          const p     = point(i, 1.22)
+          const pct   = parseFloat(stats[ax.key])
+          const label = isNaN(pct) ? '—' : ax.key.includes('%') ? `${pct}%` : pct
+          return (
+            <g key={i}>
+              <text x={p.x} y={p.y - 2}
+                textAnchor="middle" dominantBaseline="auto"
+                fontSize={9} fontWeight={700} fill="var(--text-3)"
+                style={{ textTransform: 'uppercase', letterSpacing: '0.06em' }}
+              >{ax.label}</text>
+              <text x={p.x} y={p.y + 9}
+                textAnchor="middle" dominantBaseline="auto"
+                fontSize={10} fontWeight={800} fill="var(--text-1)"
+                fontFamily="var(--font-display)"
+              >{label}</text>
+            </g>
+          )
+        })}
+
+      </svg>
+    </div>
+  )
+}
+
 // ── FICHE JOUEUR ─────────────────────────────────────────────────────────────
 function FicheJoueur({ joueur, equipe, onRetour }) {
   const [profil, setProfil]         = useState(null)
@@ -861,6 +977,9 @@ function FicheJoueur({ joueur, equipe, onRetour }) {
         </>
       )}
       {!chargement && !stats && <p style={{ color: 'var(--text-3)', fontSize: 13, marginBottom: 20 }}>Stats indisponibles.</p>}
+
+      {/* Radar stats */}
+      {!chargement && stats && <RadarStats stats={stats} couleur={couleur} />}
 
       {/* Game log — 15 derniers matchs */}
       {!chargement && gameLog.length > 0 && (
