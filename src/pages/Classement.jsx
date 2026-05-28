@@ -30,7 +30,7 @@ const LigneUser = ({ m, i, statsUser, moi, navigate }) => {
     >
       <span style={{
         fontSize: i < 3 ? 16 : 13, fontFamily: 'var(--font-display)', fontWeight: 700,
-        color: i < 3 ? 'var(--accent)' : 'var(--text-3)', minWidth: 24, textAlign: 'center',
+        color: i < 3 ? 'var(--gold)' : 'var(--text-3)', minWidth: 24, textAlign: 'center',
       }}>
         {i < 3 ? MEDAILLES[i] : `#${i + 1}`}
       </span>
@@ -39,7 +39,7 @@ const LigneUser = ({ m, i, statsUser, moi, navigate }) => {
         {m.profils?.pseudo || 'Inconnu'}
       </span>
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 2, flexShrink: 0 }}>
-        <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 18, color: i < 3 ? 'var(--accent)' : 'var(--text-2)' }}>
+        <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 18, color: i < 3 ? 'var(--gold)' : 'var(--text-2)' }}>
           {m.points}<span style={{ fontSize: 10, color: 'var(--text-3)', marginLeft: 2 }}>pts</span>
         </span>
         {statsUser && (statsUser.corrects + statsUser.incorrects) > 0 && (
@@ -167,7 +167,9 @@ function Classement() {
           </p>
         </div>
 
-        <BanniereImage url="https://images.unsplash.com/photo-1504450758481-7338eba7524a?w=800&q=60" />
+        <div style={{ margin: '25px 0' }}>
+          <BanniereImage url="https://images.unsplash.com/photo-1504450758481-7338eba7524a?w=800&q=60" />
+        </div>
 
         {chargement && (
           <p style={{ color: 'var(--text-3)', fontSize: 13, padding: '2rem', textAlign: 'center' }}>Chargement…</p>
@@ -225,7 +227,7 @@ function Classement() {
                       >
                         <span style={{
                           fontSize: i < 3 ? 16 : 13, fontFamily: 'var(--font-display)', fontWeight: 700,
-                          color: i < 3 ? 'var(--accent)' : 'var(--text-3)', minWidth: 24, textAlign: 'center',
+                          color: i < 3 ? 'var(--gold)' : 'var(--text-3)', minWidth: 24, textAlign: 'center',
                         }}>
                           {i < 3 ? MEDAILLES[i] : `#${i + 1}`}
                         </span>
@@ -234,7 +236,7 @@ function Classement() {
                           {m.pseudo || 'Inconnu'}
                         </span>
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 2, flexShrink: 0 }}>
-                          <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 18, color: i < 3 ? 'var(--accent)' : 'var(--text-2)' }}>
+                          <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 18, color: i < 3 ? 'var(--gold)' : 'var(--text-2)' }}>
                             {m.points}<span style={{ fontSize: 10, color: 'var(--text-3)', marginLeft: 2 }}>pts</span>
                           </span>
                           {(m.corrects + m.incorrects) > 0 && (
