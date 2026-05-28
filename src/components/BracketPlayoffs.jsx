@@ -281,7 +281,7 @@ export default function BracketPlayoffs({ saison = 2026 }) {
 
   return (
     <div>
-      {/* Titre */}
+      {/* Titre  */}
       <div style={{ textAlign: 'center', marginBottom: 16 }}>
         <span style={{
           display: 'inline-block',
