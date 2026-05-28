@@ -180,13 +180,13 @@ function Accueil() {
 
         {/* ── Séparateur communauté / NBA data ── */}
         {!chargement && (
-          <div style={{ margin: '8px 16px 0', display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ margin: '24px 16px', display: 'flex', alignItems: 'center' }}>
             <div style={{ flex: 1, height: 1, background: 'linear-gradient(to right, transparent, var(--accent-border), transparent)' }} />
           </div>
         )}
 
         {/* ── NBA data — standings, bracket, actu ── */}
-        {!chargement && <div style={{ marginTop: 24 }}><StandingsNBA typeSaison={typeSaisonActuel} /></div>}
+        {!chargement && <StandingsNBA typeSaison={typeSaisonActuel} />}
         {!chargement && typeSaisonActuel === 3 && <BracketPlayoffs saison={saisonActuelle} />}
 
         {!chargement && (
