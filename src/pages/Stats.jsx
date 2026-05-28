@@ -3,7 +3,6 @@ import Navigation from '../components/Navigation'
 import { BanniereImage, LabelSection } from '../components/UI'
 import { Search, ChevronRight, ArrowLeft } from 'lucide-react'
 
-// ── Constantes ESPN ──────────────────────────────────────────────────────────
 const BASE     = 'https://site.api.espn.com/apis/site/v2/sports/basketball/nba'
 const BASE_V2  = 'https://site.api.espn.com/apis/v2/sports/basketball/nba'
 const BASE_WEB = 'https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba'
@@ -17,7 +16,6 @@ const fetchAvecTimeout = (url) => {
 
 const couleurEquipe = (hex) => hex ? `#${hex}` : 'var(--accent)'
 
-// ── Composants visuels ───────────────────────────────────────────────────────
 function LogoEquipe({ url, trigramme, taille = 32, couleur }) {
   const [erreur, setErreur] = useState(false)
   if (url && !erreur) {
@@ -50,31 +48,25 @@ function PhotoJoueur({ url, nom, taille = 48 }) {
   )
 }
 
-// Badge clincher (z = conf, y = div, x = playoff, xp = play-in, pb = play-in berth, e = éliminé, * = meilleur bilan)
 function BadgeClincher({ val }) {
   if (!val) return null
   const MAP = {
-    'z':  { label: 'z', title: 'Conf. clinchée',     color: '#6366f1' },
-    'y':  { label: 'y', title: 'Division clinchée',   color: '#22c55e' },
-    'x':  { label: 'x', title: 'Playoffs clinchés',   color: '#22c55e' },
-    'xp': { label: 'xp', title: 'Play-in qualifié',   color: '#f97316' },
-    'pb': { label: 'pb', title: 'Play-in berth',      color: '#f97316' },
-    'e':  { label: 'e', title: 'Éliminé',             color: '#ef4444' },
-    '*':  { label: '*', title: 'Meilleur bilan NBA',  color: '#fbbf24' },
+    'z':  { color: '#6366f1' }, 'y': { color: '#22c55e' },
+    'x':  { color: '#22c55e' }, 'xp': { color: '#f97316' },
+    'pb': { color: '#f97316' }, 'e': { color: '#ef4444' },
+    '*':  { color: '#fbbf24' },
   }
   const b = MAP[val]
   if (!b) return null
   return (
-    <span title={b.title} style={{
-      fontSize: 9, fontWeight: 800, color: b.color,
-      background: `${b.color}20`,
+    <span style={{
+      fontSize: 9, fontWeight: 800, color: b.color, background: `${b.color}20`,
       borderRadius: 3, paddingLeft: 3, paddingRight: 3, paddingTop: 1, paddingBottom: 1,
       marginLeft: 4, flexShrink: 0,
-    }}>{b.label}</span>
+    }}>{val}</span>
   )
 }
 
-// ── Parser standings ─────────────────────────────────────────────────────────
 const parseEquipe = (e) => {
   const eq    = e.team
   const stats = e.stats || []
@@ -89,57 +81,69 @@ const parseEquipe = (e) => {
     logo:       eq.logos?.[0]?.href ?? null,
     logoSombre: eq.logos?.[1]?.href ?? eq.logos?.[0]?.href ?? null,
     couleur:    eq.color ?? null,
-    seed:       v('playoffSeed') ?? 99,           // rang officiel ESPN
+    seed:       v('playoffSeed') ?? 99,
     wins:       v('wins') ?? 0,
     losses:     v('losses') ?? 0,
     pct:        dv('winPercent'),
     gb:         dv('gamesBehind'),
     domicile:   sum('Home'),
     exterieur:  sum('Road'),
-    conference: sum('vs. Conf.'),
     l10:        sum('Last Ten Games'),
     serie:      dv('streak'),
-    diff:       dv('differential'),
     clincher:   dv('clincher'),
   }
 }
 
+// ── Parser roster (structure directe athletes[]) ─────────────────────────────
+const parseRoster = (data, equipe) =>
+  (data.athletes ?? []).map(j => ({
+    id:         j.id,
+    nom:        j.fullName,
+    prenom:     j.firstName,
+    nomFam:     j.lastName,
+    numero:     j.jersey ?? '—',
+    position:   j.position?.abbreviation ?? '?',
+    positionFull: j.position?.displayName ?? '?',
+    photo:      j.headshot?.href ?? null,
+    taille:     j.displayHeight ?? '—',
+    poids:      j.displayWeight ?? '—',
+    age:        j.age ?? '—',
+    equipeId:   equipe.id,
+    equipeTri:  equipe.trigramme,
+    equipenom:  equipe.nom,
+    equipeLogo: equipe.logo,
+    equipeCouleur: equipe.couleur,
+  }))
+
 // ── ONGLET CLASSEMENTS ───────────────────────────────────────────────────────
-function OngletClassements({ onEquipeClick }) {
-  const [donnees, setDonnees]       = useState({ est: [], ouest: [], saisons: [] })
-  const [onglet, setOnglet]         = useState('est')
-  const [saison, setSaison]         = useState(2026)
-  const [chargement, setChargement] = useState(true)
-  const [erreur, setErreur]         = useState(false)
+function OngletClassementsAvecSync({ onEquipeClick, onEquipesChargées }) {
+  const [donnees, setDonnees]         = useState({ est: [], ouest: [], saisons: [] })
+  const [onglet, setOnglet]           = useState('est')
+  const [saison, setSaison]           = useState(2026)
+  const [chargement, setChargement]   = useState(true)
+  const [erreur, setErreur]           = useState(false)
   const [labelSaison, setLabelSaison] = useState('2025-26')
 
   const charger = (annee) => {
-    setChargement(true)
-    setErreur(false)
+    setChargement(true); setErreur(false)
     fetchAvecTimeout(`${BASE_V2}/standings?season=${annee}&seasontype=2`)
       .then(r => r.json())
       .then(data => {
-        // Saisons disponibles (depuis la première réponse seulement)
         const saisonsDispos = (data.seasons ?? [])
           .filter(s => s.types?.some(t => t.id === '2' && t.hasStandings))
           .map(s => ({ year: s.year, label: s.displayName }))
           .sort((a, b) => b.year - a.year)
-
         const conferences = data.children ?? []
         const est = [], ouest = []
         conferences.forEach(conf => {
           const nom   = conf.name ?? ''
-          const liste = (conf.standings?.entries ?? [])
-            .map(parseEquipe)
-            .sort((a, b) => a.seed - b.seed) // tri par seed officiel ESPN
+          const liste = (conf.standings?.entries ?? []).map(parseEquipe).sort((a, b) => a.seed - b.seed)
           if (nom.toLowerCase().includes('east')) est.push(...liste)
           else ouest.push(...liste)
         })
-
-        // Label saison affiché
-        const meta = data.season ?? {}
-        setLabelSaison(meta.displayName ?? `${annee}`)
+        setLabelSaison(data.season?.displayName ?? `${annee}`)
         setDonnees({ est, ouest, saisons: saisonsDispos })
+        onEquipesChargées([...est, ...ouest])
         setChargement(false)
       })
       .catch(() => { setErreur(true); setChargement(false) })
@@ -151,47 +155,36 @@ function OngletClassements({ onEquipeClick }) {
 
   return (
     <div>
-      {/* Titre + saison */}
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap', marginBottom: 12 }}>
         <LabelSection>Classement NBA</LabelSection>
         <span style={{ fontSize: 12, color: 'var(--text-3)' }}>Saison {labelSaison}</span>
       </div>
 
-      {/* Sélecteur saison */}
       <div style={{ marginBottom: 12 }}>
-        <select
-          value={saison}
-          onChange={e => setSaison(Number(e.target.value))}
-          style={{
-            fontSize: 12, fontWeight: 600, color: 'var(--text-1)',
-            background: 'var(--bg-1)',
-            borderWidth: 1, borderStyle: 'solid', borderColor: 'var(--border)',
-            borderRadius: 'var(--radius-sm)', padding: '6px 10px', cursor: 'pointer',
-          }}
-        >
+        <select value={saison} onChange={e => setSaison(Number(e.target.value))} style={{
+          fontSize: 12, fontWeight: 600, color: 'var(--text-1)', background: 'var(--bg-1)',
+          borderWidth: 1, borderStyle: 'solid', borderColor: 'var(--border)',
+          borderRadius: 'var(--radius-sm)', padding: '6px 10px', cursor: 'pointer',
+        }}>
           {donnees.saisons.length > 0
-            ? donnees.saisons.map(s => (
-                <option key={s.year} value={s.year}>{s.label}</option>
-              ))
-            : <option value={2026}>2025-26</option>
-          }
+            ? donnees.saisons.map(s => <option key={s.year} value={s.year}>{s.label}</option>)
+            : <option value={2026}>2025-26</option>}
         </select>
+        <span style={{ fontSize: 11, color: 'var(--text-3)', marginLeft: 10 }}>
+          ⚠️ Standings playoffs non disponibles via ESPN (données saison régulière uniquement)
+        </span>
       </div>
 
-      {/* Onglets conférence */}
       <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
         {['est', 'ouest'].map(tab => (
           <button key={tab} onClick={() => setOnglet(tab)} style={{
             fontSize: 12, fontWeight: 700, cursor: 'pointer',
             paddingTop: 6, paddingBottom: 6, paddingLeft: 16, paddingRight: 16,
-            borderRadius: 'var(--radius-sm)',
-            borderWidth: 1, borderStyle: 'solid',
+            borderRadius: 'var(--radius-sm)', borderWidth: 1, borderStyle: 'solid',
             background:  onglet === tab ? 'rgba(99,102,241,0.18)' : 'transparent',
             borderColor: onglet === tab ? 'rgba(99,102,241,0.5)'  : 'var(--border)',
             color:       onglet === tab ? 'var(--accent)'          : 'var(--text-3)',
-          }}>
-            {tab === 'est' ? 'Conférence Est' : 'Conférence Ouest'}
-          </button>
+          }}>{tab === 'est' ? 'Conférence Est' : 'Conférence Ouest'}</button>
         ))}
       </div>
 
@@ -200,10 +193,10 @@ function OngletClassements({ onEquipeClick }) {
 
       {!chargement && !erreur && (
         <>
-          {/* En-tête colonnes — masquées sur mobile étroit */}
+          {/* En-tête */}
           <div style={{
             display: 'grid',
-            gridTemplateColumns: '24px 24px 1fr 56px 44px 60px 60px 48px',
+            gridTemplateColumns: '24px 24px 1fr 56px 44px 44px 56px 56px 44px',
             gap: 4, padding: '4px 8px',
             fontSize: 10, fontWeight: 700, color: 'var(--text-3)',
             textTransform: 'uppercase', letterSpacing: '0.05em',
@@ -211,10 +204,11 @@ function OngletClassements({ onEquipeClick }) {
             <span>#</span><span />
             <span>Équipe</span>
             <span style={{ textAlign: 'center' }}>Bilan</span>
+            <span style={{ textAlign: 'center' }}>PCT</span>
             <span style={{ textAlign: 'center' }}>GB</span>
             <span style={{ textAlign: 'center' }}>Dom.</span>
             <span style={{ textAlign: 'center' }}>Ext.</span>
-            <span style={{ textAlign: 'center' }}>Série</span>
+            <span style={{ textAlign: 'center' }}>STRK</span>
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
@@ -223,43 +217,35 @@ function OngletClassements({ onEquipeClick }) {
               const playoff = eq.seed <= 6
               const playIn  = eq.seed === 7 || eq.seed === 8
               return (
-                <button
-                  key={eq.id}
-                  onClick={() => onEquipeClick(eq)}
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: '24px 24px 1fr 56px 44px 60px 60px 48px',
-                    gap: 4, alignItems: 'center',
-                    padding: '7px 8px',
-                    borderRadius: 'var(--radius-sm)',
-                    background: playoff
-                      ? `linear-gradient(90deg, ${couleur}12, transparent)`
-                      : playIn
-                        ? 'rgba(249,115,22,0.04)'
-                        : idx % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'transparent',
-                    borderWidth: 0,
-                    borderLeftWidth: playoff ? 2 : playIn ? 1 : 0,
-                    borderLeftStyle: 'solid',
-                    borderLeftColor: playoff ? couleur : 'rgba(249,115,22,0.4)',
-                    cursor: 'pointer', textAlign: 'left', width: '100%',
-                  }}
-                >
-                  <span style={{
-                    fontSize: 11, fontWeight: 700, textAlign: 'center',
-                    color: playoff ? 'var(--accent)' : 'var(--text-3)',
-                  }}>{eq.seed}</span>
-
+                <button key={eq.id} onClick={() => onEquipeClick(eq)} style={{
+                  display: 'grid',
+                  gridTemplateColumns: '24px 24px 1fr 56px 44px 44px 56px 56px 44px',
+                  gap: 4, alignItems: 'center',
+                  padding: '7px 8px', borderRadius: 'var(--radius-sm)',
+                  background: playoff
+                    ? `linear-gradient(90deg, ${couleur}12, transparent)`
+                    : playIn ? 'rgba(249,115,22,0.04)' : idx % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'transparent',
+                  borderWidth: 0,
+                  borderLeftWidth: playoff ? 2 : playIn ? 1 : 0,
+                  borderLeftStyle: 'solid',
+                  borderLeftColor: playoff ? couleur : 'rgba(249,115,22,0.4)',
+                  cursor: 'pointer', textAlign: 'left', width: '100%',
+                }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, textAlign: 'center', color: playoff ? 'var(--accent)' : 'var(--text-3)' }}>
+                    {eq.seed}
+                  </span>
                   <LogoEquipe url={eq.logo} trigramme={eq.trigramme} taille={20} couleur={couleur} />
-
                   <div style={{ minWidth: 0, display: 'flex', alignItems: 'center', gap: 4 }}>
                     <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-1)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                       {eq.trigramme}
                     </span>
                     <BadgeClincher val={eq.clincher} />
                   </div>
-
                   <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--text-1)', textAlign: 'center', fontFamily: 'var(--font-display)' }}>
                     {eq.wins}-{eq.losses}
+                  </span>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', textAlign: 'center' }}>
+                    {eq.pct}
                   </span>
                   <span style={{ fontSize: 11, color: 'var(--text-3)', textAlign: 'center' }}>{eq.gb}</span>
                   <span style={{ fontSize: 10, color: 'var(--text-2)', textAlign: 'center' }}>{eq.domicile}</span>
@@ -272,17 +258,10 @@ function OngletClassements({ onEquipeClick }) {
             })}
           </div>
 
-          {/* Légende */}
           <div style={{ display: 'flex', gap: 16, marginTop: 10, flexWrap: 'wrap' }}>
-            <span style={{ fontSize: 10, color: 'var(--text-3)' }}>
-              <span style={{ color: 'var(--accent)' }}>■</span> Top 6 — playoffs directs
-            </span>
-            <span style={{ fontSize: 10, color: 'var(--text-3)' }}>
-              <span style={{ color: 'rgba(249,115,22,0.8)' }}>■</span> 7-8 — Play-in
-            </span>
-            <span style={{ fontSize: 10, color: 'var(--text-3)' }}>
-              z conf · y div · x playoff · xp play-in · e éliminé · * meilleur bilan
-            </span>
+            <span style={{ fontSize: 10, color: 'var(--text-3)' }}><span style={{ color: 'var(--accent)' }}>■</span> Top 6 — playoffs directs</span>
+            <span style={{ fontSize: 10, color: 'var(--text-3)' }}><span style={{ color: 'rgba(249,115,22,0.8)' }}>■</span> 7-8 — Play-in</span>
+            <span style={{ fontSize: 10, color: 'var(--text-3)' }}>PCT = win% · STRK = série en cours (W3 = 3 victoires, L2 = 2 défaites)</span>
           </div>
         </>
       )}
@@ -291,11 +270,9 @@ function OngletClassements({ onEquipeClick }) {
 }
 
 // ── ONGLET ÉQUIPES ───────────────────────────────────────────────────────────
-// Les équipes sont extraites depuis standings → pas d'appel teams?limit=30
-function OngletEquipes({ equipesStandings, equipeInitiale, onEquipeClick }) {
+function OngletEquipes({ equipesStandings, equipeInitiale }) {
   const [equipeChoisie, setEquipeChoisie] = useState(equipeInitiale ?? null)
 
-  // Mise à jour si equipeInitiale change (clic depuis standings)
   useEffect(() => {
     if (equipeInitiale) setEquipeChoisie(equipeInitiale)
   }, [equipeInitiale])
@@ -304,39 +281,30 @@ function OngletEquipes({ equipesStandings, equipeInitiale, onEquipeClick }) {
     return <FicheEquipe equipe={equipeChoisie} onRetour={() => setEquipeChoisie(null)} />
   }
 
-  // Grille des équipes (triées alphabétiquement)
   const liste = [...equipesStandings].sort((a, b) => a.nom.localeCompare(b.nom))
 
   return (
     <div>
       <LabelSection>30 Franchises NBA</LabelSection>
       {liste.length === 0
-        ? <p style={{ color: 'var(--text-3)', fontSize: 13, marginTop: 12 }}>
-            Charge d'abord l'onglet Classements pour obtenir la liste des équipes.
-          </p>
+        ? <p style={{ color: 'var(--text-3)', fontSize: 13, marginTop: 12 }}>Charge d'abord l'onglet Classements.</p>
         : (
           <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))',
+            display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))',
             gap: 10, marginTop: 12,
           }}>
             {liste.map(eq => {
               const couleur = couleurEquipe(eq.couleur)
               return (
-                <button
-                  key={eq.id}
-                  onClick={() => setEquipeChoisie(eq)}
-                  style={{
-                    background: `linear-gradient(135deg, ${couleur}18, ${couleur}06)`,
-                    borderWidth: 1, borderStyle: 'solid', borderColor: `${couleur}40`,
-                    borderRadius: 'var(--radius-md)',
-                    padding: '14px 10px',
-                    cursor: 'pointer',
-                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
-                    transition: 'transform 0.15s, border-color 0.15s',
-                  }}
-                  onMouseEnter={e => { e.currentTarget.style.borderColor = couleur; e.currentTarget.style.transform = 'translateY(-2px)' }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor = `${couleur}40`; e.currentTarget.style.transform = 'translateY(0)' }}
+                <button key={eq.id} onClick={() => setEquipeChoisie(eq)} style={{
+                  background: `linear-gradient(135deg, ${couleur}18, ${couleur}06)`,
+                  borderWidth: 1, borderStyle: 'solid', borderColor: `${couleur}40`,
+                  borderRadius: 'var(--radius-md)', padding: '14px 10px',
+                  cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
+                  transition: 'transform 0.15s, border-color 0.15s',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = couleur; e.currentTarget.style.transform = 'translateY(-2px)' }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = `${couleur}40`; e.currentTarget.style.transform = 'translateY(0)' }}
                 >
                   <LogoEquipe url={eq.logoSombre} trigramme={eq.trigramme} taille={44} couleur={couleur} />
                   <div style={{ textAlign: 'center' }}>
@@ -355,9 +323,9 @@ function OngletEquipes({ equipesStandings, equipeInitiale, onEquipeClick }) {
 
 // ── FICHE ÉQUIPE ─────────────────────────────────────────────────────────────
 function FicheEquipe({ equipe, onRetour }) {
-  const [onglet, setOnglet]   = useState('roster')
-  const [roster, setRoster]   = useState([])
-  const [blessés, setBlessés] = useState([])
+  const [onglet, setOnglet]         = useState('roster')
+  const [roster, setRoster]         = useState([])
+  const [blessés, setBlessés]       = useState([])
   const [chargement, setChargement] = useState(true)
   const [joueurChoisi, setJoueurChoisi] = useState(null)
 
@@ -370,18 +338,8 @@ function FicheEquipe({ equipe, onRetour }) {
       fetchAvecTimeout(`${BASE}/teams/${equipe.id}/injuries`).then(r => r.json()),
     ]).then(([resRoster, resBlessés]) => {
       if (resRoster.status === 'fulfilled') {
-        const joueurs = (resRoster.value.athletes ?? []).flatMap(groupe =>
-          (groupe.items ?? []).map(j => ({
-            id:       j.id,
-            nom:      j.fullName,
-            numero:   j.jersey ?? '—',
-            position: j.position?.abbreviation ?? '?',
-            photo:    j.headshot?.href ?? null,
-            taille:   j.displayHeight ?? '—',
-            poids:    j.displayWeight ?? '—',
-          }))
-        )
-        setRoster(joueurs)
+        // Structure directe : data.athletes[] (pas de groupes)
+        setRoster(parseRoster(resRoster.value, equipe))
       }
       if (resBlessés.status === 'fulfilled') {
         setBlessés((resBlessés.value.injuries ?? []).map(b => ({
@@ -409,13 +367,10 @@ function FicheEquipe({ equipe, onRetour }) {
         <ArrowLeft size={16} /> Toutes les équipes
       </button>
 
-      {/* Header équipe */}
       <div style={{
-        display: 'flex', alignItems: 'center', gap: 16,
-        padding: '16px 20px',
+        display: 'flex', alignItems: 'center', gap: 16, padding: '16px 20px',
         background: `linear-gradient(135deg, ${couleur}20, ${couleur}06)`,
-        borderRadius: 'var(--radius-lg)',
-        borderWidth: 1, borderStyle: 'solid', borderColor: `${couleur}40`,
+        borderRadius: 'var(--radius-lg)', borderWidth: 1, borderStyle: 'solid', borderColor: `${couleur}40`,
         marginBottom: 16,
       }}>
         <LogoEquipe url={equipe.logoSombre} trigramme={equipe.trigramme} taille={56} couleur={couleur} />
@@ -424,13 +379,11 @@ function FicheEquipe({ equipe, onRetour }) {
             {equipe.nom}
           </div>
           <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 2 }}>
-            {equipe.trigramme}
-            {equipe.wins != null && ` · ${equipe.wins}-${equipe.losses} (${equipe.pct})`}
+            {equipe.trigramme}{equipe.wins != null ? ` · ${equipe.wins}-${equipe.losses} (${equipe.pct})` : ''}
           </div>
         </div>
       </div>
 
-      {/* Onglets */}
       <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
         {[
           { val: 'roster',  label: 'Effectif' },
@@ -439,8 +392,7 @@ function FicheEquipe({ equipe, onRetour }) {
           <button key={val} onClick={() => setOnglet(val)} style={{
             fontSize: 12, fontWeight: 700, cursor: 'pointer',
             paddingTop: 5, paddingBottom: 5, paddingLeft: 14, paddingRight: 14,
-            borderRadius: 'var(--radius-sm)',
-            borderWidth: 1, borderStyle: 'solid',
+            borderRadius: 'var(--radius-sm)', borderWidth: 1, borderStyle: 'solid',
             background:  onglet === val ? `${couleur}20` : 'transparent',
             borderColor: onglet === val ? `${couleur}80` : 'var(--border)',
             color:       onglet === val ? couleur : 'var(--text-3)',
@@ -452,26 +404,29 @@ function FicheEquipe({ equipe, onRetour }) {
 
       {!chargement && onglet === 'roster' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          {roster.map(j => (
-            <button key={j.id} onClick={() => setJoueurChoisi(j)} style={{
-              display: 'flex', alignItems: 'center', gap: 12,
-              background: 'var(--bg-1)', borderWidth: 1, borderStyle: 'solid', borderColor: 'var(--border)',
-              borderRadius: 'var(--radius-md)', padding: '8px 12px',
-              cursor: 'pointer', textAlign: 'left', transition: 'border-color 0.15s',
-            }}
-            onMouseEnter={e => e.currentTarget.style.borderColor = `${couleur}60`}
-            onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}
-            >
-              <PhotoJoueur url={j.photo} nom={j.nom} taille={40} />
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-1)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                  {j.nom}
+          {roster.length === 0
+            ? <p style={{ color: 'var(--text-3)', fontSize: 13 }}>Effectif indisponible.</p>
+            : roster.map(j => (
+              <button key={j.id} onClick={() => setJoueurChoisi(j)} style={{
+                display: 'flex', alignItems: 'center', gap: 12,
+                background: 'var(--bg-1)', borderWidth: 1, borderStyle: 'solid', borderColor: 'var(--border)',
+                borderRadius: 'var(--radius-md)', padding: '8px 12px',
+                cursor: 'pointer', textAlign: 'left', transition: 'border-color 0.15s',
+              }}
+              onMouseEnter={e => e.currentTarget.style.borderColor = `${couleur}60`}
+              onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}
+              >
+                <PhotoJoueur url={j.photo} nom={j.nom} taille={40} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-1)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {j.nom}
+                  </div>
+                  <div style={{ fontSize: 11, color: 'var(--text-3)' }}>#{j.numero} · {j.positionFull}</div>
                 </div>
-                <div style={{ fontSize: 11, color: 'var(--text-3)' }}>#{j.numero} · {j.position}</div>
-              </div>
-              <ChevronRight size={14} color="var(--text-3)" />
-            </button>
-          ))}
+                <ChevronRight size={14} color="var(--text-3)" />
+              </button>
+            ))
+          }
         </div>
       )}
 
@@ -483,11 +438,9 @@ function FicheEquipe({ equipe, onRetour }) {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {blessés.map(b => (
                   <div key={b.id} style={{
-                    display: 'flex', alignItems: 'center', gap: 10,
-                    padding: '8px 12px',
-                    background: 'rgba(239,68,68,0.06)',
-                    borderWidth: 1, borderStyle: 'solid', borderColor: 'rgba(239,68,68,0.15)',
-                    borderRadius: 'var(--radius-sm)',
+                    display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px',
+                    background: 'rgba(239,68,68,0.06)', borderWidth: 1, borderStyle: 'solid',
+                    borderColor: 'rgba(239,68,68,0.15)', borderRadius: 'var(--radius-sm)',
                   }}>
                     <div style={{ flex: 1 }}>
                       <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-1)' }}>{b.nom}</div>
@@ -509,75 +462,66 @@ function FicheEquipe({ equipe, onRetour }) {
   )
 }
 
-// ── ONGLET JOUEURS ───────────────────────────────────────────────────────────
+// ── ONGLET JOUEURS — tous les joueurs, 30 rosters en parallèle ───────────────
 function OngletJoueurs({ equipesStandings }) {
-  const [equipeChoisie, setEquipeChoisie] = useState(null)
-  const [recherche, setRecherche]         = useState('')
-  const [roster, setRoster]               = useState([])
-  const [chargement, setChargement]       = useState(false)
-  const [joueurChoisi, setJoueurChoisi]   = useState(null)
+  const [tousJoueurs, setTousJoueurs]   = useState([])
+  const [chargement, setChargement]     = useState(false)
+  const [progression, setProgression]   = useState(0)
+  const [recherche, setRecherche]       = useState('')
+  const [filtreEquipe, setFiltreEquipe] = useState('')
+  const [joueurChoisi, setJoueurChoisi] = useState(null)
 
-  const liste = [...equipesStandings].sort((a, b) => a.nom.localeCompare(b.nom))
-
+  // Chargement au montage si on a les équipes
   useEffect(() => {
-    if (!equipeChoisie) return
+    if (equipesStandings.length === 0 || tousJoueurs.length > 0) return
     setChargement(true)
-    setRoster([])
-    fetchAvecTimeout(`${BASE}/teams/${equipeChoisie.id}/roster`)
-      .then(r => r.json())
-      .then(data => {
-        const joueurs = (data.athletes ?? []).flatMap(groupe =>
-          (groupe.items ?? []).map(j => ({
-            id:       j.id,
-            nom:      j.fullName,
-            numero:   j.jersey ?? '—',
-            position: j.position?.abbreviation ?? '?',
-            photo:    j.headshot?.href ?? null,
-          }))
-        )
-        setRoster(joueurs)
-        setChargement(false)
-      })
-      .catch(() => setChargement(false))
-  }, [equipeChoisie])
+    setProgression(0)
+
+    let done = 0
+    const total = equipesStandings.length
+
+    Promise.allSettled(
+      equipesStandings.map(eq =>
+        fetchAvecTimeout(`${BASE}/teams/${eq.id}/roster`)
+          .then(r => r.json())
+          .then(data => {
+            done++
+            setProgression(Math.round((done / total) * 100))
+            return parseRoster(data, eq)
+          })
+          .catch(() => { done++; setProgression(Math.round((done / total) * 100)); return [] })
+      )
+    ).then(resultats => {
+      const tous = resultats
+        .filter(r => r.status === 'fulfilled')
+        .flatMap(r => r.value)
+        .sort((a, b) => a.nom.localeCompare(b.nom))
+      setTousJoueurs(tous)
+      setChargement(false)
+    })
+  }, [equipesStandings])
 
   if (joueurChoisi) {
-    return <FicheJoueur joueur={joueurChoisi} equipe={equipeChoisie} onRetour={() => setJoueurChoisi(null)} />
+    const equipe = equipesStandings.find(e => e.id === joueurChoisi.equipeId) ?? null
+    return <FicheJoueur joueur={joueurChoisi} equipe={equipe} onRetour={() => setJoueurChoisi(null)} />
   }
 
-  const rosterFiltré = roster.filter(j =>
-    j.nom.toLowerCase().includes(recherche.toLowerCase())
-  )
+  const equipesTri = [...equipesStandings].sort((a, b) => a.nom.localeCompare(b.nom))
+
+  const joueursFiltres = tousJoueurs.filter(j => {
+    const matchNom    = j.nom.toLowerCase().includes(recherche.toLowerCase())
+    const matchEquipe = filtreEquipe === '' || j.equipeId === filtreEquipe
+    return matchNom && matchEquipe
+  })
 
   return (
     <div>
       <LabelSection>Joueurs NBA</LabelSection>
 
-      <div style={{ marginTop: 12, marginBottom: 12 }}>
-        <label style={{ fontSize: 11, color: 'var(--text-3)', fontWeight: 700, display: 'block', marginBottom: 6 }}>ÉQUIPE</label>
-        <select
-          value={equipeChoisie?.id ?? ''}
-          onChange={e => {
-            const eq = liste.find(x => x.id === e.target.value)
-            setEquipeChoisie(eq ?? null)
-            setRecherche('')
-          }}
-          style={{
-            width: '100%', fontSize: 13, fontWeight: 600,
-            color: 'var(--text-1)', background: 'var(--bg-1)',
-            borderWidth: 1, borderStyle: 'solid', borderColor: 'var(--border)',
-            borderRadius: 'var(--radius-sm)', padding: '8px 12px', cursor: 'pointer',
-          }}
-        >
-          <option value="">— Choisir une équipe —</option>
-          {liste.map(eq => (
-            <option key={eq.id} value={eq.id}>{eq.nom} ({eq.trigramme})</option>
-          ))}
-        </select>
-      </div>
-
-      {equipeChoisie && (
-        <div style={{ position: 'relative', marginBottom: 12 }}>
+      {/* Filtres */}
+      <div style={{ display: 'flex', gap: 8, marginTop: 12, marginBottom: 12, flexWrap: 'wrap' }}>
+        {/* Recherche */}
+        <div style={{ position: 'relative', flex: 1, minWidth: 180 }}>
           <Search size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-3)' }} />
           <input
             value={recherche}
@@ -592,43 +536,82 @@ function OngletJoueurs({ equipesStandings }) {
             }}
           />
         </div>
-      )}
+        {/* Filtre équipe */}
+        <select
+          value={filtreEquipe}
+          onChange={e => setFiltreEquipe(e.target.value)}
+          style={{
+            fontSize: 12, fontWeight: 600, color: 'var(--text-1)', background: 'var(--bg-1)',
+            borderWidth: 1, borderStyle: 'solid', borderColor: 'var(--border)',
+            borderRadius: 'var(--radius-sm)', padding: '8px 10px', cursor: 'pointer',
+          }}
+        >
+          <option value="">Toutes les équipes</option>
+          {equipesTri.map(eq => (
+            <option key={eq.id} value={eq.id}>{eq.nom} ({eq.trigramme})</option>
+          ))}
+        </select>
+      </div>
 
-      {chargement && <p style={{ color: 'var(--text-3)', fontSize: 13 }}>Chargement du roster…</p>}
-
-      {!chargement && equipeChoisie && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          {rosterFiltré.map(j => {
-            const couleur = couleurEquipe(equipeChoisie.couleur)
-            return (
-              <button key={j.id} onClick={() => setJoueurChoisi(j)} style={{
-                display: 'flex', alignItems: 'center', gap: 12,
-                background: 'var(--bg-1)', borderWidth: 1, borderStyle: 'solid', borderColor: 'var(--border)',
-                borderRadius: 'var(--radius-md)', padding: '8px 12px',
-                cursor: 'pointer', textAlign: 'left', transition: 'border-color 0.15s',
-              }}
-              onMouseEnter={e => e.currentTarget.style.borderColor = `${couleur}60`}
-              onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}
-              >
-                <PhotoJoueur url={j.photo} nom={j.nom} taille={40} />
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-1)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    {j.nom}
-                  </div>
-                  <div style={{ fontSize: 11, color: 'var(--text-3)' }}>#{j.numero} · {j.position}</div>
-                </div>
-                <ChevronRight size={14} color="var(--text-3)" />
-              </button>
-            )
-          })}
-          {rosterFiltré.length === 0 && recherche && (
-            <p style={{ color: 'var(--text-3)', fontSize: 13 }}>Aucun joueur trouvé.</p>
-          )}
+      {/* Chargement avec progression */}
+      {chargement && (
+        <div style={{ marginTop: 16 }}>
+          <p style={{ color: 'var(--text-3)', fontSize: 13, marginBottom: 8 }}>
+            Chargement des rosters… {progression}%
+          </p>
+          <div style={{
+            height: 4, background: 'var(--bg-2)', borderRadius: 2, overflow: 'hidden',
+          }}>
+            <div style={{
+              height: '100%', width: `${progression}%`,
+              background: 'var(--accent)', transition: 'width 0.2s',
+            }} />
+          </div>
         </div>
       )}
 
-      {!equipeChoisie && (
-        <p style={{ color: 'var(--text-3)', fontSize: 13 }}>Sélectionne une équipe pour voir son roster.</p>
+      {equipesStandings.length === 0 && !chargement && (
+        <p style={{ color: 'var(--text-3)', fontSize: 13 }}>Charge d'abord l'onglet Classements.</p>
+      )}
+
+      {/* Liste joueurs */}
+      {!chargement && tousJoueurs.length > 0 && (
+        <>
+          <p style={{ fontSize: 11, color: 'var(--text-3)', marginBottom: 8 }}>
+            {joueursFiltres.length} joueur{joueursFiltres.length > 1 ? 's' : ''}
+            {filtreEquipe || recherche ? ' (filtré)' : ' au total'}
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            {joueursFiltres.map(j => {
+              const couleur = couleurEquipe(j.equipeCouleur)
+              return (
+                <button key={`${j.id}-${j.equipeId}`} onClick={() => setJoueurChoisi(j)} style={{
+                  display: 'flex', alignItems: 'center', gap: 10,
+                  background: 'var(--bg-1)', borderWidth: 1, borderStyle: 'solid', borderColor: 'var(--border)',
+                  borderRadius: 'var(--radius-sm)', padding: '7px 10px',
+                  cursor: 'pointer', textAlign: 'left', transition: 'border-color 0.15s',
+                }}
+                onMouseEnter={e => e.currentTarget.style.borderColor = `${couleur}60`}
+                onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}
+                >
+                  <PhotoJoueur url={j.photo} nom={j.nom} taille={36} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-1)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {j.nom}
+                    </div>
+                    <div style={{ fontSize: 10, color: 'var(--text-3)' }}>#{j.numero} · {j.position}</div>
+                  </div>
+                  {/* Badge équipe */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
+                    <LogoEquipe url={j.equipeLogo} trigramme={j.equipeTri} taille={18} couleur={couleur} />
+                    <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-3)' }}>{j.equipeTri}</span>
+                  </div>
+                  <ChevronRight size={13} color="var(--text-3)" />
+                </button>
+              )
+            })}
+          </div>
+        </>
       )}
     </div>
   )
@@ -639,8 +622,7 @@ function FicheJoueur({ joueur, equipe, onRetour }) {
   const [profil, setProfil]         = useState(null)
   const [stats, setStats]           = useState(null)
   const [chargement, setChargement] = useState(true)
-
-  const couleur = equipe ? couleurEquipe(equipe.couleur) : 'var(--accent)'
+  const couleur = equipe ? couleurEquipe(equipe.couleur) : couleurEquipe(joueur.equipeCouleur)
 
   useEffect(() => {
     setChargement(true)
@@ -654,10 +636,10 @@ function FicheJoueur({ joueur, equipe, onRetour }) {
           nom:        a.fullName ?? joueur.nom,
           photo:      a.headshot?.href ?? joueur.photo ?? null,
           numero:     a.jersey ?? joueur.numero ?? '—',
-          position:   a.position?.displayName ?? joueur.position ?? '—',
-          age:        a.age ?? '—',
-          taille:     a.displayHeight ?? '—',
-          poids:      a.displayWeight ?? '—',
+          position:   a.position?.displayName ?? joueur.positionFull ?? '—',
+          age:        a.age ?? joueur.age ?? '—',
+          taille:     a.displayHeight ?? joueur.taille ?? '—',
+          poids:      a.displayWeight ?? joueur.poids ?? '—',
           experience: a.experience?.years != null ? `${a.experience.years} ans` : '—',
         })
       }
@@ -667,16 +649,10 @@ function FicheJoueur({ joueur, equipe, onRetour }) {
         const entries = general?.stats ?? []
         const v = (n) => entries.find(s => s.name === n)?.displayValue ?? '—'
         setStats({
-          pts: v('avgPoints'),
-          reb: v('avgRebounds'),
-          ast: v('avgAssists'),
-          stl: v('avgSteals'),
-          blk: v('avgBlocks'),
-          fg:  v('fieldGoalPct'),
-          fg3: v('threePointFieldGoalPct'),
-          ft:  v('freeThrowPct'),
-          gp:  v('gamesPlayed'),
-          min: v('avgMinutes'),
+          pts: v('avgPoints'), reb: v('avgRebounds'), ast: v('avgAssists'),
+          stl: v('avgSteals'), blk: v('avgBlocks'), fg: v('fieldGoalPct'),
+          fg3: v('threePointFieldGoalPct'), ft: v('freeThrowPct'),
+          gp: v('gamesPlayed'), min: v('avgMinutes'),
         })
       }
       setChargement(false)
@@ -684,16 +660,11 @@ function FicheJoueur({ joueur, equipe, onRetour }) {
   }, [joueur.id])
 
   const statItems = stats ? [
-    { label: 'PPG', val: stats.pts },
-    { label: 'RPG', val: stats.reb },
-    { label: 'APG', val: stats.ast },
-    { label: 'SPG', val: stats.stl },
-    { label: 'BPG', val: stats.blk },
-    { label: 'Min', val: stats.min },
-    { label: 'FG%', val: stats.fg },
-    { label: '3P%', val: stats.fg3 },
-    { label: 'FT%', val: stats.ft },
-    { label: 'MJ',  val: stats.gp },
+    { label: 'PPG', val: stats.pts }, { label: 'RPG', val: stats.reb },
+    { label: 'APG', val: stats.ast }, { label: 'SPG', val: stats.stl },
+    { label: 'BPG', val: stats.blk }, { label: 'Min', val: stats.min },
+    { label: 'FG%', val: stats.fg },  { label: '3P%', val: stats.fg3 },
+    { label: 'FT%', val: stats.ft },  { label: 'MJ',  val: stats.gp },
   ] : []
 
   return (
@@ -704,15 +675,13 @@ function FicheJoueur({ joueur, equipe, onRetour }) {
         fontSize: 13, cursor: 'pointer', marginBottom: 16, padding: 0,
       }}>
         <ArrowLeft size={16} />
-        {equipe ? `Retour — ${equipe.trigramme}` : 'Retour'}
+        {equipe ? `Retour — ${equipe.trigramme}` : joueur.equipeTri ? `Retour — ${joueur.equipeTri}` : 'Retour'}
       </button>
 
       <div style={{
-        display: 'flex', gap: 16, alignItems: 'flex-start',
-        padding: '16px 20px',
+        display: 'flex', gap: 16, alignItems: 'flex-start', padding: '16px 20px',
         background: `linear-gradient(135deg, ${couleur}18, ${couleur}06)`,
-        borderRadius: 'var(--radius-lg)',
-        borderWidth: 1, borderStyle: 'solid', borderColor: `${couleur}40`,
+        borderRadius: 'var(--radius-lg)', borderWidth: 1, borderStyle: 'solid', borderColor: `${couleur}40`,
         marginBottom: 16,
       }}>
         <PhotoJoueur url={profil?.photo ?? joueur.photo} nom={joueur.nom} taille={72} />
@@ -721,15 +690,15 @@ function FicheJoueur({ joueur, equipe, onRetour }) {
             {profil?.nom ?? joueur.nom}
           </div>
           <div style={{ fontSize: 12, color: couleur, fontWeight: 700, marginTop: 4 }}>
-            {equipe && `${equipe.trigramme} · `}#{profil?.numero ?? joueur.numero} · {profil?.position ?? joueur.position}
+            {joueur.equipeTri && `${joueur.equipeTri} · `}#{profil?.numero ?? joueur.numero} · {profil?.position ?? joueur.positionFull}
           </div>
           {profil && (
             <div style={{ display: 'flex', gap: 12, marginTop: 8, flexWrap: 'wrap' }}>
               {[
-                { label: 'Âge',    val: profil.age },
+                { label: 'Âge', val: profil.age },
                 { label: 'Taille', val: profil.taille },
-                { label: 'Poids',  val: profil.poids },
-                { label: 'Exp.',   val: profil.experience },
+                { label: 'Poids', val: profil.poids },
+                { label: 'Exp.', val: profil.experience },
               ].map(({ label, val }) => (
                 <div key={label} style={{ textAlign: 'center' }}>
                   <div style={{ fontSize: 10, color: 'var(--text-3)' }}>{label}</div>
@@ -746,16 +715,11 @@ function FicheJoueur({ joueur, equipe, onRetour }) {
       {!chargement && stats && (
         <>
           <LabelSection>Stats saison</LabelSection>
-          <div style={{
-            display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)',
-            gap: 8, marginTop: 10,
-          }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 8, marginTop: 10 }}>
             {statItems.map(({ label, val }) => (
               <div key={label} style={{
-                background: 'var(--bg-1)',
-                borderWidth: 1, borderStyle: 'solid', borderColor: 'var(--border)',
-                borderRadius: 'var(--radius-sm)',
-                padding: '10px 6px', textAlign: 'center',
+                background: 'var(--bg-1)', borderWidth: 1, borderStyle: 'solid', borderColor: 'var(--border)',
+                borderRadius: 'var(--radius-sm)', padding: '10px 6px', textAlign: 'center',
               }}>
                 <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--text-1)', fontFamily: 'var(--font-display)' }}>{val}</div>
                 <div style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 2, fontWeight: 700 }}>{label}</div>
@@ -764,10 +728,7 @@ function FicheJoueur({ joueur, equipe, onRetour }) {
           </div>
         </>
       )}
-
-      {!chargement && !stats && (
-        <p style={{ color: 'var(--text-3)', fontSize: 13 }}>Stats indisponibles pour cette saison.</p>
-      )}
+      {!chargement && !stats && <p style={{ color: 'var(--text-3)', fontSize: 13 }}>Stats indisponibles.</p>}
     </div>
   )
 }
@@ -780,19 +741,14 @@ const ONGLETS = [
 ]
 
 export default function Stats() {
-  const [onglet, setOnglet]             = useState('classements')
-  const [equipesStandings, setEquipesStandings] = useState([])  // partagées entre onglets
+  const [onglet, setOnglet]                     = useState('classements')
+  const [equipesStandings, setEquipesStandings] = useState([])
   const [equipeViaClassement, setEquipeViaClassement] = useState(null)
 
-  // Réception des équipes depuis OngletClassements via callback
-  // (les équipes sont parsées lors du chargement standings)
   const handleEquipesChargées = (equipes) => {
-    if (equipes.length > 0 && equipesStandings.length === 0) {
-      setEquipesStandings(equipes)
-    }
+    if (equipes.length > 0 && equipesStandings.length === 0) setEquipesStandings(equipes)
   }
 
-  // Clic équipe depuis standings → switch onglet Équipes + ouvre la fiche
   const handleEquipeClick = (eq) => {
     setEquipeViaClassement(eq)
     setOnglet('equipes')
@@ -801,34 +757,22 @@ export default function Stats() {
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg-0)', paddingBottom: 80 }}>
       <Navigation />
-
-      {/* Espaceurs nav */}
       <div className="nav-desktop-full" style={{ height: 52 }} />
       <div className="nav-mobile-logo" style={{ height: 40 }} />
 
-      <BanniereImage
-        src="https://images.unsplash.com/photo-1504450758481-7338eba7524a?w=800&q=60"
-        alt="Explorer NBA"
-      >
-        <div style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800, letterSpacing: '0.08em', color: '#fff' }}>
-          EXPLORER
-        </div>
-        <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', marginTop: 4 }}>
-          Classements · Équipes · Joueurs
-        </div>
+      <BanniereImage src="https://images.unsplash.com/photo-1504450758481-7338eba7524a?w=800&q=60" alt="Explorer NBA">
+        <div style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800, letterSpacing: '0.08em', color: '#fff' }}>EXPLORER</div>
+        <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', marginTop: 4 }}>Classements · Équipes · Joueurs</div>
       </BanniereImage>
 
-      {/* Onglets principaux */}
       <div style={{
-        display: 'flex',
-        marginLeft: 16, marginRight: 16,
+        display: 'flex', marginLeft: 16, marginRight: 16,
         borderBottomWidth: 1, borderBottomStyle: 'solid', borderBottomColor: 'var(--border)',
       }}>
         {ONGLETS.map(({ val, label }) => (
           <button key={val} onClick={() => setOnglet(val)} style={{
             flex: 1, fontSize: 13, fontWeight: 700, cursor: 'pointer',
-            paddingTop: 12, paddingBottom: 12,
-            background: 'none', borderWidth: 0,
+            paddingTop: 12, paddingBottom: 12, background: 'none', borderWidth: 0,
             color: onglet === val ? 'var(--text-1)' : 'var(--text-3)',
             boxShadow: onglet === val ? 'inset 0 -2px 0 var(--accent)' : 'none',
             transition: 'color 0.15s',
@@ -836,203 +780,17 @@ export default function Stats() {
         ))}
       </div>
 
-      {/* Contenu */}
       <div style={{ padding: '16px 16px 0' }}>
         {onglet === 'classements' && (
-          <OngletClassementsAvecSync
-            onEquipeClick={handleEquipeClick}
-            onEquipesChargées={handleEquipesChargées}
-          />
+          <OngletClassementsAvecSync onEquipeClick={handleEquipeClick} onEquipesChargées={handleEquipesChargées} />
         )}
         {onglet === 'equipes' && (
-          <OngletEquipes
-            equipesStandings={equipesStandings}
-            equipeInitiale={equipeViaClassement}
-            onEquipeClick={handleEquipeClick}
-          />
+          <OngletEquipes equipesStandings={equipesStandings} equipeInitiale={equipeViaClassement} />
         )}
         {onglet === 'joueurs' && (
           <OngletJoueurs equipesStandings={equipesStandings} />
         )}
       </div>
-    </div>
-  )
-}
-
-// Wrapper OngletClassements qui expose les équipes parsées vers le parent
-function OngletClassementsAvecSync({ onEquipeClick, onEquipesChargées }) {
-  const [donnees, setDonnees]         = useState({ est: [], ouest: [], saisons: [] })
-  const [onglet, setOnglet]           = useState('est')
-  const [saison, setSaison]           = useState(2026)
-  const [chargement, setChargement]   = useState(true)
-  const [erreur, setErreur]           = useState(false)
-  const [labelSaison, setLabelSaison] = useState('2025-26')
-
-  const charger = (annee) => {
-    setChargement(true)
-    setErreur(false)
-    fetchAvecTimeout(`${BASE_V2}/standings?season=${annee}&seasontype=2`)
-      .then(r => r.json())
-      .then(data => {
-        const saisonsDispos = (data.seasons ?? [])
-          .filter(s => s.types?.some(t => t.id === '2' && t.hasStandings))
-          .map(s => ({ year: s.year, label: s.displayName }))
-          .sort((a, b) => b.year - a.year)
-
-        const conferences = data.children ?? []
-        const est = [], ouest = []
-        conferences.forEach(conf => {
-          const nom   = conf.name ?? ''
-          const liste = (conf.standings?.entries ?? [])
-            .map(parseEquipe)
-            .sort((a, b) => a.seed - b.seed)
-          if (nom.toLowerCase().includes('east')) est.push(...liste)
-          else ouest.push(...liste)
-        })
-
-        const meta = data.season ?? {}
-        setLabelSaison(meta.displayName ?? `${annee}`)
-        setDonnees({ est, ouest, saisons: saisonsDispos })
-
-        // Remonte les équipes au parent (pour Équipes + Joueurs)
-        onEquipesChargées([...est, ...ouest])
-        setChargement(false)
-      })
-      .catch(() => { setErreur(true); setChargement(false) })
-  }
-
-  useEffect(() => { charger(saison) }, [saison])
-
-  const liste = onglet === 'est' ? donnees.est : donnees.ouest
-
-  return (
-    <div>
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap', marginBottom: 12 }}>
-        <LabelSection>Classement NBA</LabelSection>
-        <span style={{ fontSize: 12, color: 'var(--text-3)' }}>Saison {labelSaison}</span>
-      </div>
-
-      <div style={{ marginBottom: 12 }}>
-        <select
-          value={saison}
-          onChange={e => setSaison(Number(e.target.value))}
-          style={{
-            fontSize: 12, fontWeight: 600, color: 'var(--text-1)',
-            background: 'var(--bg-1)',
-            borderWidth: 1, borderStyle: 'solid', borderColor: 'var(--border)',
-            borderRadius: 'var(--radius-sm)', padding: '6px 10px', cursor: 'pointer',
-          }}
-        >
-          {donnees.saisons.length > 0
-            ? donnees.saisons.map(s => <option key={s.year} value={s.year}>{s.label}</option>)
-            : <option value={2026}>2025-26</option>
-          }
-        </select>
-      </div>
-
-      <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
-        {['est', 'ouest'].map(tab => (
-          <button key={tab} onClick={() => setOnglet(tab)} style={{
-            fontSize: 12, fontWeight: 700, cursor: 'pointer',
-            paddingTop: 6, paddingBottom: 6, paddingLeft: 16, paddingRight: 16,
-            borderRadius: 'var(--radius-sm)',
-            borderWidth: 1, borderStyle: 'solid',
-            background:  onglet === tab ? 'rgba(99,102,241,0.18)' : 'transparent',
-            borderColor: onglet === tab ? 'rgba(99,102,241,0.5)'  : 'var(--border)',
-            color:       onglet === tab ? 'var(--accent)'          : 'var(--text-3)',
-          }}>
-            {tab === 'est' ? 'Conférence Est' : 'Conférence Ouest'}
-          </button>
-        ))}
-      </div>
-
-      {chargement && <p style={{ color: 'var(--text-3)', fontSize: 13 }}>Chargement…</p>}
-      {erreur && <p style={{ color: 'var(--danger)', fontSize: 13 }}>Erreur ESPN</p>}
-
-      {!chargement && !erreur && (
-        <>
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: '24px 24px 1fr 56px 44px 60px 60px 48px',
-            gap: 4, padding: '4px 8px',
-            fontSize: 10, fontWeight: 700, color: 'var(--text-3)',
-            textTransform: 'uppercase', letterSpacing: '0.05em',
-          }}>
-            <span>#</span><span />
-            <span>Équipe</span>
-            <span style={{ textAlign: 'center' }}>Bilan</span>
-            <span style={{ textAlign: 'center' }}>GB</span>
-            <span style={{ textAlign: 'center' }}>Dom.</span>
-            <span style={{ textAlign: 'center' }}>Ext.</span>
-            <span style={{ textAlign: 'center' }}>Série</span>
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-            {liste.map((eq, idx) => {
-              const couleur = couleurEquipe(eq.couleur)
-              const playoff = eq.seed <= 6
-              const playIn  = eq.seed === 7 || eq.seed === 8
-              return (
-                <button
-                  key={eq.id}
-                  onClick={() => onEquipeClick(eq)}
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: '24px 24px 1fr 56px 44px 60px 60px 48px',
-                    gap: 4, alignItems: 'center',
-                    padding: '7px 8px',
-                    borderRadius: 'var(--radius-sm)',
-                    background: playoff
-                      ? `linear-gradient(90deg, ${couleur}12, transparent)`
-                      : playIn ? 'rgba(249,115,22,0.04)' : idx % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'transparent',
-                    borderWidth: 0,
-                    borderLeftWidth: playoff ? 2 : playIn ? 1 : 0,
-                    borderLeftStyle: 'solid',
-                    borderLeftColor: playoff ? couleur : 'rgba(249,115,22,0.4)',
-                    cursor: 'pointer', textAlign: 'left', width: '100%',
-                  }}
-                >
-                  <span style={{
-                    fontSize: 11, fontWeight: 700, textAlign: 'center',
-                    color: playoff ? 'var(--accent)' : 'var(--text-3)',
-                  }}>{eq.seed}</span>
-
-                  <LogoEquipe url={eq.logo} trigramme={eq.trigramme} taille={20} couleur={couleur} />
-
-                  <div style={{ minWidth: 0, display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-1)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {eq.trigramme}
-                    </span>
-                    <BadgeClincher val={eq.clincher} />
-                  </div>
-
-                  <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--text-1)', textAlign: 'center', fontFamily: 'var(--font-display)' }}>
-                    {eq.wins}-{eq.losses}
-                  </span>
-                  <span style={{ fontSize: 11, color: 'var(--text-3)', textAlign: 'center' }}>{eq.gb}</span>
-                  <span style={{ fontSize: 10, color: 'var(--text-2)', textAlign: 'center' }}>{eq.domicile}</span>
-                  <span style={{ fontSize: 10, color: 'var(--text-2)', textAlign: 'center' }}>{eq.exterieur}</span>
-                  <span style={{ fontSize: 11, fontWeight: 700, textAlign: 'center',
-                    color: eq.serie?.startsWith('W') ? 'var(--success)' : eq.serie?.startsWith('L') ? 'var(--danger)' : 'var(--text-3)',
-                  }}>{eq.serie}</span>
-                </button>
-              )
-            })}
-          </div>
-
-          <div style={{ display: 'flex', gap: 16, marginTop: 10, flexWrap: 'wrap' }}>
-            <span style={{ fontSize: 10, color: 'var(--text-3)' }}>
-              <span style={{ color: 'var(--accent)' }}>■</span> Top 6 — playoffs directs
-            </span>
-            <span style={{ fontSize: 10, color: 'var(--text-3)' }}>
-              <span style={{ color: 'rgba(249,115,22,0.8)' }}>■</span> 7-8 — Play-in
-            </span>
-            <span style={{ fontSize: 10, color: 'var(--text-3)' }}>
-              z conf · y div · x playoff · xp play-in · e éliminé · * meilleur bilan
-            </span>
-          </div>
-        </>
-      )}
     </div>
   )
 }
