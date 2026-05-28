@@ -151,7 +151,7 @@ function Colonne({ label, series, noSpoil, d, hTotale }) {
         textTransform: 'uppercase', letterSpacing: '0.08em',
         textAlign: 'center', height: d.labelH,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        whiteSpace: 'pre-line', lineHeight: 1.2, marginBottom: 6,
+        whiteSpace: 'pre-line', lineHeight: 1.2, marginBottom: 10,
       }}>{label}</div>
       <div style={{
         display: 'flex', flexDirection: 'column',
@@ -279,7 +279,7 @@ export default function BracketPlayoffs({ saison = 2026 }) {
 
   return (
     <div>
-      <div style={{ textAlign: 'center', marginBottom: 30 }}>
+      <div style={{ textAlign: 'center', marginBottom: 20 }}>
         <span style={{
           display: 'inline-block',
           background: 'linear-gradient(90deg, var(--accent), var(--orange))',
@@ -312,7 +312,7 @@ export default function BracketPlayoffs({ saison = 2026 }) {
               WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
               textAlign: 'center', height: d.labelH,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              whiteSpace: 'nowrap', marginBottom: 6,
+              whiteSpace: 'nowrap', marginBottom: 10,
             }}>FINALES NBA</div>
             {/* Colonne centrale : espace vide pour aligner les cartes avec les finales de conf */}
             <div style={{
