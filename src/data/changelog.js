@@ -1,6 +1,30 @@
 // Changelog NBA Pronostics — une entrée par version/feature
 export const CHANGELOG = [
-      {
+  {
+  version: "v1.1",
+  date: "2026-05-28",
+  titre: "Prédiction ESPN dans les fiches match",
+  desc: "Avant chaque match, un bloc affiche la prédiction ESPN : probabilités de victoire de chaque équipe sous forme de barre visuelle avec les pourcentages, et la conclusion ESPN ('ESPN prédit une victoire des X ce soir.'). Visible uniquement sur les matchs à venir ou en cours.",
+  lien: null,
+  labelLien: null,
+},
+{
+  version: "v1.1",
+  date: "2026-05-28",
+  titre: "Classement NBA — Top 5 sur le Board",
+  desc: "Le bloc Classement NBA du Board affiche désormais uniquement le Top 5 de chaque conférence lors de la saison régulière, avec un lien 'Voir tout' pour accéder au classement complet dans Explorer.",
+  lien: "/stats",
+  labelLien: "Ouvrir Explorer",
+},
+{
+  version: "v1.1",
+  date: "2026-05-28",
+  titre: "Séries Playoffs — Mode No Spoil",
+  desc: "Le bloc Séries Playoffs du Board respecte maintenant le mode No Spoil : scores masqués (?–?), labels supprimés, équipes affichées en neutre. Un badge 🙈 No Spoil actif s'affiche dans l'en-tête du bloc.",
+  lien: "/accueil",
+  labelLien: "Voir le Board",
+},
+{
     version: "v1.0",
     date: "2026-05-28",
     titre: "Explorer — Stats NBA",
@@ -113,4 +137,4 @@ export const CHANGELOG = [
 ]
 
 // Version courante de l'app — à incrémenter à chaque déploiement avec nouveautés
-export const VERSION_COURANTE = 'v1.0'
+export const VERSION_COURANTE = 'v1.1'
