@@ -180,7 +180,7 @@ function Accueil() {
 
         {/* ── Séparateur communauté / NBA data ── */}
         {!chargement && (
-          <div style={{ margin: '24px 16px', display: 'flex', alignItems: 'center' }}>
+          <div style={{ margin: '30px 16px', display: 'flex', alignItems: 'center' }}>
             <div style={{ flex: 1, height: 1, background: 'linear-gradient(to right, transparent, var(--accent-border), transparent)' }} />
           </div>
         )}
