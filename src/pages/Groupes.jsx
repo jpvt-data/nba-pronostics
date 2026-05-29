@@ -1,26 +1,31 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import { useNavigate } from 'react-router-dom'
 import Navigation from '../components/Navigation'
 import CreerGroupe from '../components/CreerGroupe'
 import { LabelSection, BanniereImage, Bloc } from '../components/UI'
 
 const ADMIN_ID = 'fa55d016-896c-4eb4-b48a-241d6be71ad0'
+const ONGLETS  = ['en_cours', 'a_venir', 'terminees']
+const LABELS   = { en_cours: 'En cours', a_venir: 'À venir', terminees: 'Terminées' }
 
 function Groupes() {
-  const [ligues, setLigues]   = useState([])
-  const [membres, setMembres] = useState({})
-  const [charg, setCharg]     = useState(true)
-  const [userId, setUserId]   = useState(null)
+  const [ligues, setLigues]             = useState([])
+  const [membres, setMembres]           = useState({})
+  const [charg, setCharg]               = useState(true)
+  const [userId, setUserId]             = useState(null)
   const [creerOuvert, setCreerOuvert]   = useState(false)
   const [ligueEnModif, setLigueEnModif] = useState(null)
+  const [onglet, setOnglet]             = useState('en_cours')
+  const navigate                        = useNavigate()
 
   const charger = async () => {
     const { data: { user } } = await supabase.auth.getUser()
     setUserId(user.id)
     const { data: toutesLigues } = await supabase
       .from('groupes')
-      .select('id, nom, date_fin, admin_id')
-      .order('date_fin', { ascending: false, nullsFirst: false })
+      .select('id, nom, date_debut, date_fin, admin_id, type_saison, saison')
+      .order('date_debut', { ascending: false, nullsFirst: false })
     setLigues(toutesLigues || [])
     const { data: mesMembres } = await supabase
       .from('membres_groupe')
@@ -59,19 +64,24 @@ function Groupes() {
     charger()
   }
 
-  const estFermee = (date_fin) => date_fin && new Date(date_fin) < new Date()
+  const maintenant = new Date()
 
-  const liguesTriees    = [...ligues].sort((a, b) => (estFermee(a.date_fin) ? 1 : 0) - (estFermee(b.date_fin) ? 1 : 0))
-  const liguesActives   = liguesTriees.filter(l => !estFermee(l.date_fin))
-  const liguesTerminees = liguesTriees.filter(l => estFermee(l.date_fin))
+  const categoriser = (l) => {
+    const debut = l.date_debut ? new Date(l.date_debut) : null
+    const fin   = l.date_fin   ? new Date(l.date_fin)   : null
+    if (fin && fin < maintenant)               return 'terminees'
+    if (debut && debut > maintenant)           return 'a_venir'
+    return 'en_cours'
+  }
+
+  const fmt = (d) => d ? new Date(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : null
 
   const CarteLigue = ({ ligue }) => {
-    const membre  = membres[ligue.id]
-    const dedans  = membre?.actif === true
-    const fermee  = estFermee(ligue.date_fin)
-    const dateFin = ligue.date_fin
-      ? new Date(ligue.date_fin).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
-      : null
+    const membre   = membres[ligue.id]
+    const dedans   = membre?.actif === true
+    const cat      = categoriser(ligue)
+    const fermee   = cat === 'terminees'
+    const aVenir   = cat === 'a_venir'
 
     return (
       <div style={{
@@ -80,10 +90,12 @@ function Groupes() {
         borderWidth: 1, borderStyle: 'solid',
         borderColor: dedans ? 'var(--accent-border)' : 'rgba(99,102,241,0.08)',
         padding: '14px 16px',
-        opacity: fermee ? 0.65 : 1,
+        opacity: fermee ? 0.7 : 1,
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div style={{ flex: 1, minWidth: 0 }}>
+
+            {/* Nom + badges */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 4 }}>
               <span style={{ fontWeight: 600, fontSize: 15, color: 'var(--text-1)' }}>{ligue.nom}</span>
               {dedans && (
@@ -92,12 +104,18 @@ function Groupes() {
               {fermee && (
                 <span style={{ fontSize: 10, fontWeight: 600, background: 'rgba(239,68,68,0.1)', color: 'var(--danger)', borderRadius: 4, padding: '2px 6px', borderWidth: 1, borderStyle: 'solid', borderColor: 'rgba(239,68,68,0.3)' }}>Terminée</span>
               )}
+              {aVenir && (
+                <span style={{ fontSize: 10, fontWeight: 600, background: 'rgba(245,158,11,0.1)', color: 'var(--gold)', borderRadius: 4, padding: '2px 6px', borderWidth: 1, borderStyle: 'solid', borderColor: 'rgba(245,158,11,0.3)' }}>À venir</span>
+              )}
             </div>
-            {dateFin && (
-              <div style={{ fontSize: 11, color: 'var(--text-3)' }}>
-                {fermee ? 'Terminée le' : "Jusqu'au"} {dateFin}
-              </div>
-            )}
+
+            {/* Dates */}
+            <div style={{ fontSize: 11, color: 'var(--text-3)', lineHeight: 1.6 }}>
+              {ligue.date_debut && <span>Du {fmt(ligue.date_debut)}</span>}
+              {ligue.date_fin   && <span> au {fmt(ligue.date_fin)}</span>}
+            </div>
+
+            {/* Points si inscrit */}
             {dedans && membre?.points != null && (
               <div style={{ marginTop: 6, display: 'flex', alignItems: 'baseline', gap: 4 }}>
                 <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 20, color: 'var(--gold)' }}>{membre.points}</span>
@@ -105,7 +123,9 @@ function Groupes() {
               </div>
             )}
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginLeft: 12 }}>
+
+          {/* Actions */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginLeft: 12, flexShrink: 0 }}>
             {!fermee && !dedans && (
               <button onClick={() => rejoindre(ligue.id)} style={{ fontSize: 12, fontWeight: 600, background: 'var(--accent)', borderWidth: 0, borderRadius: 'var(--radius-sm)', color: '#fff', paddingTop: 7, paddingBottom: 7, paddingLeft: 14, paddingRight: 14, cursor: 'pointer' }}>
                 Rejoindre
@@ -116,9 +136,15 @@ function Groupes() {
                 Quitter
               </button>
             )}
+            {/* Voir classement — en cours et terminées */}
+            {(cat === 'en_cours' || cat === 'terminees') && (
+              <button onClick={() => navigate(`/classement?ligue=${ligue.id}`)} style={{ fontSize: 11, color: 'var(--accent)', background: 'none', borderWidth: 1, borderStyle: 'solid', borderColor: 'var(--accent-border)', borderRadius: 'var(--radius-sm)', paddingTop: 5, paddingBottom: 5, paddingLeft: 10, paddingRight: 10, cursor: 'pointer' }}>
+                Classement
+              </button>
+            )}
             {userId === ADMIN_ID && (
               <>
-                <button onClick={() => setLigueEnModif(ligue)} style={{ fontSize: 11, color: 'var(--accent)', background: 'none', borderWidth: 1, borderStyle: 'solid', borderColor: 'var(--accent-border)', borderRadius: 'var(--radius-sm)', paddingTop: 5, paddingBottom: 5, paddingLeft: 10, paddingRight: 10, cursor: 'pointer' }}>
+                <button onClick={() => { setLigueEnModif(ligue); setCreerOuvert(false) }} style={{ fontSize: 11, color: 'var(--accent)', background: 'none', borderWidth: 1, borderStyle: 'solid', borderColor: 'var(--accent-border)', borderRadius: 'var(--radius-sm)', paddingTop: 5, paddingBottom: 5, paddingLeft: 10, paddingRight: 10, cursor: 'pointer' }}>
                   Modifier
                 </button>
                 <button onClick={() => supprimer(ligue.id)} style={{ fontSize: 11, color: 'var(--danger)', background: 'none', borderWidth: 1, borderStyle: 'solid', borderColor: 'rgba(239,68,68,0.3)', borderRadius: 'var(--radius-sm)', paddingTop: 5, paddingBottom: 5, paddingLeft: 10, paddingRight: 10, cursor: 'pointer' }}>
@@ -131,6 +157,8 @@ function Groupes() {
       </div>
     )
   }
+
+  const liguesFiltrees = ligues.filter(l => categoriser(l) === onglet)
 
   return (
     <>
@@ -162,11 +190,26 @@ function Groupes() {
               </button>
             )}
           </div>
-          <p style={{ fontSize: 13, color: 'var(--text-3)', margin: 0, lineHeight: 1.6 }}>
+          <p style={{ fontSize: 13, color: 'var(--text-3)', margin: '0 0 16px', lineHeight: 1.6 }}>
             Rejoins une ligue pour entrer en compétition avec tes potes.
           </p>
-        </div>
 
+          {/* Onglets */}
+          <div style={{ display: 'flex', gap: 6 }}>
+            {ONGLETS.map(o => (
+              <button key={o} onClick={() => setOnglet(o)} style={{
+                padding: '6px 14px',
+                background: onglet === o ? 'var(--accent)' : 'var(--bg-2)',
+                borderWidth: 1, borderStyle: 'solid',
+                borderColor: onglet === o ? 'var(--accent)' : 'var(--border)',
+                borderRadius: 99, color: onglet === o ? '#fff' : 'var(--text-3)',
+                fontSize: 12, fontWeight: 600, cursor: 'pointer',
+              }}>
+                {LABELS[o]}
+              </button>
+            ))}
+          </div>
+        </div>
 
         {creerOuvert && userId === ADMIN_ID && (
           <div style={{ padding: '16px 16px 0' }}>
@@ -183,26 +226,13 @@ function Groupes() {
         {charg && <p style={{ color: 'var(--text-3)', fontSize: 13, padding: '2rem', textAlign: 'center' }}>Chargement…</p>}
 
         {!charg && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: '16px 16px 24px' }}>
-            {liguesActives.length > 0 && (
-              <Bloc>
-                <LabelSection>En cours</LabelSection>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 12 }}>
-                  {liguesActives.map(ligue => <CarteLigue key={ligue.id} ligue={ligue} />)}
-                </div>
-              </Bloc>
-            )}
-            {liguesTerminees.length > 0 && (
-              <Bloc style={{ opacity: 0.8 }}>
-                <LabelSection>Terminées</LabelSection>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 12 }}>
-                  {liguesTerminees.map(ligue => <CarteLigue key={ligue.id} ligue={ligue} />)}
-                </div>
-              </Bloc>
-            )}
-            {ligues.length === 0 && (
-              <p style={{ color: 'var(--text-3)', fontSize: 13, textAlign: 'center' }}>Aucune ligue disponible.</p>
-            )}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '16px 16px 24px' }}>
+            {liguesFiltrees.length > 0
+              ? liguesFiltrees.map(ligue => <CarteLigue key={ligue.id} ligue={ligue} />)
+              : <p style={{ color: 'var(--text-3)', fontSize: 13, textAlign: 'center', marginTop: 16 }}>
+                  Aucune ligue {LABELS[onglet].toLowerCase()} pour l'instant.
+                </p>
+            }
           </div>
         )}
 

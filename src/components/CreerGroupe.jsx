@@ -13,20 +13,25 @@ const ANNEE_COURANTE = new Date().getFullYear()
 const ANNEES = [ANNEE_COURANTE - 1, ANNEE_COURANTE, ANNEE_COURANTE + 1]
 
 function CreerGroupe({ onSuccess, ligueExistante = null }) {
-  const [nom, setNom]         = useState(ligueExistante?.nom || '')
-  const [dateFin, setDateFin] = useState(ligueExistante?.date_fin?.slice(0, 10) || '')
-  const [typeSaison, setType] = useState(ligueExistante?.type_saison != null ? String(ligueExistante.type_saison) : '')
-  const [saison, setSaison]   = useState(ligueExistante?.saison ? String(ligueExistante.saison) : String(ANNEE_COURANTE))
-  const [erreur, setErreur]   = useState(null)
-  const [charg, setCharg]     = useState(false)
+  const [nom, setNom]           = useState(ligueExistante?.nom || '')
+  const [dateDebut, setDebut]   = useState(ligueExistante?.date_debut?.slice(0, 10) || '')
+  const [dateFin, setDateFin]   = useState(ligueExistante?.date_fin?.slice(0, 10) || '')
+  const [typeSaison, setType]   = useState(ligueExistante?.type_saison != null ? String(ligueExistante.type_saison) : '')
+  const [saison, setSaison]     = useState(ligueExistante?.saison ? String(ligueExistante.saison) : String(ANNEE_COURANTE))
+  const [erreur, setErreur]     = useState(null)
+  const [charg, setCharg]       = useState(false)
 
   const estModif = !!ligueExistante
 
   const gererSoumission = async () => {
+    if (!dateDebut || !dateFin) { setErreur('Les dates de début et de fin sont obligatoires'); return }
+    if (new Date(dateDebut) >= new Date(dateFin)) { setErreur('La date de début doit être avant la date de fin'); return }
     setCharg(true); setErreur(null)
+
     const payload = {
       nom,
-      date_fin:    dateFin || null,
+      date_debut:  dateDebut,
+      date_fin:    dateFin,
       type_saison: typeSaison ? parseInt(typeSaison) : null,
       saison:      parseInt(saison),
     }
@@ -73,9 +78,15 @@ function CreerGroupe({ onSuccess, ligueExistante = null }) {
           </select>
         </div>
 
-        <div>
-          <label style={S.label}>Date de clôture (optionnelle)</label>
-          <input type="date" value={dateFin} onChange={e => setDateFin(e.target.value)} style={S.input} />
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+          <div>
+            <label style={S.label}>Date de début *</label>
+            <input type="date" value={dateDebut} onChange={e => setDebut(e.target.value)} style={S.input} />
+          </div>
+          <div>
+            <label style={S.label}>Date de fin *</label>
+            <input type="date" value={dateFin} onChange={e => setDateFin(e.target.value)} style={S.input} />
+          </div>
         </div>
 
         {erreur && <div style={S.erreur}>{erreur}</div>}
@@ -105,6 +116,7 @@ const S = {
     borderRadius: 'var(--radius-sm)',
     color: 'var(--text-1)', fontSize: 14, padding: '10px 12px',
     outline: 'none', width: '100%', fontFamily: 'var(--font-body)',
+    boxSizing: 'border-box',
   },
   erreur: {
     fontSize: 13, color: 'var(--danger)', background: 'var(--danger-dim)',

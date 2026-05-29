@@ -5,6 +5,22 @@ import { Avatar } from '../components/Avatar'
 
 const MEDAILLES = ['🥇', '🥈', '🥉']
 
+// Année NBA courante : 1 sept → 31 août
+function anneNBACourante() {
+  const d = new Date()
+  return d.getMonth() >= 8 ? d.getFullYear() : d.getFullYear() - 1
+}
+
+function debutAnneeNBA() {
+  const annee = anneNBACourante()
+  return new Date(`${annee}-09-01T00:00:00`)
+}
+
+function labelAnneeNBA() {
+  const a = anneNBACourante()
+  return `${String(a).slice(2)}-${String(a + 1).slice(2)}`
+}
+
 function ClassementRapide({ userId }) {
   const [groupeActif, setGroupeActif] = useState(null)
   const [classement, setClassement]   = useState([])
@@ -13,20 +29,59 @@ function ClassementRapide({ userId }) {
 
   useEffect(() => {
     const init = async () => {
+      // Ligue en cours uniquement (date_debut ≤ aujourd'hui ≤ date_fin)
+      const maintenant = new Date().toISOString()
       const { data: membres } = await supabase
         .from('membres_groupe')
-        .select('groupe_id, groupes(id, nom)')
-        .eq('user_id', userId).eq('actif', true).limit(1)
+        .select('groupe_id, groupes(id, nom, date_debut, date_fin)')
+        .eq('user_id', userId).eq('actif', true)
+
       if (!membres?.length) return
-      const groupe = membres[0].groupes
+
+      // Filtrer ligues en cours
+      const enCours = membres.filter(m => {
+        const g = m.groupes
+        if (!g) return false
+        const apresDebut = !g.date_debut || new Date(g.date_debut) <= new Date()
+        const avantFin   = !g.date_fin   || new Date(g.date_fin)   >= new Date()
+        return apresDebut && avantFin
+      })
+      if (!enCours.length) return
+
+      const groupe = enCours[0].groupes
       setGroupeActif(groupe)
-      const { data } = await supabase
+
+      // Membres du groupe
+      const { data: tousMembers } = await supabase
         .from('membres_groupe')
-        .select('points, user_id, profils(pseudo, avatar_url)')
+        .select('user_id, profils(pseudo, avatar_url)')
         .eq('groupe_id', groupe.id).eq('actif', true)
-        .order('points', { ascending: false })
-      setClassement(data || [])
-      setMonRang((data || []).findIndex(m => m.user_id === userId) + 1)
+
+      if (!tousMembers?.length) return
+
+      const userIds = tousMembers.map(m => m.user_id)
+
+      // Points année NBA uniquement
+      const debut = debutAnneeNBA()
+      const { data: pronos } = await supabase
+        .from('pronos')
+        .select('user_id, points_gagnes')
+        .eq('groupe_id', groupe.id)
+        .eq('resultat', 'correct')
+        .in('user_id', userIds)
+        .gte('cree_le', debut.toISOString())
+
+      // Agréger points
+      const pointsMap = {}
+      userIds.forEach(id => { pointsMap[id] = 0 })
+      pronos?.forEach(p => { pointsMap[p.user_id] = (pointsMap[p.user_id] || 0) + (p.points_gagnes || 1) })
+
+      const liste = tousMembers
+        .map(m => ({ ...m, points: pointsMap[m.user_id] || 0 }))
+        .sort((a, b) => b.points - a.points)
+
+      setClassement(liste)
+      setMonRang(liste.findIndex(m => m.user_id === userId) + 1)
     }
     if (userId) init()
   }, [userId])
@@ -36,7 +91,10 @@ function ClassementRapide({ userId }) {
   return (
     <div style={{ marginBottom: '0.5rem' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-        <h3 style={{ margin: 0 }}>{groupeActif.nom}</h3>
+        <div>
+          <h3 style={{ margin: 0 }}>{groupeActif.nom}</h3>
+          <span style={{ fontSize: 10, color: 'var(--text-3)' }}>Saison {labelAnneeNBA()}</span>
+        </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           {monRang > 0 && (
             <span style={{ fontSize: 12, color: 'var(--text-3)' }}>Tu es #{monRang}</span>
