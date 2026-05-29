@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import { Home, Trophy, BarChart2, Menu, X, Swords, LogOut, Calendar, Sparkles, EyeOff, TrendingUp } from 'lucide-react'
+import { Home, Trophy, BarChart2, Menu, X, Swords, LogOut, Calendar, Sparkles, EyeOff, TrendingUp, Shield } from 'lucide-react'
 import { useNoSpoil } from '../context/NoSpoilContext'
 import { useProfil } from '../context/ProfilContext'
 import { Avatar } from '../components/Avatar'
@@ -78,7 +78,7 @@ function Navigation() {
         {/* Liens principaux */}
         {[
           { chemin: '/stats',      label: 'Explorer',   Icone: TrendingUp },
-          { chemin: '/groupes',    label: 'Ligues',     Icone: Swords },
+          { chemin: '/groupes',    label: 'Ligues',     Icone: Shield },
           { chemin: '/calendrier', label: 'Calendrier', Icone: Calendar },
         ].map(({ chemin, label, Icone }) => (
           <button key={chemin} onClick={() => aller(chemin)} style={{
@@ -105,6 +105,18 @@ function Navigation() {
         }}>
           <EyeOff size={18} strokeWidth={1.5} />
           {noSpoil ? 'No Spoil — actif' : 'No Spoil'}
+        </button>
+
+        <button onClick={() => aller('/h2h')} style={{
+          display: 'flex', alignItems: 'center', gap: 10,
+          background: location.pathname === '/h2h' ? 'var(--accent-dim)' : 'none',
+          borderWidth: location.pathname === '/h2h' ? 1 : 0, borderStyle: 'solid', borderColor: 'var(--accent-border)',
+          color: location.pathname === '/h2h' ? 'var(--accent)' : 'var(--text-2)',
+          fontSize: 14, cursor: 'pointer',
+          paddingTop: '0.75rem', paddingBottom: '0.75rem', paddingLeft: '0.5rem', paddingRight: '0.5rem',
+          borderRadius: 'var(--radius-sm)', width: '100%', textAlign: 'left',
+        }}>
+          <Swords size={18} strokeWidth={1.5} /> 1v1
         </button>
 
         {/* Séparateur bas */}
