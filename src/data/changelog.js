@@ -1,6 +1,14 @@
 // Changelog NBA Pronostics — une entrée par version/feature
 export const CHANGELOG = [
 {
+  version: "v1.3",
+  date: "2026-05-29",
+  titre: "Focus & Le Vestiaire — Board vivant",
+  desc: "Le Board s'anime avec deux nouveaux blocs. Focus : carousel personnel qui tourne automatiquement (fade, points de pagination) — streak en cours, pronos en attente, win rate. Le Vestiaire : fil communautaire qui détecte les séries de pronos réussis ou ratés (≥ 2) parmi les membres de tes ligues.",
+  lien: "/accueil",
+  labelLien: "Voir le Board",
+},
+{
   version: "v1.2",
   date: "2026-05-28",
   titre: "Fiche joueur enrichie — Game log & Radars",
@@ -161,4 +169,4 @@ export const CHANGELOG = [
 ]
 
 // Version courante de l'app — à incrémenter à chaque déploiement avec nouveautés
-export const VERSION_COURANTE = 'v1.2'
+export const VERSION_COURANTE = 'v1.3'
