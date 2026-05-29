@@ -10,10 +10,11 @@ import MesPronos    from './pages/MesPronos'
 import MatchDetail  from './pages/MatchDetail'
 import Calendrier   from './pages/Calendrier'
 import Profil       from './pages/Profil'
+import Stats        from './pages/Stats'
+import QuoiDeNeuf   from './pages/QuoiDeNeuf'
 import PopupChangelog from './components/PopupChangelog'
 import { NoSpoilProvider } from './context/NoSpoilContext'
 import { ProfilProvider } from './context/ProfilContext'
-import Stats from './pages/Stats'
 
 function App() {
   const [session, setSession] = useState(undefined)
@@ -32,22 +33,23 @@ function App() {
   return (
     <NoSpoilProvider>
       <ProfilProvider>
-      <BrowserRouter>
-        {session && <PopupChangelog />}
-        <Routes>
-          <Route path="/connexion"       element={public_(<Connexion />)} />
-          <Route path="/inscription"     element={public_(<Inscription />)} />
-          <Route path="/accueil"         element={prive(<Accueil />)} />
-          <Route path="/classement"      element={prive(<Classement />)} />
-          <Route path="/mes-pronos"      element={prive(<MesPronos />)} />
-          <Route path="/groupes"         element={prive(<Groupes />)} />
-          <Route path="/match/:espn_id"  element={prive(<MatchDetail />)} />
-          <Route path="/calendrier"      element={prive(<Calendrier />)} />
-          <Route path="/profil"          element={prive(<Profil />)} />
-          <Route path="/stats"           element={prive(<Stats />)} />
-          <Route path="*"                element={<Navigate to={session ? '/accueil' : '/connexion'} />} />
-        </Routes>
-      </BrowserRouter>
+        <BrowserRouter>
+          {session && <PopupChangelog />}
+          <Routes>
+            <Route path="/connexion"      element={public_(<Connexion />)} />
+            <Route path="/inscription"    element={public_(<Inscription />)} />
+            <Route path="/accueil"        element={prive(<Accueil />)} />
+            <Route path="/classement"     element={prive(<Classement />)} />
+            <Route path="/mes-pronos"     element={prive(<MesPronos />)} />
+            <Route path="/groupes"        element={prive(<Groupes />)} />
+            <Route path="/match/:espn_id" element={prive(<MatchDetail />)} />
+            <Route path="/calendrier"     element={prive(<Calendrier />)} />
+            <Route path="/profil"         element={prive(<Profil />)} />
+            <Route path="/stats"          element={prive(<Stats />)} />
+            <Route path="/quoi-de-neuf"   element={prive(<QuoiDeNeuf />)} />
+            <Route path="*"               element={<Navigate to={session ? '/accueil' : '/connexion'} />} />
+          </Routes>
+        </BrowserRouter>
       </ProfilProvider>
     </NoSpoilProvider>
   )

@@ -1,27 +1,40 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { X, Zap, EyeOff, Eye } from 'lucide-react'
-import { CHANGELOG, VERSION_COURANTE } from '../data/changelog'
+import { X, Eye, EyeOff } from 'lucide-react'
+import { VERSION_COURANTE } from '../data/changelog'
 import { useNoSpoil } from '../context/NoSpoilContext'
-import swishLogo from '../assets/swish_league_logo.png'
+import { supabase } from '../lib/supabase'
 
-const DEV = import.meta.env.MODE !== 'production'
 const CLE_STORAGE = `popup_vu_${VERSION_COURANTE}`
 
 function PopupChangelog({ forceOuvert = false, onFermer }) {
-  const [visible, setVisible] = useState(false)
-  const navigate = useNavigate()
+  const [visible, setVisible]     = useState(false)
+  const [message, setMessage]     = useState(null)
   const { noSpoil, toggleNoSpoil } = useNoSpoil()
 
   useEffect(() => {
-    if (forceOuvert) {
-      setVisible(true)
-      return
-    }
-    // Supprime la clé à chaque chargement en dev pour toujours voir le popup
-    localStorage.removeItem(CLE_STORAGE)
+    if (forceOuvert) { setVisible(true); return }
+    localStorage.removeItem(CLE_STORAGE) // toujours visible en dev
     setVisible(true)
   }, [forceOuvert])
+
+  useEffect(() => {
+    if (!visible) return
+    const chargerMessage = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      const { count } = await supabase
+        .from('pronos')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .eq('resultat', 'en_attente')
+      if (count > 0) {
+        setMessage(`⏳ ${count} prono${count > 1 ? 's' : ''} en attente de résultat`)
+      } else {
+        setMessage('🏀 Bon retour ! Prêt à pronostiquer ?')
+      }
+    }
+    chargerMessage()
+  }, [visible])
 
   const fermer = () => {
     localStorage.setItem(CLE_STORAGE, '1')
@@ -33,159 +46,93 @@ function PopupChangelog({ forceOuvert = false, onFermer }) {
 
   return (
     <>
-      {/* Overlay */}
-      <div
-        onClick={fermer}
-        style={{
-          position: 'fixed', inset: 0,
-          background: 'rgba(0,0,0,0.7)',
-          zIndex: 300,
-        }}
-      />
+      <div onClick={fermer} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 300 }} />
 
-      {/* Popup */}
       <div style={{
         position: 'fixed',
         top: '50%', left: '50%',
         transform: 'translate(-50%, -50%)',
-        width: 'min(480px, 92vw)',
-        maxHeight: '80vh',
+        width: 'min(420px, 92vw)',
         background: '#12121c',
-        border: '1px solid #2a2a3e',
+        borderWidth: 1, borderStyle: 'solid', borderColor: '#2a2a3e',
         borderRadius: 14,
         zIndex: 301,
-        display: 'flex',
-        flexDirection: 'column',
         overflow: 'hidden',
       }}>
-        {/* Header fixe */}
+
+        {/* Header */}
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '1rem 1.25rem',
-          borderBottom: '1px solid #1e1e2e',
-          flexShrink: 0,
+          padding: '14px 16px',
+          borderBottomWidth: 1, borderBottomStyle: 'solid', borderBottomColor: '#1e1e2e',
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <Zap size={16} color="#6366f1" strokeWidth={2} />
-            <span style={{ fontWeight: 700, fontSize: 14, color: '#e8e8f0' }}>Quoi de neuf ?</span>
-            <span style={{
-              fontSize: 11, padding: '2px 8px',
-              background: 'rgba(99,102,241,0.15)',
-              border: '1px solid rgba(99,102,241,0.4)',
-              borderRadius: 99, color: '#6366f1', fontWeight: 600,
-            }}>{VERSION_COURANTE}</span>
-          </div>
-          <button
-            onClick={fermer}
-            style={{ background: 'none', border: 'none', color: '#4a4a6a', cursor: 'pointer', padding: 4 }}
-          >
+          {/* Logo texte style navbar */}
+          <span style={{
+            fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 20, letterSpacing: '0.06em',
+            background: 'linear-gradient(90deg, var(--accent), var(--orange))',
+            WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
+          }}>
+            SWISH LEAGUE
+          </span>
+          <button onClick={fermer} style={{ background: 'none', borderWidth: 0, color: '#4a4a6a', cursor: 'pointer', padding: 4 }}>
             <X size={18} />
           </button>
         </div>
 
-        {/* Logo Swish League */}
-        <div style={{ textAlign: 'center', padding: '1.25rem 1.25rem 0' }}>
-            <img src={swishLogo} alt="Swish League" style={{ height: 100, width: 'auto', margin: '0 auto', display: 'block' }} />
-        </div>
+        <div style={{ padding: '14px 16px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
 
-        {/* Encart No Spoil */}
-        <div style={{
-          margin: '1rem 1.25rem 0',
-          padding: '0.75rem 1rem',
-          background: noSpoil ? 'rgba(99,102,241,0.1)' : 'var(--bg-2, #1a1a2e)',
-          borderWidth: 1, borderStyle: 'solid',
-          borderColor: noSpoil ? 'rgba(99,102,241,0.4)' : '#1e1e2e',
-          borderRadius: 10,
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
-        }}>
-          <div>
-            <div style={{ fontSize: 12, fontWeight: 600, color: '#e8e8f0', marginBottom: 2 }}>
-              Mode No Spoil
+          {/* Encart No Spoil */}
+          <div style={{
+            padding: '12px 14px',
+            background: noSpoil ? 'rgba(99,102,241,0.1)' : 'var(--bg-2)',
+            borderWidth: 1, borderStyle: 'solid',
+            borderColor: noSpoil ? 'rgba(99,102,241,0.4)' : '#1e1e2e',
+            borderRadius: 10,
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
+          }}>
+            <div>
+              <div style={{ fontSize: 12, fontWeight: 600, color: '#e8e8f0', marginBottom: 2 }}>Mode No Spoil</div>
+              <div style={{ fontSize: 11, color: '#9090b0', lineHeight: 1.4 }}>
+                Masque les scores des matchs terminés.
+              </div>
             </div>
-            <div style={{ fontSize: 11, color: '#9090b0', lineHeight: 1.4 }}>
-              Masque les scores des matchs terminés pour ne pas gâcher ta rediff.
-            </div>
-          </div>
-          <button
-            onClick={toggleNoSpoil}
-            style={{
-              flexShrink: 0,
-              display: 'flex', alignItems: 'center', gap: 6,
+            <button onClick={toggleNoSpoil} style={{
+              flexShrink: 0, display: 'flex', alignItems: 'center', gap: 6,
               padding: '6px 12px',
               background: noSpoil ? '#6366f1' : 'transparent',
-              borderWidth: 1, borderStyle: 'solid',
-              borderColor: noSpoil ? '#6366f1' : '#2a2a3e',
+              borderWidth: 1, borderStyle: 'solid', borderColor: noSpoil ? '#6366f1' : '#2a2a3e',
               borderRadius: 8, cursor: 'pointer',
-              fontSize: 12, fontWeight: 600,
-              color: noSpoil ? '#fff' : '#9090b0',
-            }}
-          >
-            {noSpoil ? <Eye size={13} /> : <EyeOff size={13} />}
-            {noSpoil ? 'Actif' : 'Inactif'}
-          </button>
-        </div>
-
-        {/* Corps scrollable */}
-        <div style={{ overflowY: 'auto', padding: '1rem 1.25rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-          {CHANGELOG.map((entree, i) => (
-            <div key={i} style={{
-              background: '#1a1a2e',
-              border: '1px solid #1e1e2e',
-              borderRadius: 10,
-              padding: '0.75rem 1rem',
+              fontSize: 12, fontWeight: 600, color: noSpoil ? '#fff' : '#9090b0',
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: 4 }}>
-                <span style={{
-                  fontSize: 10, padding: '1px 7px',
-                  background: 'rgba(99,102,241,0.12)',
-                  border: '1px solid rgba(99,102,241,0.3)',
-                  borderRadius: 99, color: '#6366f1', fontWeight: 600,
-                }}>{entree.version}</span>
-                <span style={{ fontSize: 11, color: '#4a4a6a' }}>{entree.date}</span>
-              </div>
-              <div style={{ fontSize: 13, fontWeight: 600, color: '#e8e8f0', marginBottom: 4 }}>
-                {entree.titre}
-              </div>
-              <div style={{ fontSize: 12, color: '#9090b0', lineHeight: 1.5 }}>
-                {entree.desc}
-              </div>
-              {entree.lien && (
-                <button
-                  onClick={() => { fermer(); navigate(entree.lien) }}
-                  style={{
-                    marginTop: 8,
-                    fontSize: 12, color: '#6366f1',
-                    background: 'none', border: 'none',
-                    padding: 0, cursor: 'pointer',
-                    textDecoration: 'underline',
-                  }}
-                >
-                  {entree.labelLien} →
-                </button>
-              )}
-            </div>
-          ))}
-        </div>
+              {noSpoil ? <Eye size={13} /> : <EyeOff size={13} />}
+              {noSpoil ? 'Actif' : 'Inactif'}
+            </button>
+          </div>
 
-        {/* Footer fixe */}
-        <div style={{
-          padding: '0.75rem 1.25rem',
-          borderTop: '1px solid #1e1e2e',
-          flexShrink: 0,
-        }}>
-          <button
-            onClick={fermer}
-            style={{
-              width: '100%', padding: '0.6rem',
-              background: 'linear-gradient(90deg, var(--accent), var(--orange))',
-              border: 'none',
-              borderRadius: 8, color: '#fff',
-              fontSize: 13, fontWeight: 700, cursor: 'pointer',
-              letterSpacing: '0.04em',
-            }}
-          >
+          {/* Message contextuel */}
+          {message && (
+            <div style={{
+              padding: '11px 14px',
+              background: 'rgba(255,255,255,0.03)',
+              borderWidth: 1, borderStyle: 'solid', borderColor: '#1e1e2e',
+              borderRadius: 10,
+              fontSize: 13, fontWeight: 500, color: 'var(--text-2)', lineHeight: 1.4,
+            }}>
+              {message}
+            </div>
+          )}
+
+          {/* CTA */}
+          <button onClick={fermer} style={{
+            width: '100%', padding: '10px',
+            background: 'linear-gradient(90deg, var(--accent), var(--orange))',
+            borderWidth: 0, borderRadius: 8,
+            color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer',
+            letterSpacing: '0.04em', marginTop: 2,
+          }}>
             C'est parti
           </button>
+
         </div>
       </div>
     </>
