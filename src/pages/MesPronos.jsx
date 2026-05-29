@@ -165,7 +165,7 @@ function MesPronos() {
                           <span style={{ color: 'var(--danger)' }}>{l.incorrects}✗</span>
                           {(l.corrects + l.incorrects) > 0 && <span> · {taux(l.corrects, l.incorrects)}%</span>}
                         </span>
-                        <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 16, color: 'var(--accent)' }}>
+                        <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 16, color: 'var(--gold)' }}>
                           {l.points}<span style={{ fontSize: 10, color: 'var(--text-3)', marginLeft: 2 }}>pts</span>
                         </span>
                       </div>
