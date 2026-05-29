@@ -7,7 +7,8 @@ import Navigation from '../components/Navigation'
 import BandeMatchs from '../components/BandeMatchs'
 import ClassementRapide from '../components/ClassementRapide'
 import PronosAttente from '../components/PronosAttente'
-import RunsPotes from '../components/RunsPotes'
+import Focus from '../components/Focus'
+import LeVestiaire from '../components/LeVestiaire'
 import StandingsNBA from '../components/StandingsNBA'
 import BracketPlayoffs from '../components/BracketPlayoffs'
 import NewsNBA from '../components/NewsNBA'
@@ -92,7 +93,7 @@ function Accueil() {
       <Navigation />
       <main style={{ flex: 1 }}>
 
-        {/* ── Header allégé — contexte utilisateur uniquement ── */}
+        {/* ── Header ── */}
         <div style={{
           padding: GUTTER,
           paddingBottom: 12,
@@ -123,7 +124,14 @@ function Accueil() {
           </button>
         </div>
 
-        {/* ── Prochains matchs ── */}
+        {/* ── 1. Focus — spotlight perso ── */}
+        {!chargement && user && (
+          <div style={{ padding: '12px 16px 0' }}>
+            <Focus userId={user.id} />
+          </div>
+        )}
+
+        {/* ── 2. Prochains matchs ── */}
         <div style={{ padding: '16px 16px 0' }}>
           <LabelSection>Prochains matchs</LabelSection>
           <p style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 4 }}>
@@ -160,7 +168,7 @@ function Accueil() {
           </div>
         )}
 
-        {/* ── Blocs communautaires — remontés avant NBA data ── */}
+        {/* ── 3. Blocs communautaires ── */}
         {!chargement && user && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16, padding: '16px 16px 0' }}>
             <Bloc>
@@ -171,18 +179,18 @@ function Accueil() {
               <LabelSection>Pronos en attente</LabelSection>
               <div style={{ marginTop: 8 }}><PronosAttente userId={user.id} /></div>
             </Bloc>
-            <RunsPotes userId={user.id} />
+            <LeVestiaire userId={user.id} />
           </div>
         )}
 
-        {/* ── Bannière séparatrice communauté / NBA data ── */}
+        {/* ── Bannière séparatrice ── */}
         {!chargement && (
           <div style={{ margin: '16px 16px' }}>
             <BanniereImage url="https://images.unsplash.com/photo-1504450758481-7338eba7524a?w=800&q=60" hauteur={90} />
           </div>
         )}
 
-        {/* ── NBA data — standings, bracket, actu ── */}
+        {/* ── NBA data ── */}
         {!chargement && <StandingsNBA typeSaison={typeSaisonActuel} />}
         {!chargement && typeSaisonActuel === 3 && <BracketPlayoffs saison={saisonActuelle} />}
 
