@@ -100,7 +100,7 @@ function Groupes() {
             )}
             {dedans && membre?.points != null && (
               <div style={{ marginTop: 6, display: 'flex', alignItems: 'baseline', gap: 4 }}>
-                <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 20, color: 'var(--accent)' }}>{membre.points}</span>
+                <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 20, color: 'var(--gold)' }}>{membre.points}</span>
                 <span style={{ fontSize: 10, color: 'var(--text-3)' }}>pts</span>
               </div>
             )}
@@ -140,6 +140,7 @@ function Groupes() {
         <div style={{
           padding: '20px 16px',
           background: 'linear-gradient(160deg, rgba(99,102,241,0.08) 0%, transparent 60%)',
+          borderBottomWidth: 1, borderBottomStyle: 'solid', borderBottomColor: 'var(--border)',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
             <h2 style={{ margin: 0 }}>Ligues</h2>
@@ -166,7 +167,6 @@ function Groupes() {
           </p>
         </div>
 
-        <BanniereImage url="https://images.unsplash.com/photo-1563506644863-444710df1e03?w=800&q=60" />
 
         {creerOuvert && userId === ADMIN_ID && (
           <div style={{ padding: '16px 16px 0' }}>
