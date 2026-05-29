@@ -35,7 +35,7 @@ function Accueil() {
       const { data: profil } = await supabase
         .from('profils').select('pseudo').eq('id', user.id).single()
       setPseudo(profil?.pseudo || null)
-      calculerPoints().catch(() => {})
+      calculerPoints(user.id).catch(() => {})
       const m = await recupererMatchs3Jours()
       setMatchs(m)
       setCharg(false)
@@ -171,16 +171,13 @@ function Accueil() {
               <LabelSection>Pronos en attente</LabelSection>
               <div style={{ marginTop: 8 }}><PronosAttente userId={user.id} /></div>
             </Bloc>
-            <Bloc>
-              <LabelSection>Runs des potes</LabelSection>
-              <div style={{ marginTop: 8 }}><RunsPotes userId={user.id} /></div>
-            </Bloc>
+            <RunsPotes userId={user.id} />
           </div>
         )}
 
         {/* ── Bannière séparatrice communauté / NBA data ── */}
         {!chargement && (
-          <div style={{ margin: '25px 16px' }}>
+          <div style={{ margin: '16px 16px' }}>
             <BanniereImage url="https://images.unsplash.com/photo-1504450758481-7338eba7524a?w=800&q=60" hauteur={90} />
           </div>
         )}
