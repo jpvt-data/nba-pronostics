@@ -8,12 +8,61 @@ import { LabelSection, Bloc } from '../components/UI'
 const formaterDate = (dateStr) =>
   new Date(dateStr).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' })
 
+// Calcule streak actuel et max depuis une liste triée par date desc
+function calculerStreaks(terminesTries) {
+  let actuel = 0, max = 0, courant = 0, dernierResultat = null
+  // On part du plus récent → on remonte
+  for (const p of terminesTries) {
+    if (dernierResultat === null) {
+      dernierResultat = p.resultat
+      courant = 1
+    } else if (p.resultat === dernierResultat) {
+      courant++
+    } else {
+      if (dernierResultat === 'correct') max = Math.max(max, courant)
+      courant = 1
+      dernierResultat = p.resultat
+    }
+  }
+  if (dernierResultat === 'correct') max = Math.max(max, courant)
+
+  // Streak actuel = série en cours si correct, sinon 0
+  let streak = 0
+  for (const p of terminesTries) {
+    if (p.resultat === 'correct') streak++
+    else break
+  }
+  return { actuel: streak, max }
+}
+
+// Meilleure et pire équipe (min 3 pronos pour être significatif)
+function calculerEquipes(termines) {
+  const map = {}
+  termines.forEach(p => {
+    const eq = p.equipe_choisie
+    if (!eq) return
+    if (!map[eq]) map[eq] = { corrects: 0, total: 0 }
+    map[eq].total++
+    if (p.resultat === 'correct') map[eq].corrects++
+  })
+  const liste = Object.entries(map)
+    .filter(([, v]) => v.total >= 3)
+    .map(([nom, v]) => ({ nom, taux: Math.round(v.corrects / v.total * 100), ...v }))
+    .sort((a, b) => b.taux - a.taux)
+  return {
+    meilleure: liste[0] || null,
+    pire: liste[liste.length - 1] || null,
+  }
+}
+
 function MesPronos() {
   const [pronos, setPronos]        = useState([])
   const [stats, setStats]          = useState({ total: 0, corrects: 0, incorrects: 0 })
-  const [statsLigues, setStatsLig] = useState([]) // [{ nom, points, corrects, incorrects }]
+  const [statsLigues, setStatsLig] = useState([])
   const [profil, setProfil]        = useState(null)
   const [formeRecente, setForme]   = useState([])
+  const [streaks, setStreaks]       = useState({ actuel: 0, max: 0 })
+  const [equipes, setEquipes]       = useState({ meilleure: null, pire: null })
   const [charg, setCharg]          = useState(true)
   const [estMoi, setEstMoi]        = useState(true)
   const navigate                   = useNavigate()
@@ -31,7 +80,6 @@ function MesPronos() {
         .from('profils').select('pseudo, avatar_url, description').eq('id', cibleId).single()
       setProfil(p)
 
-      // Pronos complets
       let query = supabase
         .from('pronos')
         .select('equipe_choisie, resultat, points_gagnes, cree_le, groupe_id, matchs(espn_id, date_match, equipe_domicile, equipe_exterieur, statut)')
@@ -43,15 +91,18 @@ function MesPronos() {
       const { data } = await query
       setPronos(data || [])
 
-      const termines   = data?.filter(p => p.resultat !== 'en_attente') || []
+      const termines = data?.filter(p => p.resultat !== 'en_attente') || []
       const corrects   = termines.filter(p => p.resultat === 'correct').length
       const incorrects = termines.filter(p => p.resultat === 'incorrect').length
       setStats({ total: termines.length, corrects, incorrects })
 
+      // Trier par date match desc pour streak et forme
       const terminesTries = [...termines].sort(
         (a, b) => new Date(b.matchs?.date_match) - new Date(a.matchs?.date_match)
       )
-      setForme(terminesTries.slice(0, 5))
+      setForme(terminesTries.slice(0, 10))
+      setStreaks(calculerStreaks(terminesTries))
+      setEquipes(calculerEquipes(termines))
 
       // Stats par ligue
       const { data: membres } = await supabase
@@ -145,6 +196,97 @@ function MesPronos() {
               </div>
             </Bloc>
 
+            {/* ── Streaks ── */}
+            {stats.total > 0 && (
+              <Bloc>
+                <LabelSection>Séries</LabelSection>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 12 }}>
+                  <div style={{
+                    padding: '12px 14px', borderRadius: 'var(--radius-sm)',
+                    background: streaks.actuel > 0 ? 'rgba(245,158,11,0.08)' : 'var(--bg-2)',
+                    borderWidth: 1, borderStyle: 'solid',
+                    borderColor: streaks.actuel > 0 ? 'rgba(245,158,11,0.25)' : 'var(--border)',
+                  }}>
+                    <div style={{ fontSize: 10, color: 'var(--text-3)', marginBottom: 6, letterSpacing: '0.05em' }}>
+                      SÉRIE EN COURS
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+                      {streaks.actuel > 0 && <span style={{ fontSize: 18 }}>🔥</span>}
+                      <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 32, color: streaks.actuel > 0 ? 'var(--gold)' : 'var(--text-3)', lineHeight: 1 }}>
+                        {streaks.actuel}
+                      </span>
+                      <span style={{ fontSize: 11, color: 'var(--text-3)' }}>corrects</span>
+                    </div>
+                  </div>
+                  <div style={{
+                    padding: '12px 14px', borderRadius: 'var(--radius-sm)', background: 'var(--bg-2)',
+                    borderWidth: 1, borderStyle: 'solid', borderColor: 'var(--border)',
+                  }}>
+                    <div style={{ fontSize: 10, color: 'var(--text-3)', marginBottom: 6, letterSpacing: '0.05em' }}>
+                      MEILLEURE SÉRIE
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+                      <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 32, color: 'var(--accent)', lineHeight: 1 }}>
+                        {streaks.max}
+                      </span>
+                      <span style={{ fontSize: 11, color: 'var(--text-3)' }}>corrects</span>
+                    </div>
+                  </div>
+                </div>
+              </Bloc>
+            )}
+
+            {/* ── Meilleure / Pire équipe ── */}
+            {(equipes.meilleure || equipes.pire) && equipes.meilleure !== equipes.pire && (
+              <Bloc>
+                <LabelSection>Équipes</LabelSection>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 12 }}>
+                  {equipes.meilleure && (
+                    <div style={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                      padding: '10px 14px', borderRadius: 'var(--radius-sm)',
+                      background: 'rgba(34,197,94,0.06)',
+                      borderWidth: 1, borderStyle: 'solid', borderColor: 'rgba(34,197,94,0.2)',
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span style={{ fontSize: 15 }}>✅</span>
+                        <div>
+                          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-1)' }}>{equipes.meilleure.nom}</div>
+                          <div style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 1 }}>
+                            {equipes.meilleure.corrects}/{equipes.meilleure.total} pronos
+                          </div>
+                        </div>
+                      </div>
+                      <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 22, color: 'var(--success)' }}>
+                        {equipes.meilleure.taux}%
+                      </span>
+                    </div>
+                  )}
+                  {equipes.pire && equipes.pire.nom !== equipes.meilleure?.nom && (
+                    <div style={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                      padding: '10px 14px', borderRadius: 'var(--radius-sm)',
+                      background: 'rgba(239,68,68,0.06)',
+                      borderWidth: 1, borderStyle: 'solid', borderColor: 'rgba(239,68,68,0.2)',
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span style={{ fontSize: 15 }}>❌</span>
+                        <div>
+                          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-1)' }}>{equipes.pire.nom}</div>
+                          <div style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 1 }}>
+                            {equipes.pire.corrects}/{equipes.pire.total} pronos
+                          </div>
+                        </div>
+                      </div>
+                      <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 22, color: 'var(--danger)' }}>
+                        {equipes.pire.taux}%
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </Bloc>
+            )}
+
             {/* ── Stats par ligue ── */}
             {statsLigues.length > 0 && (
               <Bloc>
@@ -175,22 +317,27 @@ function MesPronos() {
               </Bloc>
             )}
 
-            {/* ── Forme récente ── */}
+            {/* ── Forme récente (10 derniers) ── */}
             {formeRecente.length > 0 && (
               <Bloc>
                 <LabelSection>Forme récente</LabelSection>
-                <div style={{ display: 'flex', gap: 6, marginTop: 12 }}>
+                <div style={{ display: 'flex', gap: 5, marginTop: 12, flexWrap: 'wrap' }}>
                   {formeRecente.map((p, i) => (
-                    <div key={i} style={{
-                      width: 44, height: 44, borderRadius: '50%',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      background: p.resultat === 'correct' ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)',
-                      borderWidth: 1, borderStyle: 'solid',
-                      borderColor: p.resultat === 'correct' ? 'rgba(34,197,94,0.4)' : 'rgba(239,68,68,0.4)',
-                      fontSize: 15, fontWeight: 700,
-                      color: p.resultat === 'correct' ? 'var(--success)' : 'var(--danger)',
-                    }}>
-                      {p.resultat === 'correct' ? 'W' : 'L'}
+                    <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
+                      <div style={{
+                        width: 40, height: 40, borderRadius: '50%',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        background: p.resultat === 'correct' ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)',
+                        borderWidth: 1, borderStyle: 'solid',
+                        borderColor: p.resultat === 'correct' ? 'rgba(34,197,94,0.4)' : 'rgba(239,68,68,0.4)',
+                        fontSize: 13, fontWeight: 700,
+                        color: p.resultat === 'correct' ? 'var(--success)' : 'var(--danger)',
+                      }}>
+                        {p.resultat === 'correct' ? 'W' : 'L'}
+                      </div>
+                      <div style={{ fontSize: 9, color: 'var(--text-3)', textAlign: 'center', maxWidth: 40, lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {p.equipe_choisie}
+                      </div>
                     </div>
                   ))}
                 </div>
