@@ -282,7 +282,8 @@ function Classement() {
         }}>
           <h2 style={{ margin: '0 0 8px' }}>Classement</h2>
           <p style={{ fontSize: 13, color: 'var(--text-3)', lineHeight: 1.6, margin: 0 }}>
-            Chaque bon pronostic rapporte <strong style={{ color: 'var(--accent)' }}>1 point</strong>.
+            Ligues, semaine en cours, palmarès. Chaque prono correct rapporte{' '}
+            <strong style={{ color: 'var(--accent)' }}>1 point</strong>.
           </p>
         </div>
 
