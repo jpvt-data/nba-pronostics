@@ -49,6 +49,8 @@ export const calculerPoints = async () => {
       .eq('match_id', matchLocal.id)
       .eq('resultat', 'en_attente')
 
+    console.log('tousLesPronos pour', matchLocal.espn_id, ':', tousLesPronos)
+
     if (!tousLesPronos?.length) continue
 
     for (const prono of tousLesPronos) {
