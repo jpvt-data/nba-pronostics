@@ -47,7 +47,7 @@ async function genererMessages(userId) {
   if (enAttente > 0) {
     messages.push({
       icone: '⏳',
-      texte: `Tu as ${enAttente} prono${enAttente > 1 ? 's' : ''} en attente de résultat ! Tu es sûr de ton choix ?`,
+      texte: `Tu as ${enAttente} pronostic${enAttente > 1 ? 's' : ''} en cours ! T'es sûr.e de ton choix ? 🤞`,
       couleur: 'var(--text-2)',
     })
   }
