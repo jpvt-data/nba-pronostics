@@ -168,6 +168,13 @@ function Accueil() {
           </div>
         )}
 
+        {/* ── Le Vestiaire — après BandeMatchs ── */}
+        {!chargement && user && (
+          <div style={{ padding: '12px 16px 0' }}>
+            <LeVestiaire userId={user.id} />
+          </div>
+        )}
+
         {/* ── 3. Blocs communautaires ── */}
         {!chargement && user && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16, padding: '16px 16px 0' }}>
@@ -179,7 +186,6 @@ function Accueil() {
               <LabelSection>Pronos en attente</LabelSection>
               <div style={{ marginTop: 8 }}><PronosAttente userId={user.id} /></div>
             </Bloc>
-            <LeVestiaire userId={user.id} />
           </div>
         )}
 
