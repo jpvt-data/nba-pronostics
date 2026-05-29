@@ -9,6 +9,8 @@ export const calculerPoints = async () => {
     .eq('resultat', 'en_attente')
     .not('matchs', 'is', null)
 
+  console.log('pronos en attente:', pronosEnAttente)
+
   if (!pronosEnAttente?.length) return
 
   // Dédupliquer les matchs
