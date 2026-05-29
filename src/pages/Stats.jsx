@@ -1176,6 +1176,7 @@ export default function Stats() {
         {onglet === 'joueurs' && (
           <OngletJoueurs equipesStandings={equipesStandings} />
         )}
+      </div>
       </main>
     </>
   )
