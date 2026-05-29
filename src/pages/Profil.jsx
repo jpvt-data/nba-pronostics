@@ -2,8 +2,8 @@ import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import Navigation from '../components/Navigation'
 import { Camera, Check, X } from 'lucide-react'
-import { Avatar, couleurAvatar } from '../components/Avatar'
-import { LabelSection, BanniereImage, Bloc } from '../components/UI'
+import { couleurAvatar } from '../components/Avatar'
+import { LabelSection, Bloc } from '../components/UI'
 
 function ChampEditable({ label, valeur, onSave, multiline = false, placeholder = '' }) {
   const [edit, setEdit]  = useState(false)
@@ -58,8 +58,6 @@ function ChampEditable({ label, valeur, onSave, multiline = false, placeholder =
 
 function Profil() {
   const [profil, setProfil]        = useState(null)
-  const [ligues, setLigues]        = useState([])
-  const [stats, setStats]          = useState({ total: 0, corrects: 0, incorrects: 0 })
   const [charg, setCharg]          = useState(true)
   const [uploadEnCours, setUpload] = useState(false)
   const inputFichier               = useRef()
@@ -67,14 +65,11 @@ function Profil() {
   useEffect(() => {
     const init = async () => {
       const { data: { user } } = await supabase.auth.getUser()
-      const { data: p } = await supabase.from('profils').select('id, pseudo, avatar_url, description, cree_le').eq('id', user.id).single()
+      const { data: p } = await supabase
+        .from('profils')
+        .select('id, pseudo, avatar_url, description, cree_le')
+        .eq('id', user.id).single()
       setProfil(p)
-      const { data: pronos } = await supabase.from('pronos').select('resultat').eq('user_id', user.id)
-      const corrects   = pronos?.filter(p => p.resultat === 'correct').length || 0
-      const incorrects = pronos?.filter(p => p.resultat === 'incorrect').length || 0
-      setStats({ total: pronos?.length || 0, corrects, incorrects })
-      const { data: membres } = await supabase.from('membres_groupe').select('points, groupes(id, nom, date_fin)').eq('user_id', user.id).eq('actif', true).order('points', { ascending: false })
-      setLigues(membres || [])
       setCharg(false)
     }
     init()
@@ -104,10 +99,6 @@ function Profil() {
     setUpload(false)
   }
 
-  const taux = stats.corrects + stats.incorrects > 0
-    ? Math.round(stats.corrects / (stats.corrects + stats.incorrects) * 100) : 0
-  const estFermee = (date_fin) => date_fin && new Date(date_fin) < new Date()
-
   if (charg) return (
     <>
       <Navigation />
@@ -122,82 +113,81 @@ function Profil() {
       <Navigation />
       <main style={{ flex: 1 }}>
 
-        <div style={{ padding: '20px 16px 0' }}>
-          <Bloc style={{ display: 'flex', alignItems: 'flex-start', gap: 20 }}>
-            <div style={{ position: 'relative', flexShrink: 0 }}>
-              {profil?.avatar_url
-                ? <img src={profil.avatar_url} alt={profil.pseudo} style={{ width: 72, height: 72, borderRadius: '50%', objectFit: 'cover', background: 'var(--bg-2)' }} />
-                : <div style={{ width: 72, height: 72, borderRadius: '50%', background: couleurAvatar(profil?.pseudo), display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, fontWeight: 700, color: '#fff' }}>
-                    {(profil?.pseudo || '?').slice(0, 2).toUpperCase()}
-                  </div>
-              }
-              <button onClick={() => inputFichier.current?.click()} disabled={uploadEnCours}
-                style={{ position: 'absolute', bottom: 0, right: 0, width: 24, height: 24, borderRadius: '50%', background: 'var(--accent)', borderWidth: 2, borderStyle: 'solid', borderColor: 'var(--bg-1)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0 }}>
-                {uploadEnCours ? <span style={{ fontSize: 8, color: '#fff' }}>…</span> : <Camera size={11} color="#fff" />}
-              </button>
-              <input ref={inputFichier} type="file" accept="image/*" onChange={changerAvatar} style={{ display: 'none' }} />
-            </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 22, color: 'var(--text-1)', marginBottom: 4 }}>
-                {profil?.pseudo}
-              </div>
-              <div style={{ fontSize: 11, color: 'var(--text-3)' }}>
-                Membre depuis {new Date(profil?.cree_le).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}
-              </div>
-            </div>
-          </Bloc>
-        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: '20px 16px 24px' }}>
 
-        <BanniereImage url="https://images.unsplash.com/photo-1627627256672-027a4613d028?w=800&q=60" />
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: '16px 16px 24px' }}>
-
-          <Bloc style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-            <LabelSection>Mon profil</LabelSection>
-            <ChampEditable label="Pseudo" valeur={profil?.pseudo} placeholder="Ton pseudo" onSave={(v) => sauverChamp('pseudo', v)} />
-            <div style={{ borderTopWidth: 1, borderTopStyle: 'solid', borderTopColor: 'rgba(99,102,241,0.1)' }} />
-            <ChampEditable label="Ta bio" valeur={profil?.description} placeholder="Dis un truc sur toi…" multiline onSave={(v) => sauverChamp('description', v)} />
-          </Bloc>
-
-          <Bloc>
-            <LabelSection>Stats pronos</LabelSection>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginTop: 12 }}>
-              {[
-                { label: 'Total',    val: stats.total,      color: 'var(--text-1)'  },
-                { label: 'Corrects', val: stats.corrects,   color: 'var(--success)' },
-                { label: 'Ratés',    val: stats.incorrects, color: 'var(--danger)'  },
-                { label: 'Réussite', val: `${taux}%`,       color: 'var(--accent)'  },
-              ].map(s => (
-                <div key={s.label} style={{ textAlign: 'center' }}>
-                  <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 22, color: s.color }}>{s.val}</div>
-                  <div style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 2 }}>{s.label}</div>
-                </div>
-              ))}
-            </div>
-          </Bloc>
-
-          {ligues.length > 0 && (
-            <Bloc>
-              <LabelSection>Mes ligues</LabelSection>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 12 }}>
-                {ligues.map((m, i) => {
-                  const fermee = estFermee(m.groupes?.date_fin)
-                  return (
-                    <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px', background: 'var(--bg-2)', borderRadius: 'var(--radius-sm)', opacity: fermee ? 0.6 : 1 }}>
-                      <div>
-                        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-1)' }}>{m.groupes?.nom}</div>
-                        {fermee && <div style={{ fontSize: 10, color: 'var(--danger)', marginTop: 2 }}>Terminée</div>}
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'baseline', gap: 3 }}>
-                        <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 20, color: 'var(--accent)' }}>{m.points}</span>
-                        <span style={{ fontSize: 10, color: 'var(--text-3)' }}>pts</span>
-                      </div>
+          {/* ── Bloc identité ── */}
+          <Bloc style={{
+            background: 'linear-gradient(135deg, rgba(99,102,241,0.1) 0%, rgba(249,115,22,0.05) 100%)',
+            borderColor: 'rgba(99,102,241,0.2)',
+          }}>
+            {/* Avatar + nom + date */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 20 }}>
+              <div style={{ position: 'relative', flexShrink: 0 }}>
+                {profil?.avatar_url
+                  ? <img src={profil.avatar_url} alt={profil.pseudo} style={{ width: 72, height: 72, borderRadius: '50%', objectFit: 'cover', background: 'var(--bg-2)' }} />
+                  : <div style={{ width: 72, height: 72, borderRadius: '50%', background: couleurAvatar(profil?.pseudo), display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, fontWeight: 700, color: '#fff' }}>
+                      {(profil?.pseudo || '?').slice(0, 2).toUpperCase()}
                     </div>
-                  )
-                })}
+                }
+                <button onClick={() => inputFichier.current?.click()} disabled={uploadEnCours}
+                  style={{ position: 'absolute', bottom: 0, right: 0, width: 24, height: 24, borderRadius: '50%', background: 'var(--accent)', borderWidth: 2, borderStyle: 'solid', borderColor: 'var(--bg-1)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0 }}>
+                  {uploadEnCours ? <span style={{ fontSize: 8, color: '#fff' }}>…</span> : <Camera size={11} color="#fff" />}
+                </button>
+                <input ref={inputFichier} type="file" accept="image/*" onChange={changerAvatar} style={{ display: 'none' }} />
               </div>
-            </Bloc>
-          )}
+              <div>
+                <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 22, color: 'var(--text-1)', lineHeight: 1.2 }}>
+                  {profil?.pseudo}
+                </div>
+                <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 4 }}>
+                  Membre depuis {new Date(profil?.cree_le).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}
+                </div>
+              </div>
+            </div>
+
+            {/* Champs éditables */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <ChampEditable label="Pseudo" valeur={profil?.pseudo} placeholder="Ton pseudo" onSave={(v) => sauverChamp('pseudo', v)} />
+              <div style={{ borderTopWidth: 1, borderTopStyle: 'solid', borderTopColor: 'rgba(99,102,241,0.1)' }} />
+              <ChampEditable label="Ta bio" valeur={profil?.description} placeholder="Dis un truc sur toi…" multiline onSave={(v) => sauverChamp('description', v)} />
+            </div>
+          </Bloc>
+
+          {/* ── Bloc fan — Sprint 4 ── */}
+          <Bloc>
+            <LabelSection>Mon équipe & mon joueur</LabelSection>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 12 }}>
+
+              {/* Équipe favorite */}
+              <div style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                padding: '12px 14px', background: 'var(--bg-2)',
+                borderWidth: 1, borderStyle: 'solid', borderColor: 'var(--border)',
+                borderRadius: 'var(--radius-sm)',
+              }}>
+                <div>
+                  <div style={{ fontSize: 11, color: 'var(--text-3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Équipe favorite</div>
+                  <div style={{ fontSize: 13, color: 'var(--text-3)', fontStyle: 'italic' }}>Disponible bientôt</div>
+                </div>
+                <span style={{ fontSize: 20 }}>🏀</span>
+              </div>
+
+              {/* Joueur favori */}
+              <div style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                padding: '12px 14px', background: 'var(--bg-2)',
+                borderWidth: 1, borderStyle: 'solid', borderColor: 'var(--border)',
+                borderRadius: 'var(--radius-sm)',
+              }}>
+                <div>
+                  <div style={{ fontSize: 11, color: 'var(--text-3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Joueur favori</div>
+                  <div style={{ fontSize: 13, color: 'var(--text-3)', fontStyle: 'italic' }}>Disponible bientôt</div>
+                </div>
+                <span style={{ fontSize: 20 }}>⭐</span>
+              </div>
+
+            </div>
+          </Bloc>
 
         </div>
       </main>
