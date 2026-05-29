@@ -161,13 +161,33 @@ function MatchDetail() {
     const selec     = prono === eq.trigramme
     const perdant   = !noSpoil && termine && !eq.winner && (dom.score != null || ext.score != null)
     const cliquable = !verrou
+
+    // Couleur ESPN de l'équipe — fallback accent si trop sombre
+    const estTropSombre = (hex) => {
+      if (!hex) return true
+      const h = hex.replace('#', '')
+      const r = parseInt(h.slice(0,2), 16)
+      const g = parseInt(h.slice(2,4), 16)
+      const b = parseInt(h.slice(4,6), 16)
+      return (0.299*r + 0.587*g + 0.114*b) < 40
+    }
+    const c1 = eq.color         ? `#${eq.color}`         : null
+    const c2 = eq.alternateColor ? `#${eq.alternateColor}` : null
+    const couleur = selec
+      ? (!estTropSombre(c1) ? c1 : !estTropSombre(c2) ? c2 : 'var(--accent)')
+      : null
+
+    const bgSelec     = couleur === 'var(--accent)' ? 'var(--accent-dim)'          : couleur ? `${couleur}18` : undefined
+    const borderSelec = couleur === 'var(--accent)' ? 'var(--accent-border)'        : couleur ? `${couleur}66` : undefined
+    const txtSelec    = couleur === 'var(--accent)' ? 'var(--accent)'               : couleur || 'var(--text-1)'
+
     return (
       <button onClick={() => cliquable && faireProno(eq.trigramme)} disabled={!cliquable} style={{
         display:'flex', flexDirection:'column', alignItems:'center', gap:6,
         padding:'16px 8px',
-        background: selec ? 'var(--accent-dim)' : 'transparent',
+        background: selec ? bgSelec : 'transparent',
         borderWidth: selec ? 1 : 0, borderStyle:'solid',
-        borderColor: selec ? 'var(--accent-border)' : 'transparent',
+        borderColor: selec ? borderSelec : 'transparent',
         borderRadius:'var(--radius-md)',
         cursor: cliquable ? 'pointer' : 'default',
         flex:1, opacity: perdant ? 0.45 : 1, transition:'all 0.15s',
@@ -176,10 +196,10 @@ function MatchDetail() {
           ? <img src={eq.logo} alt={eq.trigramme} style={{ width:68, height:68, objectFit:'contain' }} />
           : <div style={{ width:68, height:68, borderRadius:'50%', background:'var(--bg-2)', display:'flex', alignItems:'center', justifyContent:'center', fontFamily:'var(--font-display)', fontWeight:700, fontSize:18, color:'var(--text-3)' }}>{eq.trigramme}</div>
         }
-        <span style={{ fontFamily:'var(--font-display)', fontWeight:700, fontSize:22, color: selec ? 'var(--accent)' : 'var(--text-1)', letterSpacing:'0.04em' }}>{eq.trigramme}</span>
+        <span style={{ fontFamily:'var(--font-display)', fontWeight:700, fontSize:22, color: selec ? txtSelec : 'var(--text-1)', letterSpacing:'0.04em' }}>{eq.trigramme}</span>
         <span style={{ fontSize:11, color:'var(--text-3)', textAlign:'center' }}>{eq.nom}</span>
         <span style={{ fontSize:10, color:'var(--text-3)' }}>{align === 'ext' ? 'Extérieur' : 'Domicile'}</span>
-        {selec && !termine && <span style={{ fontSize:11, color:'var(--accent)', fontWeight:600, marginTop:2 }}>✓ Mon prono</span>}
+        {selec && !termine && <span style={{ fontSize:11, color: txtSelec, fontWeight:600, marginTop:2 }}>✓ Mon prono</span>}
         {selec && termine && !noSpoil && (
           <span style={{ fontSize:11, fontWeight:700, marginTop:2, color: resultat==='correct' ? 'var(--success)' : resultat==='incorrect' ? 'var(--danger)' : 'var(--text-3)' }}>
             {resultat==='correct' ? '✓ Correct' : resultat==='incorrect' ? '✗ Raté' : '⏳'}
