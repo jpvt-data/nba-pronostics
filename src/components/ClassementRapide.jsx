@@ -69,7 +69,7 @@ function ClassementRapide({ userId }) {
               <span style={{ flex: 1, fontSize: 13, color: estMoi ? 'var(--text-1)' : 'var(--text-2)', fontWeight: estMoi ? 600 : 400 }}>
                 {membre.profils?.pseudo}
               </span>
-              <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 16, color: estMoi ? 'var(--accent)' : 'var(--text-2)' }}>
+              <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 16, color: 'var(--gold)' }}>
                 {membre.points}<span style={{ fontSize: 11, color: 'var(--text-3)', marginLeft: 2 }}>pts</span>
               </span>
             </div>
