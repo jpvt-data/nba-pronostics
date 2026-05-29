@@ -100,7 +100,11 @@ function MesPronos() {
       <main style={{ flex: 1 }}>
 
         <div style={{ padding: '20px 16px 0' }}>
-          <Bloc style={{ display: 'flex', alignItems: 'flex-start', gap: 16 }}>
+          <Bloc style={{
+            display: 'flex', alignItems: 'flex-start', gap: 16,
+            background: 'linear-gradient(135deg, rgba(99,102,241,0.1) 0%, rgba(249,115,22,0.05) 100%)',
+            borderColor: 'rgba(99,102,241,0.2)',
+          }}>
             <Avatar url={profil?.avatar_url} pseudo={profil?.pseudo} taille={56} fontSize={18} />
             <div style={{ flex: 1, minWidth: 0 }}>
               <h2 style={{ margin: 0, lineHeight: 1.2 }}>{profil?.pseudo || '—'}</h2>
@@ -134,7 +138,7 @@ function MesPronos() {
                   { label: 'Réussite', val: `${taux(stats.corrects, stats.incorrects)}%`, color: 'var(--accent)' },
                 ].map(s => (
                   <div key={s.label} style={{ textAlign: 'center' }}>
-                    <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 24, color: s.color }}>{s.val}</div>
+                    <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 32, color: s.color, lineHeight: 1 }}>{s.val}</div>
                     <div style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 2 }}>{s.label}</div>
                   </div>
                 ))}
@@ -178,12 +182,12 @@ function MesPronos() {
                 <div style={{ display: 'flex', gap: 6, marginTop: 12 }}>
                   {formeRecente.map((p, i) => (
                     <div key={i} style={{
-                      width: 36, height: 36, borderRadius: '50%',
+                      width: 44, height: 44, borderRadius: '50%',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                       background: p.resultat === 'correct' ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)',
                       borderWidth: 1, borderStyle: 'solid',
                       borderColor: p.resultat === 'correct' ? 'rgba(34,197,94,0.4)' : 'rgba(239,68,68,0.4)',
-                      fontSize: 13, fontWeight: 700,
+                      fontSize: 15, fontWeight: 700,
                       color: p.resultat === 'correct' ? 'var(--success)' : 'var(--danger)',
                     }}>
                       {p.resultat === 'correct' ? 'W' : 'L'}
