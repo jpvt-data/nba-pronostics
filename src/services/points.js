@@ -1,13 +1,13 @@
 import { supabase } from '../lib/supabase'
 import { recupererGagnant } from './espn'
 
-export const calculerPoints = async (userId) => {
-  // Pronos en attente de l'user connecté — pour récupérer les matchs à vérifier
+export const calculerPoints = async () => {
+  // Tous les pronos en attente, tous users confondus
   const { data: pronosEnAttente } = await supabase
     .from('pronos')
-    .select('id, match_id, matchs(id, espn_id, statut, gagnant, type_saison, saison)')
-    .eq('user_id', userId)
+    .select('id, equipe_choisie, user_id, match_id, matchs(id, espn_id, type_saison, saison)')
     .eq('resultat', 'en_attente')
+    .not('matchs', 'is', null)
 
   if (!pronosEnAttente?.length) return
 
@@ -28,7 +28,7 @@ export const calculerPoints = async (userId) => {
 
   for (const matchLocal of matchsUniques) {
     const resultatESPN = idxESPN[matchLocal.espn_id]
-    if (!resultatESPN) continue
+    if (!resultatESPN) continue // match pas encore terminé selon ESPN
 
     const { gagnant, type_saison, saison } = resultatESPN
 
@@ -38,16 +38,16 @@ export const calculerPoints = async (userId) => {
       .update({ statut: 'termine', gagnant, type_saison, saison })
       .eq('id', matchLocal.id)
 
-    // Tous les pronos en attente sur ce match (tous users)
-    const { data: tousLespronos } = await supabase
+    // Tous les pronos en attente sur ce match
+    const { data: tousLesPronos } = await supabase
       .from('pronos')
       .select('id, equipe_choisie, user_id')
       .eq('match_id', matchLocal.id)
       .eq('resultat', 'en_attente')
 
-    if (!tousLespronos?.length) continue
+    if (!tousLesPronos?.length) continue
 
-    for (const prono of tousLespronos) {
+    for (const prono of tousLesPronos) {
       const correct = prono.equipe_choisie === gagnant
       const points  = correct ? 1 : 0
 
@@ -58,7 +58,6 @@ export const calculerPoints = async (userId) => {
 
       if (!correct) continue
 
-      // Membres actifs de cet user
       const { data: membres } = await supabase
         .from('membres_groupe')
         .select('id, points, groupes(type_saison, saison)')

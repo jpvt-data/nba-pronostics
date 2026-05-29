@@ -35,7 +35,7 @@ function Accueil() {
       const { data: profil } = await supabase
         .from('profils').select('pseudo').eq('id', user.id).single()
       setPseudo(profil?.pseudo || null)
-      calculerPoints(user.id).catch(() => {})
+      calculerPoints().catch(() => {})
       const m = await recupererMatchs3Jours()
       setMatchs(m)
       setCharg(false)
