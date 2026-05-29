@@ -27,6 +27,8 @@ export const calculerPoints = async () => {
 
   const idxESPN = {}
   matchsUniques.forEach((m, i) => { idxESPN[m.espn_id] = resultatsESPN[i] })
+  console.log('matchsUniques:', matchsUniques)
+  console.log('resultatsESPN:', resultatsESPN)  
 
   for (const matchLocal of matchsUniques) {
     const resultatESPN = idxESPN[matchLocal.espn_id]
