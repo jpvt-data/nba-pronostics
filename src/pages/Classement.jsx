@@ -47,9 +47,15 @@ const Separateur = () => (
 const LigneUser = ({ m, i, statsUser, moi, navigate }) => {
   const estMoi = m.user_id === moi
   const t = calcTaux(statsUser)
+
+  const handleClic = () => {
+    if (estMoi) navigate('/mes-pronos')
+    else navigate(`/h2h?user2=${m.user_id}`)
+  }
+
   return (
     <div
-      onClick={() => navigate(`/mes-pronos?user_id=${m.user_id}`)}
+      onClick={handleClic}
       style={{
         display: 'flex', alignItems: 'center', gap: 10,
         background: estMoi ? 'rgba(99,102,241,0.08)' : 'var(--bg-2)',
@@ -125,7 +131,6 @@ function Classement() {
 
       if (tousIds.size === 0) { setCharg(false); return }
 
-      // ── Stats saison par ligue ──
       const { data: pronos } = await supabase
         .from('pronos')
         .select('user_id, groupe_id, resultat')
@@ -143,7 +148,6 @@ function Classement() {
       })
       setStatsLigue(parLigue)
 
-      // ── Stats globales saison ──
       const { data: pronosGlob } = await supabase
         .from('pronos')
         .select('user_id, resultat, points_gagnes')
@@ -167,7 +171,6 @@ function Classement() {
       })
       setGlobal([...tousIds].map(id => ({ user_id: id, ...glob[id] })).sort((a, b) => b.points - a.points))
 
-      // ── Semaine courante — dédupliqué par match_id ──
       const debutSemaine = debutSemaineCourante()
       const { data: pronosHebdoBrut } = await supabase
         .from('pronos')
@@ -194,13 +197,9 @@ function Classement() {
         if (p.resultat === 'incorrect') hebdoGlob[p.user_id].incorrects++
       })
       setHebdo([...tousIds].map(id => ({
-        user_id:    id,
-        pseudo:     glob[id]?.pseudo,
-        avatar_url: glob[id]?.avatar_url,
-        ...hebdoGlob[id],
+        user_id: id, pseudo: glob[id]?.pseudo, avatar_url: glob[id]?.avatar_url, ...hebdoGlob[id],
       })).sort((a, b) => b.points - a.points))
 
-      // ── MVP semaine précédente ──
       await enregistrerGagnantSemanePrecedente(tousGroupeIds)
 
       const { data: gagnantsPrev } = await supabase
@@ -241,11 +240,8 @@ function Classement() {
 
     for (const gid of groupeIds) {
       const { data: dejaEnr } = await supabase
-        .from('semaines_gagnees')
-        .select('id')
-        .eq('groupe_id', gid)
-        .eq('semaine_iso', iso)
-        .maybeSingle()
+        .from('semaines_gagnees').select('id')
+        .eq('groupe_id', gid).eq('semaine_iso', iso).maybeSingle()
       if (dejaEnr) continue
 
       const pointsParUser = {}
@@ -298,7 +294,6 @@ function Classement() {
         {!chargement && (
           <div style={{ display: 'flex', flexDirection: 'column', padding: '0 16px 24px' }}>
 
-            {/* ── Classements par ligue ── */}
             {groupes.length > 0 && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 16, marginBottom: 32 }}>
                 {groupes.map(mg => {
@@ -320,10 +315,8 @@ function Classement() {
               </div>
             )}
 
-            {/* ── Séparateur ── */}
             {groupes.length > 0 && <Separateur />}
 
-            {/* ── Cette semaine ── */}
             {classementHebdo.some(m => m.points > 0) && (
               <div style={{ marginTop: 28, marginBottom: 32 }}>
                 <Bloc>
@@ -343,7 +336,6 @@ function Classement() {
               </div>
             )}
 
-            {/* ── MVP Semaine précédente ── */}
             {gagnantsSemPrev.length > 0 && (
               <>
                 <Separateur />
@@ -354,7 +346,7 @@ function Classement() {
                       {gagnantsSemPrev.map((g) => (
                         <div
                           key={g.user_id}
-                          onClick={() => navigate(`/mes-pronos?user_id=${g.user_id}`)}
+                          onClick={() => navigate(`/h2h?user2=${g.user_id}`)}
                           style={{
                             display: 'flex', alignItems: 'center', gap: 12,
                             padding: '12px 14px',
@@ -382,10 +374,8 @@ function Classement() {
               </>
             )}
 
-            {/* ── Séparateur ── */}
             <Separateur />
 
-            {/* ── Classement général ── */}
             {classementGlobal.length > 0 && (
               <div style={{ marginTop: 28 }}>
                 <Bloc>
@@ -400,7 +390,7 @@ function Classement() {
                       return (
                         <div
                           key={m.user_id}
-                          onClick={() => navigate(`/mes-pronos?user_id=${m.user_id}`)}
+                          onClick={() => estMoi ? navigate('/mes-pronos') : navigate(`/h2h?user2=${m.user_id}`)}
                           style={{
                             display: 'flex', alignItems: 'center', gap: 10,
                             background: estMoi ? 'rgba(99,102,241,0.08)' : 'var(--bg-2)',

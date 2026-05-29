@@ -15,6 +15,7 @@ import QuoiDeNeuf   from './pages/QuoiDeNeuf'
 import PopupChangelog from './components/PopupChangelog'
 import { NoSpoilProvider } from './context/NoSpoilContext'
 import { ProfilProvider } from './context/ProfilContext'
+import H2H from './pages/H2H'
 
 function App() {
   const [session, setSession] = useState(undefined)
@@ -47,6 +48,7 @@ function App() {
             <Route path="/profil"         element={prive(<Profil />)} />
             <Route path="/stats"          element={prive(<Stats />)} />
             <Route path="/quoi-de-neuf"   element={prive(<QuoiDeNeuf />)} />
+            <Route path="/h2h"            element={prive(<H2H />)} />
             <Route path="*"               element={<Navigate to={session ? '/accueil' : '/connexion'} />} />
           </Routes>
         </BrowserRouter>

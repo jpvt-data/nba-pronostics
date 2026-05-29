@@ -35,7 +35,6 @@ function ClassementRapide({ userId }) {
 
   return (
     <div style={{ marginBottom: '0.5rem' }}>
-      {/* Header ligue */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
         <h3 style={{ margin: 0 }}>{groupeActif.nom}</h3>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -51,14 +50,13 @@ function ClassementRapide({ userId }) {
         </div>
       </div>
 
-      {/* Lignes classement */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
         {classement.slice(0, 5).map((membre, i) => {
           const estMoi = membre.user_id === userId
           return (
             <div
               key={membre.user_id}
-              onClick={() => navigate(`/mes-pronos?user_id=${membre.user_id}`)}
+              onClick={() => estMoi ? navigate('/mes-pronos') : navigate(`/h2h?user2=${membre.user_id}`)}
               style={{
                 display: 'flex', alignItems: 'center', gap: 10,
                 padding: '10px 12px',
