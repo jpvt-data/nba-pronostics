@@ -45,8 +45,7 @@ function RunsPotes({ userId }) {
   if (!runs.length) return null
 
   return (
-    <div style={{ marginBottom: '1.5rem' }}>
-      <h3 style={{ marginBottom: 10 }}>Dans le groupe</h3>
+    <div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
         {runs.map((run, i) => {
           const feu  = run.type === 'correct'
