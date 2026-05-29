@@ -7,7 +7,7 @@ async function genererEvenements(userId) {
 
   const { data: membres } = await supabase
     .from('membres_groupe')
-    .select('groupe_id, groupes(nom)')
+    .select('groupe_id')
     .eq('user_id', userId)
     .eq('actif', true)
   if (!membres?.length) return []
@@ -16,68 +16,47 @@ async function genererEvenements(userId) {
 
   const { data: potes } = await supabase
     .from('membres_groupe')
-    .select('user_id, groupe_id, profils(pseudo), cree_le')
+    .select('user_id, profils(pseudo)')
     .in('groupe_id', groupeIds)
     .eq('actif', true)
     .neq('user_id', userId)
   if (!potes?.length) return []
 
-  // Déduplication — priorité à l'occurrence qui a un pseudo
-  const potesMap = new Map()
-  for (const p of potes) {
-    if (!potesMap.has(p.user_id) || (!potesMap.get(p.user_id).profils?.pseudo && p.profils?.pseudo)) {
-      potesMap.set(p.user_id, p)
-    }
-  }
-  const potesUniques = [...potesMap.values()]
+  const potesUniques = [...new Map(potes.map(p => [p.user_id, p])).values()]
 
-  // Nouveaux membres récents (< 7 jours)
-  const semaineDerniere = new Date()
-  semaineDerniere.setDate(semaineDerniere.getDate() - 7)
-  potes.forEach(p => {
-    if (new Date(p.cree_le) > semaineDerniere) {
-      const nomLigue = membres.find(m => m.groupe_id === p.groupe_id)?.groupes?.nom || 'une ligue'
-      evenements.push({
-        icone: '👋',
-        texte: `${p.profils?.pseudo} a rejoint ${nomLigue}`,
-        couleur: 'var(--accent)',
-        date: new Date(p.cree_le),
-      })
-    }
-  })
-
-  // Séries des potes — seuil ≥ 2
   for (const pote of potesUniques) {
     const pseudo = pote.profils?.pseudo || 'Un pote'
-    const { data: derniers } = await supabase
+
+    const { data: pronos } = await supabase
       .from('pronos')
-      .select('resultat, cree_le')
+      .select('resultat')
       .eq('user_id', pote.user_id)
       .in('resultat', ['correct', 'incorrect'])
       .order('cree_le', { ascending: false })
-      .limit(10)
-    if (!derniers?.length) continue
+      .limit(20)
 
-    const typeStreak = derniers[0].resultat
-    let count = 0
-    for (const p of derniers) {
-      if (p.resultat === typeStreak) count++
+    if (!pronos?.length) continue
+
+    const dernier = pronos[0].resultat
+    let streak = 0
+    for (const p of pronos) {
+      if (p.resultat === dernier) streak++
       else break
     }
-    if (count < 2) continue
 
-    const feu = typeStreak === 'correct'
+    if (streak < 2) continue
+
+    const feu = dernier === 'correct'
     evenements.push({
       icone: feu ? '🔥' : '❄️',
       texte: feu
-        ? `${pseudo} est sur une série de ${count} pronos réussis !`
-        : `${pseudo} enchaîne ${count} ratés d'affilée...`,
+        ? `${pseudo} est sur une série de ${streak} pronos réussis !`
+        : `${pseudo} est sur une série de ${streak} pronos ratés ! Aïe aïe !`,
       couleur: feu ? 'var(--success)' : 'var(--danger)',
-      date: new Date(derniers[0].cree_le),
     })
   }
 
-  return evenements.sort((a, b) => b.date - a.date).slice(0, 6)
+  return evenements
 }
 
 function LeVestiaire({ userId }) {
