@@ -2,11 +2,9 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { LabelSection, Bloc } from '../components/UI'
 
-// Génère les événements du vestiaire pour toutes les ligues de l'user
 async function genererEvenements(userId) {
   const evenements = []
 
-  // Récupère toutes les ligues de l'user
   const { data: membres } = await supabase
     .from('membres_groupe')
     .select('groupe_id, groupes(nom)')
@@ -16,7 +14,6 @@ async function genererEvenements(userId) {
 
   const groupeIds = membres.map(m => m.groupe_id)
 
-  // Récupère tous les potes dans ces ligues
   const { data: potes } = await supabase
     .from('membres_groupe')
     .select('user_id, groupe_id, profils(pseudo), cree_le')
@@ -25,8 +22,14 @@ async function genererEvenements(userId) {
     .neq('user_id', userId)
   if (!potes?.length) return []
 
-  // Déduplique les potes par user_id (un pote peut être dans plusieurs ligues)
-  const potesUniques = [...new Map(potes.map(p => [p.user_id, p])).values()]
+  // Déduplication — priorité à l'occurrence qui a un pseudo
+  const potesMap = new Map()
+  for (const p of potes) {
+    if (!potesMap.has(p.user_id) || (!potesMap.get(p.user_id).profils?.pseudo && p.profils?.pseudo)) {
+      potesMap.set(p.user_id, p)
+    }
+  }
+  const potesUniques = [...potesMap.values()]
 
   // Nouveaux membres récents (< 7 jours)
   const semaineDerniere = new Date()
@@ -45,6 +48,7 @@ async function genererEvenements(userId) {
 
   // Séries des potes — seuil ≥ 2
   for (const pote of potesUniques) {
+    const pseudo = pote.profils?.pseudo || 'Un pote'
     const { data: derniers } = await supabase
       .from('pronos')
       .select('resultat, cree_le')
@@ -66,14 +70,13 @@ async function genererEvenements(userId) {
     evenements.push({
       icone: feu ? '🔥' : '❄️',
       texte: feu
-        ? `${pote.profils?.pseudo} est sur une série de ${count} pronos réussis !`
-        : `${pote.profils?.pseudo} enchaîne ${count} ratés d'affilée...`,
+        ? `${pseudo} est sur une série de ${count} pronos réussis !`
+        : `${pseudo} enchaîne ${count} ratés d'affilée...`,
       couleur: feu ? 'var(--success)' : 'var(--danger)',
       date: new Date(derniers[0].cree_le),
     })
   }
 
-  // Tri chronologique décroissant
   return evenements.sort((a, b) => b.date - a.date).slice(0, 6)
 }
 
