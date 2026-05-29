@@ -1139,15 +1139,17 @@ export default function Stats() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg-0)', paddingBottom: 80 }}>
+    <>
       <Navigation />
-      <div className="nav-desktop-full" style={{ height: 52 }} />
-      <div className="nav-mobile-logo" style={{ height: 40 }} />
+      <main style={{ flex: 1, paddingBottom: 40 }}>
 
-      <BanniereImage src="https://images.unsplash.com/photo-1504450758481-7338eba7524a?w=800&q=60" alt="Explorer NBA">
-        <div style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800, letterSpacing: '0.08em', color: '#fff' }}>EXPLORER</div>
-        <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', marginTop: 4 }}>Classements · Équipes · Joueurs</div>
-      </BanniereImage>
+      <div style={{
+        padding: '20px 16px 16px',
+        background: 'linear-gradient(160deg, rgba(99,102,241,0.08) 0%, transparent 60%)',
+      }}>
+        <p style={{ fontSize: 12, color: 'var(--text-3)', marginBottom: 2 }}>Classements · Équipes · Joueurs</p>
+        <h2 style={{ margin: 0 }}>Explorer</h2>
+      </div>
 
       <div style={{
         display: 'flex', marginLeft: 16, marginRight: 16,
@@ -1174,7 +1176,7 @@ export default function Stats() {
         {onglet === 'joueurs' && (
           <OngletJoueurs equipesStandings={equipesStandings} />
         )}
-      </div>
-    </div>
+      </main>
+    </>
   )
 }
