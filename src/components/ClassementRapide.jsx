@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { useNavigate } from 'react-router-dom'
-import { Swords } from 'lucide-react'
+import { Avatar } from '../components/Avatar'
+
+const MEDAILLES = ['🥇', '🥈', '🥉']
 
 function ClassementRapide({ userId }) {
   const [groupeActif, setGroupeActif] = useState(null)
@@ -20,7 +22,7 @@ function ClassementRapide({ userId }) {
       setGroupeActif(groupe)
       const { data } = await supabase
         .from('membres_groupe')
-        .select('points, user_id, profils(pseudo)')
+        .select('points, user_id, profils(pseudo, avatar_url)')
         .eq('groupe_id', groupe.id).eq('actif', true)
         .order('points', { ascending: false })
       setClassement(data || [])
@@ -32,45 +34,59 @@ function ClassementRapide({ userId }) {
   if (!groupeActif || !classement.length) return null
 
   return (
-    <div style={{ marginBottom: '1.5rem' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-        <button
-          onClick={() => navigate('/classement')}
-          style={{
-            fontSize: 11, color: 'var(--accent)',
-            background: 'none', borderWidth: 0,
-            cursor: 'pointer', padding: 0,
-            textDecoration: 'underline',
-          }}
-        >
-          Détails →
-        </button>
-      </div>
-      <div style={{ fontSize: 12, color: 'var(--text-3)', marginBottom: 8, display: 'flex', justifyContent: 'space-between' }}>
-        <h3 style={{ marginBottom: 10 }}>{groupeActif.nom}</h3>
-        {monRang > 0 && <span>Tu es #{monRang}</span>}
+    <div style={{ marginBottom: '0.5rem' }}>
+      {/* Header ligue */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+        <h3 style={{ margin: 0 }}>{groupeActif.nom}</h3>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          {monRang > 0 && (
+            <span style={{ fontSize: 12, color: 'var(--text-3)' }}>Tu es #{monRang}</span>
+          )}
+          <button
+            onClick={() => navigate('/classement')}
+            style={{ fontSize: 11, color: 'var(--accent)', background: 'none', borderWidth: 0, cursor: 'pointer', padding: 0, textDecoration: 'underline' }}
+          >
+            Détails →
+          </button>
+        </div>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+      {/* Lignes classement */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
         {classement.slice(0, 5).map((membre, i) => {
           const estMoi = membre.user_id === userId
           return (
-            <div key={membre.user_id} style={{
-              display: 'flex', alignItems: 'center', gap: 10,
-              paddingTop: 8, paddingBottom: 8, paddingLeft: 12, paddingRight: 12,
-              background: estMoi ? 'var(--accent-dim)' : 'transparent',
-              borderWidth: 1, borderStyle: 'solid',
-              borderColor: estMoi ? 'var(--accent-border)' : 'var(--border)',
-              borderRadius: 'var(--radius-sm)',
-            }}>
-              <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 15, color: estMoi ? 'var(--accent)' : 'var(--text-3)', minWidth: 22 }}>
-                #{i + 1}
+            <div
+              key={membre.user_id}
+              onClick={() => navigate(`/mes-pronos?user_id=${membre.user_id}`)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 10,
+                padding: '10px 12px',
+                background: estMoi ? 'rgba(99,102,241,0.08)' : 'var(--bg-2)',
+                borderWidth: 1, borderStyle: 'solid',
+                borderColor: estMoi ? 'rgba(99,102,241,0.3)' : 'var(--border)',
+                borderRadius: 'var(--radius-sm)',
+                cursor: 'pointer',
+              }}
+            >
+              <span style={{
+                fontSize: i < 3 ? 16 : 13,
+                fontFamily: 'var(--font-display)', fontWeight: 700,
+                color: i < 3 ? 'var(--gold)' : 'var(--text-3)',
+                minWidth: 24, textAlign: 'center',
+              }}>
+                {i < 3 ? MEDAILLES[i] : `#${i + 1}`}
               </span>
-              <span style={{ flex: 1, fontSize: 13, color: estMoi ? 'var(--text-1)' : 'var(--text-2)', fontWeight: estMoi ? 600 : 400 }}>
+              <Avatar url={membre.profils?.avatar_url} pseudo={membre.profils?.pseudo} taille={32} fontSize={11} />
+              <span style={{
+                flex: 1, fontSize: 14, fontWeight: estMoi ? 600 : 500,
+                color: estMoi ? 'var(--text-1)' : 'var(--text-2)',
+                minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+              }}>
                 {membre.profils?.pseudo}
               </span>
-              <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 16, color: 'var(--gold)' }}>
-                {membre.points}<span style={{ fontSize: 11, color: 'var(--text-3)', marginLeft: 2 }}>pts</span>
+              <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 18, color: 'var(--gold)' }}>
+                {membre.points}<span style={{ fontSize: 10, color: 'var(--text-3)', marginLeft: 2 }}>pts</span>
               </span>
             </div>
           )
