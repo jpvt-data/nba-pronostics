@@ -57,18 +57,20 @@ export const calculerPoints = async () => {
       const correct = prono.equipe_choisie === gagnant
       const points  = correct ? 1 : 0
 
-      await supabase
+      const { error: errProno } = await supabase
         .from('pronos')
         .update({ resultat: correct ? 'correct' : 'incorrect', points_gagnes: points })
         .eq('id', prono.id)
+      console.log('update prono', prono.id, '→ erreur:', errProno)
 
       if (!correct) continue
 
-      const { data: membres } = await supabase
+      const { data: membres, error: errMembres } = await supabase
         .from('membres_groupe')
         .select('id, points, groupes(type_saison, saison)')
         .eq('user_id', prono.user_id)
         .eq('actif', true)
+      console.log('membres pour', prono.user_id, ':', membres, '→ erreur:', errMembres)
 
       for (const membre of (membres || [])) {
         const ligue = membre.groupes
@@ -77,10 +79,11 @@ export const calculerPoints = async () => {
           !ligue.type_saison ||
           (ligue.type_saison === type_saison && ligue.saison === saison)
         if (matcheLigue) {
-          await supabase
+          const { error: errMembre } = await supabase
             .from('membres_groupe')
             .update({ points: membre.points + 1 })
             .eq('id', membre.id)
+          console.log('update membre', membre.id, '→ erreur:', errMembre)
         }
       }
     }
