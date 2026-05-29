@@ -56,7 +56,7 @@ function ClassementRapide({ userId }) {
           return (
             <div
               key={membre.user_id}
-              onClick={() => estMoi ? navigate('/mes-pronos') : navigate(`/h2h?user2=${membre.user_id}`)}
+              onClick={() => navigate(`/mes-pronos?user_id=${membre.user_id}`)}
               style={{
                 display: 'flex', alignItems: 'center', gap: 10,
                 padding: '10px 12px',

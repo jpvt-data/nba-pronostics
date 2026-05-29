@@ -169,6 +169,22 @@ function MesPronos() {
                   {profil.description}
                 </p>
               )}
+              {!estMoi && (
+                <button
+                  onClick={() => navigate(`/h2h?user2=${new URLSearchParams(location.search).get('user_id')}`)}
+                  style={{
+                    marginTop: 10,
+                    display: 'flex', alignItems: 'center', gap: 6,
+                    padding: '7px 14px',
+                    background: 'linear-gradient(90deg, var(--accent), var(--orange))',
+                    borderWidth: 0, borderRadius: 'var(--radius-sm)',
+                    color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer',
+                    letterSpacing: '0.03em',
+                  }}
+                >
+                  ⚔️ 1v1 — me comparer à {profil?.pseudo}
+                </button>
+              )}
             </div>
           </Bloc>
         </div>

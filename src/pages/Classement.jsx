@@ -48,10 +48,7 @@ const LigneUser = ({ m, i, statsUser, moi, navigate }) => {
   const estMoi = m.user_id === moi
   const t = calcTaux(statsUser)
 
-  const handleClic = () => {
-    if (estMoi) navigate('/mes-pronos')
-    else navigate(`/h2h?user2=${m.user_id}`)
-  }
+  const handleClic = () => navigate(`/mes-pronos?user_id=${m.user_id}`)
 
   return (
     <div
@@ -346,7 +343,7 @@ function Classement() {
                       {gagnantsSemPrev.map((g) => (
                         <div
                           key={g.user_id}
-                          onClick={() => navigate(`/h2h?user2=${g.user_id}`)}
+                          onClick={() => navigate(`/mes-pronos?user_id=${m.user_id}`)}
                           style={{
                             display: 'flex', alignItems: 'center', gap: 12,
                             padding: '12px 14px',
