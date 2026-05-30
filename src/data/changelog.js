@@ -1,6 +1,14 @@
 // Changelog NBA Pronostics — une entrée par version/feature
 export const CHANGELOG = [
 {
+  version: "v1.4",
+  date: "2026-05-30",
+  titre: "Classement enrichi, 1v1 & Ligues planifiées",
+  desc: "Le classement s'organise en 3 blocs : ligues en cours, MVP de la semaine précédente, et classement général filtrable Semaine / Mois / Saison. Le 1v1 permet de se comparer prono par prono face à n'importe quel pote. Les ligues ont maintenant une date de début — elles s'organisent en À venir / En cours / Terminées. Dashboard Mes Stats enrichi : streak actuel et max, meilleure et pire équipe pronostiquée, forme récente sur 10 matchs.",
+  lien: "/classement",
+  labelLien: "Voir le classement",
+},
+{
   version: "v1.3",
   date: "2026-05-29",
   titre: "Focus & Le Vestiaire — Board vivant",
@@ -169,4 +177,4 @@ export const CHANGELOG = [
 ]
 
 // Version courante de l'app — à incrémenter à chaque déploiement avec nouveautés
-export const VERSION_COURANTE = 'v1.3'
+export const VERSION_COURANTE = 'v1.4'
