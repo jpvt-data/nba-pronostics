@@ -5,7 +5,31 @@ import { Bloc, LabelSection } from '../components/UI'
 async function genererMessages(userId, nbPronosAttente) {
   const messages = []
 
-  // 1. Streak — derniers pronos résolus
+  // 1. Matchs ESPN sans prono (badge)
+  if (nbPronosAttente > 0) {
+    messages.push({
+      icone: '🏀',
+      texte: `Il te reste ${nbPronosAttente} match${nbPronosAttente > 1 ? 's' : ''} à pronostiquer !`,
+      couleur: 'var(--orange)',
+    })
+  }
+
+  // 2. Pronos posés mais pas encore résolus (Supabase)
+  const { count: enAttente } = await supabase
+    .from('pronos')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', userId)
+    .eq('resultat', 'en_attente')
+
+  if (enAttente > 0) {
+    messages.push({
+      icone: '⏳',
+      texte: `Tu as ${enAttente} pronostic${enAttente > 1 ? 's' : ''} en cours ! T'es sûr.e de ton choix ? 🤞`,
+      couleur: 'var(--text-2)',
+    })
+  }
+
+  // 3. Streak — derniers pronos résolus
   const { data: derniers } = await supabase
     .from('pronos')
     .select('resultat, cree_le')
@@ -24,26 +48,6 @@ async function genererMessages(userId, nbPronosAttente) {
     }
   }
 
-  // 2. Win rate global
-  const { data: tous } = await supabase
-    .from('pronos')
-    .select('resultat')
-    .eq('user_id', userId)
-    .in('resultat', ['correct', 'incorrect'])
-
-  const totalResolus = tous?.length || 0
-  const corrects = tous?.filter(p => p.resultat === 'correct').length || 0
-  const winRate = totalResolus >= 5 ? Math.round((corrects / totalResolus) * 100) : null
-
-  // Construction — ordre de priorité
-  if (nbPronosAttente > 0) {
-    messages.push({
-      icone: '🏀',
-      texte: `Il te reste ${nbPronosAttente} match${nbPronosAttente > 1 ? 's' : ''} à pronostiquer !`,
-      couleur: 'var(--orange)',
-    })
-  }
-
   if (streak >= 2 && typeStreak === 'correct') {
     messages.push({
       icone: '🔥',
@@ -57,6 +61,17 @@ async function genererMessages(userId, nbPronosAttente) {
       couleur: 'var(--danger)',
     })
   }
+
+  // 4. Win rate global
+  const { data: tous } = await supabase
+    .from('pronos')
+    .select('resultat')
+    .eq('user_id', userId)
+    .in('resultat', ['correct', 'incorrect'])
+
+  const totalResolus = tous?.length || 0
+  const corrects = tous?.filter(p => p.resultat === 'correct').length || 0
+  const winRate = totalResolus >= 5 ? Math.round((corrects / totalResolus) * 100) : null
 
   if (winRate !== null) {
     messages.push({
