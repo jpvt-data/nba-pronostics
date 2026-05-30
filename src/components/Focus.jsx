@@ -2,8 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { Bloc, LabelSection } from '../components/UI'
 
-// Génère tous les messages disponibles — plus de limite arbitraire
-async function genererMessages(userId) {
+async function genererMessages(userId, nbPronosAttente) {
   const messages = []
 
   // 1. Streak — derniers pronos résolus
@@ -25,14 +24,7 @@ async function genererMessages(userId) {
     }
   }
 
-  // 2. Pronos en attente
-  const { count: enAttente } = await supabase
-    .from('pronos')
-    .select('id', { count: 'exact', head: true })
-    .eq('user_id', userId)
-    .eq('resultat', 'en_attente')
-
-  // 3. Win rate global
+  // 2. Win rate global
   const { data: tous } = await supabase
     .from('pronos')
     .select('resultat')
@@ -43,12 +35,12 @@ async function genererMessages(userId) {
   const corrects = tous?.filter(p => p.resultat === 'correct').length || 0
   const winRate = totalResolus >= 5 ? Math.round((corrects / totalResolus) * 100) : null
 
-  // Construction — tous les messages pertinents
-  if (enAttente > 0) {
+  // Construction — ordre de priorité
+  if (nbPronosAttente > 0) {
     messages.push({
-      icone: '⏳',
-      texte: `Tu as ${enAttente} pronostic${enAttente > 1 ? 's' : ''} en cours ! T'es sûr.e de ton choix ? 🤞`,
-      couleur: 'var(--text-2)',
+      icone: '🏀',
+      texte: `Il te reste ${nbPronosAttente} match${nbPronosAttente > 1 ? 's' : ''} à pronostiquer !`,
+      couleur: 'var(--orange)',
     })
   }
 
@@ -77,7 +69,7 @@ async function genererMessages(userId) {
   return messages
 }
 
-function Focus({ userId }) {
+function Focus({ userId, nbPronosAttente = 0 }) {
   const [messages, setMessages] = useState([])
   const [indexActif, setIndexActif] = useState(0)
   const [visible, setVisible] = useState(true)
@@ -86,11 +78,11 @@ function Focus({ userId }) {
 
   useEffect(() => {
     if (!userId) return
-    genererMessages(userId).then(msgs => {
+    genererMessages(userId, nbPronosAttente).then(msgs => {
       setMessages(msgs)
       setChargement(false)
     })
-  }, [userId])
+  }, [userId, nbPronosAttente])
 
   // Carousel — rotation toutes les 4s avec fade out/in
   useEffect(() => {
@@ -113,7 +105,6 @@ function Focus({ userId }) {
     <Bloc>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <LabelSection>Focus</LabelSection>
-        {/* Points de pagination */}
         {messages.length > 1 && (
           <div style={{ display: 'flex', gap: 4 }}>
             {messages.map((_, i) => (
