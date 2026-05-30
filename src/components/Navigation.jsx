@@ -21,7 +21,7 @@ const navBase = {
   zIndex: 100,
 }
 
-function Navigation() {
+function Navigation({ nbPronosAttente = 0 }) {
   const navigate = useNavigate()
   const location = useLocation()
   const [ouvert, setOuvert]     = useState(false)
@@ -119,10 +119,8 @@ function Navigation() {
           <Swords size={18} strokeWidth={1.5} /> 1v1
         </button>
 
-        {/* Séparateur bas */}
         <div style={{ borderTopWidth: 1, borderTopStyle: 'solid', borderTopColor: 'var(--border)', margin: '0.75rem 0' }} />
 
-        {/* Quoi de neuf — en bas avant déconnexion */}
         <button onClick={() => aller('/quoi-de-neuf')} style={{
           display: 'flex', alignItems: 'center', gap: 10,
           background: location.pathname === '/quoi-de-neuf' ? 'var(--accent-dim)' : 'none',
@@ -174,7 +172,18 @@ function Navigation() {
                 borderRadius: 'var(--radius-sm)',
                 boxShadow: actif ? 'inset 0 -2px 0 var(--accent)' : 'none',
               }}>
-                <Icone size={15} strokeWidth={actif ? 2 : 1.5} />
+                {/* Badge sur Board — desktop */}
+                <div style={{ position: 'relative', display: 'inline-flex' }}>
+                  <Icone size={15} strokeWidth={actif ? 2 : 1.5} />
+                  {chemin === '/accueil' && nbPronosAttente > 0 && (
+                    <span style={{
+                      position: 'absolute', top: -3, right: -5,
+                      width: 7, height: 7, borderRadius: '50%',
+                      background: 'var(--danger)',
+                      border: '1.5px solid var(--bg-0)',
+                    }} />
+                  )}
+                </div>
                 {label}
               </button>
             )
@@ -240,7 +249,18 @@ function Navigation() {
               fontSize: 10, fontWeight: 500, cursor: 'pointer',
               boxShadow: actif ? 'inset 0 2px 0 var(--accent)' : 'none',
             }}>
-              <Icone size={22} strokeWidth={actif ? 2 : 1.5} />
+              {/* Badge sur Board — mobile */}
+              <div style={{ position: 'relative', display: 'inline-flex' }}>
+                <Icone size={22} strokeWidth={actif ? 2 : 1.5} />
+                {chemin === '/accueil' && nbPronosAttente > 0 && (
+                  <span style={{
+                    position: 'absolute', top: -2, right: -4,
+                    width: 8, height: 8, borderRadius: '50%',
+                    background: 'var(--danger)',
+                    border: '1.5px solid var(--bg-0)',
+                  }} />
+                )}
+              </div>
               {label}
             </button>
           )

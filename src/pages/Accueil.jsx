@@ -21,10 +21,11 @@ import { SAISON_ESPN } from '../config'
 const GUTTER = '20px 16px'
 
 function Accueil() {
-  const [matchs, setMatchs]    = useState([])
-  const [user, setUser]        = useState(null)
-  const [pseudo, setPseudo]    = useState(null)
-  const [chargement, setCharg] = useState(true)
+  const [matchs, setMatchs]               = useState([])
+  const [user, setUser]                   = useState(null)
+  const [pseudo, setPseudo]               = useState(null)
+  const [chargement, setCharg]            = useState(true)
+  const [nbPronosAttente, setNbPronosAttente] = useState(0)
   const navigate = useNavigate()
   const { noSpoil, toggleNoSpoil } = useNoSpoil()
 
@@ -90,7 +91,7 @@ function Accueil() {
 
   return (
     <>
-      <Navigation />
+      <Navigation nbPronosAttente={nbPronosAttente} />
       <main style={{ flex: 1 }}>
 
         {/* ── Header ── */}
@@ -145,7 +146,12 @@ function Accueil() {
 
         {!chargement && (
           <div style={{ marginTop: 8 }}>
-            <BandeMatchs matchs={matchs} userId={user?.id} onProno={faireProno} />
+            <BandeMatchs
+              matchs={matchs}
+              userId={user?.id}
+              onProno={faireProno}
+              onBadge={setNbPronosAttente}
+            />
           </div>
         )}
 
@@ -168,7 +174,7 @@ function Accueil() {
           </div>
         )}
 
-        {/* ── Le Vestiaire — après BandeMatchs ── */}
+        {/* ── Le Vestiaire ── */}
         {!chargement && user && (
           <div style={{ padding: '12px 16px 0' }}>
             <LeVestiaire userId={user.id} />

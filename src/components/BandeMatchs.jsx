@@ -9,7 +9,7 @@ const formaterHeure = (dateStr) =>
 const formaterJour = (dateStr) =>
   new Date(dateStr).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' })
 
-function BandeMatchs({ matchs, userId }) {
+function BandeMatchs({ matchs, userId, onProno, onBadge }) {
   const navigate = useNavigate()
   const { noSpoil } = useNoSpoil()
   const [pronos, setPronos] = useState({})
@@ -28,9 +28,17 @@ function BandeMatchs({ matchs, userId }) {
           idx[p.matchs.espn_id] = p.equipe_choisie
       })
       setPronos(idx)
+
+      // Matchs pronosticables = pas terminé, pas en cours, pas encore pronostiqué
+      const nbAttente = matchs.filter(m =>
+        m.statut !== 'STATUS_FINAL' &&
+        m.statut !== 'STATUS_IN_PROGRESS' &&
+        !idx[m.espn_id]
+      ).length
+      if (onBadge) onBadge(nbAttente)
     }
     charger()
-  }, [userId])
+  }, [userId, matchs])
 
   if (!matchs.length) return null
 
@@ -47,24 +55,21 @@ function BandeMatchs({ matchs, userId }) {
           const termine     = match.statut === 'STATUS_FINAL'
           const enCours     = match.statut === 'STATUS_IN_PROGRESS'
 
-          // Couleur de l'équipe pronostiquée (ESPN hex sans #)
           const equipeProno = pronoActuel
             ? [match.domicile, match.exterieur].find(e => e.trigramme === pronoActuel)
             : null
 
-          // Vérifie si une couleur hex ESPN est trop sombre pour un dark theme
           const estTropSombre = (hex) => {
             if (!hex) return true
             const h = hex.replace('#', '')
             const r = parseInt(h.slice(0,2), 16)
             const g = parseInt(h.slice(2,4), 16)
             const b = parseInt(h.slice(4,6), 16)
-            // luminance perçue — seuil à 40
             return (0.299*r + 0.587*g + 0.114*b) < 40
           }
 
-          const couleurBrute     = equipeProno?.color         ? `#${equipeProno.color}`         : null
-          const couleurAlt       = equipeProno?.alternateColor ? `#${equipeProno.alternateColor}` : null
+          const couleurBrute = equipeProno?.color         ? `#${equipeProno.color}`         : null
+          const couleurAlt   = equipeProno?.alternateColor ? `#${equipeProno.alternateColor}` : null
           const couleur = !estTropSombre(couleurBrute)
             ? couleurBrute
             : !estTropSombre(couleurAlt)
@@ -94,12 +99,10 @@ function BandeMatchs({ matchs, userId }) {
                 transition: 'border-color 0.2s, background 0.2s',
               }}
             >
-              {/* Date / heure */}
               <div style={{ fontSize: 10, color: 'var(--text-3)', textAlign: 'center', marginBottom: 10 }}>
                 {formaterJour(match.date)} · {formaterHeure(match.date)}
               </div>
 
-              {/* Équipes */}
               {[match.exterieur, match.domicile].map((eq, i) => {
                 const estProno = pronoActuel === eq.trigramme
                 return (
@@ -126,7 +129,6 @@ function BandeMatchs({ matchs, userId }) {
                 )
               })}
 
-              {/* Statut + prono */}
               <div style={{ marginTop: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ fontSize: 10, fontWeight: 600, color: enCours ? 'var(--success)' : 'var(--text-3)' }}>
                   {enCours ? '● Live' : termine ? (noSpoil ? '🙈' : 'Terminé') : ''}
