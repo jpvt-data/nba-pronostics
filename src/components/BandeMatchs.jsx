@@ -88,7 +88,7 @@ function CarteMatch({ match, prono, onProno, userId }) {
         width: '80vw',
         maxWidth: 320,
         minWidth: 260,
-        height: 200,
+        height: 220,
         flexShrink: 0,
         cursor: 'pointer',
         overflow: 'hidden',
@@ -101,19 +101,19 @@ function CarteMatch({ match, prono, onProno, userId }) {
         background: `linear-gradient(105deg, ${c1}55 0%, #0d0d12 42%, #0d0d12 58%, ${c2}55 100%)`,
       }} />
 
-      {/* Logo EXT — watermark fond gauche, déborde */}
+      {/* Logo EXT — watermark fond gauche, déborde largement */}
       <img src={ext.logo} alt="" style={{
-        position: 'absolute', left: -20, top: '50%', transform: 'translateY(-50%)',
-        width: 140, height: 140, objectFit: 'contain',
-        opacity: 0.12, pointerEvents: 'none',
-        filter: 'saturate(0.3) brightness(1.5)',
+        position: 'absolute', left: -30, top: '50%', transform: 'translateY(-50%)',
+        width: 200, height: 200, objectFit: 'contain',
+        opacity: 0.13, pointerEvents: 'none',
+        filter: 'saturate(0.4) brightness(1.4)',
       }} />
-      {/* Logo DOM — watermark fond droite, déborde */}
+      {/* Logo DOM — watermark fond droite, déborde largement */}
       <img src={dom.logo} alt="" style={{
-        position: 'absolute', right: -20, top: '50%', transform: 'translateY(-50%)',
-        width: 140, height: 140, objectFit: 'contain',
-        opacity: 0.12, pointerEvents: 'none',
-        filter: 'saturate(0.3) brightness(1.5)',
+        position: 'absolute', right: -30, top: '50%', transform: 'translateY(-50%)',
+        width: 200, height: 200, objectFit: 'contain',
+        opacity: 0.13, pointerEvents: 'none',
+        filter: 'saturate(0.4) brightness(1.4)',
       }} />
 
       {/* Overlay sombre bas */}
@@ -133,9 +133,9 @@ function CarteMatch({ match, prono, onProno, userId }) {
         {/* Haut — logos nets + trigrammes */}
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '10px 12px 0' }}>
           {/* EXT gauche */}
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 3 }}>
-            <img src={ext.logo} style={{ width: 52, height: 52, objectFit: 'contain', filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.7))' }} alt="" />
-            <span style={{ fontFamily: 'var(--font-display)', fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.7)', letterSpacing: '0.06em' }}>{ext.trigramme}</span>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 4 }}>
+            <img src={ext.logo} style={{ width: 80, height: 80, objectFit: 'contain', filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.8))' }} alt="" />
+            <span style={{ fontFamily: 'var(--font-display)', fontSize: 14, fontWeight: 700, color: 'rgba(255,255,255,0.7)', letterSpacing: '0.06em' }}>{ext.trigramme}</span>
           </div>
 
           {/* Centre — score ou heure */}
@@ -169,9 +169,9 @@ function CarteMatch({ match, prono, onProno, userId }) {
           </div>
 
           {/* DOM droite */}
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 3 }}>
-            <img src={dom.logo} style={{ width: 52, height: 52, objectFit: 'contain', filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.7))' }} alt="" />
-            <span style={{ fontFamily: 'var(--font-display)', fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.7)', letterSpacing: '0.06em' }}>{dom.trigramme}</span>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
+            <img src={dom.logo} style={{ width: 80, height: 80, objectFit: 'contain', filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.8))' }} alt="" />
+            <span style={{ fontFamily: 'var(--font-display)', fontSize: 14, fontWeight: 700, color: 'rgba(255,255,255,0.7)', letterSpacing: '0.06em' }}>{dom.trigramme}</span>
           </div>
         </div>
 
@@ -180,7 +180,7 @@ function CarteMatch({ match, prono, onProno, userId }) {
         {/* Bas — stade + prono */}
         <div style={{ padding: '0 10px 10px' }}>
           {match.stade && (
-            <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.28)', marginBottom: 5, letterSpacing: '0.06em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.28)', marginBottom: 5, letterSpacing: '0.06em', textAlign: 'right', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {match.stade}
             </div>
           )}
