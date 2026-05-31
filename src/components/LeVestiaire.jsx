@@ -143,7 +143,7 @@ function ChatMiniLigue({ groupe, userId }) {
                 </div>
                 <span style={{ fontSize: 10, color: 'var(--text-3)', flexShrink: 0, whiteSpace: 'nowrap' }}>
                   {(() => {
-                    const d = new Date(msg.cree_le)
+                    const d = new Date(msg.cree_le + 'Z') // force UTC parsing
                     const auj = new Date()
                     const memeJour = d.toDateString() === auj.toDateString()
                     return memeJour
