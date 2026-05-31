@@ -37,13 +37,12 @@ function PronosAttente({ userId, refreshKey }) {
               display: 'flex', justifyContent: 'space-between', alignItems: 'center',
               padding: '10px 14px',
               background: 'rgba(99,102,241,0.06)',
-              borderWidth: 1, borderStyle: 'solid', borderColor: 'rgba(99,102,241,0.2)',
-              borderRadius: 'var(--radius-sm)',
+              borderLeft: '3px solid rgba(99,102,241,0.5)',
               cursor: 'pointer',
               transition: 'border-color 0.15s',
             }}
-            onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(99,102,241,0.4)'}
-            onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(99,102,241,0.2)'}
+            onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(99,102,241,0.9)'}
+            onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(99,102,241,0.5)'}
           >
             <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-1)' }}>
               {m.equipe_exterieur} @ {m.equipe_domicile}
@@ -52,7 +51,7 @@ function PronosAttente({ userId, refreshKey }) {
               fontSize: 13, fontWeight: 700, color: 'var(--accent)',
               fontFamily: 'var(--font-display)', letterSpacing: '0.04em',
               background: 'rgba(99,102,241,0.12)',
-              borderRadius: 4, paddingLeft: 8, paddingRight: 8, paddingTop: 2, paddingBottom: 2,
+              borderRadius: 2, paddingLeft: 8, paddingRight: 8, paddingTop: 2, paddingBottom: 2,
             }}>
               → {p.equipe_choisie}
             </span>
