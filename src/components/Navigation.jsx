@@ -27,6 +27,7 @@ function Navigation({ nbPronosAttente = 0 }) {
   const [ouvert, setOuvert]     = useState(false)
   const { noSpoil, toggleNoSpoil } = useNoSpoil()
   const { profil } = useProfil()
+  const estAdmin = profil?.id === 'fa55d016-896c-4eb4-b48a-241d6be71ad0'
 
   const deconnecter = async () => { await supabase.auth.signOut(); setOuvert(false) }
   const aller = (chemin) => { navigate(chemin); setOuvert(false) }
@@ -121,6 +122,20 @@ function Navigation({ nbPronosAttente = 0 }) {
 
         <div style={{ borderTopWidth: 1, borderTopStyle: 'solid', borderTopColor: 'var(--border)', margin: '0.75rem 0' }} />
 
+        {estAdmin && (
+          <button onClick={() => aller('/admin')} style={{
+            display: 'flex', alignItems: 'center', gap: 10,
+            background: location.pathname === '/admin' ? 'var(--accent-dim)' : 'none',
+            borderWidth: location.pathname === '/admin' ? 1 : 0, borderStyle: 'solid', borderColor: 'var(--accent-border)',
+            color: location.pathname === '/admin' ? 'var(--accent)' : 'var(--text-2)',
+            fontSize: 14, cursor: 'pointer',
+            paddingTop: '0.75rem', paddingBottom: '0.75rem', paddingLeft: '0.5rem', paddingRight: '0.5rem',
+            borderRadius: 'var(--radius-sm)', width: '100%', textAlign: 'left',
+          }}>
+            🛡️ Admin
+          </button>
+        )}
+        
         <button onClick={() => aller('/quoi-de-neuf')} style={{
           display: 'flex', alignItems: 'center', gap: 10,
           background: location.pathname === '/quoi-de-neuf' ? 'var(--accent-dim)' : 'none',
