@@ -335,11 +335,11 @@ function BandeMatchs({ matchs, userId, onProno, onBadge, equipeFiltre, onFiltreC
 
   const groupes = grouperParJour(matchsFiltres)
   const aujourdhui = new Date().toISOString().slice(0, 10)
-  let jourCible = groupes.find(([j]) => j === aujourdhui)?.[0]
-  if (!jourCible) {
-    const futurs = groupes.filter(([j]) => j > aujourdhui)
-    jourCible = futurs.length ? futurs[0][0] : groupes[0]?.[0]
-  }
+  // Chercher le premier jour avec un match à venir (pas terminé, pas en cours)
+  const jourAvecProno = groupes.find(([j, ms]) => 
+    ms.some(m => m.statut !== 'STATUS_FINAL' && m.statut !== 'STATUS_IN_PROGRESS')
+  )?.[0]
+  const jourCible = jourAvecProno || groupes[groupes.length - 1]?.[0]
 
   if (!groupes.length) return (
     <div style={{ padding: '16px', fontSize: 13, color: 'var(--text-3)' }}>
