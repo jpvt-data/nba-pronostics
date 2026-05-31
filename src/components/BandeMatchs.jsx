@@ -3,21 +3,22 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useNoSpoil } from '../context/NoSpoilContext'
 
-const formaterJourCourt = (dateStr) =>
-  new Date(dateStr).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' })
-
 const formaterHeure = (dateStr) =>
   new Date(dateStr).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
 
+const formaterJourLong = (dateStr) =>
+  new Date(dateStr + 'T12:00:00').toLocaleDateString('fr-FR', {
+    weekday: 'long', day: 'numeric', month: 'long'
+  }).toUpperCase()
+
 const estAujourdhui = (dateStr) => {
-  const d = new Date(dateStr)
+  const d = new Date(dateStr + 'T12:00:00')
   const auj = new Date()
-  return d.getDate() === auj.getDate() && d.getMonth() === auj.getMonth() && d.getFullYear() === auj.getFullYear()
+  return d.getDate() === auj.getDate() &&
+    d.getMonth() === auj.getMonth() &&
+    d.getFullYear() === auj.getFullYear()
 }
 
-const estPasse = (dateStr) => new Date(dateStr) < new Date()
-
-// Couleur hex valide et pas trop sombre
 const couleurValide = (hex) => {
   if (!hex) return false
   const h = hex.replace('#', '')
@@ -34,7 +35,6 @@ const getCouleur = (equipe) => {
   return '#6366f1'
 }
 
-// Groupe les matchs par jour
 const grouperParJour = (matchs) => {
   const groupes = {}
   matchs.forEach(m => {
@@ -51,14 +51,15 @@ function CarteMatch({ match, prono, onProno, userId }) {
   const [pronoLocal, setPronoLocal] = useState(prono || null)
   const [loading, setLoading] = useState(false)
 
-  const termine  = match.statut === 'STATUS_FINAL'
-  const enCours  = match.statut === 'STATUS_IN_PROGRESS'
-  const aVenir   = !termine && !enCours
-  const dom      = match.domicile
-  const ext      = match.exterieur
+  const termine = match.statut === 'STATUS_FINAL'
+  const enCours = match.statut === 'STATUS_IN_PROGRESS'
+  const aVenir  = !termine && !enCours
 
-  const c1 = getCouleur(dom)
-  const c2 = getCouleur(ext)
+  // Convention NBA : EXT à gauche, DOM à droite
+  const ext = match.exterieur
+  const dom = match.domicile
+  const c1  = getCouleur(ext) // gauche = ext
+  const c2  = getCouleur(dom) // droite = dom
 
   const handleProno = async (e, equipe) => {
     e.stopPropagation()
@@ -69,7 +70,6 @@ function CarteMatch({ match, prono, onProno, userId }) {
     setLoading(false)
   }
 
-  // Résultat du prono
   let resultatProno = null
   if (pronoLocal && termine) {
     const scoreDom = parseInt(dom.score)
@@ -85,38 +85,43 @@ function CarteMatch({ match, prono, onProno, userId }) {
       onClick={() => navigate(`/match/${match.espn_id}`)}
       style={{
         position: 'relative',
-        width: '82vw',
-        maxWidth: 340,
-        minWidth: 280,
-        height: 190,
+        width: '80vw',
+        maxWidth: 320,
+        minWidth: 260,
+        height: 200,
         flexShrink: 0,
         cursor: 'pointer',
         overflow: 'hidden',
         opacity: noSpoil && termine ? 0.6 : 1,
       }}
     >
-      {/* Fond gradient couleurs équipes */}
+      {/* Fond gradient : ext gauche, dom droite */}
       <div style={{
         position: 'absolute', inset: 0,
-        background: `linear-gradient(105deg, ${c1}55 0%, #0d0d12 45%, #0d0d12 55%, ${c2}55 100%)`,
+        background: `linear-gradient(105deg, ${c1}55 0%, #0d0d12 42%, #0d0d12 58%, ${c2}55 100%)`,
       }} />
-      {/* Logos en fond watermark */}
-      <img src={dom.logo} alt="" style={{
-        position: 'absolute', left: -10, top: '50%', transform: 'translateY(-50%)',
-        width: 110, height: 110, objectFit: 'contain', opacity: 0.1, pointerEvents: 'none',
-        filter: 'saturate(0) brightness(2)',
-      }} />
+
+      {/* Logo EXT — watermark fond gauche, déborde */}
       <img src={ext.logo} alt="" style={{
-        position: 'absolute', right: -10, top: '50%', transform: 'translateY(-50%)',
-        width: 110, height: 110, objectFit: 'contain', opacity: 0.1, pointerEvents: 'none',
-        filter: 'saturate(0) brightness(2)',
+        position: 'absolute', left: -20, top: '50%', transform: 'translateY(-50%)',
+        width: 140, height: 140, objectFit: 'contain',
+        opacity: 0.12, pointerEvents: 'none',
+        filter: 'saturate(0.3) brightness(1.5)',
       }} />
+      {/* Logo DOM — watermark fond droite, déborde */}
+      <img src={dom.logo} alt="" style={{
+        position: 'absolute', right: -20, top: '50%', transform: 'translateY(-50%)',
+        width: 140, height: 140, objectFit: 'contain',
+        opacity: 0.12, pointerEvents: 'none',
+        filter: 'saturate(0.3) brightness(1.5)',
+      }} />
+
       {/* Overlay sombre bas */}
       <div style={{
-        position: 'absolute', bottom: 0, left: 0, right: 0, height: '55%',
-        background: 'linear-gradient(0deg, rgba(6,6,8,0.92) 0%, transparent 100%)',
+        position: 'absolute', bottom: 0, left: 0, right: 0, height: '50%',
+        background: 'linear-gradient(0deg, rgba(6,6,8,0.95) 0%, transparent 100%)',
       }} />
-      {/* Bord top gradient équipes */}
+      {/* Bord top */}
       <div style={{
         position: 'absolute', top: 0, left: 0, right: 0, height: 2,
         background: `linear-gradient(90deg, ${c1}, ${c2})`,
@@ -125,75 +130,76 @@ function CarteMatch({ match, prono, onProno, userId }) {
       {/* Contenu */}
       <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column' }}>
 
-        {/* Top — équipes + logos nets */}
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '12px 14px 0' }}>
-          {/* DOM */}
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 4 }}>
-            <img src={dom.logo} style={{ width: 44, height: 44, objectFit: 'contain', filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.6))' }} alt="" />
-            <span style={{ fontFamily: 'var(--font-display)', fontSize: 16, fontWeight: 700, color: '#fff', letterSpacing: '0.06em' }}>{dom.trigramme}</span>
+        {/* Haut — logos nets + trigrammes */}
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '10px 12px 0' }}>
+          {/* EXT gauche */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 3 }}>
+            <img src={ext.logo} style={{ width: 52, height: 52, objectFit: 'contain', filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.7))' }} alt="" />
+            <span style={{ fontFamily: 'var(--font-display)', fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.7)', letterSpacing: '0.06em' }}>{ext.trigramme}</span>
           </div>
 
-          {/* Centre */}
-          <div style={{ textAlign: 'center', paddingTop: 4, flex: 1 }}>
+          {/* Centre — score ou heure */}
+          <div style={{ textAlign: 'center', flex: 1, paddingTop: 6 }}>
             {(termine || enCours) && !noSpoil ? (
               <>
-                <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: 6 }}>
-                  <span style={{ fontFamily: 'var(--font-display)', fontSize: 36, fontWeight: 700, color: '#fff', lineHeight: 1 }}>
-                    {dom.score}
-                  </span>
-                  <span style={{ fontFamily: 'var(--font-display)', fontSize: 18, color: 'rgba(255,255,255,0.3)' }}>-</span>
-                  <span style={{ fontFamily: 'var(--font-display)', fontSize: 36, fontWeight: 700, color: '#fff', lineHeight: 1 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
+                  <span style={{ fontFamily: 'var(--font-display)', fontSize: 52, fontWeight: 700, color: '#fff', lineHeight: 1, letterSpacing: '-0.02em' }}>
                     {ext.score}
+                  </span>
+                  <span style={{ fontFamily: 'var(--font-display)', fontSize: 24, color: 'rgba(255,255,255,0.25)', lineHeight: 1 }}>–</span>
+                  <span style={{ fontFamily: 'var(--font-display)', fontSize: 52, fontWeight: 700, color: '#fff', lineHeight: 1, letterSpacing: '-0.02em' }}>
+                    {dom.score}
                   </span>
                 </div>
                 {enCours && (
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, marginTop: 3 }}>
-                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#22c55e', boxShadow: '0 0 6px #22c55e', animation: 'blink 1.2s infinite', display: 'inline-block' }} />
-                    <span style={{ fontFamily: 'var(--font-display)', fontSize: 10, color: '#22c55e', fontWeight: 700, letterSpacing: '0.1em' }}>LIVE</span>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, marginTop: 2 }}>
+                    <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#22c55e', boxShadow: '0 0 6px #22c55e', animation: 'blink 1.2s infinite', display: 'inline-block' }} />
+                    <span style={{ fontFamily: 'var(--font-display)', fontSize: 10, color: '#22c55e', fontWeight: 700, letterSpacing: '0.12em' }}>LIVE</span>
                   </div>
                 )}
               </>
             ) : noSpoil && termine ? (
-              <span style={{ fontSize: 22 }}>🙈</span>
+              <span style={{ fontSize: 24 }}>🙈</span>
             ) : (
               <>
-                <div style={{ fontFamily: 'var(--font-display)', fontSize: 26, fontWeight: 700, color: '#fff', lineHeight: 1 }}>{formaterHeure(match.date)}</div>
-                {match.canal && <div style={{ fontFamily: 'var(--font-body)', fontSize: 9, color: 'rgba(255,255,255,0.4)', letterSpacing: '0.15em', marginTop: 2 }}>{match.canal}</div>}
+                <div style={{ fontFamily: 'var(--font-display)', fontSize: 30, fontWeight: 700, color: '#fff', lineHeight: 1 }}>{formaterHeure(match.date)}</div>
+                {match.canal && <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.4)', letterSpacing: '0.15em', marginTop: 2 }}>{match.canal}</div>}
               </>
             )}
           </div>
 
-          {/* EXT */}
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
-            <img src={ext.logo} style={{ width: 44, height: 44, objectFit: 'contain', filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.6))' }} alt="" />
-            <span style={{ fontFamily: 'var(--font-display)', fontSize: 16, fontWeight: 700, color: '#fff', letterSpacing: '0.06em' }}>{ext.trigramme}</span>
+          {/* DOM droite */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 3 }}>
+            <img src={dom.logo} style={{ width: 52, height: 52, objectFit: 'contain', filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.7))' }} alt="" />
+            <span style={{ fontFamily: 'var(--font-display)', fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.7)', letterSpacing: '0.06em' }}>{dom.trigramme}</span>
           </div>
         </div>
 
         <div style={{ flex: 1 }} />
 
-        {/* Bas — date/lieu + prono */}
-        <div style={{ padding: '0 12px 10px' }}>
-          <div style={{ fontFamily: 'var(--font-body)', fontSize: 9, color: 'rgba(255,255,255,0.35)', marginBottom: 6, letterSpacing: '0.05em' }}>
-            {match.ville || match.stade || ''}
-          </div>
+        {/* Bas — stade + prono */}
+        <div style={{ padding: '0 10px 10px' }}>
+          {match.stade && (
+            <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.28)', marginBottom: 5, letterSpacing: '0.06em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {match.stade}
+            </div>
+          )}
 
-          {/* Boutons prono ou résultat */}
+          {/* Boutons prono */}
           {aVenir && (
             <div style={{ display: 'flex', gap: 5 }} onClick={e => e.stopPropagation()}>
-              {[{ eq: dom, c: c1 }, { eq: ext, c: c2 }].map(({ eq, c }) => {
-                const selectionne = pronoLocal === eq.trigramme
+              {[{ eq: ext, c: c1 }, { eq: dom, c: c2 }].map(({ eq, c }) => {
+                const sel = pronoLocal === eq.trigramme
                 return (
                   <button key={eq.trigramme} onClick={(e) => handleProno(e, eq.trigramme)} style={{
-                    flex: 1, padding: '7px 0',
-                    background: selectionne ? c : `rgba(255,255,255,0.06)`,
-                    border: `1.5px solid ${selectionne ? c : 'rgba(255,255,255,0.15)'}`,
-                    borderRadius: 3,
+                    flex: 1, padding: '6px 0',
+                    background: sel ? c : 'rgba(255,255,255,0.07)',
+                    border: `1.5px solid ${sel ? c : 'rgba(255,255,255,0.15)'}`,
+                    borderRadius: 2,
                     fontFamily: 'var(--font-display)', fontSize: 13, fontWeight: 700,
-                    color: selectionne ? '#fff' : 'rgba(255,255,255,0.7)',
-                    letterSpacing: '0.08em',
-                    cursor: 'pointer',
-                    boxShadow: selectionne ? `0 0 10px ${c}60` : 'none',
+                    color: sel ? '#fff' : 'rgba(255,255,255,0.65)',
+                    letterSpacing: '0.08em', cursor: 'pointer',
+                    boxShadow: sel ? `0 0 10px ${c}60` : 'none',
                     transition: 'all 0.15s',
                   }}>{eq.trigramme}</button>
                 )
@@ -201,15 +207,15 @@ function CarteMatch({ match, prono, onProno, userId }) {
             </div>
           )}
 
-          {/* Prono posé sur match terminé ou en cours */}
+          {/* Prono posé sur match non à venir */}
           {pronoLocal && !aVenir && (
             <div style={{
-              display: 'flex', alignItems: 'center', gap: 6,
-              padding: '5px 8px',
-              background: resultatProno === 'correct' ? 'rgba(34,197,94,0.15)' : resultatProno === 'incorrect' ? 'rgba(239,68,68,0.15)' : 'rgba(255,255,255,0.06)',
+              display: 'inline-flex', alignItems: 'center', gap: 5,
+              padding: '4px 8px',
+              background: resultatProno === 'correct' ? 'rgba(34,197,94,0.15)' : resultatProno === 'incorrect' ? 'rgba(239,68,68,0.15)' : 'rgba(255,255,255,0.07)',
               borderLeft: `3px solid ${resultatProno === 'correct' ? '#22c55e' : resultatProno === 'incorrect' ? '#ef4444' : 'rgba(255,255,255,0.2)'}`,
             }}>
-              <span style={{ fontSize: 12 }}>
+              <span style={{ fontSize: 11 }}>
                 {resultatProno === 'correct' ? '✅' : resultatProno === 'incorrect' ? '❌' : '🎯'}
               </span>
               <span style={{ fontFamily: 'var(--font-display)', fontSize: 12, fontWeight: 700, color: '#fff', letterSpacing: '0.06em' }}>
@@ -223,30 +229,44 @@ function CarteMatch({ match, prono, onProno, userId }) {
   )
 }
 
-function LabelJour({ dateStr }) {
-  const auj = estAujourdhui(dateStr + 'T12:00:00')
+function GroupeJour({ jour, matchs, pronos, onProno, userId, refEl }) {
+  const aujd = estAujourdhui(jour)
   return (
-    <div style={{
-      display: 'flex', alignItems: 'center', gap: 8,
-      paddingLeft: 16, marginBottom: 8, marginTop: 4,
-      flexShrink: 0,
-    }}>
-      {auj && <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--accent)', boxShadow: '0 0 6px var(--accent)', display: 'inline-block' }} />}
-      <span style={{
-        fontFamily: 'var(--font-display)', fontSize: 11, fontWeight: 700,
-        color: auj ? 'var(--accent)' : 'var(--text-3)',
-        letterSpacing: '0.15em', textTransform: 'uppercase',
+    <div ref={refEl} style={{ flexShrink: 0, display: 'flex', flexDirection: 'column' }}>
+      {/* Label jour */}
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 6,
+        paddingLeft: 4, marginBottom: 8,
       }}>
-        {auj ? 'AUJOURD\'HUI' : new Date(dateStr + 'T12:00:00').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'short' }).toUpperCase()}
-      </span>
+        {aujd && <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--accent)', boxShadow: '0 0 6px var(--accent)', flexShrink: 0, display: 'inline-block' }} />}
+        <span style={{
+          fontFamily: 'var(--font-display)', fontSize: 10, fontWeight: 700,
+          color: aujd ? 'var(--accent)' : 'var(--text-3)',
+          letterSpacing: '0.16em',
+        }}>
+          {aujd ? "AUJOURD'HUI" : formaterJourLong(jour)}
+        </span>
+      </div>
+      {/* Matchs du jour en ligne */}
+      <div style={{ display: 'flex', gap: 8 }}>
+        {matchs.map(match => (
+          <CarteMatch
+            key={match.espn_id}
+            match={match}
+            prono={pronos[match.espn_id]?.equipe || null}
+            onProno={onProno}
+            userId={userId}
+          />
+        ))}
+      </div>
     </div>
   )
 }
 
 function BandeMatchs({ matchs, userId, onProno, onBadge }) {
   const [pronos, setPronos] = useState({})
-  const scrollRef = useRef(null)
-  const aujourdhuiRef = useRef(null)
+  const scrollRef     = useRef(null)
+  const cibleScrollRef = useRef(null)
 
   useEffect(() => {
     const charger = async () => {
@@ -266,19 +286,27 @@ function BandeMatchs({ matchs, userId, onProno, onBadge }) {
     charger()
   }, [userId, matchs])
 
-  // Auto-scroll sur aujourd'hui
+  // Auto-scroll sur aujourd'hui ou dernier match passé
   useEffect(() => {
-    if (aujourdhuiRef.current && scrollRef.current) {
-      const container = scrollRef.current
-      const el = aujourdhuiRef.current
-      const offset = el.offsetLeft - container.offsetWidth / 2 + el.offsetWidth / 2
-      container.scrollLeft = Math.max(0, offset)
-    }
+    if (!cibleScrollRef.current || !scrollRef.current) return
+    const container = scrollRef.current
+    const el = cibleScrollRef.current
+    setTimeout(() => {
+      container.scrollLeft = Math.max(0, el.offsetLeft - 16)
+    }, 100)
   }, [matchs])
 
   if (!matchs.length) return null
 
   const groupes = grouperParJour(matchs)
+  const aujourdhui = new Date().toISOString().slice(0, 10)
+
+  // Trouver le groupe cible : aujourd'hui ou le plus récent avant aujourd'hui
+  let jourCible = groupes.find(([j]) => j === aujourdhui)?.[0]
+  if (!jourCible) {
+    const passes = groupes.filter(([j]) => j < aujourdhui)
+    jourCible = passes.length ? passes[passes.length - 1][0] : groupes[0][0]
+  }
 
   return (
     <div
@@ -287,30 +315,24 @@ function BandeMatchs({ matchs, userId, onProno, onBadge }) {
         overflowX: 'auto',
         WebkitOverflowScrolling: 'touch',
         scrollbarWidth: 'none',
-        paddingTop: 8, paddingBottom: 16,
+        paddingTop: 10,
+        paddingBottom: 16,
       }}
     >
       <style>{`@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }`}</style>
-      <div style={{ display: 'flex', flexDirection: 'column', width: 'max-content' }}>
-        {groupes.map(([jour, matchsJour]) => {
-          const estAujd = matchsJour.some(m => estAujourdhui(m.date))
-          return (
-            <div key={jour} ref={estAujd ? aujourdhuiRef : null} style={{ marginBottom: 16 }}>
-              <LabelJour dateStr={jour} />
-              <div style={{ display: 'flex', gap: 10, paddingLeft: 16, paddingRight: 16 }}>
-                {matchsJour.map(match => (
-                  <CarteMatch
-                    key={match.espn_id}
-                    match={match}
-                    prono={pronos[match.espn_id]?.equipe || null}
-                    onProno={onProno}
-                    userId={userId}
-                  />
-                ))}
-              </div>
-            </div>
-          )
-        })}
+      {/* Scroll horizontal — groupes par jour côte à côte */}
+      <div style={{ display: 'flex', flexDirection: 'row', gap: 20, paddingLeft: 16, paddingRight: 16, width: 'max-content', alignItems: 'flex-start' }}>
+        {groupes.map(([jour, matchsJour]) => (
+          <GroupeJour
+            key={jour}
+            jour={jour}
+            matchs={matchsJour}
+            pronos={pronos}
+            onProno={onProno}
+            userId={userId}
+            refEl={jour === jourCible ? cibleScrollRef : null}
+          />
+        ))}
       </div>
     </div>
   )
