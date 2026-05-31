@@ -133,7 +133,7 @@ function Focus({ userId, nbPronosAttente = 0 }) {
 
   return (
     <div style={{
-      background: '#f5f5f0',
+      background: '#f0ede8',
       padding: '12px 16px 14px 16px',
       marginTop: 12, marginBottom: 4,
     }}>
