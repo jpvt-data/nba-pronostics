@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
-
+import { Bloc, LabelSection } from '../components/UI'
 
 async function genererMessages(userId, nbPronosAttente) {
   const messages = []
@@ -132,12 +132,9 @@ function Focus({ userId, nbPronosAttente = 0 }) {
   const msg = messages[indexActif]
 
   return (
-    <div style={{ borderLeft: '3px solid var(--accent)', padding: '10px 16px 14px 16px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-          <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 22, color: 'var(--text-1)', letterSpacing: '0.02em', lineHeight: 1 }}>FO</span>
-          <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 22, color: 'var(--accent)', letterSpacing: '0.02em', lineHeight: 1 }}>CUS</span>
-        </div>
+    <Bloc>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <LabelSection>Focus</LabelSection>
         {messages.length > 1 && (
           <div style={{ display: 'flex', gap: 4 }}>
             {messages.map((_, i) => (
@@ -153,15 +150,16 @@ function Focus({ userId, nbPronosAttente = 0 }) {
         )}
       </div>
 
-      <div style={{ minHeight: 44 }}>
+      <div style={{ marginTop: 10, minHeight: 44 }}>
         {chargement ? (
           <p style={{ fontSize: 13, color: 'var(--text-3)', margin: 0 }}>…</p>
         ) : msg ? (
           <div style={{
             display: 'flex', alignItems: 'center', gap: 10,
             padding: '10px 12px',
-            background: 'rgba(255,255,255,0.02)',
-            borderLeft: `3px solid ${msg.couleur}`,
+            background: 'rgba(255,255,255,0.03)',
+            borderWidth: 1, borderStyle: 'solid', borderColor: 'var(--border-2)',
+            borderRadius: 'var(--radius-sm)',
             opacity: visible ? 1 : 0,
             transition: 'opacity 0.35s ease',
           }}>
@@ -172,7 +170,7 @@ function Focus({ userId, nbPronosAttente = 0 }) {
           </div>
         ) : null}
       </div>
-    </div>
+    </Bloc>
   )
 }
 

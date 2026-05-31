@@ -33,12 +33,19 @@ export default function NewsNBA() {
   if (erreur || (!chargement && news.length === 0)) return null
 
   return (
-    <div style={{ borderLeft: '3px solid var(--orange)', padding: '0 16px 12px 16px' }}>
+    <div style={{
+      margin: '12px 16px 0',
+      borderRadius: 'var(--radius-lg)',
+      background: 'linear-gradient(160deg, rgba(99,102,241,0.08) 0%, transparent 60%)',
+      borderWidth: 1, borderStyle: 'solid', borderColor: 'rgba(99,102,241,0.08)',
+      padding: '16px 16px 12px',
+    }}>
 
       {noSpoil ? (
         <div style={{
           display: 'flex', alignItems: 'center', gap: 8,
           marginTop: 12, padding: '10px 12px',
+          borderRadius: 'var(--radius-sm)',
           background: 'rgba(99,102,241,0.06)',
           borderWidth: 1, borderStyle: 'solid', borderColor: 'rgba(99,102,241,0.15)',
         }}>

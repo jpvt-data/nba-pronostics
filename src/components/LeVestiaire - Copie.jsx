@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
+import { LabelSection, Bloc } from '../components/UI'
 import { Send } from 'lucide-react'
 
 async function genererEvenements(userId) {
@@ -150,7 +151,7 @@ function ChatMiniLigue({ groupe, userId }) {
               background: msg.user_id === userId ? 'var(--accent-dim)' : 'rgba(255,255,255,0.02)',
               borderWidth: 1, borderStyle: 'solid',
               borderColor: msg.user_id === userId ? 'var(--accent-border)' : 'var(--border)',
-              borderRadius: 4,
+              borderRadius: 'var(--radius-sm)',
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}>
                 <div style={{ minWidth: 0 }}>
@@ -187,7 +188,7 @@ function ChatMiniLigue({ groupe, userId }) {
             flex: 1, fontSize: 12,
             background: 'var(--bg-2)',
             borderWidth: 1, borderStyle: 'solid', borderColor: 'var(--border)',
-            borderRadius: 4,
+            borderRadius: 'var(--radius-sm)',
             padding: '7px 10px', color: 'var(--text-1)',
             outline: 'none',
           }}
@@ -197,7 +198,7 @@ function ChatMiniLigue({ groupe, userId }) {
           disabled={!texte.trim() || envoi}
           style={{
             background: 'var(--accent)', borderWidth: 0,
-            borderRadius: 4,
+            borderRadius: 'var(--radius-sm)',
             padding: '7px 10px', cursor: 'pointer',
             display: 'flex', alignItems: 'center',
             opacity: !texte.trim() || envoi ? 0.4 : 1,
@@ -253,24 +254,22 @@ function LeVestiaire({ userId }) {
   if (rien) return null
 
   return (
-    <div style={{ borderLeft: '3px solid var(--orange)', padding: '10px 0 14px 16px' }}>
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 10, paddingRight: 16 }}>
-        <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 22, color: 'var(--text-1)', letterSpacing: '0.02em', lineHeight: 1 }}>LE</span>
-        <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 22, color: 'var(--orange)', letterSpacing: '0.02em', lineHeight: 1 }}>VESTIAIRE</span>
-      </div>
+    <Bloc>
+      <LabelSection>Le Vestiaire</LabelSection>
 
       {/* Streaks */}
       {evenements.length > 0 && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 4, paddingRight: 16 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 10 }}>
           {chargement ? (
             <p style={{ fontSize: 13, color: 'var(--text-3)', margin: 0 }}>…</p>
           ) : (
             evenements.map((evt, i) => (
               <div key={i} style={{
                 display: 'flex', alignItems: 'center', gap: 10,
-                padding: '9px 12px',
+                padding: '10px 12px',
                 background: 'rgba(255,255,255,0.02)',
-                borderLeft: `3px solid ${evt.couleur}`,
+                borderWidth: 1, borderStyle: 'solid', borderColor: 'var(--border)',
+                borderRadius: 'var(--radius-sm)',
               }}>
                 <span style={{ fontSize: 16, lineHeight: 1, flexShrink: 0 }}>{evt.icone}</span>
                 <span style={{ fontSize: 13, color: evt.couleur, fontWeight: 500, lineHeight: 1.4 }}>
@@ -284,7 +283,7 @@ function LeVestiaire({ userId }) {
 
       {/* Chats par ligue */}
       {!chargement && groupes.length > 0 && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginTop: evenements.length ? 16 : 0, paddingRight: 16 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginTop: evenements.length ? 16 : 10 }}>
           {groupes.length > 1 && evenements.length > 0 && (
             <div style={{ borderTopWidth: 1, borderTopStyle: 'solid', borderTopColor: 'var(--border)' }} />
           )}
@@ -293,7 +292,7 @@ function LeVestiaire({ userId }) {
           ))}
         </div>
       )}
-    </div>
+    </Bloc>
   )
 }
 
