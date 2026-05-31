@@ -132,12 +132,26 @@ function ChatMiniLigue({ groupe, userId }) {
               borderColor: msg.user_id === userId ? 'var(--accent-border)' : 'var(--border)',
               borderRadius: 'var(--radius-sm)',
             }}>
-              <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', marginRight: 6 }}>
-                {msg.profils?.pseudo || '—'}
-              </span>
-              <span style={{ fontSize: 12, color: 'var(--text-2)', lineHeight: 1.4 }}>
-                {msg.contenu}
-              </span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}>
+                <div style={{ minWidth: 0 }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', marginRight: 6 }}>
+                    {msg.profils?.pseudo || '—'}
+                  </span>
+                  <span style={{ fontSize: 12, color: 'var(--text-2)', lineHeight: 1.4 }}>
+                    {msg.contenu}
+                  </span>
+                </div>
+                <span style={{ fontSize: 10, color: 'var(--text-3)', flexShrink: 0, whiteSpace: 'nowrap' }}>
+                  {(() => {
+                    const d = new Date(msg.cree_le)
+                    const auj = new Date()
+                    const memeJour = d.toDateString() === auj.toDateString()
+                    return memeJour
+                      ? d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+                      : d.toLocaleDateString('fr-FR', { weekday: 'short', day: '2-digit', month: '2-digit' })
+                  })()}
+                </span>
+              </div>
             </div>
           ))
         )}
