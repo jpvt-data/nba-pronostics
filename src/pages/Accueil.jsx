@@ -233,16 +233,6 @@ function Accueil() {
               </div>
               <ClassementRapide userId={user.id} />
             </div>
-
-            {/* Pronos en attente — décalé droite, pas de card */}
-            <div style={{ borderLeft: '3px solid var(--gold)', padding: '12px 16px 16px 16px' }}>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 10 }}>
-                <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 24, color: 'var(--text-1)', letterSpacing: '0.02em', lineHeight: 1 }}>PRONOS</span>
-                <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 24, color: 'var(--gold)', letterSpacing: '0.02em', lineHeight: 1 }}>EN ATTENTE</span>
-              </div>
-              <PronosAttente userId={user.id} />
-            </div>
-
           </div>
         )}
 
