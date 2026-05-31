@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
-import { recupererMatchs3Jours } from '../services/espn'
+import { recupererTimeline } from '../services/espn'
 import { recupererLiguesCibles } from '../services/ligues'
 import { calculerPoints } from '../services/points'
 import Navigation from '../components/Navigation'
@@ -38,7 +38,7 @@ function Accueil() {
         .from('profils').select('pseudo').eq('id', user.id).single()
       setPseudo(profil?.pseudo || null)
       calculerPoints(user.id).catch(() => {})
-      const m = await recupererMatchs3Jours()
+      const m = await recupererTimeline(15, 15)
       setMatchs(m)
       setCharg(false)
     }
@@ -144,15 +144,22 @@ function Accueil() {
           <Focus userId={user.id} nbPronosAttente={nbPronosAttente} />
         )}
 
-        {/* ── 2. Prochains matchs ── */}
-        <div style={{ padding: '20px 16px 0' }}>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 4 }}>
-            <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 28, color: 'var(--text-1)', letterSpacing: '0.02em', lineHeight: 1 }}>PROCHAINS</span>
-            <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 28, color: 'var(--accent)', letterSpacing: '0.02em', lineHeight: 1 }}>MATCHS</span>
+        {/* ── 2. Le Fil ── */}
+        <div style={{ padding: '20px 16px 0', display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+            <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 28, color: 'var(--text-1)', letterSpacing: '0.02em', lineHeight: 1 }}>LE</span>
+            <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 28, color: 'var(--accent)', letterSpacing: '0.02em', lineHeight: 1 }}>FIL</span>
           </div>
-          <p style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 2 }}>
-            Clique sur une affiche pour pronostiquer et voir le détail
-          </p>
+          <button
+            onClick={() => navigate('/calendrier')}
+            style={{
+              fontSize: 11, color: 'var(--text-3)', background: 'none',
+              borderWidth: 0, cursor: 'pointer',
+              display: 'flex', alignItems: 'center', gap: 4,
+            }}
+          >
+            <Calendar size={12} strokeWidth={1.5} /> Calendrier complet
+          </button>
         </div>
 
         {chargement && (
@@ -171,7 +178,7 @@ function Accueil() {
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
               }}>
                 <span style={{ fontSize: 13, color: 'var(--text-3)', lineHeight: 1.5 }}>
-                  Pas de match NBA dans les 3 prochains jours. Consulte le calendrier pour ne pas rater la prochaine affiche 👀
+                  Pas de match NBA sur cette période. Consulte le calendrier complet 👀
                 </span>
                 <button
                   onClick={() => navigate('/calendrier')}
@@ -195,25 +202,6 @@ function Accueil() {
                 onBadge={setNbPronosAttente}
               />
             )}
-          </div>
-        )}
-
-        {!chargement && (
-          <div style={{ padding: '4px 16px 0', display: 'flex', justifyContent: 'flex-end' }}>
-            <button
-              onClick={() => navigate('/calendrier')}
-              style={{
-                fontSize: 12, color: 'var(--text-3)', background: 'none',
-                borderWidth: 1, borderStyle: 'solid', borderColor: 'var(--border)',
-                borderRadius: 'var(--radius-sm)',
-                paddingTop: 5, paddingBottom: 5, paddingLeft: 12, paddingRight: 12,
-                cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
-              }}
-              onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--accent-border)'; e.currentTarget.style.color = 'var(--accent)' }}
-              onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--text-3)' }}
-            >
-              <Calendar size={13} strokeWidth={1.5} /> Calendrier complet
-            </button>
           </div>
         )}
 

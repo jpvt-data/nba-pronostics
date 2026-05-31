@@ -12,7 +12,7 @@ import LeVestiaire from '../components/LeVestiaire'
 import StandingsNBA from '../components/StandingsNBA'
 import BracketPlayoffs from '../components/BracketPlayoffs'
 import NewsNBA from '../components/NewsNBA'
-import { LabelSection, BanniereImage, Bloc } from '../components/UI'
+import { BanniereImage } from '../components/UI'
 import { useNavigate } from 'react-router-dom'
 import { Calendar, EyeOff, Eye } from 'lucide-react'
 import { useNoSpoil } from '../context/NoSpoilContext'
@@ -94,48 +94,63 @@ function Accueil() {
       <Navigation nbPronosAttente={nbPronosAttente} />
       <main style={{ flex: 1 }}>
 
-        {/* ── Header ── */}
+        {/* ── Header asymétrique ── */}
         <div style={{
-          padding: GUTTER,
-          paddingBottom: 12,
-          background: 'linear-gradient(160deg, rgba(99,102,241,0.08) 0%, transparent 60%)',
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '20px 16px 0 16px',
+          position: 'relative',
+          overflow: 'hidden',
         }}>
-          <div>
-            <p style={{ fontSize: 12, color: 'var(--text-3)', marginBottom: 2 }}>
-              Pronostique. Clashe. Règne.
-            </p>
-            <h2 style={{ margin: 0 }}>Bonjour {pseudo || ''} 👋</h2>
+          {/* Ligne accent verticale gauche — décalage visuel */}
+          <div style={{
+            position: 'absolute', left: 0, top: 0, bottom: 0, width: 3,
+            background: 'var(--accent)',
+          }} />
+
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+            {/* Titre Teko — décalé vers le bas */}
+            <div style={{ paddingTop: 4 }}>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 0 }}>
+                <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 36, color: 'var(--text-1)', letterSpacing: '0.02em', lineHeight: 1 }}>
+                  Bonjour{' '}
+                </span>
+                <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 36, color: 'var(--accent)', letterSpacing: '0.02em', lineHeight: 1 }}>
+                  {pseudo || ''}
+                </span>
+              </div>
+            </div>
+
+            {/* Toggle No Spoil — aligné haut droite, décalé */}
+            <button
+              onClick={toggleNoSpoil}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 5,
+                padding: '5px 10px', flexShrink: 0, marginTop: 8,
+                background: noSpoil ? 'rgba(99,102,241,0.15)' : 'transparent',
+                borderWidth: 1, borderStyle: 'solid',
+                borderColor: noSpoil ? 'rgba(99,102,241,0.4)' : 'var(--border)',
+                borderRadius: 'var(--radius-sm)', cursor: 'pointer',
+                fontSize: 11, fontWeight: 600,
+                color: noSpoil ? 'var(--accent)' : 'var(--text-3)',
+              }}
+            >
+              {noSpoil ? <Eye size={12} /> : <EyeOff size={12} />}
+              No Spoil
+            </button>
           </div>
-          <button
-            onClick={toggleNoSpoil}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 5,
-              padding: '5px 10px', flexShrink: 0,
-              background: noSpoil ? 'rgba(99,102,241,0.15)' : 'transparent',
-              borderWidth: 1, borderStyle: 'solid',
-              borderColor: noSpoil ? 'rgba(99,102,241,0.4)' : 'var(--border)',
-              borderRadius: 'var(--radius-sm)', cursor: 'pointer',
-              fontSize: 11, fontWeight: 600,
-              color: noSpoil ? 'var(--accent)' : 'var(--text-3)',
-            }}
-          >
-            {noSpoil ? <Eye size={12} /> : <EyeOff size={12} />}
-            No Spoil
-          </button>
         </div>
 
         {/* ── 1. Focus — spotlight perso ── */}
         {!chargement && user && (
-          <div style={{ padding: '12px 16px 0' }}>
-            <Focus userId={user.id} nbPronosAttente={nbPronosAttente} />
-          </div>
+          <Focus userId={user.id} nbPronosAttente={nbPronosAttente} />
         )}
 
         {/* ── 2. Prochains matchs ── */}
-        <div style={{ padding: '16px 16px 0' }}>
-          <LabelSection>Prochains matchs</LabelSection>
-          <p style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 4 }}>
+        <div style={{ padding: '20px 16px 0' }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 4 }}>
+            <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 28, color: 'var(--text-1)', letterSpacing: '0.02em', lineHeight: 1 }}>PROCHAINS</span>
+            <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 28, color: 'var(--accent)', letterSpacing: '0.02em', lineHeight: 1 }}>MATCHS</span>
+          </div>
+          <p style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 2 }}>
             Clique sur une affiche pour pronostiquer et voir le détail
           </p>
         </div>
@@ -202,24 +217,22 @@ function Accueil() {
           </div>
         )}
 
-        {/* ── Le Vestiaire ── */}
         {!chargement && user && (
-          <div style={{ padding: '12px 16px 0' }}>
-            <LeVestiaire userId={user.id} />
-          </div>
+          <LeVestiaire userId={user.id} />
         )}
 
-        {/* ── 3. Blocs communautaires ── */}
+        {/* ── 3. Blocs communautaires — sans card arrondie ── */}
         {!chargement && user && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16, padding: '16px 16px 0' }}>
-            <Bloc>
-              <LabelSection>Ligue en cours</LabelSection>
-              <div style={{ marginTop: 8 }}><ClassementRapide userId={user.id} /></div>
-            </Bloc>
-            <Bloc>
-              <LabelSection>Pronos en attente</LabelSection>
-              <div style={{ marginTop: 8 }}><PronosAttente userId={user.id} /></div>
-            </Bloc>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 0, padding: '16px 0 0' }}>
+
+            {/* Ligue en cours — bord gauche accent, pas de card */}
+            <div style={{ borderLeft: '3px solid var(--accent)', padding: '12px 16px 16px 16px', marginBottom: 8 }}>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 10 }}>
+                <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 24, color: 'var(--text-1)', letterSpacing: '0.02em', lineHeight: 1 }}>LIGUE</span>
+                <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 24, color: 'var(--accent)', letterSpacing: '0.02em', lineHeight: 1 }}>EN COURS</span>
+              </div>
+              <ClassementRapide userId={user.id} />
+            </div>
           </div>
         )}
 
@@ -235,11 +248,12 @@ function Accueil() {
         {!chargement && typeSaisonActuel === 3 && <BracketPlayoffs saison={saisonActuelle} />}
 
         {!chargement && user && (
-          <div style={{ padding: '16px 16px 20px' }}>
-            <Bloc>
-              <LabelSection>Actu NBA</LabelSection>
-              <div style={{ marginTop: 8 }}><NewsNBA /></div>
-            </Bloc>
+          <div style={{ padding: '16px 0 20px', borderLeft: '3px solid var(--orange)' }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 10, paddingLeft: 16 }}>
+              <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 24, color: 'var(--text-1)', letterSpacing: '0.02em', lineHeight: 1 }}>ACTU</span>
+              <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 24, color: 'var(--orange)', letterSpacing: '0.02em', lineHeight: 1 }}>NBA</span>
+            </div>
+            <div style={{ paddingLeft: 16, paddingRight: 16 }}><NewsNBA /></div>
           </div>
         )}
 
