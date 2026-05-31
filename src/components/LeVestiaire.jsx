@@ -253,7 +253,7 @@ function LeVestiaire({ userId }) {
   if (rien) return null
 
   return (
-    <div style={{ background: '#f5f5f0', padding: '12px 16px 14px 16px', marginBottom: 4 }}>
+    <div style={{ background: '#f0ede8', padding: '12px 16px 14px 16px', marginBottom: 4 }}>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 10 }}>
         <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 22, color: '#0d0d12', letterSpacing: '0.02em', lineHeight: 1 }}>LE</span>
         <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 22, color: 'var(--orange)', letterSpacing: '0.02em', lineHeight: 1 }}>VESTIAIRE</span>
