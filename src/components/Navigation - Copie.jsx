@@ -37,14 +37,6 @@ function Navigation({ nbPronosAttente = 0 }) {
   const deconnecter = async () => { await supabase.auth.signOut(); setOuvert(false) }
   const aller = (chemin) => { navigate(chemin); setOuvert(false) }
 
-  // Logo Teko — SWISH noir, LEAGUE violet
-  const LogoTeko = ({ size = 20 }) => (
-    <div style={{ display: 'flex', alignItems: 'baseline', lineHeight: 1 }}>
-      <span style={{ fontFamily: "'Teko', system-ui, sans-serif", fontWeight: 600, fontSize: size * 1.6, color: 'var(--nav-text)', letterSpacing: '0.02em', lineHeight: 1 }}>SWISH</span>
-      <span style={{ fontFamily: "'Teko', system-ui, sans-serif", fontWeight: 600, fontSize: size * 1.6, color: 'var(--accent)', letterSpacing: '0.02em', lineHeight: 1 }}>LEAGUE</span>
-    </div>
-  )
-
   return (
     <>
       {ouvert && (
@@ -176,13 +168,16 @@ function Navigation({ nbPronosAttente = 0 }) {
       {/* ── DESKTOP — barre top ── */}
       <nav className="nav-desktop-full" style={{
         ...navBase, top: 0, height: 52,
-        background: 'var(--nav-bg)',
-        borderBottomWidth: 1, borderBottomStyle: 'solid', borderBottomColor: 'var(--nav-border)',
+        borderBottomWidth: 1, borderBottomStyle: 'solid', borderBottomColor: 'var(--border)',
         alignItems: 'center', justifyContent: 'space-between', padding: '0 20px',
-        boxShadow: '0 1px 0 rgba(0,0,0,0.06)',
       }}>
-        <div onClick={() => navigate('/accueil')} style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
-          <LogoTeko size={22} />
+        <div onClick={() => navigate('/accueil')} style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+          <img src={swishLogo} alt="Swish League" style={{ height: 36, width: 'auto' }} />
+          <span style={{
+            fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 20, letterSpacing: '0.06em',
+            background: 'linear-gradient(90deg, var(--accent), var(--orange))',
+            WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
+          }}>SWISH LEAGUE</span>
         </div>
         <div style={{ display: 'flex', gap: 4 }}>
           {LIENS.map(({ chemin, label, Icone }) => {
@@ -191,12 +186,13 @@ function Navigation({ nbPronosAttente = 0 }) {
               <button key={chemin} onClick={() => aller(chemin)} style={{
                 display: 'flex', alignItems: 'center', gap: 6,
                 background: 'none', borderWidth: 0,
-                color: actif ? '#0d0d12' : '#888',
+                color: actif ? 'var(--text-1)' : 'var(--text-3)',
                 fontWeight: actif ? 600 : 400, fontSize: 13, cursor: 'pointer',
                 paddingTop: 5, paddingBottom: 5, paddingLeft: 12, paddingRight: 12,
                 borderRadius: 'var(--radius-sm)',
                 boxShadow: actif ? 'inset 0 -2px 0 var(--accent)' : 'none',
               }}>
+                {/* Badge sur Board — desktop */}
                 <div style={{ position: 'relative', display: 'inline-flex' }}>
                   <Icone size={15} strokeWidth={actif ? 2 : 1.5} />
                   {chemin === '/accueil' && nbPronosAttente > 0 && (
@@ -204,7 +200,7 @@ function Navigation({ nbPronosAttente = 0 }) {
                       position: 'absolute', top: -3, right: -5,
                       width: 7, height: 7, borderRadius: '50%',
                       background: 'var(--danger)',
-                      border: '1.5px solid var(--nav-bg)',
+                      border: '1.5px solid var(--bg-0)',
                     }} />
                   )}
                 </div>
@@ -216,15 +212,15 @@ function Navigation({ nbPronosAttente = 0 }) {
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <button onClick={() => navigate('/profil')} style={{
             display: 'flex', alignItems: 'center', gap: 8,
-            background: 'none', borderWidth: 1, borderStyle: 'solid', borderColor: '#e0e0e0',
+            background: 'none', borderWidth: 1, borderStyle: 'solid', borderColor: 'var(--border)',
             borderRadius: 'var(--radius-sm)', padding: '4px 10px 4px 6px', cursor: 'pointer',
           }}>
             <Avatar url={profil?.avatar_url} pseudo={profil?.pseudo} taille={24} fontSize={9} />
-            <span style={{ fontSize: 12, color: '#444', fontWeight: 500 }}>{profil?.pseudo || '—'}</span>
+            <span style={{ fontSize: 12, color: 'var(--text-2)', fontWeight: 500 }}>{profil?.pseudo || '—'}</span>
           </button>
           <button onClick={() => setOuvert(!ouvert)} style={{
-            background: 'none', borderWidth: 1, borderStyle: 'solid', borderColor: '#e0e0e0',
-            color: '#555', paddingTop: 6, paddingBottom: 6, paddingLeft: 10, paddingRight: 10,
+            background: 'none', borderWidth: 1, borderStyle: 'solid', borderColor: 'var(--border)',
+            color: 'var(--text-3)', paddingTop: 6, paddingBottom: 6, paddingLeft: 10, paddingRight: 10,
             borderRadius: 'var(--radius-sm)', cursor: 'pointer', display: 'flex', alignItems: 'center',
           }}>
             <Menu size={16} strokeWidth={1.5} />
@@ -235,19 +231,22 @@ function Navigation({ nbPronosAttente = 0 }) {
       {/* ── MOBILE — barre logo top ── */}
       <nav className="nav-mobile-logo" style={{
         ...navBase, top: 0, height: 40,
-        background: 'var(--nav-bg)',
-        borderBottomWidth: 1, borderBottomStyle: 'solid', borderBottomColor: 'var(--nav-border)',
+        borderBottomWidth: 1, borderBottomStyle: 'solid', borderBottomColor: 'var(--border)',
         alignItems: 'center', justifyContent: 'space-between', padding: '0 16px',
-        boxShadow: '0 1px 0 rgba(0,0,0,0.06)',
       }}>
-        <div onClick={() => navigate('/accueil')} style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-          <LogoTeko size={18} />
+        <div onClick={() => navigate('/accueil')} style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
+          <img src={swishLogo} alt="Swish League" style={{ height: 28, width: 'auto' }} />
+          <span style={{
+            fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 16, letterSpacing: '0.06em',
+            background: 'linear-gradient(90deg, var(--accent), var(--orange))',
+            WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
+          }}>SWISH LEAGUE</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <button onClick={() => navigate('/profil')} style={{ background: 'none', borderWidth: 0, cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center' }}>
             <Avatar url={profil?.avatar_url} pseudo={profil?.pseudo} taille={26} fontSize={9} />
           </button>
-          <button onClick={() => setOuvert(!ouvert)} style={{ background: 'none', borderWidth: 0, color: '#555', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: 4 }}>
+          <button onClick={() => setOuvert(!ouvert)} style={{ background: 'none', borderWidth: 0, color: 'var(--text-3)', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: 4 }}>
             <Menu size={18} strokeWidth={1.5} />
           </button>
         </div>

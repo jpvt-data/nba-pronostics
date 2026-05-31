@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Barlow+Condensed:wght@600;700&family=Teko:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Barlow+Condensed:wght@600;700&display=swap');
 
 /* ── TOKENS ─────────────────────────────────────────── */
 :root {
@@ -27,13 +27,6 @@
   --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.5);
   --font-body: 'Inter', system-ui, sans-serif;
   --font-display: 'Barlow Condensed', system-ui, sans-serif;
-  --font-title: 'Teko', system-ui, sans-serif;
-
-  /* Navbar top — light mode */
-  --nav-bg: #ffffff;
-  --nav-border: #e8e8e8;
-  --nav-text: #0d0d12;
-  --nav-text-dim: #888;
 }
 
 /* ── RESET ───────────────────────────────────────────── */
@@ -109,16 +102,6 @@ img { display: block; }
   scrollbar-width: none;
 }
 .scroll-x::-webkit-scrollbar { display: none; }
-
-/* ── TEKO section titles ── */
-.teko-title {
-  font-family: var(--font-title);
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  line-height: 1;
-}
-.teko-title span.dim  { color: var(--text-2); }
-.teko-title span.accent { color: var(--accent); }
 
 /* ── PWA iOS — mode standalone ── */
 @media (display-mode: standalone) {
