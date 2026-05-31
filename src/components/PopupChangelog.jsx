@@ -36,8 +36,6 @@ function PopupChangelog({ forceOuvert = false, onFermer }) {
         .eq('resultat', 'en_attente')
       if (count > 0) {
         setMessage(`⏳ ${count} prono${count > 1 ? 's' : ''} en attente de résultat`)
-      } else {
-        setMessage('🏀 Bon retour ! Prêt à pronostiquer ?')
       }
     }
     chargerMessage()
