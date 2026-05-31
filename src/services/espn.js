@@ -301,6 +301,8 @@ export const recupererTimeline = async (joursAvant = 15, joursApres = 15) => {
   matchs.sort((a, b) => new Date(a.date) - new Date(b.date))
   return matchs
 }
+
+export const recupererGagnant = async (espnId) => {
   try {
     const res  = await fetchAvecTimeout(`${BASE_WEB}/summary?event=${espnId}`)
     const data = await res.json()
