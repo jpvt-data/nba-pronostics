@@ -210,7 +210,7 @@ function Accueil() {
           <div style={{ padding: '16px 16px 20px' }}>
             <Bloc>
               <LabelSection>Actu NBA</LabelSection>
-              <div style={{ marginTop: 8 }}><NewsNBA typeSaison={typeSaisonActuel} /></div>
+              <div style={{ marginTop: 8 }}><NewsNBA /></div>
             </Bloc>
           </div>
         )}

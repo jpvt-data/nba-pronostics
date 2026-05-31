@@ -4,14 +4,13 @@ import { EyeOff } from 'lucide-react'
 
 const URL_NEWS = 'https://site.api.espn.com/apis/site/v2/sports/basketball/nba/news?limit=5'
 
-export default function NewsNBA({ typeSaison }) {
+export default function NewsNBA() {
   const [news, setNews]             = useState([])
   const [chargement, setChargement] = useState(true)
   const [erreur, setErreur]         = useState(false)
   const { noSpoil }                 = useNoSpoil()
 
   useEffect(() => {
-    if (typeSaison === null) return
     const controller = new AbortController()
     fetch(URL_NEWS, { signal: controller.signal })
       .then(r => r.json())
@@ -29,9 +28,8 @@ export default function NewsNBA({ typeSaison }) {
         setChargement(false)
       })
     return () => controller.abort()
-  }, [typeSaison])
+  }, [])
 
-  if (typeSaison === null) return null
   if (erreur || (!chargement && news.length === 0)) return null
 
   return (
