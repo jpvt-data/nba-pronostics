@@ -214,9 +214,6 @@ function Accueil() {
           </div>
         )}
 
-        {!chargement && user && (
-          <LeVestiaire userId={user.id} />
-        )}
 
         {/* ── 3. Blocs communautaires — sans card arrondie ── */}
         {!chargement && user && (
@@ -231,6 +228,10 @@ function Accueil() {
               <ClassementRapide userId={user.id} />
             </div>
           </div>
+        )}
+
+        {!chargement && user && (
+          <LeVestiaire userId={user.id} />
         )}
 
         {/* ── Bannière séparatrice ── */}
