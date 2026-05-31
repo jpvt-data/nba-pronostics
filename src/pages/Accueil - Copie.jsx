@@ -229,10 +229,13 @@ function Accueil() {
               </div>
               <ClassementRapide userId={user.id} />
             </div>
-            <LeVestiaire userId={user.id} />
           </div>
         )}
-        
+
+        {!chargement && user && (
+          <LeVestiaire userId={user.id} />
+        )}
+
         {/* ── Bannière séparatrice ── */}
         {!chargement && (
           <div style={{ margin: '16px 16px' }}>
