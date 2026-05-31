@@ -146,12 +146,40 @@ function Accueil() {
 
         {!chargement && (
           <div style={{ marginTop: 8 }}>
-            <BandeMatchs
-              matchs={matchs}
-              userId={user?.id}
-              onProno={faireProno}
-              onBadge={setNbPronosAttente}
-            />
+            {matchs.length === 0 ? (
+              <div style={{
+                margin: '8px 16px',
+                padding: '14px 16px',
+                background: 'var(--bg-1)',
+                borderWidth: 1, borderStyle: 'solid', borderColor: 'var(--border)',
+                borderRadius: 'var(--radius-md)',
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
+              }}>
+                <span style={{ fontSize: 13, color: 'var(--text-3)', lineHeight: 1.5 }}>
+                  Pas de match NBA dans les 3 prochains jours. Consulte le calendrier pour ne pas rater la prochaine affiche 👀
+                </span>
+                <button
+                  onClick={() => navigate('/calendrier')}
+                  style={{
+                    flexShrink: 0, fontSize: 12, fontWeight: 600,
+                    color: 'var(--accent)', background: 'var(--accent-dim)',
+                    borderWidth: 1, borderStyle: 'solid', borderColor: 'var(--accent-border)',
+                    borderRadius: 'var(--radius-sm)',
+                    paddingTop: 6, paddingBottom: 6, paddingLeft: 10, paddingRight: 10,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Calendrier
+                </button>
+              </div>
+            ) : (
+              <BandeMatchs
+                matchs={matchs}
+                userId={user?.id}
+                onProno={faireProno}
+                onBadge={setNbPronosAttente}
+              />
+            )}
           </div>
         )}
 
