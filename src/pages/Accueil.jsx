@@ -106,7 +106,7 @@ function Accueil() {
             background: 'var(--accent)',
           }} />
 
-          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', paddingLeft: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
             {/* Titre Teko — décalé vers le bas */}
             <div style={{ paddingTop: 4 }}>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 0 }}>
