@@ -31,6 +31,7 @@ function Navigation({ nbPronosAttente = 0 }) {
   const [estAdmin, setEstAdmin] = useState(false)
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
+      console.log('user id:', user?.id)
       setEstAdmin(user?.id === 'fa55d016-896c-4eb4-b48a-241d6be71ad0')
     })
   }, [])
