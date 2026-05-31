@@ -156,9 +156,12 @@ function Accueil() {
             <button
               onClick={() => navigate('/calendrier')}
               style={{
-                fontSize: 11, color: 'var(--text-3)', background: 'none',
-                borderWidth: 0, cursor: 'pointer',
-                display: 'flex', alignItems: 'center', gap: 4,
+                display: 'flex', alignItems: 'center', gap: 5,
+                background: 'none',
+                border: '1px solid var(--border)',
+                borderRadius: 'var(--radius-sm)',
+                padding: '4px 8px', cursor: 'pointer',
+                fontSize: 11, color: 'var(--text-3)', fontWeight: 600,
               }}
             >
               <Calendar size={12} strokeWidth={1.5} /> Calendrier

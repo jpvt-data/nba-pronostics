@@ -196,7 +196,7 @@ function CarteMatch({ match, prono, onProno, userId }) {
       style={{
         position: 'relative',
         width: '80vw', maxWidth: 320, minWidth: 260,
-        height: 200, flexShrink: 0,
+        height: 175, flexShrink: 0,
         cursor: 'pointer', overflow: 'hidden',
         opacity: noSpoil && termine ? 0.6 : 1,
       }}
@@ -230,84 +230,90 @@ function CarteMatch({ match, prono, onProno, userId }) {
 
       <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column' }}>
 
-        {/* Logos + score sur même ligne */}
-        <div style={{ display: 'flex', alignItems: 'center', flex: 1, padding: '10px 8px 0' }}>
+        {/* Logos seuls en haut */}
+        <div style={{ display: 'flex', alignItems: 'flex-start', flex: 1, padding: '10px 8px 0' }}>
 
           {/* EXT */}
           <div style={{
-            flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
-            opacity: pronoLocal && !extChoise ? 0.3 : 1,
-            transition: 'opacity 0.2s',
+            flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
+            opacity: pronoLocal && !extChoise ? 0.3 : 1, transition: 'opacity 0.2s',
           }}>
             <img src={ext.logo} style={{
               width: 90, height: 90, objectFit: 'contain',
               filter: `drop-shadow(0 4px 12px rgba(0,0,0,0.8))${extChoise ? ` drop-shadow(0 0 8px ${c1})` : ''}`,
             }} alt={ext.trigramme} />
-            <span style={{
-              fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 700,
-              color: extChoise ? c1 : 'rgba(255,255,255,0.75)',
-              letterSpacing: '0.06em',
-            }}>{ext.trigramme}</span>
           </div>
 
-          {/* Score ou heure — centré, aligné avec trigrammes */}
-          <div style={{ textAlign: 'center', minWidth: 90 }}>
+          {/* Centre vide — place pour le score en dessous */}
+          <div style={{ minWidth: 90 }} />
+
+          {/* DOM */}
+          <div style={{
+            flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
+            opacity: pronoLocal && !domChoise ? 0.3 : 1, transition: 'opacity 0.2s',
+          }}>
+            <img src={dom.logo} style={{
+              width: 90, height: 90, objectFit: 'contain',
+              filter: `drop-shadow(0 4px 12px rgba(0,0,0,0.8))${domChoise ? ` drop-shadow(0 0 8px ${c2})` : ''}`,
+            }} alt={dom.trigramme} />
+          </div>
+        </div>
+
+        {/* Ligne trigrammes + score — même niveau */}
+        <div style={{ display: 'flex', alignItems: 'center', padding: '2px 8px 0' }}>
+          <div style={{
+            flex: 1, textAlign: 'center',
+            opacity: pronoLocal && !extChoise ? 0.3 : 1, transition: 'opacity 0.2s',
+          }}>
+            <span style={{ fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 700, color: extChoise ? c1 : 'rgba(255,255,255,0.75)', letterSpacing: '0.06em' }}>{ext.trigramme}</span>
+          </div>
+
+          <div style={{ minWidth: 90, textAlign: 'center' }}>
             {(termine || enCours) && !noSpoil ? (
               <>
                 <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: 3 }}>
-                  <span style={{ fontFamily: 'var(--font-display)', fontSize: 42, fontWeight: 700, color: '#fff', lineHeight: 1, letterSpacing: '-0.02em' }}>{ext.score}</span>
-                  <span style={{ fontFamily: 'var(--font-display)', fontSize: 20, color: 'rgba(255,255,255,0.2)' }}>–</span>
-                  <span style={{ fontFamily: 'var(--font-display)', fontSize: 42, fontWeight: 700, color: '#fff', lineHeight: 1, letterSpacing: '-0.02em' }}>{dom.score}</span>
+                  <span style={{ fontFamily: 'var(--font-display)', fontSize: 38, fontWeight: 700, color: '#fff', lineHeight: 1, letterSpacing: '-0.02em' }}>{ext.score}</span>
+                  <span style={{ fontFamily: 'var(--font-display)', fontSize: 18, color: 'rgba(255,255,255,0.2)' }}>–</span>
+                  <span style={{ fontFamily: 'var(--font-display)', fontSize: 38, fontWeight: 700, color: '#fff', lineHeight: 1, letterSpacing: '-0.02em' }}>{dom.score}</span>
                 </div>
                 {enCours && (
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, marginTop: 4 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, marginTop: 2 }}>
                     <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#22c55e', boxShadow: '0 0 6px #22c55e', animation: 'blink 1.2s infinite', display: 'inline-block' }} />
                     <span style={{ fontFamily: 'var(--font-display)', fontSize: 10, color: '#22c55e', fontWeight: 700, letterSpacing: '0.12em' }}>LIVE</span>
                   </div>
                 )}
               </>
             ) : noSpoil && termine ? (
-              <span style={{ fontSize: 24 }}>🙈</span>
+              <span style={{ fontSize: 20 }}>🙈</span>
             ) : (
-              <div style={{ fontFamily: 'var(--font-display)', fontSize: 28, fontWeight: 700, color: '#fff', lineHeight: 1 }}>
+              <div style={{ fontFamily: 'var(--font-display)', fontSize: 24, fontWeight: 700, color: '#fff', lineHeight: 1 }}>
                 {formaterHeure(match.date)}
               </div>
             )}
           </div>
 
-          {/* DOM */}
           <div style={{
-            flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
-            opacity: pronoLocal && !domChoise ? 0.3 : 1,
-            transition: 'opacity 0.2s',
+            flex: 1, textAlign: 'center',
+            opacity: pronoLocal && !domChoise ? 0.3 : 1, transition: 'opacity 0.2s',
           }}>
-            <img src={dom.logo} style={{
-              width: 90, height: 90, objectFit: 'contain',
-              filter: `drop-shadow(0 4px 12px rgba(0,0,0,0.8))${domChoise ? ` drop-shadow(0 0 8px ${c2})` : ''}`,
-            }} alt={dom.trigramme} />
-            <span style={{
-              fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 700,
-              color: domChoise ? c2 : 'rgba(255,255,255,0.75)',
-              letterSpacing: '0.06em',
-            }}>{dom.trigramme}</span>
+            <span style={{ fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 700, color: domChoise ? c2 : 'rgba(255,255,255,0.75)', letterSpacing: '0.06em' }}>{dom.trigramme}</span>
           </div>
         </div>
 
-        {/* Bas — prono + stade */}
+        {/* Bas — prono + stade sur même ligne */}
         <div style={{ padding: '4px 10px 8px' }}>
-          {/* Stade */}
-          {match.stade && (
-            <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.22)', letterSpacing: '0.05em', textAlign: 'right', marginBottom: 4, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              {match.stade}
-            </div>
-          )}
-
-          {/* Boutons prono (matchs à venir) */}
           {aVenir && (
             <div onClick={e => e.stopPropagation()}>
-              {/* Label */}
-              <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.1em', marginBottom: 4 }}>
-                {pronoLocal ? `Mon prono · ${pronoLocal} ✓` : 'Ton prono ?'}
+              {/* Ligne lieu + label prono */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.1em' }}>
+                  {pronoLocal ? `Mon prono · ${pronoLocal} ✓` : 'Ton prono ?'}
+                </div>
+                {match.stade && (
+                  <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.22)', letterSpacing: '0.05em', textAlign: 'right', maxWidth: 110, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {match.stade}
+                  </div>
+                )}
               </div>
               <div style={{ display: 'flex', gap: 4 }}>
                 {[{ eq: ext, c: c1 }, { eq: dom, c: c2 }].map(({ eq, c }) => {
@@ -331,18 +337,27 @@ function CarteMatch({ match, prono, onProno, userId }) {
             </div>
           )}
 
-          {/* Résultat prono (matchs terminés/live) */}
-          {pronoLocal && !aVenir && (
-            <div style={{
-              display: 'inline-flex', alignItems: 'center', gap: 5,
-              padding: '3px 8px',
-              background: resultatProno === 'correct' ? 'rgba(34,197,94,0.15)' : resultatProno === 'incorrect' ? 'rgba(239,68,68,0.15)' : 'rgba(255,255,255,0.07)',
-              borderLeft: `3px solid ${resultatProno === 'correct' ? '#22c55e' : resultatProno === 'incorrect' ? '#ef4444' : 'rgba(255,255,255,0.2)'}`,
-            }}>
-              <span style={{ fontSize: 11 }}>{resultatProno === 'correct' ? '✅' : resultatProno === 'incorrect' ? '❌' : '🎯'}</span>
-              <span style={{ fontFamily: 'var(--font-display)', fontSize: 12, fontWeight: 700, color: '#fff', letterSpacing: '0.06em' }}>
-                Mon prono · {pronoLocal}
-              </span>
+          {/* Match terminé/live */}
+          {!aVenir && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              {pronoLocal ? (
+                <div style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 5,
+                  padding: '3px 8px',
+                  background: resultatProno === 'correct' ? 'rgba(34,197,94,0.15)' : resultatProno === 'incorrect' ? 'rgba(239,68,68,0.15)' : 'rgba(255,255,255,0.07)',
+                  borderLeft: `3px solid ${resultatProno === 'correct' ? '#22c55e' : resultatProno === 'incorrect' ? '#ef4444' : 'rgba(255,255,255,0.2)'}`,
+                }}>
+                  <span style={{ fontSize: 11 }}>{resultatProno === 'correct' ? '✅' : resultatProno === 'incorrect' ? '❌' : '🎯'}</span>
+                  <span style={{ fontFamily: 'var(--font-display)', fontSize: 12, fontWeight: 700, color: '#fff', letterSpacing: '0.06em' }}>
+                    Mon prono · {pronoLocal}
+                  </span>
+                </div>
+              ) : <div />}
+              {match.stade && (
+                <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.22)', letterSpacing: '0.05em', textAlign: 'right', maxWidth: 120, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {match.stade}
+                </div>
+              )}
             </div>
           )}
         </div>
