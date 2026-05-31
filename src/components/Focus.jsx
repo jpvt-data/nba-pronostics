@@ -132,12 +132,13 @@ function Focus({ userId, nbPronosAttente = 0 }) {
   const msg = messages[indexActif]
 
   return (
-    <div style={{ borderLeft: '3px solid var(--accent)', padding: '10px 16px 14px 16px' }}>
+    <div style={{
+      background: '#f5f5f0',
+      padding: '12px 16px 14px 16px',
+      margin: '0 0 0 0',
+    }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-          <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 22, color: 'var(--text-1)', letterSpacing: '0.02em', lineHeight: 1 }}>FO</span>
-          <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 22, color: 'var(--accent)', letterSpacing: '0.02em', lineHeight: 1 }}>CUS</span>
-        </div>
+        <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 22, color: '#0d0d12', letterSpacing: '0.02em', lineHeight: 1 }}>SPOT<span style={{ color: 'var(--accent)' }}>LIGHT</span></span>
         {messages.length > 1 && (
           <div style={{ display: 'flex', gap: 4 }}>
             {messages.map((_, i) => (
@@ -145,7 +146,7 @@ function Focus({ userId, nbPronosAttente = 0 }) {
                 width: i === indexActif ? 16 : 5,
                 height: 5,
                 borderRadius: 3,
-                background: i === indexActif ? 'var(--accent)' : 'var(--border-2)',
+                background: i === indexActif ? 'var(--accent)' : '#ccc',
                 transition: 'width 0.3s ease, background 0.3s ease',
               }} />
             ))}
@@ -155,18 +156,18 @@ function Focus({ userId, nbPronosAttente = 0 }) {
 
       <div style={{ minHeight: 44 }}>
         {chargement ? (
-          <p style={{ fontSize: 13, color: 'var(--text-3)', margin: 0 }}>…</p>
+          <p style={{ fontSize: 13, color: '#888', margin: 0 }}>…</p>
         ) : msg ? (
           <div style={{
             display: 'flex', alignItems: 'center', gap: 10,
             padding: '10px 12px',
-            background: 'rgba(255,255,255,0.02)',
+            background: 'rgba(0,0,0,0.04)',
             borderLeft: `3px solid ${msg.couleur}`,
             opacity: visible ? 1 : 0,
             transition: 'opacity 0.35s ease',
           }}>
             <span style={{ fontSize: 18, lineHeight: 1, flexShrink: 0 }}>{msg.icone}</span>
-            <span style={{ fontSize: 13, fontWeight: 500, color: msg.couleur, lineHeight: 1.4 }}>
+            <span style={{ fontSize: 13, fontWeight: 600, color: '#1a1a2e', lineHeight: 1.4 }}>
               {msg.texte}
             </span>
           </div>
