@@ -399,23 +399,36 @@ function BandeMatchs({ matchs, userId, onProno, onBadge, equipeFiltre, onFiltreC
     const charger = async () => {
       if (!userId || !matchs.length) return
 
-      // Charger tous les pronos + espn_id via jointure
-      const { data } = await supabase
+      // Étape 1 — tous les pronos de l'user
+      const { data: pronosData } = await supabase
         .from('pronos')
-        .select('equipe_choisie, resultat, match_id, matchs(espn_id)')
+        .select('equipe_choisie, resultat, match_id')
         .eq('user_id', userId)
 
-      const idx = {}
-      data?.forEach(p => {
-        const espnId = p.matchs?.espn_id
-        if (espnId) {
-          idx[espnId] = { equipe: p.equipe_choisie, resultat: p.resultat }
-        } else {
-          console.warn('Prono sans espn_id:', p)
-        }
-      })
-      setPronos(idx)
+      if (!pronosData?.length) {
+        if (onBadge) onBadge(matchs.filter(m => m.statut !== 'STATUS_FINAL' && m.statut !== 'STATUS_IN_PROGRESS').length)
+        return
+      }
 
+      // Étape 2 — récupérer les espn_id pour ces match_ids
+      const matchIds = pronosData.map(p => p.match_id).filter(Boolean)
+      const { data: matchsData } = await supabase
+        .from('matchs')
+        .select('id, espn_id')
+        .in('id', matchIds)
+
+      // Index match_id → espn_id
+      const matchIdx = {}
+      matchsData?.forEach(m => { matchIdx[m.id] = m.espn_id })
+
+      // Index espn_id → prono
+      const idx = {}
+      pronosData.forEach(p => {
+        const espnId = matchIdx[p.match_id]
+        if (espnId) idx[espnId] = { equipe: p.equipe_choisie, resultat: p.resultat }
+      })
+
+      setPronos(idx)
       const nbAttente = matchs.filter(m =>
         m.statut !== 'STATUS_FINAL' && m.statut !== 'STATUS_IN_PROGRESS' && !idx[m.espn_id]
       ).length
