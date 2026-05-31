@@ -398,15 +398,40 @@ function BandeMatchs({ matchs, userId, onProno, onBadge, equipeFiltre, onFiltreC
   useEffect(() => {
     const charger = async () => {
       if (!userId || !matchs.length) return
-      const { data } = await supabase
+
+      // 1. Pronos de l'user (sans jointure)
+      const { data: pronosData } = await supabase
         .from('pronos')
-        .select('equipe_choisie, resultat, matchs(espn_id)')
+        .select('equipe_choisie, resultat, match_id')
         .eq('user_id', userId)
+
+      if (!pronosData?.length) {
+        if (onBadge) onBadge(matchs.filter(m =>
+          m.statut !== 'STATUS_FINAL' && m.statut !== 'STATUS_IN_PROGRESS'
+        ).length)
+        return
+      }
+
+      // 2. Matchs Supabase correspondants
+      const matchIds = [...new Set(pronosData.map(p => p.match_id).filter(Boolean))]
+      const { data: matchsSupabase } = await supabase
+        .from('matchs')
+        .select('id, espn_id')
+        .in('id', matchIds)
+
+      // 3. Index match_id → espn_id
+      const matchIdx = {}
+      matchsSupabase?.forEach(m => { matchIdx[m.id] = m.espn_id })
+
+      // 4. Index espn_id → prono (premier prono trouvé par match)
       const idx = {}
-      matchs.forEach(m => {
-        const found = data?.find(p => p.matchs?.espn_id === m.espn_id)
-        if (found) idx[m.espn_id] = { equipe: found.equipe_choisie, resultat: found.resultat }
+      pronosData.forEach(p => {
+        const espnId = matchIdx[p.match_id]
+        if (espnId && !idx[espnId]) {
+          idx[espnId] = { equipe: p.equipe_choisie, resultat: p.resultat }
+        }
       })
+
       setPronos(idx)
       const nbAttente = matchs.filter(m =>
         m.statut !== 'STATUS_FINAL' && m.statut !== 'STATUS_IN_PROGRESS' && !idx[m.espn_id]
