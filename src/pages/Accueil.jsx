@@ -109,9 +109,6 @@ function Accueil() {
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', paddingLeft: 12 }}>
             {/* Titre Teko — décalé vers le bas */}
             <div style={{ paddingTop: 4 }}>
-              <p style={{ fontSize: 10, color: 'var(--text-3)', letterSpacing: '0.18em', textTransform: 'uppercase', marginBottom: 4 }}>
-                Pronostique · Clashe · Règne
-              </p>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 0 }}>
                 <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 36, color: 'var(--text-1)', letterSpacing: '0.02em', lineHeight: 1 }}>
                   Bonjour{' '}
