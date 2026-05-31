@@ -45,16 +45,37 @@ async function genererEvenements(userId) {
       else break
     }
 
-    if (streak < 2) continue
+    // Série en cours ≥ 2
+    if (streak >= 2) {
+      const feu = dernier === 'correct'
+      evenements.push({
+        icone: feu ? '🔥' : '❄️',
+        texte: feu
+          ? `${pseudo} est sur une série de ${streak} pronos réussis !`
+          : `${pseudo} est sur une série de ${streak} pronos ratés ! Aïe aïe !`,
+        couleur: feu ? 'var(--success)' : 'var(--danger)',
+      })
+      continue
+    }
 
-    const feu = dernier === 'correct'
-    evenements.push({
-      icone: feu ? '🔥' : '❄️',
-      texte: feu
-        ? `${pseudo} est sur une série de ${streak} pronos réussis !`
-        : `${pseudo} est sur une série de ${streak} pronos ratés ! Aïe aïe !`,
-      couleur: feu ? 'var(--success)' : 'var(--danger)',
-    })
+    // Série cassée — vérifier si avant le dernier prono il y avait une série ≥ 2
+    if (pronos.length >= 3) {
+      const avantDernier = pronos[1].resultat
+      let streakPrecedent = 0
+      for (let i = 1; i < pronos.length; i++) {
+        if (pronos[i].resultat === avantDernier) streakPrecedent++
+        else break
+      }
+
+      // Série précédente ≥ 2 correcte, maintenant cassée
+      if (streakPrecedent >= 2 && avantDernier === 'correct' && dernier === 'incorrect') {
+        evenements.push({
+          icone: '💔',
+          texte: `${pseudo} vient de briser sa série de ${streakPrecedent} pronos réussis ! Aïe !`,
+          couleur: 'var(--orange)',
+        })
+      }
+    }
   }
 
   return evenements
