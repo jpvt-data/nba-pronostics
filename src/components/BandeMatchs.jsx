@@ -398,15 +398,14 @@ function BandeMatchs({ matchs, userId, onProno, onBadge, equipeFiltre, onFiltreC
   useEffect(() => {
     const charger = async () => {
       if (!userId || !matchs.length) return
-      const espnIds = matchs.map(m => m.espn_id)
       const { data } = await supabase
         .from('pronos')
         .select('equipe_choisie, resultat, matchs(espn_id)')
         .eq('user_id', userId)
       const idx = {}
-      data?.forEach(p => {
-        if (p.matchs && espnIds.includes(p.matchs.espn_id))
-          idx[p.matchs.espn_id] = { equipe: p.equipe_choisie, resultat: p.resultat }
+      matchs.forEach(m => {
+        const found = data?.find(p => p.matchs?.espn_id === m.espn_id)
+        if (found) idx[m.espn_id] = { equipe: found.equipe_choisie, resultat: found.resultat }
       })
       setPronos(idx)
       const nbAttente = matchs.filter(m =>
