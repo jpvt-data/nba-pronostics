@@ -4,7 +4,7 @@ import { recupererTimeline } from '../services/espn'
 import { recupererLiguesCibles } from '../services/ligues'
 import { calculerPoints } from '../services/points'
 import Navigation from '../components/Navigation'
-import BandeMatchs from '../components/BandeMatchs'
+import BandeMatchs, { FiltreEquipe } from '../components/BandeMatchs'
 import ClassementRapide from '../components/ClassementRapide'
 import PronosAttente from '../components/PronosAttente'
 import Focus from '../components/Focus'
@@ -26,6 +26,7 @@ function Accueil() {
   const [pseudo, setPseudo]               = useState(null)
   const [chargement, setCharg]            = useState(true)
   const [nbPronosAttente, setNbPronosAttente] = useState(0)
+  const [equipeFiltre, setEquipeFiltre] = useState(null)
   const navigate = useNavigate()
   const { noSpoil, toggleNoSpoil } = useNoSpoil()
 
@@ -144,22 +145,25 @@ function Accueil() {
           <Focus userId={user.id} nbPronosAttente={nbPronosAttente} />
         )}
 
-        {/* ── 2. Le Fil ── */}
-        <div style={{ padding: '20px 16px 0', display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
+        {/* ── 2. Timeline ── */}
+        <div style={{ padding: '20px 16px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
             <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 28, color: 'var(--text-1)', letterSpacing: '0.02em', lineHeight: 1 }}>TIME</span>
             <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 28, color: 'var(--accent)', letterSpacing: '0.02em', lineHeight: 1 }}>LINE</span>
           </div>
-          <button
-            onClick={() => navigate('/calendrier')}
-            style={{
-              fontSize: 11, color: 'var(--text-3)', background: 'none',
-              borderWidth: 0, cursor: 'pointer',
-              display: 'flex', alignItems: 'center', gap: 4,
-            }}
-          >
-            <Calendar size={12} strokeWidth={1.5} /> Calendrier complet
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <FiltreEquipe equipeFiltre={equipeFiltre} onSelect={setEquipeFiltre} />
+            <button
+              onClick={() => navigate('/calendrier')}
+              style={{
+                fontSize: 11, color: 'var(--text-3)', background: 'none',
+                borderWidth: 0, cursor: 'pointer',
+                display: 'flex', alignItems: 'center', gap: 4,
+              }}
+            >
+              <Calendar size={12} strokeWidth={1.5} /> Calendrier
+            </button>
+          </div>
         </div>
 
         {chargement && (
@@ -200,6 +204,8 @@ function Accueil() {
                 userId={user?.id}
                 onProno={faireProno}
                 onBadge={setNbPronosAttente}
+                equipeFiltre={equipeFiltre}
+                onFiltreChange={setEquipeFiltre}
               />
             )}
           </div>
