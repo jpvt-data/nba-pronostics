@@ -88,7 +88,7 @@ function CarteMatch({ match, prono, onProno, userId }) {
         width: '80vw',
         maxWidth: 320,
         minWidth: 260,
-        height: 220,
+        height: 200,
         flexShrink: 0,
         cursor: 'pointer',
         overflow: 'hidden',
@@ -131,10 +131,10 @@ function CarteMatch({ match, prono, onProno, userId }) {
       <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column' }}>
 
         {/* Haut — logos nets + trigrammes */}
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '10px 12px 0' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '4px 8px 0' }}>
           {/* EXT gauche */}
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 4 }}>
-            <img src={ext.logo} style={{ width: 80, height: 80, objectFit: 'contain', filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.8))' }} alt="" />
+            <img src={ext.logo} style={{ width: 100, height: 100, objectFit: 'contain', filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.8))', marginTop: -8, marginLeft: -4 }} alt="" />
             <span style={{ fontFamily: 'var(--font-display)', fontSize: 14, fontWeight: 700, color: 'rgba(255,255,255,0.7)', letterSpacing: '0.06em' }}>{ext.trigramme}</span>
           </div>
 
@@ -170,7 +170,7 @@ function CarteMatch({ match, prono, onProno, userId }) {
 
           {/* DOM droite */}
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
-            <img src={dom.logo} style={{ width: 80, height: 80, objectFit: 'contain', filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.8))' }} alt="" />
+            <img src={dom.logo} style={{ width: 100, height: 100, objectFit: 'contain', filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.8))', marginTop: -8, marginRight: -4 }} alt="" />
             <span style={{ fontFamily: 'var(--font-display)', fontSize: 14, fontWeight: 700, color: 'rgba(255,255,255,0.7)', letterSpacing: '0.06em' }}>{dom.trigramme}</span>
           </div>
         </div>
