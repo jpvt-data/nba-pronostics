@@ -114,7 +114,7 @@ function Classement() {
   const [statsParLigue, setStatsLigue] = useState({})
   const [classementGeneralFiltre, setGeneralFiltre] = useState([])
   const [gagnantsSemPrev, setGagnants] = useState([])
-  const [filtre, setFiltre]            = useState('semaine')
+  const [filtre, setFiltre]            = useState('annee')
   const [chargement, setCharg]         = useState(true)
   const [moi, setMoi]                  = useState(null)
   const navigate = useNavigate()
@@ -381,7 +381,7 @@ function Classement() {
             {/* ── Classement général ── */}
             <div style={{ borderLeft: '3px solid var(--accent)', padding: '12px 16px 16px 16px', marginTop: 8 }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                <TitreSection mot1="GÉNÉRAL" mot2={filtre === 'annee' ? `${labelAnneeNBA()}` : filtre === 'mois' ? 'MOIS' : 'SEMAINE'} taille={20} />
+                <TitreSection mot1="TOTAL" mot2={filtre === 'annee' ? `${labelAnneeNBA()}` : filtre === 'mois' ? 'MOIS' : 'SEMAINE'} taille={20} />
                 {/* Toggle */}
                 <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
                   {['semaine', 'mois', 'annee'].map(f => (
