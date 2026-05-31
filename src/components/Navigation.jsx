@@ -194,7 +194,7 @@ function Navigation({ nbPronosAttente = 0 }) {
               <button key={chemin} onClick={() => aller(chemin)} style={{
                 display: 'flex', alignItems: 'center', gap: 6,
                 background: 'none', borderWidth: 0,
-                color: actif ? '#0d0d12' : '#888',
+                color: actif ? '#0d0d12' : '#333',
                 fontWeight: actif ? 600 : 400, fontSize: 13, cursor: 'pointer',
                 paddingTop: 5, paddingBottom: 5, paddingLeft: 12, paddingRight: 12,
                 borderRadius: 'var(--radius-sm)',
