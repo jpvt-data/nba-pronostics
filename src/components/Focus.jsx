@@ -49,18 +49,33 @@ async function genererMessages(userId, nbPronosAttente) {
   }
 
   if (streak >= 2 && typeStreak === 'correct') {
-    messages.push({
-      icone: '🔥',
-      texte: `Tu es sur une série de ${streak} pronos réussis, continue !`,
-      couleur: 'var(--success)',
-    })
-  } else if (streak >= 2 && typeStreak === 'incorrect') {
-    messages.push({
-      icone: '💪',
-      texte: `${streak} ratés d'affilée — tu vas renverser ça !`,
-      couleur: 'var(--danger)',
-    })
-  }
+      messages.push({
+        icone: '🔥',
+        texte: `Tu es sur une série de ${streak} pronos réussis, continue !`,
+        couleur: 'var(--success)',
+      })
+    } else if (streak >= 2 && typeStreak === 'incorrect') {
+      messages.push({
+        icone: '💪',
+        texte: `${streak} ratés d'affilée — tu vas renverser ça !`,
+        couleur: 'var(--danger)',
+      })
+    } else if (streak === 1 && typeStreak === 'incorrect' && derniers?.length >= 3) {
+      // Dernier = raté, vérifier si avant il y avait une série ≥ 2 correcte
+      const avantDernier = derniers[1].resultat
+      let streakPrecedent = 0
+      for (let i = 1; i < derniers.length; i++) {
+        if (derniers[i].resultat === avantDernier) streakPrecedent++
+        else break
+      }
+      if (streakPrecedent >= 2 && avantDernier === 'correct') {
+        messages.push({
+          icone: '💔',
+          texte: `Tu viens de briser ta série de ${streakPrecedent} pronos réussis ! Ça arrive 😤`,
+          couleur: 'var(--orange)',
+        })
+      }
+    }
 
   // 4. Win rate global
   const { data: tous } = await supabase
