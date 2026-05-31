@@ -227,32 +227,29 @@ export const recupererTimeline = async (joursAvant = 15, joursApres = 15) => {
 
   const debut = new Date(aujourdhui)
   debut.setDate(aujourdhui.getDate() - joursAvant)
+  debut.setHours(0, 0, 0, 0)
 
   const fin = new Date(aujourdhui)
   fin.setDate(aujourdhui.getDate() + joursApres)
+  fin.setHours(23, 59, 59, 999)
 
-  // Construit les plages par mois pour éviter des appels trop larges
+  // Construit les plages par mois calendaire
   const plages = []
-  const curseur = new Date(debut)
-  while (curseur <= fin) {
-    const debutPlage = new Date(curseur)
-    // Fin de plage = fin du mois courant ou fin de la fenêtre
-    const finMois = new Date(curseur.getFullYear(), curseur.getMonth() + 1, 0)
-    const finPlage = finMois < fin ? finMois : fin
-    plages.push(`${formaterDate(debutPlage)}-${formaterDate(finPlage)}`)
-    curseur.setDate(finPlage.getDate() + 1)
-    curseur.setMonth(finPlage.getMonth())
-    if (finPlage.getMonth() !== debutPlage.getMonth()) {
-      curseur.setMonth(finPlage.getMonth() + 1)
-      curseur.setDate(1)
-    } else {
-      break
-    }
+  let moisCurseur = new Date(debut.getFullYear(), debut.getMonth(), 1)
+  const moisFin   = new Date(fin.getFullYear(), fin.getMonth(), 1)
+
+  while (moisCurseur <= moisFin) {
+    const debutMois = new Date(moisCurseur)
+    const finMois   = new Date(moisCurseur.getFullYear(), moisCurseur.getMonth() + 1, 0)
+    const d1 = formaterDate(debutMois > debut ? debutMois : debut)
+    const d2 = formaterDate(finMois   < fin   ? finMois   : fin)
+    plages.push(`${d1}-${d2}`)
+    moisCurseur.setMonth(moisCurseur.getMonth() + 1)
   }
 
   const resultats = await Promise.allSettled(
     plages.map(plage =>
-      fetchAvecTimeout(`${BASE_URL}/scoreboard?dates=${plage}&limit=200`).then(r => r.json())
+      fetchAvecTimeout(`${BASE_URL}/scoreboard?dates=${plage}&limit=500`).then(r => r.json())
     )
   )
 
@@ -263,25 +260,24 @@ export const recupererTimeline = async (joursAvant = 15, joursApres = 15) => {
       return
     }
     ;(res.value.events || []).forEach(evt => {
-      const comp  = evt.competitions[0]
-      const dom   = comp.competitors.find(c => c.homeAway === 'home')
-      const ext   = comp.competitors.find(c => c.homeAway === 'away')
-      const venue = comp.venue
+      const comp      = evt.competitions[0]
+      const dom       = comp.competitors.find(c => c.homeAway === 'home')
+      const ext       = comp.competitors.find(c => c.homeAway === 'away')
+      const venue     = comp.venue
       const dateMatch = new Date(evt.date)
-      // Filtre strict sur la fenêtre
       if (dateMatch < debut || dateMatch > fin) return
 
       matchs.push({
-        espn_id:        evt.id,
-        date:           evt.date,
-        statut:         comp.status.type.name,
-        saison:         evt.season?.year ? `${evt.season.year - 1}-${String(evt.season.year).slice(2)}` : null,
-        typeSaison:     TYPE_SAISON[evt.season?.type] || null,
-        saisonNum:      evt.season?.year ?? null,
-        typeSaisonNum:  evt.season?.type ?? null,
-        stade:          venue?.fullName || null,
-        ville:          venue?.address?.city || null,
-        canal:          comp.broadcasts?.[0]?.names?.[0] || null,
+        espn_id:       evt.id,
+        date:          evt.date,
+        statut:        comp.status.type.name,
+        saison:        evt.season?.year ? `${evt.season.year - 1}-${String(evt.season.year).slice(2)}` : null,
+        typeSaison:    TYPE_SAISON[evt.season?.type] || null,
+        saisonNum:     evt.season?.year ?? null,
+        typeSaisonNum: evt.season?.type ?? null,
+        stade:         venue?.fullName || null,
+        ville:         venue?.address?.city || null,
+        canal:         comp.broadcasts?.[0]?.names?.[0] || null,
         domicile: {
           nom:            dom.team.displayName,
           trigramme:      dom.team.abbreviation,
@@ -302,7 +298,6 @@ export const recupererTimeline = async (joursAvant = 15, joursApres = 15) => {
     })
   })
 
-  // Tri chronologique
   matchs.sort((a, b) => new Date(a.date) - new Date(b.date))
   return matchs
 }
