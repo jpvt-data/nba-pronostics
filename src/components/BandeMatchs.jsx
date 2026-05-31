@@ -231,7 +231,7 @@ function CarteMatch({ match, prono, onProno, userId }) {
       <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column' }}>
 
         {/* Logos seuls en haut */}
-        <div style={{ display: 'flex', alignItems: 'flex-start', flex: 1, padding: '10px 8px 0' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-end', padding: '6px 8px 0' }}>
 
           {/* EXT */}
           <div style={{
