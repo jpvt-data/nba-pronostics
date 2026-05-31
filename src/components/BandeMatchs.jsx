@@ -337,8 +337,8 @@ function BandeMatchs({ matchs, userId, onProno, onBadge, equipeFiltre, onFiltreC
   const aujourdhui = new Date().toISOString().slice(0, 10)
   let jourCible = groupes.find(([j]) => j === aujourdhui)?.[0]
   if (!jourCible) {
-    const passes = groupes.filter(([j]) => j < aujourdhui)
-    jourCible = passes.length ? passes[passes.length - 1][0] : groupes[0]?.[0]
+    const futurs = groupes.filter(([j]) => j > aujourdhui)
+    jourCible = futurs.length ? futurs[0][0] : groupes[0]?.[0]
   }
 
   if (!groupes.length) return (
