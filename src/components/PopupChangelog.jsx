@@ -9,11 +9,12 @@ const CLE_STORAGE = `popup_vu_${VERSION_COURANTE}`
 function PopupChangelog({ forceOuvert = false, onFermer }) {
   const [visible, setVisible]     = useState(false)
   const [message, setMessage]     = useState(null)
+  const [pseudo, setPseudo]       = useState(null)
   const { noSpoil, toggleNoSpoil } = useNoSpoil()
 
   useEffect(() => {
     if (forceOuvert) { setVisible(true); return }
-    localStorage.removeItem(CLE_STORAGE) // toujours visible en dev
+    localStorage.removeItem(CLE_STORAGE)
     setVisible(true)
   }, [forceOuvert])
 
@@ -22,6 +23,12 @@ function PopupChangelog({ forceOuvert = false, onFermer }) {
     const chargerMessage = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
+
+      // Récupérer le pseudo
+      const { data: profil } = await supabase
+        .from('profils').select('pseudo').eq('id', user.id).single()
+      setPseudo(profil?.pseudo || null)
+
       const { count } = await supabase
         .from('pronos')
         .select('id', { count: 'exact', head: true })
@@ -62,21 +69,32 @@ function PopupChangelog({ forceOuvert = false, onFermer }) {
 
         {/* Header */}
         <div style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           padding: '14px 16px',
           borderBottomWidth: 1, borderBottomStyle: 'solid', borderBottomColor: '#1e1e2e',
         }}>
-          {/* Logo texte style navbar */}
-          <span style={{
-            fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 20, letterSpacing: '0.06em',
-            background: 'linear-gradient(90deg, var(--accent), var(--orange))',
-            WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
-          }}>
-            SWISH LEAGUE
-          </span>
-          <button onClick={fermer} style={{ background: 'none', borderWidth: 0, color: '#4a4a6a', cursor: 'pointer', padding: 4 }}>
-            <X size={18} />
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span style={{
+              fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 20, letterSpacing: '0.06em',
+              background: 'linear-gradient(90deg, var(--accent), var(--orange))',
+              WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
+            }}>
+              SWISH LEAGUE
+            </span>
+            <button onClick={fermer} style={{ background: 'none', borderWidth: 0, color: '#4a4a6a', cursor: 'pointer', padding: 4 }}>
+              <X size={18} />
+            </button>
+          </div>
+
+          {/* Welcome back */}
+          {pseudo && (
+            <p style={{
+              margin: '6px 0 0', fontSize: 12,
+              color: 'var(--text-3)', lineHeight: 1.4,
+            }}>
+              👋 Content de te revoir,{' '}
+              <span style={{ color: 'var(--accent)', fontWeight: 700 }}>{pseudo}</span> !
+            </p>
+          )}
         </div>
 
         <div style={{ padding: '14px 16px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
