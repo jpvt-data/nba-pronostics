@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { Home, Trophy, BarChart2, Menu, X, Swords, LogOut, Calendar, Sparkles, EyeOff, TrendingUp, Shield } from 'lucide-react'
@@ -6,7 +6,6 @@ import { useNoSpoil } from '../context/NoSpoilContext'
 import { useProfil } from '../context/ProfilContext'
 import { Avatar } from '../components/Avatar'
 import swishLogo from '../assets/swish_league_logo.png'
-import { useState, useEffect } from 'react'
 
 const LIENS = [
   { chemin: '/accueil',    label: 'Board',      Icone: Home },
@@ -31,7 +30,6 @@ function Navigation({ nbPronosAttente = 0 }) {
   const [estAdmin, setEstAdmin] = useState(false)
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
-      console.log('user id:', user?.id)
       setEstAdmin(user?.id === 'fa55d016-896c-4eb4-b48a-241d6be71ad0')
     })
   }, [])
