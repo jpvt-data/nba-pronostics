@@ -236,7 +236,7 @@ function CarteMatch({ match, prono, onProno, userId }) {
           {/* EXT — logo centré au-dessus du trigramme */}
           <div style={{
             flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
-            opacity: pronoLocal && !extChoise ? 0.3 : 1, transition: 'opacity 0.2s',
+            opacity: pronoLocal && !extChoise ? 0.6 : 1, transition: 'opacity 0.2s',
           }}>
             <img src={ext.logo} style={{
               width: 80, height: 80, objectFit: 'contain',
@@ -276,7 +276,7 @@ function CarteMatch({ match, prono, onProno, userId }) {
           {/* DOM — logo centré au-dessus du trigramme */}
           <div style={{
             flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
-            opacity: pronoLocal && !domChoise ? 0.3 : 1, transition: 'opacity 0.2s',
+            opacity: pronoLocal && !domChoise ? 0.6 : 1, transition: 'opacity 0.2s',
           }}>
             <img src={dom.logo} style={{
               width: 80, height: 80, objectFit: 'contain',
@@ -329,19 +329,26 @@ function CarteMatch({ match, prono, onProno, userId }) {
           {/* Match terminé/live */}
           {!aVenir && (
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              {pronoLocal ? (
-                <div style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 5,
-                  padding: '3px 8px',
-                  background: resultatProno === 'correct' ? 'rgba(34,197,94,0.15)' : resultatProno === 'incorrect' ? 'rgba(239,68,68,0.15)' : 'rgba(255,255,255,0.07)',
-                  borderLeft: `3px solid ${resultatProno === 'correct' ? '#22c55e' : resultatProno === 'incorrect' ? '#ef4444' : 'rgba(255,255,255,0.2)'}`,
-                }}>
-                  <span style={{ fontSize: 11 }}>{resultatProno === 'correct' ? '✅' : resultatProno === 'incorrect' ? '❌' : '🎯'}</span>
-                  <span style={{ fontFamily: 'var(--font-display)', fontSize: 12, fontWeight: 700, color: '#fff', letterSpacing: '0.06em' }}>
-                    Mon prono · {pronoLocal}
-                  </span>
-                </div>
-              ) : <div />}
+              <div style={{
+                display: 'inline-flex', alignItems: 'center', gap: 5,
+                padding: '3px 0',
+              }}>
+                {resultatProno === 'correct' && <>
+                  <span style={{ fontSize: 11 }}>✅</span>
+                  <span style={{ fontFamily: 'var(--font-display)', fontSize: 12, fontWeight: 700, color: '#22c55e', letterSpacing: '0.04em' }}>Pronostic correct !</span>
+                </>}
+                {resultatProno === 'incorrect' && <>
+                  <span style={{ fontSize: 11 }}>❌</span>
+                  <span style={{ fontFamily: 'var(--font-display)', fontSize: 12, fontWeight: 700, color: '#ef4444', letterSpacing: '0.04em' }}>Pronostic raté !</span>
+                </>}
+                {!pronoLocal && (
+                  <span style={{ fontFamily: 'var(--font-display)', fontSize: 12, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.04em' }}>Non pronostiqué</span>
+                )}
+                {pronoLocal && !resultatProno && <>
+                  <span style={{ fontSize: 11 }}>🎯</span>
+                  <span style={{ fontFamily: 'var(--font-display)', fontSize: 12, fontWeight: 700, color: '#fff', letterSpacing: '0.04em' }}>Mon prono · {pronoLocal}</span>
+                </>}
+              </div>
               {match.stade && (
                 <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.22)', letterSpacing: '0.05em', textAlign: 'right', maxWidth: 120, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                   {match.stade}
