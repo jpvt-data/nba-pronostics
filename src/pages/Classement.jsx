@@ -56,7 +56,7 @@ function plageSemanePrecedente() {
 
 // ── Titre de section bicolore Teko ────────────────────
 const TitreSection = ({ mot1, mot2, couleur2 = 'var(--accent)', taille = 22 }) => (
-  <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 10 }}>
+  <div style={{ display: 'flex', alignItems: 'baseline', gap: 0, marginBottom: 10 }}>
     <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: taille, color: 'var(--text-1)', letterSpacing: '0.02em', lineHeight: 1 }}>{mot1}</span>
     <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: taille, color: couleur2, letterSpacing: '0.02em', lineHeight: 1 }}>{mot2}</span>
   </div>
@@ -194,8 +194,7 @@ function Classement() {
         .select('user_id, points, profils(pseudo, avatar_url)')
         .eq('semaine_iso', semaineISO(plageSemanePrecedente().debut))
       if (gagnantsPrev?.length > 0) {
-        const maxPts = Math.max(...gagnantsPrev.map(g => g.points))
-        setGagnants(gagnantsPrev.filter(g => g.points === maxPts))
+        setGagnants(gagnantsPrev)
       }
 
       setCharg(false)
@@ -268,8 +267,10 @@ function Classement() {
         if (p.resultat === 'correct') pts[p.user_id] += (p.points_gagnes || 1)
       })
       if (!Object.keys(pts).length) continue
-      const [gagnantId, maxPts] = Object.entries(pts).sort((a, b) => b[1] - a[1])[0]
+      const entries = Object.entries(pts).sort((a, b) => b[1] - a[1])
+      const [gagnantId, maxPts] = entries[0]
       if (maxPts === 0) continue
+      if (entries.filter(([, p]) => p === maxPts).length > 1) continue  // ex-aequo → pas de MVP
       await supabase.from('semaines_gagnees').insert({ user_id: gagnantId, groupe_id: gid, semaine_iso: iso, points: maxPts })
     }
   }
@@ -367,9 +368,6 @@ function Classement() {
                       <Avatar url={g.profils?.avatar_url} pseudo={g.profils?.pseudo} taille={32} fontSize={11} />
                       <span style={{ flex: 1, fontSize: 14, fontWeight: 600, color: 'var(--text-1)' }}>
                         {g.profils?.pseudo || 'Inconnu'}
-                        {gagnantsSemPrev.length > 1 && (
-                          <span style={{ fontSize: 11, color: 'var(--text-3)', marginLeft: 8 }}>ex-aequo</span>
-                        )}
                       </span>
                       <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 20, color: 'var(--gold)' }}>
                         {g.points}<span style={{ fontSize: 10, color: 'var(--text-3)', marginLeft: 2 }}>pts</span>
