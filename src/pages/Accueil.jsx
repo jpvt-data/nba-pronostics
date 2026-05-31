@@ -141,9 +141,7 @@ function Accueil() {
 
         {/* ── 1. Focus — spotlight perso ── */}
         {!chargement && user && (
-          <div style={{ padding: '12px 16px 0' }}>
-            <Focus userId={user.id} nbPronosAttente={nbPronosAttente} />
-          </div>
+          <Focus userId={user.id} nbPronosAttente={nbPronosAttente} />
         )}
 
         {/* ── 2. Prochains matchs ── */}

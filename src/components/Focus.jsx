@@ -135,42 +135,38 @@ function Focus({ userId, nbPronosAttente = 0 }) {
     <div style={{
       background: '#f5f5f0',
       padding: '12px 16px 14px 16px',
-      margin: '0 0 0 0',
+      marginTop: 12, marginBottom: 4,
     }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-        <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 22, color: '#0d0d12', letterSpacing: '0.02em', lineHeight: 1 }}>SPOT<span style={{ color: 'var(--accent)' }}>LIGHT</span></span>
-        {messages.length > 1 && (
-          <div style={{ display: 'flex', gap: 4 }}>
-            {messages.map((_, i) => (
-              <div key={i} style={{
-                width: i === indexActif ? 16 : 5,
-                height: 5,
-                borderRadius: 3,
-                background: i === indexActif ? 'var(--accent)' : '#ccc',
-                transition: 'width 0.3s ease, background 0.3s ease',
-              }} />
-            ))}
-          </div>
-        )}
-      </div>
-
       <div style={{ minHeight: 44 }}>
         {chargement ? (
           <p style={{ fontSize: 13, color: '#888', margin: 0 }}>…</p>
         ) : msg ? (
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: 10,
-            padding: '10px 12px',
-            background: 'rgba(0,0,0,0.04)',
-            borderLeft: `3px solid ${msg.couleur}`,
-            opacity: visible ? 1 : 0,
-            transition: 'opacity 0.35s ease',
-          }}>
-            <span style={{ fontSize: 18, lineHeight: 1, flexShrink: 0 }}>{msg.icone}</span>
-            <span style={{ fontSize: 13, fontWeight: 600, color: '#1a1a2e', lineHeight: 1.4 }}>
-              {msg.texte}
-            </span>
-          </div>
+          <>
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 10,
+              padding: '10px 12px',
+              background: 'rgba(0,0,0,0.04)',
+              borderLeft: `3px solid ${msg.couleur}`,
+              opacity: visible ? 1 : 0,
+              transition: 'opacity 0.35s ease',
+            }}>
+              <span style={{ fontSize: 18, lineHeight: 1, flexShrink: 0 }}>{msg.icone}</span>
+              <span style={{ fontSize: 13, fontWeight: 600, color: '#1a1a2e', lineHeight: 1.4 }}>
+                {msg.texte}
+              </span>
+            </div>
+            {messages.length > 1 && (
+              <div style={{ display: 'flex', gap: 4, marginTop: 8, paddingLeft: 2 }}>
+                {messages.map((_, i) => (
+                  <div key={i} style={{
+                    width: i === indexActif ? 16 : 5, height: 4, borderRadius: 2,
+                    background: i === indexActif ? 'var(--accent)' : '#ccc',
+                    transition: 'width 0.3s ease',
+                  }} />
+                ))}
+              </div>
+            )}
+          </>
         ) : null}
       </div>
     </div>
