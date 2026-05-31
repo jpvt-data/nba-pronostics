@@ -6,6 +6,7 @@ import { useNoSpoil } from '../context/NoSpoilContext'
 import { useProfil } from '../context/ProfilContext'
 import { Avatar } from '../components/Avatar'
 import swishLogo from '../assets/swish_league_logo.png'
+import { useState, useEffect } from 'react'
 
 const LIENS = [
   { chemin: '/accueil',    label: 'Board',      Icone: Home },
@@ -27,7 +28,12 @@ function Navigation({ nbPronosAttente = 0 }) {
   const [ouvert, setOuvert]     = useState(false)
   const { noSpoil, toggleNoSpoil } = useNoSpoil()
   const { profil } = useProfil()
-  const estAdmin = profil?.id === 'fa55d016-896c-4eb4-b48a-241d6be71ad0'
+  const [estAdmin, setEstAdmin] = useState(false)
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setEstAdmin(user?.id === 'fa55d016-896c-4eb4-b48a-241d6be71ad0')
+    })
+  }, [])
 
   const deconnecter = async () => { await supabase.auth.signOut(); setOuvert(false) }
   const aller = (chemin) => { navigate(chemin); setOuvert(false) }
