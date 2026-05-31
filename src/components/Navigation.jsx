@@ -44,7 +44,7 @@ function Navigation({ nbPronosAttente = 0 }) {
         <span style={{ fontFamily: "'Teko', system-ui, sans-serif", fontWeight: 600, fontSize: size * 1.6, color: 'var(--nav-text)', letterSpacing: '0.02em', lineHeight: 1 }}>SWISH</span>
         <span style={{ fontFamily: "'Teko', system-ui, sans-serif", fontWeight: 600, fontSize: size * 1.6, color: 'var(--accent)', letterSpacing: '0.02em', lineHeight: 1 }}>LEAGUE</span>
       </div>
-      <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 8, fontWeight: 500, color: 'var(--nav-text-dim)', letterSpacing: '0.18em', textTransform: 'uppercase', lineHeight: 1, marginTop: 0 }}>Pronostique · Clashe · Règne</span>
+      <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 8, fontWeight: 500, color: 'var(--nav-text-dim)', letterSpacing: '0.18em', textTransform: 'uppercase', lineHeight: 1, marginTop: -3 }}>Pronostique · Clashe · Règne</span>
     </div>
   )
 
@@ -181,7 +181,7 @@ function Navigation({ nbPronosAttente = 0 }) {
         ...navBase, top: 0, height: 52,
         background: 'var(--nav-bg)',
         borderBottomWidth: 1, borderBottomStyle: 'solid', borderBottomColor: 'var(--nav-border)',
-        alignItems: 'center', justifyContent: 'space-between', padding: '0 20px 0 12px',
+        alignItems: 'center', justifyContent: 'space-between', padding: '0 20px 0 8px',
         boxShadow: '0 1px 0 rgba(0,0,0,0.06)',
       }}>
         <div onClick={() => navigate('/accueil')} style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
@@ -240,7 +240,7 @@ function Navigation({ nbPronosAttente = 0 }) {
         ...navBase, top: 0, height: 40,
         background: 'var(--nav-bg)',
         borderBottomWidth: 1, borderBottomStyle: 'solid', borderBottomColor: 'var(--nav-border)',
-        alignItems: 'center', justifyContent: 'space-between', padding: '0 16px 0 10px',
+        alignItems: 'center', justifyContent: 'space-between', padding: '0 16px 0 8px',
         boxShadow: '0 1px 0 rgba(0,0,0,0.06)',
       }}>
         <div onClick={() => navigate('/accueil')} style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>

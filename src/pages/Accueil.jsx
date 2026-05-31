@@ -106,7 +106,7 @@ function Accueil() {
             background: 'var(--accent)',
           }} />
 
-          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', paddingLeft: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', paddingLeft: 16 }}>
             {/* Titre Teko — décalé vers le bas */}
             <div style={{ paddingTop: 4 }}>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 0 }}>
@@ -217,11 +217,8 @@ function Accueil() {
           </div>
         )}
 
-        {/* ── Le Vestiaire ── */}
         {!chargement && user && (
-          <div style={{ padding: '12px 16px 0' }}>
-            <LeVestiaire userId={user.id} />
-          </div>
+          <LeVestiaire userId={user.id} />
         )}
 
         {/* ── 3. Blocs communautaires — sans card arrondie ── */}
