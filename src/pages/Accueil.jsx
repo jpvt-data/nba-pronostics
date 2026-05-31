@@ -144,13 +144,6 @@ function Accueil() {
           <Focus userId={user.id} nbPronosAttente={nbPronosAttente} />
         )}
 
-        {/* ── Pronos en attente — sous Focus ── */}
-        {!chargement && user && (
-          <div style={{ padding: '12px 16px 0' }}>
-            <PronosAttente userId={user.id} />
-          </div>
-        )}
-
         {/* ── 2. Prochains matchs ── */}
         <div style={{ padding: '20px 16px 0' }}>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 4 }}>
@@ -233,12 +226,21 @@ function Accueil() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 0, padding: '16px 0 0' }}>
 
             {/* Ligue en cours — bord gauche accent, pas de card */}
-            <div style={{ borderLeft: '3px solid var(--accent)', padding: '12px 16px 16px 16px' }}>
+            <div style={{ borderLeft: '3px solid var(--accent)', padding: '12px 16px 16px 16px', marginBottom: 8 }}>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 10 }}>
                 <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 24, color: 'var(--text-1)', letterSpacing: '0.02em', lineHeight: 1 }}>LIGUE</span>
                 <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 24, color: 'var(--accent)', letterSpacing: '0.02em', lineHeight: 1 }}>EN COURS</span>
               </div>
               <ClassementRapide userId={user.id} />
+            </div>
+
+            {/* Pronos en attente — décalé droite, pas de card */}
+            <div style={{ borderLeft: '3px solid var(--gold)', padding: '12px 16px 16px 16px' }}>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 10 }}>
+                <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 24, color: 'var(--text-1)', letterSpacing: '0.02em', lineHeight: 1 }}>PRONOS</span>
+                <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 24, color: 'var(--gold)', letterSpacing: '0.02em', lineHeight: 1 }}>EN ATTENTE</span>
+              </div>
+              <PronosAttente userId={user.id} />
             </div>
 
           </div>
