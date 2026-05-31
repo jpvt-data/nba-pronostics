@@ -130,7 +130,7 @@ function ChatMiniLigue({ groupe, userId }) {
     <div style={{ marginTop: 10 }}>
       {/* En-tête ligue */}
       <div style={{
-        fontSize: 11, fontWeight: 700, color: '#555',
+        fontSize: 11, fontWeight: 700, color: 'var(--text-3)',
         textTransform: 'uppercase', letterSpacing: '0.08em',
         marginBottom: 6, display: 'flex', alignItems: 'center', gap: 6,
       }}>
@@ -140,16 +140,16 @@ function ChatMiniLigue({ groupe, userId }) {
       {/* Messages */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 8 }}>
         {messages.length === 0 ? (
-          <p style={{ fontSize: 12, color: '#888', margin: 0, paddingLeft: 4 }}>
+          <p style={{ fontSize: 12, color: 'var(--text-3)', margin: 0, paddingLeft: 4 }}>
             Aucun message — soyez les premiers à chambrer 🏀
           </p>
         ) : (
           messages.map(msg => (
             <div key={msg.id} style={{
               padding: '7px 10px',
-              background: msg.user_id === userId ? 'rgba(99,102,241,0.12)' : 'rgba(0,0,0,0.04)',
+              background: msg.user_id === userId ? 'var(--accent-dim)' : 'rgba(255,255,255,0.04)',
               borderWidth: 1, borderStyle: 'solid',
-              borderColor: msg.user_id === userId ? 'rgba(99,102,241,0.3)' : 'rgba(0,0,0,0.1)',
+              borderColor: msg.user_id === userId ? 'var(--accent-border)' : 'var(--border)',
               borderRadius: 4,
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}>
@@ -157,11 +157,11 @@ function ChatMiniLigue({ groupe, userId }) {
                   <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', marginRight: 6 }}>
                     {msg.profils?.pseudo || '—'}
                   </span>
-                  <span style={{ fontSize: 12, color: '#1a1a2e', lineHeight: 1.4 }}>
+                  <span style={{ fontSize: 12, color: 'var(--text-2)', lineHeight: 1.4 }}>
                     {msg.contenu}
                   </span>
                 </div>
-                <span style={{ fontSize: 10, color: '#888', flexShrink: 0, whiteSpace: 'nowrap' }}>
+                <span style={{ fontSize: 10, color: 'var(--text-3)', flexShrink: 0, whiteSpace: 'nowrap' }}>
                   {(() => {
                     const d = new Date(msg.cree_le + 'Z')
                     return d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })
@@ -185,10 +185,10 @@ function ChatMiniLigue({ groupe, userId }) {
           maxLength={500}
           style={{
             flex: 1, fontSize: 12,
-            background: '#fff',
-            borderWidth: 1, borderStyle: 'solid', borderColor: 'rgba(0,0,0,0.15)',
+            background: 'var(--bg-2)',
+            borderWidth: 1, borderStyle: 'solid', borderColor: 'var(--border)',
             borderRadius: 4,
-            padding: '7px 10px', color: '#1a1a2e',
+            padding: '7px 10px', color: 'var(--text-1)',
             outline: 'none',
           }}
         />
@@ -282,12 +282,15 @@ function LeVestiaire({ userId }) {
         </div>
       )}
 
-      {/* Chats par ligue */}
+      {/* Chats par ligue — encart foncé contrasté */}
       {!chargement && groupes.length > 0 && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginTop: evenements.length ? 16 : 0 }}>
-          {groupes.length > 1 && evenements.length > 0 && (
-            <div style={{ borderTopWidth: 1, borderTopStyle: 'solid', borderTopColor: 'rgba(0,0,0,0.1)' }} />
-          )}
+        <div style={{
+          background: '#1a1a2e',
+          borderRadius: 4,
+          padding: '12px 14px',
+          marginTop: evenements.length ? 14 : 0,
+          display: 'flex', flexDirection: 'column', gap: 16,
+        }}>
           {groupes.map(groupe => (
             <ChatMiniLigue key={groupe.groupe_id} groupe={groupe} userId={userId} />
           ))}

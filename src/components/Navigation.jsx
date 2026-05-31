@@ -240,13 +240,13 @@ function Navigation({ nbPronosAttente = 0 }) {
         ...navBase, top: 0, height: 40,
         background: 'var(--nav-bg)',
         borderBottomWidth: 1, borderBottomStyle: 'solid', borderBottomColor: 'var(--nav-border)',
-        alignItems: 'center', justifyContent: 'space-between', padding: '0 16px 0 8px',
+        alignItems: 'center', justifyContent: 'space-between', padding: '0 6px 0 8px',
         boxShadow: '0 1px 0 rgba(0,0,0,0.06)',
       }}>
         <div onClick={() => navigate('/accueil')} style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
           <LogoTeko size={18} />
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
           <button onClick={() => navigate('/profil')} style={{ background: 'none', borderWidth: 0, cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center' }}>
             <Avatar url={profil?.avatar_url} pseudo={profil?.pseudo} taille={26} fontSize={9} />
           </button>
