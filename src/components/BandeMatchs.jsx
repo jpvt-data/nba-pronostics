@@ -230,45 +230,26 @@ function CarteMatch({ match, prono, onProno, userId }) {
 
       <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column' }}>
 
-        {/* Logos seuls en haut */}
-        <div style={{ display: 'flex', alignItems: 'flex-end', padding: '6px 8px 0' }}>
+        {/* Ligne unique : [logo EXT + tri] — [score] — [logo DOM + tri] */}
+        <div style={{ display: 'flex', alignItems: 'flex-end', padding: '8px 8px 0', gap: 0 }}>
 
-          {/* EXT */}
+          {/* EXT — logo centré au-dessus du trigramme */}
           <div style={{
             flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
             opacity: pronoLocal && !extChoise ? 0.3 : 1, transition: 'opacity 0.2s',
           }}>
             <img src={ext.logo} style={{
-              width: 90, height: 90, objectFit: 'contain',
+              width: 80, height: 80, objectFit: 'contain',
               filter: `drop-shadow(0 4px 12px rgba(0,0,0,0.8))${extChoise ? ` drop-shadow(0 0 8px ${c1})` : ''}`,
             }} alt={ext.trigramme} />
+            <span style={{
+              fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 700,
+              color: extChoise ? c1 : 'rgba(255,255,255,0.75)', letterSpacing: '0.06em',
+            }}>{ext.trigramme}</span>
           </div>
 
-          {/* Centre vide — place pour le score en dessous */}
-          <div style={{ minWidth: 90 }} />
-
-          {/* DOM */}
-          <div style={{
-            flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
-            opacity: pronoLocal && !domChoise ? 0.3 : 1, transition: 'opacity 0.2s',
-          }}>
-            <img src={dom.logo} style={{
-              width: 90, height: 90, objectFit: 'contain',
-              filter: `drop-shadow(0 4px 12px rgba(0,0,0,0.8))${domChoise ? ` drop-shadow(0 0 8px ${c2})` : ''}`,
-            }} alt={dom.trigramme} />
-          </div>
-        </div>
-
-        {/* Ligne trigrammes + score — même niveau */}
-        <div style={{ display: 'flex', alignItems: 'center', padding: '2px 8px 0' }}>
-          <div style={{
-            flex: 1, textAlign: 'center',
-            opacity: pronoLocal && !extChoise ? 0.3 : 1, transition: 'opacity 0.2s',
-          }}>
-            <span style={{ fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 700, color: extChoise ? c1 : 'rgba(255,255,255,0.75)', letterSpacing: '0.06em' }}>{ext.trigramme}</span>
-          </div>
-
-          <div style={{ minWidth: 90, textAlign: 'center' }}>
+          {/* Score ou heure — centré, aligné baseline avec trigrammes */}
+          <div style={{ minWidth: 90, textAlign: 'center', paddingBottom: 2 }}>
             {(termine || enCours) && !noSpoil ? (
               <>
                 <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: 3 }}>
@@ -292,11 +273,19 @@ function CarteMatch({ match, prono, onProno, userId }) {
             )}
           </div>
 
+          {/* DOM — logo centré au-dessus du trigramme */}
           <div style={{
-            flex: 1, textAlign: 'center',
+            flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
             opacity: pronoLocal && !domChoise ? 0.3 : 1, transition: 'opacity 0.2s',
           }}>
-            <span style={{ fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 700, color: domChoise ? c2 : 'rgba(255,255,255,0.75)', letterSpacing: '0.06em' }}>{dom.trigramme}</span>
+            <img src={dom.logo} style={{
+              width: 80, height: 80, objectFit: 'contain',
+              filter: `drop-shadow(0 4px 12px rgba(0,0,0,0.8))${domChoise ? ` drop-shadow(0 0 8px ${c2})` : ''}`,
+            }} alt={dom.trigramme} />
+            <span style={{
+              fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 700,
+              color: domChoise ? c2 : 'rgba(255,255,255,0.75)', letterSpacing: '0.06em',
+            }}>{dom.trigramme}</span>
           </div>
         </div>
 
