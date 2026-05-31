@@ -3,8 +3,8 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import Navigation from '../components/Navigation'
 import { Avatar } from '../components/Avatar'
-import { LabelSection, BanniereImage, Bloc } from '../components/UI'
 
+// ── Utilitaires (inchangés) ────────────────────────────
 const MEDAILLES = ['🥇', '🥈', '🥉']
 
 const calcTaux = (s) => {
@@ -54,10 +54,15 @@ function plageSemanePrecedente() {
   return { debut, fin }
 }
 
-const Separateur = () => (
-  <div style={{ borderTopWidth: 1, borderTopStyle: 'solid', borderTopColor: 'var(--border)', margin: '8px 0' }} />
+// ── Titre de section bicolore Teko ────────────────────
+const TitreSection = ({ mot1, mot2, couleur2 = 'var(--accent)', taille = 22 }) => (
+  <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 10 }}>
+    <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: taille, color: 'var(--text-1)', letterSpacing: '0.02em', lineHeight: 1 }}>{mot1}</span>
+    <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: taille, color: couleur2, letterSpacing: '0.02em', lineHeight: 1 }}>{mot2}</span>
+  </div>
 )
 
+// ── Ligne utilisateur ──────────────────────────────────
 const LigneUser = ({ m, i, statsUser, moi, navigate }) => {
   const estMoi = m.user_id === moi
   const t = calcTaux(statsUser)
@@ -66,15 +71,17 @@ const LigneUser = ({ m, i, statsUser, moi, navigate }) => {
       onClick={() => navigate(`/mes-pronos?user_id=${m.user_id}`)}
       style={{
         display: 'flex', alignItems: 'center', gap: 10,
-        background: estMoi ? 'rgba(99,102,241,0.08)' : 'var(--bg-2)',
-        borderWidth: 1, borderStyle: 'solid',
-        borderColor: estMoi ? 'rgba(99,102,241,0.3)' : 'var(--border)',
-        borderRadius: 'var(--radius-sm)', padding: '10px 12px', cursor: 'pointer',
+        background: estMoi ? 'rgba(99,102,241,0.08)' : 'transparent',
+        borderLeft: estMoi ? '3px solid var(--accent)' : '3px solid transparent',
+        padding: '10px 12px', cursor: 'pointer',
+        borderBottom: '1px solid var(--border)',
       }}
     >
       <span style={{
-        fontSize: i < 3 ? 16 : 13, fontFamily: 'var(--font-display)', fontWeight: 700,
-        color: i < 3 ? 'var(--gold)' : 'var(--text-3)', minWidth: 24, textAlign: 'center',
+        fontSize: i < 3 ? 16 : 12,
+        fontFamily: 'var(--font-display)', fontWeight: 700,
+        color: i < 3 ? 'var(--gold)' : 'var(--text-3)',
+        minWidth: 24, textAlign: 'center',
       }}>
         {i < 3 ? MEDAILLES[i] : `#${i + 1}`}
       </span>
@@ -98,6 +105,7 @@ const LigneUser = ({ m, i, statsUser, moi, navigate }) => {
   )
 }
 
+// ── Composant principal ────────────────────────────────
 function Classement() {
   const [searchParams]                 = useSearchParams()
   const ligueParam                     = searchParams.get('ligue')
@@ -106,7 +114,7 @@ function Classement() {
   const [statsParLigue, setStatsLigue] = useState({})
   const [classementGeneralFiltre, setGeneralFiltre] = useState([])
   const [gagnantsSemPrev, setGagnants] = useState([])
-  const [filtre, setFiltre]            = useState('semaine') // 'semaine' | 'mois' | 'annee'
+  const [filtre, setFiltre]            = useState('semaine')
   const [chargement, setCharg]         = useState(true)
   const [moi, setMoi]                  = useState(null)
   const navigate = useNavigate()
@@ -118,13 +126,11 @@ function Classement() {
 
       const maintenant = new Date()
 
-      // Ligues de l'user
       const { data: mesGroupes } = await supabase
         .from('membres_groupe')
         .select('groupe_id, groupes(id, nom, date_debut, date_fin)')
         .eq('user_id', user.id).eq('actif', true)
 
-      // Filtrer : si ligueParam → uniquement cette ligue, sinon ligues en cours
       const groupesFiltres = (mesGroupes || []).filter(mg => {
         if (ligueParam) return mg.groupes.id === ligueParam
         const g = mg.groupes
@@ -152,7 +158,6 @@ function Classement() {
 
       if (tousIds.size === 0) { setCharg(false); return }
 
-      // Stats par ligue
       const { data: pronos } = await supabase
         .from('pronos')
         .select('user_id, groupe_id, resultat')
@@ -170,7 +175,6 @@ function Classement() {
       })
       setStatsLigue(parLigue)
 
-      // Profils map
       const glob = {}
       tousIds.forEach(id => { glob[id] = { pseudo: null, avatar_url: null } })
       Object.values(tousClassements).forEach(liste => {
@@ -182,10 +186,8 @@ function Classement() {
         })
       })
 
-      // Classement général filtré (recalculé selon filtre actif)
       await chargerGeneralFiltre(tousIds, tousGroupeIds, glob, filtre)
 
-      // MVP semaine précédente
       await enregistrerGagnantSemanePrecedente(tousGroupeIds)
       const { data: gagnantsPrev } = await supabase
         .from('semaines_gagnees')
@@ -213,7 +215,6 @@ function Classement() {
       .neq('resultat', 'en_attente')
       .gte('cree_le', debut.toISOString())
 
-    // Déduplication par (user_id, match_id)
     const seen = new Set()
     const dedup = []
     for (const p of pronosFiltres || []) {
@@ -273,10 +274,8 @@ function Classement() {
     }
   }
 
-  // Recharger le général quand filtre change
   const changerFiltre = async (f) => {
     setFiltre(f)
-    // Reconstruire depuis les données déjà fetchées — on a besoin des IDs
     const tousIds = new Set()
     const tousGroupeIds = []
     Object.entries(classements).forEach(([gid, liste]) => {
@@ -298,21 +297,18 @@ function Classement() {
       <Navigation />
       <main style={{ flex: 1 }}>
 
-        <div style={{
-          padding: '20px 16px',
-          background: 'linear-gradient(160deg, rgba(99,102,241,0.08) 0%, transparent 60%)',
-        }}>
-          <h2 style={{ margin: '0 0 8px' }}>
-            {ligueParam ? (groupes[0]?.groupes?.nom || 'Classement') : 'Classement'}
-          </h2>
-          <p style={{ fontSize: 13, color: 'var(--text-3)', lineHeight: 1.6, margin: 0 }}>
-            Ligues, semaine en cours, palmarès. Chaque prono correct rapporte{' '}
-            <strong style={{ color: 'var(--accent)' }}>1 point</strong>.
+        {/* ── Header ── */}
+        <div style={{ padding: '20px 16px 0 16px', position: 'relative', overflow: 'hidden' }}>
+          <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 3, background: 'var(--gold)' }} />
+          <TitreSection
+            mot1={ligueParam ? (groupes[0]?.groupes?.nom?.split(' ')[0] || 'CLASSE') : 'CLASSE'}
+            mot2={ligueParam ? (groupes[0]?.groupes?.nom?.split(' ').slice(1).join(' ') || 'MENT') : 'MENT'}
+            couleur2="var(--gold)"
+            taille={36}
+          />
+          <p style={{ fontSize: 12, color: 'var(--text-3)', margin: '4px 0 0', lineHeight: 1.5 }}>
+            Chaque prono correct rapporte <strong style={{ color: 'var(--accent)' }}>1 point</strong>. Clashe tes potes.
           </p>
-        </div>
-
-        <div style={{ margin: '25px 0' }}>
-          <BanniereImage url="https://images.unsplash.com/photo-1504450758481-7338eba7524a?w=800&q=60" />
         </div>
 
         {chargement && (
@@ -320,144 +316,148 @@ function Classement() {
         )}
 
         {!chargement && (
-          <div style={{ display: 'flex', flexDirection: 'column', padding: '0 16px 24px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', paddingBottom: 32 }}>
 
             {/* ── Classements par ligue ── */}
             {groupes.length > 0 && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 16, marginBottom: 32 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 24, marginTop: 24, padding: '0 0 24px' }}>
                 {groupes.map(mg => {
                   const gid   = mg.groupes.id
                   const liste = classements[gid] || []
                   const stats = statsParLigue[gid] || {}
                   return (
-                    <Bloc key={gid}>
-                      <LabelSection>{mg.groupes.nom}</LabelSection>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 12 }}>
+                    <div key={gid} style={{ borderLeft: '3px solid var(--accent)', paddingLeft: 16 }}>
+                      <TitreSection
+                        mot1={mg.groupes.nom.split(' ')[0]}
+                        mot2={mg.groupes.nom.split(' ').slice(1).join(' ') || ''}
+                        taille={20}
+                      />
+                      <div style={{ display: 'flex', flexDirection: 'column' }}>
                         {liste.map((m, i) => (
                           <LigneUser key={m.user_id} m={m} i={i} statsUser={stats[m.user_id]} moi={moi} navigate={navigate} />
                         ))}
-                        {liste.length === 0 && <p style={{ color: 'var(--text-3)', fontSize: 13 }}>Aucun membre.</p>}
+                        {liste.length === 0 && (
+                          <p style={{ fontSize: 13, color: 'var(--text-3)', padding: '8px 12px' }}>Aucun membre.</p>
+                        )}
                       </div>
-                    </Bloc>
+                    </div>
                   )
                 })}
               </div>
             )}
 
-            {groupes.length > 0 && <Separateur />}
-
             {/* ── MVP Semaine précédente ── */}
             {gagnantsSemPrev.length > 0 && (
-              <>
-                <div style={{ marginTop: 28, marginBottom: 32 }}>
-                  <Bloc>
-                    <LabelSection>MVP Semaine précédente</LabelSection>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 12 }}>
-                      {gagnantsSemPrev.map((g) => (
-                        <div
-                          key={g.user_id}
-                          onClick={() => navigate(`/mes-pronos?user_id=${g.user_id}`)}
-                          style={{
-                            display: 'flex', alignItems: 'center', gap: 12,
-                            padding: '12px 14px',
-                            background: 'rgba(245,158,11,0.06)',
-                            borderWidth: 1, borderStyle: 'solid', borderColor: 'rgba(245,158,11,0.25)',
-                            borderRadius: 'var(--radius-sm)', cursor: 'pointer',
-                          }}
-                        >
-                          <span style={{ fontSize: 22 }}>👑</span>
-                          <Avatar url={g.profils?.avatar_url} pseudo={g.profils?.pseudo} taille={32} fontSize={11} />
-                          <span style={{ flex: 1, fontSize: 14, fontWeight: 600, color: 'var(--text-1)' }}>
-                            {g.profils?.pseudo || 'Inconnu'}
-                            {gagnantsSemPrev.length > 1 && (
-                              <span style={{ fontSize: 11, color: 'var(--text-3)', marginLeft: 8 }}>ex-aequo</span>
-                            )}
-                          </span>
-                          <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 20, color: 'var(--gold)' }}>
-                            {g.points}<span style={{ fontSize: 10, color: 'var(--text-3)', marginLeft: 2 }}>pts</span>
-                          </span>
-                        </div>
-                      ))}
+              <div style={{ borderLeft: '3px solid var(--gold)', padding: '12px 16px 16px 16px', margin: '8px 0' }}>
+                <TitreSection mot1="MVP" mot2="SEMAINE" couleur2="var(--gold)" taille={20} />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {gagnantsSemPrev.map((g) => (
+                    <div
+                      key={g.user_id}
+                      onClick={() => navigate(`/mes-pronos?user_id=${g.user_id}`)}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: 12,
+                        padding: '12px 14px',
+                        background: 'rgba(245,158,11,0.06)',
+                        borderWidth: 1, borderStyle: 'solid', borderColor: 'rgba(245,158,11,0.2)',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      <span style={{ fontSize: 22 }}>👑</span>
+                      <Avatar url={g.profils?.avatar_url} pseudo={g.profils?.pseudo} taille={32} fontSize={11} />
+                      <span style={{ flex: 1, fontSize: 14, fontWeight: 600, color: 'var(--text-1)' }}>
+                        {g.profils?.pseudo || 'Inconnu'}
+                        {gagnantsSemPrev.length > 1 && (
+                          <span style={{ fontSize: 11, color: 'var(--text-3)', marginLeft: 8 }}>ex-aequo</span>
+                        )}
+                      </span>
+                      <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 20, color: 'var(--gold)' }}>
+                        {g.points}<span style={{ fontSize: 10, color: 'var(--text-3)', marginLeft: 2 }}>pts</span>
+                      </span>
                     </div>
-                  </Bloc>
+                  ))}
                 </div>
-                <Separateur />
-              </>
+              </div>
             )}
 
-            {/* ── Classement général avec toggle ── */}
-            <div style={{ marginTop: 28 }}>
-              <Bloc>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-                  <LabelSection>Classement général</LabelSection>
-                  <div style={{ display: 'flex', gap: 4 }}>
-                    {['semaine', 'mois', 'annee'].map(f => (
-                      <button key={f} onClick={() => changerFiltre(f)} style={{
-                        padding: '4px 10px',
-                        background: filtre === f ? 'var(--accent)' : 'var(--bg-2)',
-                        borderWidth: 1, borderStyle: 'solid',
-                        borderColor: filtre === f ? 'var(--accent)' : 'var(--border)',
-                        borderRadius: 99, color: filtre === f ? '#fff' : 'var(--text-3)',
-                        fontSize: 10, fontWeight: 600, cursor: 'pointer',
+            {/* ── Classement général ── */}
+            <div style={{ borderLeft: '3px solid var(--accent)', padding: '12px 16px 16px 16px', marginTop: 8 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                <TitreSection mot1="GÉNÉRAL" mot2={filtre === 'annee' ? `${labelAnneeNBA()}` : filtre === 'mois' ? 'MOIS' : 'SEMAINE'} taille={20} />
+                {/* Toggle */}
+                <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
+                  {['semaine', 'mois', 'annee'].map(f => (
+                    <button key={f} onClick={() => changerFiltre(f)} style={{
+                      padding: '4px 9px',
+                      background: filtre === f ? 'var(--accent)' : 'transparent',
+                      borderWidth: 1, borderStyle: 'solid',
+                      borderColor: filtre === f ? 'var(--accent)' : 'var(--border)',
+                      borderRadius: 'var(--radius-sm)',
+                      color: filtre === f ? '#fff' : 'var(--text-3)',
+                      fontSize: 10, fontWeight: 600, cursor: 'pointer',
+                    }}>
+                      {f === 'semaine' ? 'Sem.' : f === 'mois' ? 'Mois' : 'Saison'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <p style={{ fontSize: 11, color: 'var(--text-3)', margin: '0 0 10px' }}>
+                {labelFiltre[filtre]} — toutes ligues confondues
+              </p>
+
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                {classementGeneralFiltre.filter(m => m.points > 0).map((m, i) => {
+                  const estMoi = m.user_id === moi
+                  const t = calcTaux(m)
+                  return (
+                    <div
+                      key={m.user_id}
+                      onClick={() => navigate(`/mes-pronos?user_id=${m.user_id}`)}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: 10,
+                        background: estMoi ? 'rgba(99,102,241,0.08)' : 'transparent',
+                        borderLeft: estMoi ? '3px solid var(--accent)' : '3px solid transparent',
+                        padding: '10px 12px', cursor: 'pointer',
+                        borderBottom: '1px solid var(--border)',
+                        marginLeft: -16, // annuler le paddingLeft parent pour aligner le border-left
+                      }}
+                    >
+                      <span style={{
+                        fontSize: i < 3 ? 16 : 12,
+                        fontFamily: 'var(--font-display)', fontWeight: 700,
+                        color: i < 3 ? 'var(--gold)' : 'var(--text-3)',
+                        minWidth: 24, textAlign: 'center',
                       }}>
-                        {f === 'semaine' ? 'Semaine' : f === 'mois' ? 'Mois' : 'Saison'}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <p style={{ fontSize: 11, color: 'var(--text-3)', margin: '0 0 12px' }}>
-                  {labelFiltre[filtre]} — toutes ligues
-                </p>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  {classementGeneralFiltre.filter(m => m.points > 0).map((m, i) => {
-                    const estMoi = m.user_id === moi
-                    const t = calcTaux(m)
-                    return (
-                      <div
-                        key={m.user_id}
-                        onClick={() => navigate(`/mes-pronos?user_id=${m.user_id}`)}
-                        style={{
-                          display: 'flex', alignItems: 'center', gap: 10,
-                          background: estMoi ? 'rgba(99,102,241,0.08)' : 'var(--bg-2)',
-                          borderWidth: 1, borderStyle: 'solid',
-                          borderColor: estMoi ? 'rgba(99,102,241,0.3)' : 'var(--border)',
-                          borderRadius: 'var(--radius-sm)', padding: '10px 12px', cursor: 'pointer',
-                        }}
-                      >
-                        <span style={{
-                          fontSize: i < 3 ? 16 : 13, fontFamily: 'var(--font-display)', fontWeight: 700,
-                          color: i < 3 ? 'var(--gold)' : 'var(--text-3)', minWidth: 24, textAlign: 'center',
-                        }}>
-                          {i < 3 ? MEDAILLES[i] : `#${i + 1}`}
+                        {i < 3 ? MEDAILLES[i] : `#${i + 1}`}
+                      </span>
+                      <Avatar url={m.avatar_url} pseudo={m.pseudo} taille={32} fontSize={11} />
+                      <span style={{ flex: 1, fontSize: 14, color: 'var(--text-1)', fontWeight: 500, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {m.pseudo || 'Inconnu'}
+                      </span>
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 2, flexShrink: 0 }}>
+                        <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 18, color: i < 3 ? 'var(--gold)' : 'var(--text-2)' }}>
+                          {m.points}<span style={{ fontSize: 10, color: 'var(--text-3)', marginLeft: 2 }}>pts</span>
                         </span>
-                        <Avatar url={m.avatar_url} pseudo={m.pseudo} taille={32} fontSize={11} />
-                        <span style={{ flex: 1, fontSize: 14, color: 'var(--text-1)', fontWeight: 500, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {m.pseudo || 'Inconnu'}
-                        </span>
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 2, flexShrink: 0 }}>
-                          <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 18, color: i < 3 ? 'var(--gold)' : 'var(--text-2)' }}>
-                            {m.points}<span style={{ fontSize: 10, color: 'var(--text-3)', marginLeft: 2 }}>pts</span>
+                        {(m.corrects + m.incorrects) > 0 && (
+                          <span style={{ fontSize: 10, color: 'var(--text-3)', whiteSpace: 'nowrap' }}>
+                            <span style={{ color: 'var(--success)' }}>{m.corrects}✓</span>{' '}
+                            <span style={{ color: 'var(--danger)' }}>{m.incorrects}✗</span>
+                            {t !== null && <span> · {t}%</span>}
                           </span>
-                          {(m.corrects + m.incorrects) > 0 && (
-                            <span style={{ fontSize: 10, color: 'var(--text-3)', whiteSpace: 'nowrap' }}>
-                              <span style={{ color: 'var(--success)' }}>{m.corrects}✓</span>{' '}
-                              <span style={{ color: 'var(--danger)' }}>{m.incorrects}✗</span>
-                              {t !== null && <span> · {t}%</span>}
-                            </span>
-                          )}
-                        </div>
+                        )}
                       </div>
-                    )
-                  })}
-                  {classementGeneralFiltre.filter(m => m.points > 0).length === 0 && (
-                    <p style={{ color: 'var(--text-3)', fontSize: 13 }}>Aucun point sur cette période.</p>
-                  )}
-                </div>
-              </Bloc>
+                    </div>
+                  )
+                })}
+                {classementGeneralFiltre.filter(m => m.points > 0).length === 0 && (
+                  <p style={{ fontSize: 13, color: 'var(--text-3)', padding: '8px 0' }}>Aucun point sur cette période.</p>
+                )}
+              </div>
             </div>
 
             {groupes.length === 0 && !ligueParam && (
-              <p style={{ color: 'var(--text-3)', fontSize: 13, textAlign: 'center', marginTop: 24 }}>
+              <p style={{ color: 'var(--text-3)', fontSize: 13, textAlign: 'center', marginTop: 32, padding: '0 16px' }}>
                 Aucune ligue en cours. Rejoins une ligue depuis le menu Ligues.
               </p>
             )}
