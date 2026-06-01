@@ -29,18 +29,18 @@ function App() {
 
   if (session === undefined) return null
 
-  const prive = (el) => session ? el : <Navigate to="/accueil" />
+  const prive   = (el) => session ? el : <Navigate to="/connexion" />
   const public_ = (el) => !session ? el : <Navigate to="/accueil" />
 
   return (
     <NoSpoilProvider>
       <ProfilProvider>
         <BrowserRouter>
-          <PopupChangelog />
+          {session && <PopupChangelog />}
           <Routes>
             <Route path="/connexion"      element={public_(<Connexion />)} />
-            <Route path="/inscription" element={<Inscription />} />
-            <Route path="/accueil"        element={<Accueil />} />
+            <Route path="/inscription"    element={<Inscription />} />
+            <Route path="/accueil"        element={prive(<Accueil />)} />
             <Route path="/classement"     element={prive(<Classement />)} />
             <Route path="/mes-pronos"     element={prive(<MesPronos />)} />
             <Route path="/groupes"        element={prive(<Groupes />)} />
@@ -51,7 +51,7 @@ function App() {
             <Route path="/quoi-de-neuf"   element={prive(<QuoiDeNeuf />)} />
             <Route path="/h2h"            element={prive(<H2H />)} />
             <Route path="/admin"          element={prive(<Admin />)} />
-            <Route path="*"               element={<Navigate to="/accueil" />} />
+            <Route path="*"               element={<Navigate to={session ? '/accueil' : '/connexion'} />} />
           </Routes>
         </BrowserRouter>
       </ProfilProvider>

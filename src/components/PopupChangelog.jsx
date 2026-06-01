@@ -17,9 +17,6 @@ function PopupChangelog({ forceOuvert = false, onFermer }) {
   const navigate                = useNavigate()
 
   useEffect(() => {
-    if (forceOuvert) { setVisible(true); return }
-    const skip = localStorage.getItem('skip_popup')
-    if (skip) { localStorage.removeItem('skip_popup'); return }
     setVisible(true)
   }, [forceOuvert])
 
@@ -49,9 +46,9 @@ function PopupChangelog({ forceOuvert = false, onFermer }) {
   }, [visible])
 
   const fermer = () => {
-    localStorage.setItem(CLE_STORAGE, '1')
     setVisible(false)
     onFermer?.()
+    if (connecte) navigate('/accueil')
   }
 
   const seConnecter = async () => {
