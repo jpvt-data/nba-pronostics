@@ -39,7 +39,7 @@ function App() {
           <PopupChangelog />
           <Routes>
             <Route path="/connexion"      element={public_(<Connexion />)} />
-            <Route path="/inscription"    element={public_(<Inscription />)} />
+            <Route path="/inscription" element={<Inscription />} />
             <Route path="/accueil"        element={<Accueil />} />
             <Route path="/classement"     element={prive(<Classement />)} />
             <Route path="/mes-pronos"     element={prive(<MesPronos />)} />

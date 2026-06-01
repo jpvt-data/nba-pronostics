@@ -34,7 +34,11 @@ function Navigation({ nbPronosAttente = 0 }) {
     })
   }, [])
 
-  const deconnecter = async () => { await supabase.auth.signOut(); setOuvert(false) }
+  const deconnecter = async () => {
+    await supabase.auth.signOut()
+    setOuvert(false)
+    window.location.href = '/accueil'
+  }
   const aller = (chemin) => { navigate(chemin); setOuvert(false) }
 
   // Logo Teko — SWISH noir, LEAGUE violet + accroche dessous
