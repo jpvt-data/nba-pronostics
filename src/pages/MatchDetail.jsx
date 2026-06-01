@@ -19,23 +19,59 @@ const STATS_LABELS = [
   { key: 'stl', label: 'STL' }, { key: 'to',  label: 'TO'  },
 ]
 
-const LabelSection = ({ children }) => (
-  <h3 style={{
-    display: 'inline-block',
-    background: 'linear-gradient(90deg, var(--accent), var(--orange))',
-    WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
-    letterSpacing: '0.1em', fontSize: 13, fontWeight: 700, marginBottom: 12,
-  }}>{children}</h3>
-)
+const BASE_CORE = 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/nba'
 
-const BLOC = {
-  borderRadius: 'var(--radius-lg)',
-  background: 'linear-gradient(160deg, rgba(99,102,241,0.08) 0%, transparent 60%)',
-  borderWidth: 1, borderStyle: 'solid', borderColor: 'rgba(99,102,241,0.08)',
-  padding: '16px', marginBottom: 12,
+// Utilitaire couleur équipe
+const estTropSombre = (hex) => {
+  if (!hex) return true
+  const h = hex.replace('#', '')
+  const r = parseInt(h.slice(0,2), 16)
+  const g = parseInt(h.slice(2,4), 16)
+  const b = parseInt(h.slice(4,6), 16)
+  return (0.299*r + 0.587*g + 0.114*b) < 40
+}
+const getCouleur = (eq) => {
+  const c1 = eq.color         ? `#${eq.color}`         : null
+  const c2 = eq.alternateColor ? `#${eq.alternateColor}` : null
+  if (!estTropSombre(c1)) return c1
+  if (!estTropSombre(c2)) return c2
+  return 'var(--accent)'
 }
 
-const BASE_CORE = 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/nba'
+// Titre section nouvelle charte
+const TitreSection = ({ mot1, mot2 = '', couleur2 = 'var(--accent)' }) => (
+  <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 14 }}>
+    <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 20, color: 'var(--text-1)', letterSpacing: '0.02em', lineHeight: 1 }}>{mot1}</span>
+    {mot2 && <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 20, color: couleur2, letterSpacing: '0.02em', lineHeight: 1 }}>{mot2}</span>}
+  </div>
+)
+
+// Barre stat comparative
+const BarreStat = ({ vE, vD, label }) => {
+  if (!vE && !vD) return null
+  const nE = parseFloat(vE) || 0
+  const nD = parseFloat(vD) || 0
+  const total = nE + nD
+  const pctE = total > 0 ? Math.round(nE / total * 100) : 50
+  const pctD = 100 - pctE
+  const meilleureExt = nE >= nD
+
+  return (
+    <div style={{ marginBottom: 10 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 4 }}>
+        <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 15,
+          color: meilleureExt ? 'var(--text-1)' : 'var(--text-3)' }}>{vE ?? '–'}</span>
+        <span style={{ fontSize: 10, color: 'var(--text-3)', fontWeight: 600, letterSpacing: '0.06em' }}>{label}</span>
+        <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 15,
+          color: !meilleureExt ? 'var(--text-1)' : 'var(--text-3)' }}>{vD ?? '–'}</span>
+      </div>
+      <div style={{ display: 'flex', height: 4, overflow: 'hidden', gap: 1 }}>
+        <div style={{ width: `${pctE}%`, background: meilleureExt ? 'var(--accent)' : 'var(--border-2)', transition: 'width 0.4s' }} />
+        <div style={{ width: `${pctD}%`, background: !meilleureExt ? 'var(--orange)' : 'var(--border-2)', transition: 'width 0.4s' }} />
+      </div>
+    </div>
+  )
+}
 
 function MatchDetail() {
   const { espn_id } = useParams()
@@ -47,7 +83,7 @@ function MatchDetail() {
   const [resultat, setRes]          = useState(null)
   const [charg, setCharg]           = useState(true)
   const [erreur, setErr]            = useState(false)
-  const [prediction, setPrediction] = useState(null) // { extPct, domPct, equipePrediite }
+  const [prediction, setPrediction] = useState(null)
 
   useEffect(() => {
     const init = async () => {
@@ -63,33 +99,20 @@ function MatchDetail() {
       if (found) { setProno(found.equipe_choisie); setRes(found.resultat) }
       setCharg(false)
 
-      // Fetch predictor ESPN — uniquement si match non terminé
       if (detail.statut !== 'STATUS_FINAL') {
         try {
           const resPred = await fetch(
             `${BASE_CORE}/events/${espn_id}/competitions/${espn_id}/predictor`
           ).then(r => r.json())
-
-          // gameProjection est dans statistics[], pas directement sur l'objet
           const trouverGP = (equipe) =>
             equipe?.statistics?.find(s => s.name === 'gameProjection')?.value ?? null
-
           const aPct = trouverGP(resPred.awayTeam)
           const hPct = trouverGP(resPred.homeTeam)
-
-          // Si une seule valeur dispo, on déduit l'autre
           const extVal = aPct ?? (hPct != null ? 100 - hPct : null)
           const domVal = hPct ?? (aPct != null ? 100 - aPct : null)
-
           if (extVal != null && domVal != null) {
-            const equipePrediite = domVal >= extVal
-              ? detail.domicile.trigramme
-              : detail.exterieur.trigramme
-            setPrediction({
-              domPct: Math.round(domVal),
-              extPct: Math.round(extVal),
-              equipePrediite,
-            })
+            const equipePrediite = domVal >= extVal ? detail.domicile.trigramme : detail.exterieur.trigramme
+            setPrediction({ domPct: Math.round(domVal), extPct: Math.round(extVal), equipePrediite })
           }
         } catch { /* silencieux */ }
       }
@@ -99,40 +122,26 @@ function MatchDetail() {
 
   const faireProno = async (equipe) => {
     if (!match || estVerrouille(match.date, match.statut)) return
-
     const { data: matchDB } = await supabase.from('matchs').upsert({
-      espn_id:          match.espn_id,
-      date_match:       match.date,
-      equipe_domicile:  match.domicile.trigramme,
-      equipe_exterieur: match.exterieur.trigramme,
-      statut:           match.statut,
-      type_saison:      match.typeSaisonNum ?? null,
-      saison:           match.saisonNum ?? null,
+      espn_id: match.espn_id, date_match: match.date,
+      equipe_domicile: match.domicile.trigramme, equipe_exterieur: match.exterieur.trigramme,
+      statut: match.statut, type_saison: match.typeSaisonNum ?? null, saison: match.saisonNum ?? null,
     }, { onConflict: 'espn_id' }).select().single()
     if (!matchDB) return
-
     const liguesCibles = await recupererLiguesCibles(user.id, match.typeSaisonNum ?? null)
-
     if (liguesCibles.length > 0) {
       await Promise.all(liguesCibles.map(m =>
         supabase.from('pronos').upsert({
-          user_id:        user.id,
-          match_id:       matchDB.id,
-          equipe_choisie: equipe,
-          resultat:       'en_attente',
-          groupe_id:      m.groupe_id,
+          user_id: user.id, match_id: matchDB.id, equipe_choisie: equipe,
+          resultat: 'en_attente', groupe_id: m.groupe_id,
         }, { onConflict: 'user_id,match_id,groupe_id' })
       ))
     } else {
       await supabase.from('pronos').upsert({
-        user_id:        user.id,
-        match_id:       matchDB.id,
-        equipe_choisie: equipe,
-        resultat:       'en_attente',
-        groupe_id:      null,
+        user_id: user.id, match_id: matchDB.id, equipe_choisie: equipe,
+        resultat: 'en_attente', groupe_id: null,
       }, { onConflict: 'user_id,match_id,groupe_id' })
     }
-
     setProno(equipe); setRes('en_attente')
   }
 
@@ -141,7 +150,6 @@ function MatchDetail() {
       <p style={{ color:'var(--text-3)', fontSize:13 }}>Chargement…</p>
     </main></>
   )
-
   if (erreur || !match) return (
     <><Navigation /><main style={{ flex:1, padding:'20px 16px' }}>
       <button onClick={() => navigate(-1)} style={S.retour}><ChevronLeft size={16} /> Retour</button>
@@ -157,52 +165,67 @@ function MatchDetail() {
   const heureStr   = new Date(match.date).toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' })
   const nbPeriodes = Math.max(dom.periodes?.length || 0, ext.periodes?.length || 0)
 
+  const couleurExt = getCouleur(ext)
+  const couleurDom = getCouleur(dom)
+
+  // ── Carte équipe (affiche principale) ──
   const CarteEquipe = ({ eq, align }) => {
     const selec     = prono === eq.trigramme
     const perdant   = !noSpoil && termine && !eq.winner && (dom.score != null || ext.score != null)
-    const cliquable = !verrou
-
-    // Couleur ESPN de l'équipe — fallback accent si trop sombre
-    const estTropSombre = (hex) => {
-      if (!hex) return true
-      const h = hex.replace('#', '')
-      const r = parseInt(h.slice(0,2), 16)
-      const g = parseInt(h.slice(2,4), 16)
-      const b = parseInt(h.slice(4,6), 16)
-      return (0.299*r + 0.587*g + 0.114*b) < 40
-    }
-    const c1 = eq.color         ? `#${eq.color}`         : null
-    const c2 = eq.alternateColor ? `#${eq.alternateColor}` : null
-    const couleur = selec
-      ? (!estTropSombre(c1) ? c1 : !estTropSombre(c2) ? c2 : 'var(--accent)')
-      : null
-
-    const bgSelec     = couleur === 'var(--accent)' ? 'var(--accent-dim)'          : couleur ? `${couleur}18` : undefined
-    const borderSelec = couleur === 'var(--accent)' ? 'var(--accent-border)'        : couleur ? `${couleur}66` : undefined
-    const txtSelec    = couleur === 'var(--accent)' ? 'var(--accent)'               : couleur || 'var(--text-1)'
+    const couleur   = getCouleur(eq)
+    const estAccent = couleur === 'var(--accent)'
+    const bgSelec   = estAccent ? 'var(--accent-dim)' : `${couleur}18`
+    const borderSelec = estAccent ? 'var(--accent-border)' : `${couleur}66`
+    const txtSelec  = couleur
 
     return (
-      <button onClick={() => cliquable && faireProno(eq.trigramme)} disabled={!cliquable} style={{
-        display:'flex', flexDirection:'column', alignItems:'center', gap:6,
-        padding:'16px 8px',
-        background: selec ? bgSelec : 'transparent',
-        borderWidth: selec ? 1 : 0, borderStyle:'solid',
-        borderColor: selec ? borderSelec : 'transparent',
-        borderRadius:'var(--radius-md)',
-        cursor: cliquable ? 'pointer' : 'default',
-        flex:1, opacity: perdant ? 0.45 : 1, transition:'all 0.15s',
-      }}>
+      <button
+        onClick={() => !verrou && faireProno(eq.trigramme)}
+        disabled={verrou}
+        style={{
+          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
+          padding: '20px 10px 16px',
+          background: selec ? bgSelec : 'transparent',
+          borderLeft: align === 'ext' ? `3px solid ${selec ? couleur : 'transparent'}` : 'none',
+          borderRight: align === 'dom' ? `3px solid ${selec ? couleur : 'transparent'}` : 'none',
+          borderTop: 0, borderBottom: 0,
+          cursor: verrou ? 'default' : 'pointer',
+          flex: 1, opacity: perdant ? 0.35 : 1, transition: 'all 0.15s',
+          position: 'relative', overflow: 'hidden',
+        }}
+      >
+        {/* Logo watermark fond */}
+        {eq.logo && (
+          <img src={eq.logo} alt="" aria-hidden style={{
+            position: 'absolute', opacity: selec ? 0.08 : 0.04,
+            width: 120, height: 120, objectFit: 'contain',
+            top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+            pointerEvents: 'none', filter: 'blur(1px)',
+          }} />
+        )}
+        {/* Logo principal */}
         {eq.logo
-          ? <img src={eq.logo} alt={eq.trigramme} style={{ width:68, height:68, objectFit:'contain' }} />
-          : <div style={{ width:68, height:68, borderRadius:'50%', background:'var(--bg-2)', display:'flex', alignItems:'center', justifyContent:'center', fontFamily:'var(--font-display)', fontWeight:700, fontSize:18, color:'var(--text-3)' }}>{eq.trigramme}</div>
+          ? <img src={eq.logo} alt={eq.trigramme} style={{ width: 72, height: 72, objectFit: 'contain', position: 'relative' }} />
+          : <div style={{ width: 72, height: 72, borderRadius: '50%', background: 'var(--bg-2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 20, color: 'var(--text-3)' }}>{eq.trigramme}</div>
         }
-        <span style={{ fontFamily:'var(--font-display)', fontWeight:700, fontSize:22, color: selec ? txtSelec : 'var(--text-1)', letterSpacing:'0.04em' }}>{eq.trigramme}</span>
-        <span style={{ fontSize:11, color:'var(--text-3)', textAlign:'center' }}>{eq.nom}</span>
-        <span style={{ fontSize:10, color:'var(--text-3)' }}>{align === 'ext' ? 'Extérieur' : 'Domicile'}</span>
-        {selec && !termine && <span style={{ fontSize:11, color: txtSelec, fontWeight:600, marginTop:2 }}>✓ Mon prono</span>}
+        {/* Trigramme */}
+        <span style={{
+          fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 26,
+          color: selec ? txtSelec : 'var(--text-1)', letterSpacing: '0.04em',
+          position: 'relative',
+        }}>{eq.trigramme}</span>
+        <span style={{ fontSize: 11, color: 'var(--text-3)', textAlign: 'center', position: 'relative', lineHeight: 1.3 }}>{eq.nom}</span>
+        <span style={{ fontSize: 10, color: 'var(--text-3)', position: 'relative' }}>{align === 'ext' ? 'Extérieur' : 'Domicile'}</span>
+        {/* Badge prono */}
+        {selec && !termine && (
+          <span style={{ fontSize: 11, color: txtSelec, fontWeight: 700, marginTop: 2, position: 'relative' }}>✓ Mon prono</span>
+        )}
         {selec && termine && !noSpoil && (
-          <span style={{ fontSize:11, fontWeight:700, marginTop:2, color: resultat==='correct' ? 'var(--success)' : resultat==='incorrect' ? 'var(--danger)' : 'var(--text-3)' }}>
-            {resultat==='correct' ? '✓ Correct' : resultat==='incorrect' ? '✗ Raté' : '⏳'}
+          <span style={{
+            fontSize: 11, fontWeight: 700, marginTop: 2, position: 'relative',
+            color: resultat === 'correct' ? 'var(--success)' : resultat === 'incorrect' ? 'var(--danger)' : 'var(--text-3)'
+          }}>
+            {resultat === 'correct' ? '✓ Correct' : resultat === 'incorrect' ? '✗ Raté' : '⏳'}
           </span>
         )}
       </button>
@@ -212,214 +235,258 @@ function MatchDetail() {
   return (
     <>
       <Navigation />
-      <main style={{ flex:1, padding:'16px 16px 40px' }}>
+      <main style={{ flex: 1, paddingBottom: 40 }}>
 
-        <button onClick={() => navigate(-1)} style={S.retour}>
-          <ChevronLeft size={16} /> Retour
-        </button>
+        {/* ── Bouton retour ── */}
+        <div style={{ padding: '12px 16px 0' }}>
+          <button onClick={() => navigate(-1)} style={S.retour}>
+            <ChevronLeft size={16} /> Retour
+          </button>
+        </div>
 
-        <div style={{ display:'flex', gap:6, marginBottom:14, flexWrap:'wrap' }}>
+        {/* ── Badges saison/type + série ── */}
+        <div style={{ padding: '0 16px', display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 8 }}>
           {match.saison     && <span style={S.badge}>{match.saison}</span>}
-          {match.typeSaison && <span style={{ ...S.badge, background:'var(--accent-dim)', color:'var(--accent)', borderColor:'var(--accent-border)' }}>{match.typeSaison}</span>}
-          {enCours && <span style={{ ...S.badge, background:'rgba(34,197,94,0.1)', color:'var(--success)', borderColor:'rgba(34,197,94,0.3)' }}>● Live — Q{match.periode} {match.clock}</span>}
+          {match.typeSaison && <span style={{ ...S.badge, background: 'var(--accent-dim)', color: 'var(--accent)', borderColor: 'var(--accent-border)' }}>{match.typeSaison}</span>}
+          {enCours && <span style={{ ...S.badge, background: 'rgba(34,197,94,0.1)', color: 'var(--success)', borderColor: 'rgba(34,197,94,0.3)' }}>● Live — Q{match.periode} {match.clock}</span>}
         </div>
 
         {match.serie?.summary && !noSpoil && (
-          <div style={{ textAlign:'center', fontSize:13, fontWeight:600, color:'var(--accent)', marginBottom:12 }}>
-            {match.serie.description && <span style={{ color:'var(--text-3)', fontWeight:400, marginRight:6 }}>{match.serie.description} ·</span>}
+          <div style={{ textAlign: 'center', fontSize: 12, fontWeight: 600, color: 'var(--accent)', margin: '0 16px 10px', lineHeight: 1.5 }}>
+            {match.serie.description && <span style={{ color: 'var(--text-3)', fontWeight: 400, marginRight: 6 }}>{match.serie.description} ·</span>}
             {match.serie.summary}
           </div>
         )}
 
-        <div style={{ ...BLOC }}>
-          {!verrou && !prono && <div style={{ textAlign:'center', fontSize:12, color:'var(--text-3)', marginBottom:12 }}>Clique sur une équipe pour pronostiquer</div>}
-          {!verrou && prono  && <div style={{ textAlign:'center', fontSize:12, color:'var(--text-3)', marginBottom:12 }}>Tu peux encore changer d'avis !</div>}
-
-          <div style={{ display:'grid', gridTemplateColumns:'1fr auto 1fr', alignItems:'center', gap:4 }}>
-            <CarteEquipe eq={ext} align="ext" />
-            <div style={{ textAlign:'center', minWidth:72, padding:'0 4px' }}>
-              {(termine || enCours) && ext.score != null
-                ? <>
-                    <div style={{ fontFamily:'var(--font-display)', fontWeight:700, fontSize: noSpoil && termine ? 22 : 36, color: noSpoil && termine ? 'var(--text-3)' : 'var(--text-1)', lineHeight:1, whiteSpace:'nowrap' }}>
-                      {noSpoil && termine ? '🙈' : `${ext.score}–${dom.score}`}
-                    </div>
-                    <div style={{ fontSize:10, marginTop:4, fontWeight: enCours ? 600 : 400, color: enCours ? 'var(--success)' : 'var(--text-3)' }}>
-                      {enCours ? `Q${match.periode} ${match.clock}` : (noSpoil ? 'Terminé' : 'Final')}
-                    </div>
-                  </>
-                : <>
-                    <div style={{ fontFamily:'var(--font-display)', fontWeight:700, fontSize:18, color:'var(--text-3)' }}>VS</div>
-                    <div style={{ fontSize:11, color:'var(--text-3)', marginTop:4 }}>{heureStr}</div>
-                  </>
-              }
+        {/* ── AFFICHE PRINCIPALE ── */}
+        <div style={{
+          background: 'var(--bg-1)',
+          borderTop: '1px solid var(--border)',
+          borderBottom: '1px solid var(--border)',
+          position: 'relative', overflow: 'hidden',
+        }}>
+          {/* Message prono */}
+          {!verrou && (
+            <div style={{ textAlign: 'center', fontSize: 11, color: 'var(--text-3)', padding: '10px 16px 0', fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+              {prono ? 'Tu peux encore changer d\'avis' : 'Clique sur une équipe pour pronostiquer'}
             </div>
+          )}
+          {enCours && !prono && (
+            <div style={{ textAlign: 'center', fontSize: 11, color: 'var(--text-3)', padding: '10px 16px 0', fontWeight: 600 }}>
+              🔒 Match en cours — pronos fermés
+            </div>
+          )}
+
+          {/* Grid equipes + score */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center' }}>
+            <CarteEquipe eq={ext} align="ext" />
+
+            {/* Centre — score ou VS */}
+            <div style={{ textAlign: 'center', minWidth: 80, padding: '0 8px' }}>
+              {(termine || enCours) && ext.score != null ? (
+                <>
+                  <div style={{
+                    fontFamily: 'var(--font-display)', fontWeight: 700,
+                    fontSize: noSpoil && termine ? 22 : 44,
+                    color: noSpoil && termine ? 'var(--text-3)' : 'var(--text-1)',
+                    lineHeight: 1, whiteSpace: 'nowrap',
+                  }}>
+                    {noSpoil && termine ? '🙈' : `${ext.score}–${dom.score}`}
+                  </div>
+                  <div style={{ fontSize: 10, marginTop: 5, fontWeight: enCours ? 700 : 400, color: enCours ? 'var(--success)' : 'var(--text-3)' }}>
+                    {enCours ? `Q${match.periode} ${match.clock}` : (noSpoil ? 'Terminé' : 'Final')}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 28, color: 'var(--text-3)', lineHeight: 1 }}>VS</div>
+                  <div style={{ fontSize: 13, color: 'var(--text-2)', marginTop: 4, fontWeight: 600 }}>{heureStr}</div>
+                </>
+              )}
+            </div>
+
             <CarteEquipe eq={dom} align="dom" />
           </div>
 
-          {nbPeriodes > 0 && (
-            <div style={{ marginTop:16, borderTopWidth:1, borderTopStyle:'solid', borderTopColor:'rgba(99,102,241,0.1)', paddingTop:12, overflowX:'auto' }}>
-              <div style={{ display:'grid', gridTemplateColumns:`72px repeat(${nbPeriodes}, 1fr)`, gap:4, fontSize:11, textAlign:'center' }}>
+          {/* Quart-temps */}
+          {nbPeriodes > 0 && !noSpoil && (
+            <div style={{ borderTop: '1px solid var(--border)', padding: '10px 16px', overflowX: 'auto' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: `56px repeat(${nbPeriodes}, 1fr) 44px`, gap: 4, fontSize: 11, textAlign: 'center', minWidth: 240 }}>
                 <div />
                 {Array.from({ length: nbPeriodes }, (_, i) => (
-                  <div key={i} style={{ color:'var(--text-3)' }}>{i < 4 ? `Q${i+1}` : `OT${i-3}`}</div>
+                  <div key={i} style={{ color: 'var(--text-3)', fontWeight: 600 }}>{i < 4 ? `Q${i+1}` : `OT${i-3}`}</div>
                 ))}
+                <div style={{ color: 'var(--text-3)', fontWeight: 700 }}>TOT</div>
                 {[ext, dom].map(eq => (
                   <React.Fragment key={eq.trigramme}>
-                    <div style={{ color:'var(--text-2)', fontWeight:600, textAlign:'left' }}>{eq.trigramme}</div>
+                    <div style={{ color: 'var(--text-2)', fontWeight: 700, textAlign: 'left', fontFamily: 'var(--font-display)' }}>{eq.trigramme}</div>
                     {Array.from({ length: nbPeriodes }, (_, i) => (
-                      <div key={i} style={{ fontFamily:'var(--font-display)', fontWeight:600, fontSize:13, color:'var(--text-1)' }}>{eq.periodes?.[i] ?? '–'}</div>
+                      <div key={i} style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 13, color: 'var(--text-1)' }}>{eq.periodes?.[i] ?? '–'}</div>
                     ))}
+                    <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 14, color: eq.winner ? 'var(--success)' : 'var(--text-1)' }}>{eq.score ?? '–'}</div>
                   </React.Fragment>
                 ))}
               </div>
             </div>
           )}
+        </div>
 
-          {enCours && !prono && (
-            <div style={{ textAlign:'center', fontSize:12, color:'var(--text-3)', marginTop:12, paddingTop:12, borderTopWidth:1, borderTopStyle:'solid', borderTopColor:'rgba(99,102,241,0.1)' }}>
-              🔒 Match en cours — pronos fermés
+        {/* ── Infos lieu/date ── */}
+        <div style={{ background: 'var(--bg-0)', padding: '10px 16px', borderBottom: '1px solid var(--border)', textAlign: 'center' }}>
+          <div style={{ fontSize: 12, color: 'var(--text-2)', fontWeight: 500 }}>{dateStr} à {heureStr}</div>
+          {match.stade && (
+            <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 2 }}>
+              {match.stade}{match.ville ? ` · ${match.ville}` : ''}
             </div>
           )}
         </div>
 
-        <div style={{ fontSize:12, color:'var(--text-3)', textAlign:'center', margin:'4px 0 12px', lineHeight:1.7 }}>
-          {dateStr} à {heureStr}
-          {match.stade && <><br />{match.stade}{match.ville ? ` · ${match.ville}` : ''}</>}
-        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
 
-        {/* ── BLOC PRÉDICTION ESPN — visible uniquement avant/pendant le match ── */}
-        {!termine && prediction && (
-          <div style={{ ...BLOC }}>
-            <LabelSection>Prédiction avant match</LabelSection>
-
-            <p style={{ fontSize:12, color:'var(--text-3)', margin:'0 0 14px', lineHeight:1.6 }}>
-              ESPN calcule les probabilités de victoire selon la forme et les stats de la saison.
-            </p>
-
-            <div style={{ display:'flex', justifyContent:'space-between', marginBottom:6 }}>
-              <span style={{ fontSize:12, fontWeight:700, color:'var(--text-1)' }}>{ext.trigramme}</span>
-              <span style={{ fontSize:12, fontWeight:700, color:'var(--text-1)' }}>{dom.trigramme}</span>
+          {/* ── Prédiction ESPN ── */}
+          {!termine && prediction && (
+            <div style={{ background: 'var(--bg-1)', padding: '16px 16px 20px', borderLeft: '3px solid var(--accent)' }}>
+              <TitreSection mot1="PRÉDICTION" mot2="ESPN" />
+              <p style={{ fontSize: 12, color: 'var(--text-3)', margin: '0 0 14px', lineHeight: 1.6 }}>
+                Probabilités de victoire selon la forme et les stats de la saison.
+              </p>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-1)' }}>{ext.trigramme}</span>
+                <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-1)' }}>{dom.trigramme}</span>
+              </div>
+              <div style={{ display: 'flex', height: 8, overflow: 'hidden', gap: 2, marginBottom: 6 }}>
+                <div style={{ width: `${prediction.extPct}%`, background: couleurExt !== 'var(--accent)' ? couleurExt : 'var(--accent)', transition: 'width 0.4s' }} />
+                <div style={{ width: `${prediction.domPct}%`, background: couleurDom !== 'var(--accent)' ? couleurDom : 'var(--orange)', transition: 'width 0.4s' }} />
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
+                <span style={{ fontSize: 14, fontWeight: 800, color: 'var(--accent)', fontFamily: 'var(--font-display)' }}>{prediction.extPct}%</span>
+                <span style={{ fontSize: 14, fontWeight: 800, color: 'var(--orange)', fontFamily: 'var(--font-display)' }}>{prediction.domPct}%</span>
+              </div>
+              <p style={{ fontSize: 12, color: 'var(--text-2)', margin: 0, textAlign: 'center' }}>
+                ESPN prédit une victoire des <strong style={{ color: 'var(--text-1)' }}>{prediction.equipePrediite}</strong>.
+              </p>
+              <p style={{ fontSize: 10, color: 'var(--text-3)', margin: '8px 0 0', textAlign: 'right' }}>Source : ESPN</p>
             </div>
+          )}
 
-            <div style={{ display:'flex', borderRadius:4, overflow:'hidden', height:10, marginBottom:8 }}>
-              <div style={{ width:`${prediction.extPct}%`, background:'var(--accent)', transition:'width 0.4s ease' }} />
-              <div style={{ width:`${prediction.domPct}%`, background:'var(--orange)', transition:'width 0.4s ease' }} />
+          {/* ── Forme récente ── */}
+          {(ext.l5?.length > 0 || dom.l5?.length > 0) && (
+            <div style={{ background: 'var(--bg-0)', padding: '16px 16px 20px', borderLeft: '3px solid var(--border-2)' }}>
+              <TitreSection mot1="FORME" mot2="RÉCENTE" couleur2="var(--text-2)" />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {[ext, dom].map(eq => {
+                  const c = getCouleur(eq)
+                  return (
+                    <div key={eq.trigramme} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <div style={{ fontSize: 11, color: 'var(--text-3)', fontWeight: 700, minWidth: 32, fontFamily: 'var(--font-display)' }}>{eq.trigramme}</div>
+                      <div style={{ display: 'flex', gap: 4 }}>
+                        {eq.l5?.map((j, i) => (
+                          <div key={i} style={{
+                            width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 13,
+                            background: j.resultat === 'W' ? 'var(--success-dim)' : 'var(--danger-dim)',
+                            color: j.resultat === 'W' ? 'var(--success)' : 'var(--danger)',
+                            borderWidth: 1, borderStyle: 'solid',
+                            borderColor: j.resultat === 'W' ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)',
+                          }}>{j.resultat}</div>
+                        ))}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
             </div>
+          )}
 
-            <div style={{ display:'flex', justifyContent:'space-between', marginBottom:14 }}>
-              <span style={{ fontSize:13, fontWeight:800, color:'var(--accent)', fontFamily:'var(--font-display)' }}>{prediction.extPct}%</span>
-              <span style={{ fontSize:13, fontWeight:800, color:'var(--orange)', fontFamily:'var(--font-display)' }}>{prediction.domPct}%</span>
-            </div>
+          {/* ── Stats (barres comparatives) ── */}
+          {(dom.stats?.fg || ext.stats?.fg) && (
+            <div style={{ background: 'var(--bg-1)', padding: '16px 16px 20px', borderLeft: '3px solid var(--accent)' }}>
+              <TitreSection mot1={termine ? 'STATS' : 'STATS'} mot2={termine ? 'DU MATCH' : 'SAISON'} />
 
-            <p style={{ fontSize:12, color:'var(--text-2)', margin:0, textAlign:'center', fontStyle:'italic' }}>
-              ESPN prédit une victoire des <strong style={{ color:'var(--text-1)' }}>{prediction.equipePrediite}</strong> ce soir.
-            </p>
-
-            <p style={{ fontSize:10, color:'var(--text-3)', margin:'10px 0 0', textAlign:'right' }}>Source : ESPN</p>
-          </div>
-        )}
-
-        {(ext.l5?.length > 0 || dom.l5?.length > 0) && (
-          <div style={{ ...BLOC }}>
-            <LabelSection>Forme récente</LabelSection>
-            <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
-              {[ext, dom].map(eq => (
-                <div key={eq.trigramme} style={{ display:'flex', alignItems:'center', gap:10 }}>
-                  <div style={{ fontSize:11, color:'var(--text-3)', fontWeight:600, minWidth:28 }}>{eq.trigramme}</div>
-                  <div style={{ display:'flex', gap:4, flexWrap:'wrap' }}>
-                    {eq.l5?.map((j, i) => (
-                      <div key={i} style={{ width:26, height:26, borderRadius:4, display:'flex', alignItems:'center', justifyContent:'center', fontFamily:'var(--font-display)', fontWeight:700, fontSize:13, background: j.resultat==='W' ? 'var(--success-dim)' : 'var(--danger-dim)', color: j.resultat==='W' ? 'var(--success)' : 'var(--danger)', borderWidth:1, borderStyle:'solid', borderColor: j.resultat==='W' ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)' }}>{j.resultat}</div>
-                    ))}
-                  </div>
+              {/* En-têtes équipes */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  {ext.logo && <img src={ext.logo} alt="" style={{ width: 18, height: 18, objectFit: 'contain' }} />}
+                  <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 13, color: couleurExt !== 'var(--accent)' ? couleurExt : 'var(--accent)' }}>{ext.trigramme}</span>
                 </div>
-              ))}
-            </div>
-          </div>
-        )}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 13, color: couleurDom !== 'var(--accent)' ? couleurDom : 'var(--orange)' }}>{dom.trigramme}</span>
+                  {dom.logo && <img src={dom.logo} alt="" style={{ width: 18, height: 18, objectFit: 'contain' }} />}
+                </div>
+              </div>
 
-        {(dom.stats?.fg || ext.stats?.fg) && (
-          <div style={{ ...BLOC }}>
-            <LabelSection>{termine ? 'Stats du match' : 'Stats moyennes saison'}</LabelSection>
-            <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
               {STATS_LABELS.map(({ key, label }) => {
                 const vE = ext.stats?.[key]; const vD = dom.stats?.[key]
-                if (!vE && !vD) return null
-                return (
-                  <div key={key} style={{ display:'grid', gridTemplateColumns:'1fr 40px 1fr', alignItems:'center', gap:8 }}>
-                    <div style={{ fontFamily:'var(--font-display)', fontWeight:700, fontSize:16, color:'var(--text-1)', textAlign:'right' }}>{vE ?? '–'}</div>
-                    <div style={{ fontSize:10, color:'var(--text-3)', textAlign:'center', fontWeight:600 }}>{label}</div>
-                    <div style={{ fontFamily:'var(--font-display)', fontWeight:700, fontSize:16, color:'var(--text-1)', textAlign:'left' }}>{vD ?? '–'}</div>
-                  </div>
-                )
+                return <BarreStat key={key} vE={vE} vD={vD} label={label} />
               })}
             </div>
-            <div style={{ display:'grid', gridTemplateColumns:'1fr 40px 1fr', marginTop:10 }}>
-              <div style={{ fontSize:11, color:'var(--text-3)', textAlign:'right' }}>{ext.trigramme}</div>
-              <div />
-              <div style={{ fontSize:11, color:'var(--text-3)', textAlign:'left' }}>{dom.trigramme}</div>
-            </div>
-          </div>
-        )}
+          )}
 
-        {(dom.leaders?.length > 0 || ext.leaders?.length > 0) && (
-          <div style={{ ...BLOC }}>
-            <LabelSection>Leaders</LabelSection>
-            <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
-              {[ext, dom].map(eq => (
-                <div key={eq.trigramme}>
-                  <div style={{ fontSize:11, color:'var(--text-3)', marginBottom:8, fontWeight:600 }}>{eq.trigramme} — {eq.nom}</div>
-                  <div style={{ display:'flex', flexDirection:'column', gap:8, paddingLeft:8 }}>
-                    {eq.leaders?.map((l, i) => (
-                      <div key={i} style={{ display:'flex', alignItems:'center', gap:10 }}>
-                        {l.photo && <img src={l.photo} alt={l.joueur||''} style={{ width:36, height:36, borderRadius:'50%', objectFit:'cover', flexShrink:0, background:'var(--bg-2)' }} />}
-                        <div style={{ minWidth:0, flex:1 }}>
-                          <div style={{ fontSize:12, fontWeight:600, color:'var(--text-1)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{l.joueur}</div>
-                          <div style={{ fontSize:11, color:'var(--text-3)' }}>
-                            <span style={{ fontFamily:'var(--font-display)', fontWeight:700, fontSize:14, color:'var(--accent)' }}>{l.valeur}</span>{' '}{l.categorie}
+          {/* ── Leaders ── */}
+          {(dom.leaders?.length > 0 || ext.leaders?.length > 0) && (
+            <div style={{ background: 'var(--bg-0)', padding: '16px 16px 20px', borderLeft: '3px solid var(--gold)' }}>
+              <TitreSection mot1="LEADERS" couleur2="var(--gold)" />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                {[ext, dom].map(eq => (
+                  <div key={eq.trigramme}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
+                      {eq.logo && <img src={eq.logo} alt="" style={{ width: 16, height: 16, objectFit: 'contain' }} />}
+                      <span style={{ fontSize: 11, color: 'var(--text-3)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{eq.trigramme} — {eq.nom}</span>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingLeft: 8 }}>
+                      {eq.leaders?.map((l, i) => (
+                        <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                          {l.photo && <img src={l.photo} alt={l.joueur || ''} style={{ width: 38, height: 38, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, background: 'var(--bg-2)' }} />}
+                          <div style={{ minWidth: 0, flex: 1 }}>
+                            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-1)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{l.joueur}</div>
+                            <div style={{ fontSize: 11, color: 'var(--text-3)' }}>
+                              <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 15, color: 'var(--gold)' }}>{l.valeur}</span>{' '}{l.categorie}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {(dom.blessés?.length > 0 || ext.blessés?.length > 0) && (
-          <div style={{ ...BLOC }}>
-            <LabelSection>Blessés / Absents</LabelSection>
-            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
-              {[ext, dom].map(eq => (
-                <div key={eq.trigramme}>
-                  <div style={{ fontSize:11, color:'var(--text-3)', marginBottom:8, fontWeight:600 }}>{eq.trigramme}</div>
-                  {!eq.blessés?.length
-                    ? <div style={{ fontSize:12, color:'var(--text-3)' }}>RAS</div>
-                    : eq.blessés.map((b, i) => (
-                      <div key={i} style={{ display:'flex', alignItems:'center', gap:8, marginBottom:6 }}>
-                        {b.photo && <img src={b.photo} alt={b.joueur||''} style={{ width:28, height:28, borderRadius:'50%', objectFit:'cover', background:'var(--bg-2)', flexShrink:0 }} />}
-                        <div>
-                          <div style={{ fontSize:11, fontWeight:600, color:'var(--text-1)' }}>{b.joueur}</div>
-                          <div style={{ fontSize:10, color:'var(--danger)' }}>{b.statut}{b.type ? ` · ${b.type}` : ''}</div>
+          {/* ── Blessés ── */}
+          {(dom.blessés?.length > 0 || ext.blessés?.length > 0) && (
+            <div style={{ background: 'var(--bg-1)', padding: '16px 16px 20px', borderLeft: '3px solid var(--danger)' }}>
+              <TitreSection mot1="BLESSÉS" mot2="/ ABSENTS" couleur2="var(--danger)" />
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                {[ext, dom].map(eq => (
+                  <div key={eq.trigramme}>
+                    <div style={{ fontSize: 11, color: 'var(--text-3)', marginBottom: 8, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{eq.trigramme}</div>
+                    {!eq.blessés?.length
+                      ? <div style={{ fontSize: 12, color: 'var(--success)', fontWeight: 600 }}>✓ RAS</div>
+                      : eq.blessés.map((b, i) => (
+                        <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                          {b.photo && <img src={b.photo} alt={b.joueur || ''} style={{ width: 30, height: 30, borderRadius: '50%', objectFit: 'cover', background: 'var(--bg-2)', flexShrink: 0 }} />}
+                          <div>
+                            <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-1)' }}>{b.joueur}</div>
+                            <div style={{ fontSize: 10, color: 'var(--danger)' }}>{b.statut}{b.type ? ` · ${b.type}` : ''}</div>
+                          </div>
                         </div>
-                      </div>
-                    ))
-                  }
-                </div>
-              ))}
+                      ))
+                    }
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
+        </div>
       </main>
     </>
   )
 }
 
 const S = {
-  retour: { display:'flex', alignItems:'center', gap:4, background:'none', borderWidth:0, color:'var(--text-3)', fontSize:13, cursor:'pointer', marginBottom:16, paddingLeft:0 },
-  badge:  { fontSize:11, fontWeight:600, padding:'3px 8px', borderRadius:4, background:'var(--bg-2)', color:'var(--text-3)', borderWidth:1, borderStyle:'solid', borderColor:'var(--border)' },
+  retour: { display: 'flex', alignItems: 'center', gap: 4, background: 'none', borderWidth: 0, color: 'var(--text-3)', fontSize: 13, cursor: 'pointer', marginBottom: 12, paddingLeft: 0 },
+  badge:  { fontSize: 11, fontWeight: 600, padding: '3px 8px', background: 'var(--bg-2)', color: 'var(--text-3)', borderWidth: 1, borderStyle: 'solid', borderColor: 'var(--border)' },
 }
 
 export default MatchDetail
