@@ -40,7 +40,7 @@ function calculerEquipes(termines) {
 // Pour mots composés : mot1="FORME " mot2="RÉCENTE" (espace dans mot1)
 // Pour mots simples : mot1="SÉRIES" mot2="" ou couleur identique
 const TitreSection = ({ mot1, mot2 = '', couleur2 = 'var(--accent)', taille = 24 }) => (
-  <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: 10 }}>
+  <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 10 }}>
     <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: taille, color: 'var(--text-1)', letterSpacing: '0.02em', lineHeight: 1 }}>{mot1}</span>
     {mot2 && <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: taille, color: couleur2, letterSpacing: '0.02em', lineHeight: 1 }}>{mot2}</span>}
   </div>

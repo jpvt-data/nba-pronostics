@@ -1147,10 +1147,10 @@ export default function Stats() {
         padding: '20px 16px 0 16px',
         position: 'relative', overflow: 'hidden',
       }}>
-        <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 3, background: 'var(--accent)' }} />
-          <div style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 36, color: 'var(--orange)', letterSpacing: '0.02em', lineHeight: 1 }}>
-            EXPLORER
-          </div>
+        <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 3, background: 'var(--orange)' }} />
+        <div style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 36, color: 'var(--orange)', letterSpacing: '0.02em', lineHeight: 1 }}>
+          EXPLORER
+        </div>
         <p style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 4, marginBottom: 16 }}>
           Classements · Équipes · Joueurs
         </p>
