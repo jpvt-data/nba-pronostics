@@ -300,7 +300,7 @@ function MesPronos() {
 
                 {statsLigues.length > 0 && (
                   <>
-                    <TitreSection mot1="STATS" mot2="LIGUES" couleur2="var(--orange)" sombre={false} />
+                    <TitreSection mot1="STATS" mot2="LIGUE EN COURS" couleur2="var(--orange)" sombre={false} />
                     <div style={{ display: 'flex', flexDirection: 'column' }}>
                       {statsLigues.map((l, i) => (
                         <div key={i} style={{

@@ -1144,11 +1144,17 @@ export default function Stats() {
       <main style={{ flex: 1, paddingBottom: 40 }}>
 
       <div style={{
-        padding: '20px 16px 16px',
-        background: 'linear-gradient(160deg, rgba(99,102,241,0.08) 0%, transparent 60%)',
+        padding: '20px 16px 0 16px',
+        position: 'relative', overflow: 'hidden',
       }}>
-        <p style={{ fontSize: 12, color: 'var(--text-3)', marginBottom: 2 }}>Classements · Équipes · Joueurs</p>
-        <h2 style={{ margin: 0 }}>Explorer</h2>
+        <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 3, background: 'var(--accent)' }} />
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 0 }}>
+          <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 36, color: 'var(--text-1)', letterSpacing: '0.02em', lineHeight: 1 }}>EXPLO</span>
+          <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 36, color: 'var(--accent)', letterSpacing: '0.02em', lineHeight: 1 }}>RER</span>
+        </div>
+        <p style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 4, marginBottom: 16 }}>
+          Classements · Équipes · Joueurs
+        </p>
       </div>
 
       <div style={{
