@@ -75,7 +75,7 @@ const BarreStat = ({ vE, vD, label, couleurExt, couleurDom }) => {
           <div style={{ flex: 1, height: 6, background: 'var(--bg-2)', display: 'flex', justifyContent: 'flex-end', overflow: 'hidden' }}>
             <div style={{
               width: `${pctE}%`, height: '100%',
-              background: meilleureExt ? cExt : 'var(--border-2)',
+              background: cExt,
               transition: 'width 0.5s ease',
             }} />
           </div>
@@ -89,7 +89,7 @@ const BarreStat = ({ vE, vD, label, couleurExt, couleurDom }) => {
           <div style={{ flex: 1, height: 6, background: 'var(--bg-2)', overflow: 'hidden' }}>
             <div style={{
               width: `${pctD}%`, height: '100%',
-              background: !meilleureExt ? cDom : 'var(--border-2)',
+              background: cDom,
               transition: 'width 0.5s ease',
             }} />
           </div>
