@@ -36,10 +36,13 @@ function calculerEquipes(termines) {
   return { meilleure: liste[0] || null, pire: liste[liste.length - 1] || null }
 }
 
-const TitreSection = ({ mot1, mot2, couleur2 = 'var(--accent)', taille = 20, sombre = true }) => (
+// Titre bicolore — mot1 blanc, mot2 couleur accent
+// Pour mots composés : mot1="FORME " mot2="RÉCENTE" (espace dans mot1)
+// Pour mots simples : mot1="SÉRIES" mot2="" ou couleur identique
+const TitreSection = ({ mot1, mot2 = '', couleur2 = 'var(--accent)', taille = 20 }) => (
   <div style={{ display: 'flex', alignItems: 'baseline', gap: 0, marginBottom: 10 }}>
-    <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: taille, color: sombre ? 'var(--text-1)' : '#0d0d12', letterSpacing: '0.02em', lineHeight: 1 }}>{mot1}</span>
-    <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: taille, color: couleur2, letterSpacing: '0.02em', lineHeight: 1 }}>{mot2}</span>
+    <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: taille, color: 'var(--text-1)', letterSpacing: '0.02em', lineHeight: 1 }}>{mot1}</span>
+    {mot2 && <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: taille, color: couleur2, letterSpacing: '0.02em', lineHeight: 1 }}>{mot2}</span>}
   </div>
 )
 
@@ -77,7 +80,7 @@ function MesPronos() {
       const { data } = await query
       setPronos(data || [])
 
-      const termines = data?.filter(p => p.resultat !== 'en_attente') || []
+      const termines   = data?.filter(p => p.resultat !== 'en_attente') || []
       const corrects   = termines.filter(p => p.resultat === 'correct').length
       const incorrects = termines.filter(p => p.resultat === 'incorrect').length
       setStats({ total: termines.length, corrects, incorrects })
@@ -122,19 +125,14 @@ function MesPronos() {
       <Navigation />
       <main style={{ flex: 1 }}>
 
-        {/* ── Header profil — beige ── */}
-        <div style={{ background: '#f0ede8', padding: '20px 16px', position: 'relative' }}>
-          <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 3, background: 'var(--accent)' }} />
+        {/* ── Header profil — sombre + barre accent ── */}
+        <div style={{ background: 'var(--bg-1)', padding: '20px 16px', position: 'relative', borderLeft: '3px solid var(--accent)' }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16 }}>
             <Avatar url={profil?.avatar_url} pseudo={profil?.pseudo} taille={56} fontSize={18} />
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: 0 }}>
-                <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 32, color: '#0d0d12', letterSpacing: '0.02em', lineHeight: 1 }}>
-                  {profil?.pseudo?.slice(0, -1) || '—'}
-                </span>
-                <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 32, color: 'var(--accent)', letterSpacing: '0.02em', lineHeight: 1 }}>
-                  {profil?.pseudo?.slice(-1) || ''}
-                </span>
+              {/* Pseudo tout en blanc — pas de découpe aléatoire */}
+              <div style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 32, color: 'var(--text-1)', letterSpacing: '0.02em', lineHeight: 1 }}>
+                {profil?.pseudo || '—'}
               </div>
               {!estMoi && (
                 <div style={{ fontSize: 11, color: 'var(--accent)', marginTop: 4, fontWeight: 600 }}>
@@ -142,7 +140,7 @@ function MesPronos() {
                 </div>
               )}
               {profil?.description && (
-                <p style={{ fontSize: 13, color: '#555', marginTop: 6, lineHeight: 1.5 }}>{profil.description}</p>
+                <p style={{ fontSize: 13, color: 'var(--text-3)', marginTop: 6, lineHeight: 1.5 }}>{profil.description}</p>
               )}
               {!estMoi && (
                 <button
@@ -167,9 +165,9 @@ function MesPronos() {
         {!charg && (
           <div style={{ display: 'flex', flexDirection: 'column', paddingBottom: 32 }}>
 
-            {/* ── Stats globales — sombre + barre accent ── */}
-            <div style={{ background: 'var(--bg-1)', padding: '16px 16px 20px', borderLeft: '3px solid var(--accent)' }}>
-              <TitreSection mot1="STATS" mot2="GLOBALES" />
+            {/* ── Stats globales — bg-0 + barre accent ── */}
+            <div style={{ background: 'var(--bg-0)', padding: '16px 16px 20px', borderLeft: '3px solid var(--accent)' }}>
+              <TitreSection mot1="STATS " mot2="GLOBALES" />
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
                 {[
                   { label: 'Total',    val: stats.total,      color: 'var(--text-1)'  },
@@ -185,14 +183,14 @@ function MesPronos() {
               </div>
             </div>
 
-            {/* ── Séries — transparent + barre gold ── */}
+            {/* ── Séries — bg-1 + barre gold ── */}
             {stats.total > 0 && (
-              <div style={{ padding: '16px 16px 20px', borderLeft: '3px solid var(--gold)' }}>
-                <TitreSection mot1="SÉ" mot2="RIES" couleur2="var(--gold)" />
+              <div style={{ background: 'var(--bg-1)', padding: '16px 16px 20px', borderLeft: '3px solid var(--gold)' }}>
+                <TitreSection mot1="SÉRIES" couleur2="var(--gold)" />
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                   <div style={{
                     padding: '12px 14px',
-                    background: streaks.actuel > 0 ? 'rgba(245,158,11,0.08)' : 'var(--bg-1)',
+                    background: streaks.actuel > 0 ? 'rgba(245,158,11,0.08)' : 'var(--bg-2)',
                     borderWidth: 1, borderStyle: 'solid',
                     borderColor: streaks.actuel > 0 ? 'rgba(245,158,11,0.25)' : 'var(--border)',
                   }}>
@@ -206,7 +204,7 @@ function MesPronos() {
                     </div>
                   </div>
                   <div style={{
-                    padding: '12px 14px', background: 'var(--bg-1)',
+                    padding: '12px 14px', background: 'var(--bg-2)',
                     borderWidth: 1, borderStyle: 'solid', borderColor: 'var(--border)',
                   }}>
                     <div style={{ fontSize: 10, color: 'var(--text-3)', marginBottom: 6, letterSpacing: '0.05em' }}>MEILLEURE SÉRIE</div>
@@ -221,10 +219,10 @@ function MesPronos() {
               </div>
             )}
 
-            {/* ── Forme récente — SOMBRE ── */}
+            {/* ── Forme récente — bg-0 ── */}
             {formeRecente.length > 0 && (
-              <div style={{ background: 'var(--bg-1)', padding: '16px 16px 20px' }}>
-                <TitreSection mot1="FORME" mot2="RÉCENTE" couleur2="var(--accent)" />
+              <div style={{ background: 'var(--bg-0)', padding: '16px 16px 20px' }}>
+                <TitreSection mot1="FORME " mot2="RÉCENTE" couleur2="var(--accent)" />
                 <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
                   {formeRecente.slice().reverse().map((p, i) => (
                     <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
@@ -248,26 +246,26 @@ function MesPronos() {
               </div>
             )}
 
-            {/* ── Équipes + Stats ligues — BEIGE ── */}
+            {/* ── Équipes + Stats ligues — bg-1 + barre orange ── */}
             {((equipes.meilleure || equipes.pire) || statsLigues.length > 0) && (
-              <div style={{ background: '#f0ede8', padding: '16px 16px 20px', borderLeft: '3px solid var(--orange)' }}>
+              <div style={{ background: 'var(--bg-1)', padding: '16px 16px 20px', borderLeft: '3px solid var(--orange)' }}>
 
                 {(equipes.meilleure || equipes.pire) && equipes.meilleure !== equipes.pire && (
                   <>
-                    <TitreSection mot1="ÉQUI" mot2="PES" couleur2="var(--orange)" sombre={false} />
+                    <TitreSection mot1="ÉQUIPES" couleur2="var(--orange)" />
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: statsLigues.length > 0 ? 20 : 0 }}>
                       {equipes.meilleure && (
                         <div style={{
                           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                           padding: '10px 14px',
-                          background: 'rgba(34,197,94,0.08)',
-                          borderWidth: 1, borderStyle: 'solid', borderColor: 'rgba(34,197,94,0.25)',
+                          background: 'rgba(34,197,94,0.06)',
+                          borderWidth: 1, borderStyle: 'solid', borderColor: 'rgba(34,197,94,0.2)',
                         }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                             <span style={{ fontSize: 15 }}>✅</span>
                             <div>
-                              <div style={{ fontSize: 13, fontWeight: 700, color: '#0d0d12' }}>{equipes.meilleure.nom}</div>
-                              <div style={{ fontSize: 10, color: '#666', marginTop: 1 }}>{equipes.meilleure.corrects}/{equipes.meilleure.total} pronos</div>
+                              <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-1)' }}>{equipes.meilleure.nom}</div>
+                              <div style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 1 }}>{equipes.meilleure.corrects}/{equipes.meilleure.total} pronos</div>
                             </div>
                           </div>
                           <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 22, color: 'var(--success)' }}>
@@ -279,14 +277,14 @@ function MesPronos() {
                         <div style={{
                           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                           padding: '10px 14px',
-                          background: 'rgba(239,68,68,0.08)',
-                          borderWidth: 1, borderStyle: 'solid', borderColor: 'rgba(239,68,68,0.25)',
+                          background: 'rgba(239,68,68,0.06)',
+                          borderWidth: 1, borderStyle: 'solid', borderColor: 'rgba(239,68,68,0.2)',
                         }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                             <span style={{ fontSize: 15 }}>❌</span>
                             <div>
-                              <div style={{ fontSize: 13, fontWeight: 700, color: '#0d0d12' }}>{equipes.pire.nom}</div>
-                              <div style={{ fontSize: 10, color: '#666', marginTop: 1 }}>{equipes.pire.corrects}/{equipes.pire.total} pronos</div>
+                              <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-1)' }}>{equipes.pire.nom}</div>
+                              <div style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 1 }}>{equipes.pire.corrects}/{equipes.pire.total} pronos</div>
                             </div>
                           </div>
                           <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 22, color: 'var(--danger)' }}>
@@ -300,26 +298,26 @@ function MesPronos() {
 
                 {statsLigues.length > 0 && (
                   <>
-                    <TitreSection mot1="STATS" mot2="LIGUE EN COURS" couleur2="var(--orange)" sombre={false} />
+                    <TitreSection mot1="STATS " mot2="LIGUES" couleur2="var(--orange)" />
                     <div style={{ display: 'flex', flexDirection: 'column' }}>
                       {statsLigues.map((l, i) => (
                         <div key={i} style={{
                           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                           padding: '8px 12px',
-                          background: i % 2 === 0 ? 'rgba(0,0,0,0.04)' : 'transparent',
-                          borderBottom: '1px solid rgba(0,0,0,0.08)',
+                          background: i % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'transparent',
+                          borderBottom: '1px solid var(--border)',
                         }}>
-                          <span style={{ fontSize: 13, fontWeight: 600, color: '#0d0d12', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-1)', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                             {l.nom}
                           </span>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
-                            <span style={{ fontSize: 10, color: '#666', whiteSpace: 'nowrap' }}>
+                            <span style={{ fontSize: 10, color: 'var(--text-3)', whiteSpace: 'nowrap' }}>
                               <span style={{ color: 'var(--success)' }}>{l.corrects}✓</span>{' '}
                               <span style={{ color: 'var(--danger)' }}>{l.incorrects}✗</span>
                               {(l.corrects + l.incorrects) > 0 && <span> · {taux(l.corrects, l.incorrects)}%</span>}
                             </span>
                             <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 16, color: 'var(--gold)' }}>
-                              {l.points}<span style={{ fontSize: 10, color: '#888', marginLeft: 2 }}>pts</span>
+                              {l.points}<span style={{ fontSize: 10, color: 'var(--text-3)', marginLeft: 2 }}>pts</span>
                             </span>
                           </div>
                         </div>
@@ -330,9 +328,9 @@ function MesPronos() {
               </div>
             )}
 
-            {/* ── Historique — transparent + barre colorée par résultat ── */}
-            <div style={{ padding: '16px 16px 20px', borderLeft: '3px solid var(--border-2)' }}>
-              <TitreSection mot1="HISTO" mot2="RIQUE" couleur2="var(--text-2)" />
+            {/* ── Historique — bg-0 + barre colorée par résultat ── */}
+            <div style={{ background: 'var(--bg-0)', padding: '16px 16px 20px', borderLeft: '3px solid var(--border-2)' }}>
+              <TitreSection mot1="HISTORIQUE" />
               <div style={{ display: 'flex', flexDirection: 'column' }}>
                 {pronos.map((p, i) => {
                   const m = p.matchs
