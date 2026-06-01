@@ -47,7 +47,7 @@ const TitreSection = ({ mot1, mot2 = '', couleur2 = 'var(--accent)' }) => (
 )
 
 // Barre stat comparative
-const BarreStat = ({ vE, vD, label }) => {
+const BarreStat = ({ vE, vD, label, couleurExt, couleurDom }) => {
   if (!vE && !vD) return null
   const nE = parseFloat(vE) || 0
   const nD = parseFloat(vD) || 0
@@ -56,18 +56,50 @@ const BarreStat = ({ vE, vD, label }) => {
   const pctD = 100 - pctE
   const meilleureExt = nE >= nD
 
+  // Couleur avec fallback lisible sur fond sombre
+  const cExt = couleurExt === 'var(--accent)' ? 'var(--accent)' : couleurExt
+  const cDom = couleurDom === 'var(--accent)' ? 'var(--orange)' : couleurDom
+
   return (
-    <div style={{ marginBottom: 10 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 4 }}>
-        <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 15,
-          color: meilleureExt ? 'var(--text-1)' : 'var(--text-3)' }}>{vE ?? '–'}</span>
-        <span style={{ fontSize: 10, color: 'var(--text-3)', fontWeight: 600, letterSpacing: '0.06em' }}>{label}</span>
-        <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 15,
-          color: !meilleureExt ? 'var(--text-1)' : 'var(--text-3)' }}>{vD ?? '–'}</span>
-      </div>
-      <div style={{ display: 'flex', height: 4, overflow: 'hidden', gap: 1 }}>
-        <div style={{ width: `${pctE}%`, background: meilleureExt ? 'var(--accent)' : 'var(--border-2)', transition: 'width 0.4s' }} />
-        <div style={{ width: `${pctD}%`, background: !meilleureExt ? 'var(--orange)' : 'var(--border-2)', transition: 'width 0.4s' }} />
+    <div style={{ marginBottom: 14 }}>
+      {/* Barres + valeurs + label */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 52px 1fr', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+
+        {/* Côté extérieur — barre part de droite vers gauche */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'flex-end' }}>
+          <span style={{
+            fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 15,
+            color: meilleureExt ? 'var(--text-1)' : 'var(--text-3)',
+            minWidth: 36, textAlign: 'right',
+          }}>{vE ?? '–'}</span>
+          <div style={{ flex: 1, height: 6, background: 'var(--bg-2)', display: 'flex', justifyContent: 'flex-end', overflow: 'hidden' }}>
+            <div style={{
+              width: `${pctE}%`, height: '100%',
+              background: meilleureExt ? cExt : 'var(--border-2)',
+              transition: 'width 0.5s ease',
+            }} />
+          </div>
+        </div>
+
+        {/* Label central */}
+        <div style={{ textAlign: 'center', fontSize: 10, color: 'var(--text-3)', fontWeight: 700, letterSpacing: '0.06em' }}>{label}</div>
+
+        {/* Côté domicile — barre part de gauche */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <div style={{ flex: 1, height: 6, background: 'var(--bg-2)', overflow: 'hidden' }}>
+            <div style={{
+              width: `${pctD}%`, height: '100%',
+              background: !meilleureExt ? cDom : 'var(--border-2)',
+              transition: 'width 0.5s ease',
+            }} />
+          </div>
+          <span style={{
+            fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 15,
+            color: !meilleureExt ? 'var(--text-1)' : 'var(--text-3)',
+            minWidth: 36, textAlign: 'left',
+          }}>{vD ?? '–'}</span>
+        </div>
+
       </div>
     </div>
   )
@@ -417,7 +449,7 @@ function MatchDetail() {
 
               {STATS_LABELS.map(({ key, label }) => {
                 const vE = ext.stats?.[key]; const vD = dom.stats?.[key]
-                return <BarreStat key={key} vE={vE} vD={vD} label={label} />
+                return <BarreStat key={key} vE={vE} vD={vD} label={label} couleurExt={couleurExt} couleurDom={couleurDom} />
               })}
             </div>
           )}
