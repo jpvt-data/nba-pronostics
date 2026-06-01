@@ -39,8 +39,8 @@ function calculerEquipes(termines) {
 // Titre bicolore — mot1 blanc, mot2 couleur accent
 // Pour mots composés : mot1="FORME " mot2="RÉCENTE" (espace dans mot1)
 // Pour mots simples : mot1="SÉRIES" mot2="" ou couleur identique
-const TitreSection = ({ mot1, mot2 = '', couleur2 = 'var(--accent)', taille = 20 }) => (
-  <div style={{ display: 'flex', alignItems: 'baseline', gap: 0, marginBottom: 10 }}>
+const TitreSection = ({ mot1, mot2 = '', couleur2 = 'var(--accent)', taille = 22 }) => (
+  <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: 10 }}>
     <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: taille, color: 'var(--text-1)', letterSpacing: '0.02em', lineHeight: 1 }}>{mot1}</span>
     {mot2 && <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: taille, color: couleur2, letterSpacing: '0.02em', lineHeight: 1 }}>{mot2}</span>}
   </div>
@@ -167,7 +167,7 @@ function MesPronos() {
 
             {/* ── Stats globales — bg-0 + barre accent ── */}
             <div style={{ background: 'var(--bg-0)', padding: '16px 16px 20px', borderLeft: '3px solid var(--accent)' }}>
-              <TitreSection mot1="STATS " mot2="GLOBALES" />
+              <TitreSection mot1="STATS" mot2="GLOBALES" />
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
                 {[
                   { label: 'Total',    val: stats.total,      color: 'var(--text-1)'  },
@@ -222,7 +222,7 @@ function MesPronos() {
             {/* ── Forme récente — bg-0 ── */}
             {formeRecente.length > 0 && (
               <div style={{ background: 'var(--bg-0)', padding: '16px 16px 20px' }}>
-                <TitreSection mot1="FORME " mot2="RÉCENTE" couleur2="var(--accent)" />
+                <TitreSection mot1="FORME" mot2="RÉCENTE" couleur2="var(--accent)" />
                 <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
                   {formeRecente.slice().reverse().map((p, i) => (
                     <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
@@ -298,7 +298,7 @@ function MesPronos() {
 
                 {statsLigues.length > 0 && (
                   <>
-                    <TitreSection mot1="STATS " mot2="LIGUES" couleur2="var(--orange)" />
+                    <TitreSection mot1="STATS" mot2="LIGUES" couleur2="var(--orange)" />
                     <div style={{ display: 'flex', flexDirection: 'column' }}>
                       {statsLigues.map((l, i) => (
                         <div key={i} style={{
