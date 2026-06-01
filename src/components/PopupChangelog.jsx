@@ -71,7 +71,11 @@ function PopupChangelog({ forceOuvert = false, onFermer }) {
 
   return (
     <>
-      <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 300 }} />
+      // Conditionnel :
+      <div
+        onClick={connecte ? fermer : undefined}
+        style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 300 }}
+      />
 
       <div style={{
         position: 'fixed',
