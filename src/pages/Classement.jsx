@@ -302,8 +302,8 @@ function Classement() {
         <div style={{ padding: '20px 16px 0 16px', position: 'relative', overflow: 'hidden' }}>
           <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 3, background: 'var(--gold)' }} />
           <TitreSection
-            mot1={ligueParam ? (groupes[0]?.groupes?.nom?.split(' ')[0] || 'CLASSE') : 'CLASSE'}
-            mot2={ligueParam ? (groupes[0]?.groupes?.nom?.split(' ').slice(1).join(' ') || 'MENT') : 'MENT'}
+            mot1={ligueParam ? (groupes[0]?.groupes?.nom?.split(' ')[0] || 'CLASSE') : ''}
+            mot2={ligueParam ? (groupes[0]?.groupes?.nom?.split(' ').slice(1).join(' ') || 'CLASSEMENT') : 'CLASSEMENT'}
             couleur2="var(--gold)"
             taille={36}
           />
@@ -329,7 +329,7 @@ function Classement() {
                   return (
                     <div key={gid} style={{ borderLeft: '3px solid var(--accent)', paddingLeft: 16 }}>
                       <TitreSection
-                        mot1={mg.groupes.nom.split(' ')[0]}
+                        mot1={mg.groupes.nom.split(' ')[0] + ' '}
                         mot2={mg.groupes.nom.split(' ').slice(1).join(' ') || ''}
                         taille={20}
                       />
@@ -350,7 +350,7 @@ function Classement() {
             {/* ── MVP Semaine précédente ── */}
             {gagnantsSemPrev.length > 0 && (
               <div style={{ borderLeft: '3px solid var(--gold)', padding: '12px 16px 16px 16px', margin: '8px 0' }}>
-                <TitreSection mot1="MVP" mot2="SEMAINE" couleur2="var(--gold)" taille={20} />
+                <TitreSection mot1="MVP " mot2="SEMAINE" couleur2="var(--gold)" taille={20} />
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                   {gagnantsSemPrev.map((g) => (
                     <div
@@ -381,7 +381,7 @@ function Classement() {
             {/* ── Classement général ── */}
             <div style={{ borderLeft: '3px solid var(--accent)', padding: '12px 16px 16px 16px', marginTop: 8 }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                <TitreSection mot1="TOTAL" mot2={filtre === 'annee' ? `${labelAnneeNBA()}` : filtre === 'mois' ? 'MOIS' : 'SEMAINE'} taille={20} />
+                <TitreSection mot1="TOTAL " mot2={filtre === 'annee' ? `${labelAnneeNBA()}` : filtre === 'mois' ? 'MOIS' : 'SEMAINE'} taille={20} />
                 {/* Toggle */}
                 <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
                   {['semaine', 'mois', 'annee'].map(f => (
