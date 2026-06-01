@@ -43,28 +43,37 @@ const formatSummary = (summary, terminee) => {
 }
 
 const DIM = {
-  normal:  { w: 80,  h: 20, logo: 12, fsTri: 9,  fsScore: 10, gap: 10, fsSum: 8,  fsLabel: 7,  labelH: 18, sumH: 12 },
-  compact: { w: 56,  h: 15, logo: 10, fsTri: 8,  fsScore: 9,  gap: 6,  fsSum: 7,  fsLabel: 6,  labelH: 16, sumH: 10 },
-  ultra:   { w: 40,  h: 12, logo: 8,  fsTri: 7,  fsScore: 8,  gap: 4,  fsSum: 6,  fsLabel: 5,  labelH: 14, sumH: 9  },
+  normal:  { w: 80, h: 20, logo: 12, fsTri: 9,  fsScore: 10, gap: 10, fsSum: 8, fsLabel: 7,  labelH: 18, sumH: 12 },
+  compact: { w: 56, h: 15, logo: 10, fsTri: 8,  fsScore: 9,  gap: 6,  fsSum: 7, fsLabel: 6,  labelH: 16, sumH: 10 },
+  ultra:   { w: 40, h: 12, logo: 8,  fsTri: 7,  fsScore: 8,  gap: 4,  fsSum: 6, fsLabel: 5,  labelH: 14, sumH: 9  },
 }
 
 const hMatchup = (d) => d.h * 2 + 2 + d.sumH
 
-// ── Trie le 1er tour pour aligner avec les demi-finales ──────────────────────
-// Paires classiques NBA : (1v8 + 4v5) → demi 1 | (2v7 + 3v6) → demi 2
-// On trie par min seed des deux équipes : 1v8 < 2v7 < 3v6 < 4v5
-function trierPremierTour(series, seedMap) {
-  return [...series].sort((a, b) => {
-    const minA = Math.min(
-      seedMap[a.exterieur.trigramme] ?? 99,
-      seedMap[a.domicile.trigramme]  ?? 99
-    )
-    const minB = Math.min(
-      seedMap[b.exterieur.trigramme] ?? 99,
-      seedMap[b.domicile.trigramme]  ?? 99
-    )
-    return minA - minB
-  })
+// Trie le 1er tour pour aligner avec les demi-finales :
+// Pour chaque demi-finale, trouve les 2 matchs du 1er tour qui l'ont produite
+// (une des équipes de la demi vient de ce match)
+function trierPremierTourParDemis(premierTour, demis) {
+  if (!demis.length || !premierTour.length) return premierTour
+
+  const resultat = []
+  const utilises = new Set()
+
+  for (const demi of demis) {
+    const equipesDemi = new Set([demi.exterieur.trigramme, demi.domicile.trigramme])
+    const matchesDemi = premierTour.filter((m, idx) => {
+      if (utilises.has(idx)) return false
+      return equipesDemi.has(m.exterieur.trigramme) || equipesDemi.has(m.domicile.trigramme)
+    })
+    matchesDemi.forEach(m => {
+      const idx = premierTour.indexOf(m)
+      if (!utilises.has(idx)) { utilises.add(idx); resultat.push(m) }
+    })
+  }
+
+  // Restants non matchés
+  premierTour.forEach((m, idx) => { if (!utilises.has(idx)) resultat.push(m) })
+  return resultat
 }
 
 // ── Carte équipe ──────────────────────────────────────────────────────────────
@@ -76,7 +85,7 @@ function CarteEquipe({ equipe, gagnante, noSpoil, d }) {
       display: 'flex', alignItems: 'center', gap: 3,
       height: d.h, width: d.w, flexShrink: 0, paddingLeft: 4, paddingRight: 4,
       background: 'rgba(255,255,255,0.02)',
-      borderBottom: '1px solid rgba(255,255,255,0.05)',
+      borderLeft: '2px solid rgba(255,255,255,0.05)',
     }}>
       <div style={{ width: d.logo, height: d.logo, background: 'var(--bg-2)', flexShrink: 0 }} />
     </div>
@@ -91,7 +100,7 @@ function CarteEquipe({ equipe, gagnante, noSpoil, d }) {
       height: d.h, width: d.w, flexShrink: 0, paddingLeft: 4, paddingRight: 4,
       position: 'relative', overflow: 'hidden',
       background: estGagnant ? `${couleur}18` : 'rgba(255,255,255,0.03)',
-      borderLeft: `2px solid ${estGagnant ? couleur : 'rgba(255,255,255,0.06)'}`,
+      borderLeft: `2px solid ${estGagnant ? couleur : 'rgba(255,255,255,0.08)'}`,
     }}>
       {equipe.logo && !imgErr && (
         <img src={equipe.logo} alt="" aria-hidden="true" style={{
@@ -106,11 +115,9 @@ function CarteEquipe({ equipe, gagnante, noSpoil, d }) {
         : <div style={{ width: d.logo, height: d.logo, background: couleur, flexShrink: 0 }} />
       }
       <span style={{
-        fontSize: d.fsTri, fontWeight: 800,
-        fontFamily: 'var(--font-display)', letterSpacing: '0.03em',
+        fontSize: d.fsTri, fontWeight: 800, fontFamily: 'var(--font-display)', letterSpacing: '0.03em',
         color: estGagnant ? 'var(--text-1)' : 'var(--text-2)',
-        flex: 1, position: 'relative',
-        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+        flex: 1, position: 'relative', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
       }}>{equipe.trigramme}</span>
       <span style={{
         fontSize: d.fsScore, fontWeight: 900, fontFamily: 'var(--font-display)',
@@ -156,7 +163,6 @@ function Matchup({ serie, noSpoil, d }) {
 // ── Colonne ───────────────────────────────────────────────────────────────────
 function Colonne({ label, series, noSpoil, d, hTotale }) {
   const items = series.length > 0 ? series : [null]
-
   return (
     <div style={{ display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
       <div style={{
@@ -219,24 +225,21 @@ export default function BracketPlayoffs({ saison = 2026 }) {
         ])
 
         const mapInfos  = {}
-        const seedMap   = {}  // trigramme → playoffSeed
         const confEst   = new Set()
         const confOuest = new Set()
 
         ;(dataStandings.children ?? []).forEach(conf => {
           const estEst = conf.name?.toLowerCase().includes('east')
           ;(conf.standings?.entries ?? []).forEach(e => {
-            const eq   = e.team
-            const seed = e.stats?.find(s => s.name === 'playoffSeed')?.value ?? 99
+            const eq = e.team
             if (!eq?.abbreviation) return
             mapInfos[eq.abbreviation] = { couleur: eq.color ?? null, logo: eq.logos?.[0]?.href ?? null }
-            seedMap[eq.abbreviation]  = seed
             if (estEst) confEst.add(eq.abbreviation)
             else confOuest.add(eq.abbreviation)
           })
         })
 
-        const tousEvents = dataBoards.flatMap(d => d.events ?? [])
+        const tousEvents = dataBoards.flatMap(db => db.events ?? [])
         const mapSeries  = new Map()
 
         tousEvents.forEach(evt => {
@@ -269,14 +272,13 @@ export default function BracketPlayoffs({ saison = 2026 }) {
           const round = TYPE_ROUNDS[s.typeId]
           if (s.typeId === '17') { finale = s; return }
           const isEst = confEst.has(s.exterieur.trigramme) || confEst.has(s.domicile.trigramme)
-          if (isEst && est[round])    est[round].push(s)
-          else if (ouest[round])      ouest[round].push(s)
+          if (isEst && est[round])   est[round].push(s)
+          else if (ouest[round])     ouest[round].push(s)
         })
 
-        // Tri 1er tour par seed pour aligner avec les demi-finales
-        // Paires : [1v8, 4v5] → demi du haut | [2v7, 3v6] → demi du bas
-        ouest['1er tour'] = trierPremierTour(ouest['1er tour'], seedMap)
-        est['1er tour']   = trierPremierTour(est['1er tour'],   seedMap)
+        // Tri 1er tour basé sur les équipes des demi-finales
+        ouest['1er tour'] = trierPremierTourParDemis(ouest['1er tour'], ouest['Demi-finales'])
+        est['1er tour']   = trierPremierTourParDemis(est['1er tour'],   est['Demi-finales'])
 
         setBracket({ ouest, est, finale })
         setCharg(false)
@@ -285,11 +287,11 @@ export default function BracketPlayoffs({ saison = 2026 }) {
     charger()
   }, [saison])
 
-  if (charg)            return <p style={{ color: 'var(--text-3)', fontSize: 13, textAlign: 'center', padding: '24px 0' }}>Chargement du bracket…</p>
+  if (charg)             return <p style={{ color: 'var(--text-3)', fontSize: 13, textAlign: 'center', padding: '24px 0' }}>Chargement du bracket…</p>
   if (erreur || !bracket) return <p style={{ color: 'var(--danger)', fontSize: 13, textAlign: 'center', padding: '24px 0' }}>Impossible de charger le bracket.</p>
 
   const aucuneDonnee = ORDRE_ROUNDS.every(r => bracket.ouest[r].length === 0 && bracket.est[r].length === 0) && !bracket.finale
-  if (aucuneDonnee)   return <p style={{ color: 'var(--text-3)', fontSize: 13, textAlign: 'center', padding: '24px 0' }}>Aucune donnée playoff disponible.</p>
+  if (aucuneDonnee)    return <p style={{ color: 'var(--text-3)', fontSize: 13, textAlign: 'center', padding: '24px 0' }}>Aucune donnée playoff disponible.</p>
 
   const hm      = hMatchup(d)
   const n1      = Math.max(bracket.ouest['1er tour'].length, bracket.est['1er tour'].length, 1)
@@ -310,10 +312,7 @@ export default function BracketPlayoffs({ saison = 2026 }) {
       {noSpoil && <div style={{ fontSize: 10, color: 'var(--text-3)', marginBottom: 8, fontStyle: 'italic' }}>🙈 No Spoil actif</div>}
 
       <div ref={scrollRef} style={{ overflowX: 'auto', paddingBottom: 8, display: 'flex', justifyContent: 'center', marginTop: 12 }}>
-        <div style={{
-          display: 'flex', flexDirection: 'row', alignItems: 'flex-start',
-          gap: colGap, padding: '0 8px',
-        }}>
+        <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'flex-start', gap: colGap, padding: '0 8px' }}>
 
           {/* OUEST */}
           <Colonne label={`OUEST\n1er tour`}     series={bracket.ouest['1er tour']}         noSpoil={noSpoil} d={d} hTotale={hTotale} />
@@ -323,13 +322,12 @@ export default function BracketPlayoffs({ saison = 2026 }) {
           {/* FINALE NBA */}
           <div ref={finaleRef} style={{ display: 'flex', flexDirection: 'column', flexShrink: 0, alignItems: 'center' }}>
             <div style={{
-              fontSize: d.fsLabel, fontWeight: 900, letterSpacing: '0.1em',
-              background: 'linear-gradient(90deg, var(--accent), var(--orange))',
-              WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
-              textAlign: 'center', height: d.labelH,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              whiteSpace: 'nowrap', marginBottom: 10,
-            }}>FINALES NBA</div>
+              height: d.labelH, marginBottom: 10,
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0,
+            }}>
+              <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: d.fsLabel * 1.6, color: 'var(--text-1)', letterSpacing: '0.04em', lineHeight: 1, whiteSpace: 'nowrap' }}>FINALE</span>
+              <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: d.fsLabel * 1.6, color: 'var(--accent)', letterSpacing: '0.04em', lineHeight: 1, whiteSpace: 'nowrap' }}>NBA</span>
+            </div>
             <div style={{ display: 'flex', flexDirection: 'column', height: hTotale, justifyContent: 'center', alignItems: 'center' }}>
               <Matchup serie={bracket.finale} noSpoil={noSpoil} d={d} />
             </div>
