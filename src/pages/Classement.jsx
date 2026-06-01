@@ -56,7 +56,7 @@ function plageSemanePrecedente() {
 
 // ── Titre de section bicolore Teko ────────────────────
 const TitreSection = ({ mot1, mot2, couleur2 = 'var(--accent)', taille = 22 }) => (
-  <div style={{ display: 'flex', alignItems: 'baseline', gap: 0, marginBottom: 10 }}>
+  <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: 10 }}>
     <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: taille, color: 'var(--text-1)', letterSpacing: '0.02em', lineHeight: 1 }}>{mot1}</span>
     <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: taille, color: couleur2, letterSpacing: '0.02em', lineHeight: 1 }}>{mot2}</span>
   </div>
@@ -329,9 +329,9 @@ function Classement() {
                   return (
                     <div key={gid} style={{ borderLeft: '3px solid var(--accent)', paddingLeft: 16 }}>
                       <TitreSection
-                        mot1={mg.groupes.nom.split(' ')[0] + ' '}
+                        mot1={mg.groupes.nom.split(' ')[0]}
                         mot2={mg.groupes.nom.split(' ').slice(1).join(' ') || ''}
-                        taille={20}
+                        taille={22}
                       />
                       <div style={{ display: 'flex', flexDirection: 'column' }}>
                         {liste.map((m, i) => (
@@ -350,7 +350,7 @@ function Classement() {
             {/* ── MVP Semaine précédente ── */}
             {gagnantsSemPrev.length > 0 && (
               <div style={{ borderLeft: '3px solid var(--gold)', padding: '12px 16px 16px 16px', margin: '8px 0' }}>
-                <TitreSection mot1="MVP " mot2="SEMAINE" couleur2="var(--gold)" taille={20} />
+                <TitreSection mot1="MVP" mot2="SEMAINE" couleur2="var(--gold)" taille={20} />
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                   {gagnantsSemPrev.map((g) => (
                     <div
@@ -381,7 +381,7 @@ function Classement() {
             {/* ── Classement général ── */}
             <div style={{ borderLeft: '3px solid var(--accent)', padding: '12px 16px 16px 16px', marginTop: 8 }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                <TitreSection mot1="TOTAL " mot2={filtre === 'annee' ? `${labelAnneeNBA()}` : filtre === 'mois' ? 'MOIS' : 'SEMAINE'} taille={20} />
+                <TitreSection mot1="TOTAL" mot2={filtre === 'annee' ? `${labelAnneeNBA()}` : filtre === 'mois' ? 'MOIS' : 'SEMAINE'} taille={20} />
                 {/* Toggle */}
                 <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
                   {['semaine', 'mois', 'annee'].map(f => (
