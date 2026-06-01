@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import { Home, Trophy, BarChart2, Menu, X, Swords, LogOut, Calendar, Sparkles, EyeOff, TrendingUp, Shield } from 'lucide-react'
-import { useNoSpoil } from '../context/NoSpoilContext'
+import { Home, Trophy, BarChart2, Menu, X, Swords, LogOut, Calendar, Sparkles, TrendingUp, Shield } from 'lucide-react'
 import { useProfil } from '../context/ProfilContext'
 import { Avatar } from '../components/Avatar'
 import swishLogo from '../assets/swish_league_logo.png'
@@ -25,7 +24,6 @@ function Navigation({ nbPronosAttente = 0 }) {
   const navigate = useNavigate()
   const location = useLocation()
   const [ouvert, setOuvert]     = useState(false)
-  const { noSpoil, toggleNoSpoil } = useNoSpoil()
   const { profil } = useProfil()
   const [estAdmin, setEstAdmin] = useState(false)
   useEffect(() => {
@@ -39,7 +37,7 @@ function Navigation({ nbPronosAttente = 0 }) {
     setOuvert(false)
     navigate('/connexion')
   }
-  
+
   const aller = (chemin) => { navigate(chemin); setOuvert(false) }
 
   // Logo Teko — SWISH noir, LEAGUE violet + accroche dessous
@@ -115,19 +113,6 @@ function Navigation({ nbPronosAttente = 0 }) {
             <Icone size={18} strokeWidth={1.5} /> {label}
           </button>
         ))}
-
-        <button onClick={toggleNoSpoil} style={{
-          display: 'flex', alignItems: 'center', gap: 10,
-          background: noSpoil ? 'rgba(99,102,241,0.1)' : 'none',
-          borderWidth: noSpoil ? 1 : 0, borderStyle: 'solid', borderColor: 'rgba(99,102,241,0.3)',
-          color: noSpoil ? 'var(--accent)' : 'var(--text-2)',
-          fontSize: 14, cursor: 'pointer',
-          paddingTop: '0.75rem', paddingBottom: '0.75rem', paddingLeft: '0.5rem', paddingRight: '0.5rem',
-          borderRadius: 'var(--radius-sm)', width: '100%', textAlign: 'left',
-        }}>
-          <EyeOff size={18} strokeWidth={1.5} />
-          {noSpoil ? 'No Spoil — actif' : 'No Spoil'}
-        </button>
 
         <button onClick={() => aller('/h2h')} style={{
           display: 'flex', alignItems: 'center', gap: 10,

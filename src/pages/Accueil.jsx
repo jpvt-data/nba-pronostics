@@ -14,7 +14,7 @@ import BracketPlayoffs from '../components/BracketPlayoffs'
 import NewsNBA from '../components/NewsNBA'
 import { BanniereImage } from '../components/UI'
 import { useNavigate } from 'react-router-dom'
-import { Calendar, EyeOff, Eye } from 'lucide-react'
+import { Calendar } from 'lucide-react'
 import { useNoSpoil } from '../context/NoSpoilContext'
 import { SAISON_ESPN } from '../config'
 
@@ -119,24 +119,6 @@ function Accueil() {
                 </span>
               </div>
             </div>
-
-            {/* Toggle No Spoil — aligné haut droite, décalé */}
-            <button
-              onClick={toggleNoSpoil}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 5,
-                padding: '5px 10px', flexShrink: 0, marginTop: 8,
-                background: noSpoil ? 'rgba(99,102,241,0.15)' : 'transparent',
-                borderWidth: 1, borderStyle: 'solid',
-                borderColor: noSpoil ? 'rgba(99,102,241,0.4)' : 'var(--border)',
-                borderRadius: 'var(--radius-sm)', cursor: 'pointer',
-                fontSize: 11, fontWeight: 600,
-                color: noSpoil ? 'var(--accent)' : 'var(--text-3)',
-              }}
-            >
-              {noSpoil ? <Eye size={12} /> : <EyeOff size={12} />}
-              No Spoil
-            </button>
           </div>
         </div>
 
