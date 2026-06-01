@@ -172,7 +172,7 @@ function MesPronos() {
           <div style={{ display: 'flex', flexDirection: 'column', paddingBottom: 32 }}>
 
             {/* ── Stats globales — fond sombre ── */}
-            <div style={{ background: 'var(--bg-1)', padding: '16px 16px 20px', borderLeft: '3px solid var(--accent)' }}>
+            <div style={{ background: '#f0ede8', padding: '16px 16px 20px', borderLeft: '3px solid var(--accent)' }}>
               <TitreSection mot1="STATS" mot2="GLOBALES" />
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
                 {[
@@ -227,7 +227,7 @@ function MesPronos() {
 
             {/* ── Forme récente — fond clair beige ── */}
             {formeRecente.length > 0 && (
-              <div style={{ background: '#f0ede8', padding: '16px 16px 20px' }}>
+              <div style={{ background: 'var(--bg-1)', padding: '16px 16px 20px' }}>
                 <TitreSection mot1="FORME" mot2="RÉCENTE" couleur2="#6366f1" />
                 <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
                   {formeRecente.slice().reverse().map((p, i) => (
@@ -239,7 +239,7 @@ function MesPronos() {
                         borderWidth: 1, borderStyle: 'solid',
                         borderColor: p.resultat === 'correct' ? 'rgba(34,197,94,0.4)' : 'rgba(239,68,68,0.4)',
                         fontSize: 13, fontWeight: 700,
-                        color: p.resultat === 'correct' ? 'var(--success)' : 'var(--danger)',
+                        color: p.resultat === 'correct' ? 'var(--text-3)' : 'var(--danger)',
                       }}>
                         {p.resultat === 'correct' ? 'W' : 'L'}
                       </div>
