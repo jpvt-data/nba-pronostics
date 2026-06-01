@@ -130,9 +130,9 @@ function Calendrier() {
 
         <div style={{ padding: '20px 16px 0 16px', position: 'relative' }}>
           <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 3, background: 'var(--accent)' }} />
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 4 }}>
-            <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 36, color: 'var(--text-1)', letterSpacing: '0.02em', lineHeight: 1 }}>CALEN</span>
-            <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 36, color: 'var(--accent)', letterSpacing: '0.02em', lineHeight: 1 }}>DRIER</span>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 0, marginBottom: 4 }}>
+            <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 36, color: 'var(--text-1)', letterSpacing: '0.02em', lineHeight: 1 }}>CALENDRIER</span>
+            <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 36, color: 'var(--accent)', letterSpacing: '0.02em', lineHeight: 1 }}></span>
           </div>
           <p style={{ fontSize: 12, color: 'var(--text-3)', margin: '0 0 16px', lineHeight: 1.5 }}>
             Tous les matchs — passés et à venir.
