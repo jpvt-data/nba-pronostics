@@ -121,11 +121,11 @@ const parseRoster = (data, equipe) =>
 function OngletClassementsAvecSync({ onEquipeClick, onEquipesChargées }) {
   const [donnees, setDonnees]         = useState({ est: [], ouest: [], saisons: [] })
   const [onglet, setOnglet]           = useState('est')
-  const [saison, setSaison]           = useState(2026)
-  const [typeSaison, setTypeSaison]   = useState('reguliere') // 'reguliere' | 'playoffs'
+  const [saison, setSaison]           = useState(SAISON_ESPN)
+  const [typeSaison, setTypeSaison]   = useState('reguliere')
   const [chargement, setChargement]   = useState(true)
   const [erreur, setErreur]           = useState(false)
-  const [labelSaison, setLabelSaison] = useState('2025-26')
+  const [labelSaison, setLabelSaison] = useState(`${SAISON_ESPN - 1}-${String(SAISON_ESPN).slice(2)}`)
 
   const charger = (annee) => {
     setChargement(true); setErreur(false)
@@ -154,26 +154,20 @@ function OngletClassementsAvecSync({ onEquipeClick, onEquipesChargées }) {
 
   useEffect(() => { charger(saison) }, [saison])
 
-  // Sélecteur de saison — commun aux deux modes
-  const selecteurSaison = (
-    <select value={saison} onChange={e => setSaison(Number(e.target.value))} style={{
-      fontSize: 12, fontWeight: 600, color: 'var(--text-1)', background: 'var(--bg-1)',
-      borderWidth: 1, borderStyle: 'solid', borderColor: 'var(--border)',
-      borderRadius: 'var(--radius-sm)', padding: '6px 10px', cursor: 'pointer',
-    }}>
-      {donnees.saisons.length > 0
-        ? donnees.saisons.map(s => <option key={s.year} value={s.year}>{s.label}</option>)
-        : <option value={2026}>2025-26</option>}
-    </select>
-  )
-
   const liste = onglet === 'est' ? donnees.est : donnees.ouest
+
+  // Colonnes : #, logo, équipe (sticky) | bilan, pct, gb, dom, ext, strk (scrollables)
+  const COLS_STICKY = '28px 24px 52px' // #, logo, trigramme
+  const COLS_SCROLL = '56px 44px 44px 52px 52px 44px' // bilan, pct, gb, dom, ext, strk
 
   return (
     <div>
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap', marginBottom: 12 }}>
-        <LabelSection>Classement NBA</LabelSection>
-        <span style={{ fontSize: 12, color: 'var(--text-3)' }}>Saison {labelSaison}</span>
+
+      {/* ── Titre charte ── */}
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 12 }}>
+        <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 20, color: 'var(--text-1)', letterSpacing: '0.02em', lineHeight: 1 }}>CLASSEMENT</span>
+        <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 20, color: 'var(--orange)', letterSpacing: '0.02em', lineHeight: 1 }}>NBA</span>
+        <span style={{ fontSize: 11, color: 'var(--text-3)', marginLeft: 4 }}>{labelSaison}</span>
       </div>
 
       {/* Toggle type de saison */}
@@ -195,23 +189,30 @@ function OngletClassementsAvecSync({ onEquipeClick, onEquipesChargées }) {
 
       {/* Sélecteur de saison */}
       <div style={{ marginBottom: 12 }}>
-        {selecteurSaison}
+        <select value={saison} onChange={e => setSaison(Number(e.target.value))} style={{
+          fontSize: 12, fontWeight: 600, color: 'var(--text-1)', background: 'var(--bg-1)',
+          borderWidth: 1, borderStyle: 'solid', borderColor: 'var(--border)',
+          borderRadius: 'var(--radius-sm)', padding: '6px 10px', cursor: 'pointer',
+        }}>
+          {donnees.saisons.length > 0
+            ? donnees.saisons.map(s => <option key={s.year} value={s.year}>{s.label}</option>)
+            : <option value={2026}>2025-26</option>}
+        </select>
       </div>
 
-      {/* MODE PLAYOFFS : bracket */}
-      {typeSaison === 'playoffs' && (
-        <BracketPlayoffs saison={saison} />
-      )}
+      {/* MODE PLAYOFFS */}
+      {typeSaison === 'playoffs' && <BracketPlayoffs saison={saison} />}
 
-      {/* MODE SAISON RÉGULIÈRE : standings */}
+      {/* MODE SAISON RÉGULIÈRE */}
       {typeSaison === 'reguliere' && (
         <>
           {chargement && <p style={{ color: 'var(--text-3)', fontSize: 13 }}>Chargement…</p>}
-          {erreur && <p style={{ color: 'var(--danger)', fontSize: 13 }}>Erreur ESPN</p>}
+          {erreur    && <p style={{ color: 'var(--danger)', fontSize: 13 }}>Erreur ESPN</p>}
 
           {!chargement && !erreur && (
             <>
-              <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+              {/* Toggle conférence */}
+              <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
                 {['est', 'ouest'].map(tab => (
                   <button key={tab} onClick={() => setOnglet(tab)} style={{
                     fontSize: 12, fontWeight: 700, cursor: 'pointer',
@@ -224,75 +225,105 @@ function OngletClassementsAvecSync({ onEquipeClick, onEquipesChargées }) {
                 ))}
               </div>
 
-              {/* En-tête tableau */}
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: '24px 24px 1fr 56px 44px 44px 56px 56px 44px',
-                gap: 4, padding: '4px 8px',
-                fontSize: 10, fontWeight: 700, color: 'var(--text-3)',
-                textTransform: 'uppercase', letterSpacing: '0.05em',
-              }}>
-                <span>#</span><span />
-                <span>Équipe</span>
-                <span style={{ textAlign: 'center' }}>Bilan</span>
-                <span style={{ textAlign: 'center' }}>PCT</span>
-                <span style={{ textAlign: 'center' }}>GB</span>
-                <span style={{ textAlign: 'center' }}>Dom.</span>
-                <span style={{ textAlign: 'center' }}>Ext.</span>
-                <span style={{ textAlign: 'center' }}>STRK</span>
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                {liste.map((eq, idx) => {
-                  const couleur = couleurEquipe(eq.couleur)
-                  const playoff = eq.seed <= 6
-                  const playIn  = eq.seed === 7 || eq.seed === 8
-                  return (
-                    <button key={eq.id} onClick={() => onEquipeClick(eq)} style={{
-                      display: 'grid',
-                      gridTemplateColumns: '24px 24px 1fr 56px 44px 44px 56px 56px 44px',
-                      gap: 4, alignItems: 'center',
-                      padding: '7px 8px', borderRadius: 'var(--radius-sm)',
-                      background: playoff
+              {/* Tableau scrollable horizontalement — colonnes sticky à gauche */}
+              <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none' }}>
+                <table style={{ borderCollapse: 'collapse', width: '100%', minWidth: 420 }}>
+                  <thead>
+                    <tr style={{ fontSize: 9, fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      {/* Colonnes sticky */}
+                      <th style={{ position: 'sticky', left: 0, background: 'var(--bg-0)', zIndex: 2, padding: '4px 4px 4px 0', width: 24, textAlign: 'center' }}>#</th>
+                      <th style={{ position: 'sticky', left: 24, background: 'var(--bg-0)', zIndex: 2, padding: '4px 4px', width: 24 }}></th>
+                      <th style={{ position: 'sticky', left: 48, background: 'var(--bg-0)', zIndex: 2, padding: '4px 8px 4px 4px', width: 56, textAlign: 'left' }}>Équipe</th>
+                      {/* Colonnes scrollables */}
+                      <th style={{ padding: '4px 6px', width: 58, textAlign: 'center' }}>Bilan</th>
+                      <th style={{ padding: '4px 6px', width: 44, textAlign: 'center' }}>PCT</th>
+                      <th style={{ padding: '4px 6px', width: 40, textAlign: 'center' }}>GB</th>
+                      <th style={{ padding: '4px 6px', width: 52, textAlign: 'center' }}>Dom.</th>
+                      <th style={{ padding: '4px 6px', width: 52, textAlign: 'center' }}>Ext.</th>
+                      <th style={{ padding: '4px 6px', width: 44, textAlign: 'center' }}>STRK</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {liste.map((eq, idx) => {
+                      const couleur = couleurEquipe(eq.couleur)
+                      const playoff = eq.seed <= 6
+                      const playIn  = eq.seed === 7 || eq.seed === 8
+                      const bgRow   = playoff
                         ? `linear-gradient(90deg, ${couleur}12, transparent)`
-                        : playIn ? 'rgba(249,115,22,0.04)' : idx % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'transparent',
-                      borderWidth: 0,
-                      borderLeftWidth: playoff ? 2 : playIn ? 1 : 0,
-                      borderLeftStyle: 'solid',
-                      borderLeftColor: playoff ? couleur : 'rgba(249,115,22,0.4)',
-                      cursor: 'pointer', textAlign: 'left', width: '100%',
-                    }}>
-                      <span style={{ fontSize: 11, fontWeight: 700, textAlign: 'center', color: playoff ? 'var(--accent)' : 'var(--text-3)' }}>
-                        {eq.seed}
-                      </span>
-                      <LogoEquipe url={eq.logo} trigramme={eq.trigramme} taille={20} couleur={couleur} />
-                      <div style={{ minWidth: 0, display: 'flex', alignItems: 'center', gap: 4 }}>
-                        <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-1)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                          {eq.trigramme}
-                        </span>
-                        <BadgeClincher val={eq.clincher} />
-                      </div>
-                      <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--text-1)', textAlign: 'center', fontFamily: 'var(--font-display)' }}>
-                        {eq.wins}-{eq.losses}
-                      </span>
-                      <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', textAlign: 'center' }}>
-                        {eq.pct}
-                      </span>
-                      <span style={{ fontSize: 11, color: 'var(--text-3)', textAlign: 'center' }}>{eq.gb}</span>
-                      <span style={{ fontSize: 10, color: 'var(--text-2)', textAlign: 'center' }}>{eq.domicile}</span>
-                      <span style={{ fontSize: 10, color: 'var(--text-2)', textAlign: 'center' }}>{eq.exterieur}</span>
-                      <span style={{ fontSize: 11, fontWeight: 700, textAlign: 'center',
-                        color: eq.serie?.startsWith('W') ? 'var(--success)' : eq.serie?.startsWith('L') ? 'var(--danger)' : 'var(--text-3)',
-                      }}>{eq.serie}</span>
-                    </button>
-                  )
-                })}
+                        : playIn ? 'rgba(249,115,22,0.04)' : idx % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'transparent'
+                      const borderLeft = playoff ? `2px solid ${couleur}` : playIn ? '1px solid rgba(249,115,22,0.4)' : '2px solid transparent'
+
+                      return (
+                        <tr
+                          key={eq.id}
+                          onClick={() => onEquipeClick(eq)}
+                          style={{ cursor: 'pointer', borderLeft }}
+                        >
+                          {/* Sticky : # */}
+                          <td style={{
+                            position: 'sticky', left: 0, zIndex: 1,
+                            background: playoff ? `color-mix(in srgb, ${couleur} 10%, var(--bg-0))` : 'var(--bg-0)',
+                            padding: '7px 4px 7px 0', textAlign: 'center',
+                            fontSize: 11, fontWeight: 700,
+                            color: playoff ? 'var(--accent)' : 'var(--text-3)',
+                          }}>{eq.seed}</td>
+
+                          {/* Sticky : logo */}
+                          <td style={{
+                            position: 'sticky', left: 24, zIndex: 1,
+                            background: playoff ? `color-mix(in srgb, ${couleur} 10%, var(--bg-0))` : 'var(--bg-0)',
+                            padding: '7px 4px',
+                          }}>
+                            <LogoEquipe url={eq.logo} trigramme={eq.trigramme} taille={20} couleur={couleur} />
+                          </td>
+
+                          {/* Sticky : trigramme */}
+                          <td style={{
+                            position: 'sticky', left: 48, zIndex: 1,
+                            background: playoff ? `color-mix(in srgb, ${couleur} 10%, var(--bg-0))` : 'var(--bg-0)',
+                            padding: '7px 8px 7px 4px',
+                          }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                              <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-1)', whiteSpace: 'nowrap' }}>
+                                {eq.trigramme}
+                              </span>
+                              <BadgeClincher val={eq.clincher} />
+                            </div>
+                          </td>
+
+                          {/* Scrollables */}
+                          <td style={{ padding: '7px 6px', textAlign: 'center', fontSize: 12, fontWeight: 800, color: 'var(--text-1)', fontFamily: 'var(--font-display)', background: bgRow }}>
+                            {eq.wins}-{eq.losses}
+                          </td>
+                          <td style={{ padding: '7px 6px', textAlign: 'center', fontSize: 11, fontWeight: 700, color: 'var(--accent)', background: bgRow }}>
+                            {eq.pct}
+                          </td>
+                          <td style={{ padding: '7px 6px', textAlign: 'center', fontSize: 11, color: 'var(--text-3)', background: bgRow }}>
+                            {eq.gb}
+                          </td>
+                          <td style={{ padding: '7px 6px', textAlign: 'center', fontSize: 10, color: 'var(--text-2)', background: bgRow }}>
+                            {eq.domicile}
+                          </td>
+                          <td style={{ padding: '7px 6px', textAlign: 'center', fontSize: 10, color: 'var(--text-2)', background: bgRow }}>
+                            {eq.exterieur}
+                          </td>
+                          <td style={{ padding: '7px 6px', textAlign: 'center', fontSize: 11, fontWeight: 700,
+                            color: eq.serie?.startsWith('W') ? 'var(--success)' : eq.serie?.startsWith('L') ? 'var(--danger)' : 'var(--text-3)',
+                            background: bgRow,
+                          }}>
+                            {eq.serie}
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
               </div>
 
               <div style={{ display: 'flex', gap: 16, marginTop: 10, flexWrap: 'wrap' }}>
                 <span style={{ fontSize: 10, color: 'var(--text-3)' }}><span style={{ color: 'var(--accent)' }}>■</span> Top 6 — playoffs directs</span>
                 <span style={{ fontSize: 10, color: 'var(--text-3)' }}><span style={{ color: 'rgba(249,115,22,0.8)' }}>■</span> 7-8 — Play-in</span>
-                <span style={{ fontSize: 10, color: 'var(--text-3)' }}>PCT = win% · STRK = série en cours (W3 = 3 victoires, L2 = 2 défaites)</span>
+                <span style={{ fontSize: 10, color: 'var(--text-3)' }}>PCT = win% · STRK = série en cours</span>
               </div>
             </>
           )}
