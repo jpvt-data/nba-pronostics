@@ -118,10 +118,11 @@ function ClassementRapide({ userId }) {
               style={{
                 display: 'flex', alignItems: 'center', gap: 10,
                 padding: '10px 12px',
-                background: estMoi ? 'rgba(99,102,241,0.08)' : 'var(--bg-2)',
-                borderWidth: 1, borderStyle: 'solid',
-                borderColor: estMoi ? 'rgba(99,102,241,0.3)' : 'var(--border)',
-                borderRadius: 'var(--radius-sm)',
+                background: estMoi ? 'rgba(99,102,241,0.08)' : 'transparent',
+                borderLeft: estMoi ? '3px solid var(--accent)' : '3px solid transparent',
+                borderRight: 0, borderTop: 0,
+                borderBottom: '1px solid var(--border)',
+                borderRadius: 0,
                 cursor: 'pointer',
               }}
             >
