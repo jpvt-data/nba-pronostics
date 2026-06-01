@@ -458,7 +458,7 @@ function MatchDetail() {
           {(dom.leaders?.length > 0 || ext.leaders?.length > 0) && (
             <div style={{ background: 'var(--bg-0)', padding: '16px 16px 20px', borderLeft: '3px solid var(--gold)' }}>
               <TitreSection mot1="LEADERS" couleur2="var(--gold)" />
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 20 }}>
                 {[ext, dom].map(eq => (
                   <div key={eq.trigramme}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
