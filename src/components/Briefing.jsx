@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 
@@ -10,7 +10,7 @@ const DISMISS_KEY = (key) => {
 const estDismisse = (key) => !!localStorage.getItem(DISMISS_KEY(key))
 const dismisser   = (key) => localStorage.setItem(DISMISS_KEY(key), '1')
 
-async function genererMessages(userId, nbPronosAttente) {
+async function genererMessages(userId, nbPronosAttente, matchs = []) {
   const messages = []
 
   // 1. Matchs ESPN sans prono — guideline dismissable
@@ -61,7 +61,7 @@ async function genererMessages(userId, nbPronosAttente) {
     }
   }
 
-  if (streak >= 3 && typeStreak === 'correct') {
+  if (streak >= 2 && typeStreak === 'correct') {
     messages.push({
       id:      'streak_correct',
       icone:   '🔥',
@@ -132,22 +132,147 @@ async function genererMessages(userId, nbPronosAttente) {
     }
   }
 
+  // 6. Contexte ligue Supabase
+  const aujourd_hui = new Date()
+  const auj_str     = aujourd_hui.toISOString().slice(0, 10)
+
+  const { data: liguesUser } = await supabase
+    .from('membres_groupe')
+    .select('groupes(nom, type_saison, date_debut, date_fin, saison)')
+    .eq('user_id', userId)
+    .eq('actif', true)
+
+  const ligues = liguesUser
+    ?.map(m => m.groupes)
+    .filter(Boolean) || []
+
+  // Ligue active (date_debut <= aujourd'hui <= date_fin ou pas de date_fin)
+  const ligueActive = ligues.find(g =>
+    (!g.date_debut || g.date_debut <= auj_str) &&
+    (!g.date_fin   || g.date_fin   >= auj_str)
+  )
+
+  // Ligue à venir (date_debut dans le futur)
+  const ligueAVenir = ligues
+    .filter(g => g.date_debut && g.date_debut > auj_str)
+    .sort((a, b) => a.date_debut.localeCompare(b.date_debut))[0]
+
+  // Ligue terminée récemment (date_fin < aujourd'hui, dans les 7 derniers jours)
+  const il_y_a_7j = new Date(aujourd_hui)
+  il_y_a_7j.setDate(aujourd_hui.getDate() - 7)
+  const il_y_a_7j_str = il_y_a_7j.toISOString().slice(0, 10)
+  const ligueTerminee = ligues.find(g =>
+    g.date_fin && g.date_fin < auj_str && g.date_fin >= il_y_a_7j_str
+  )
+
+  const formaterDate = (str) => {
+    const d = new Date(str + 'T12:00:00')
+    return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })
+  }
+
+  if (ligueActive) {
+    const typeSaison = ligueActive.type_saison
+    const nom        = ligueActive.nom
+    const saison     = ligueActive.saison || ''
+    const icone      = typeSaison === 3 ? '🏆' : '🏀'
+
+    if (ligueActive.date_fin) {
+      const dateFinObj  = new Date(ligueActive.date_fin + 'T12:00:00')
+      const diffFin     = Math.floor((dateFinObj - aujourd_hui) / (1000 * 60 * 60 * 24))
+      if (diffFin <= 7) {
+        messages.push({
+          id:      'ligue_active',
+          icone,
+          texte:   `"${nom}" se termine dans ${diffFin} jour${diffFin > 1 ? 's' : ''} !`,
+          couleur: typeSaison === 3 ? 'var(--gold)' : 'var(--accent)',
+        })
+      } else {
+        messages.push({
+          id:      'ligue_active',
+          icone,
+          texte:   `"${nom}" ${saison ? `${saison} ` : ''}en cours`,
+          couleur: typeSaison === 3 ? 'var(--gold)' : 'var(--accent)',
+        })
+      }
+    } else {
+      messages.push({
+        id:      'ligue_active',
+        icone,
+        texte:   `"${nom}" ${saison ? `${saison} ` : ''}en cours`,
+        couleur: typeSaison === 3 ? 'var(--gold)' : 'var(--accent)',
+      })
+    }
+  } else if (ligueAVenir) {
+    messages.push({
+      id:      'ligue_a_venir',
+      icone:   '📅',
+      texte:   `La ligue "${ligueAVenir.nom}" commence le ${formaterDate(ligueAVenir.date_debut)}`,
+      couleur: 'var(--accent)',
+    })
+  } else if (ligueTerminee) {
+    messages.push({
+      id:      'ligue_terminee',
+      icone:   '🎉',
+      texte:   `La ligue "${ligueTerminee.nom}" vient de se terminer — bien joué !`,
+      couleur: 'var(--success)',
+    })
+  }
+
+  // 7. Prochain match à venir
+  const maintenant = new Date()
+  const prochainMatch = matchs
+    .filter(m => m.statut !== 'STATUS_FINAL' && m.statut !== 'STATUS_IN_PROGRESS')
+    .sort((a, b) => new Date(a.date) - new Date(b.date))[0]
+
+  if (prochainMatch) {
+    const dateMatch = new Date(prochainMatch.date)
+    const diffMs    = dateMatch - maintenant
+    const diffJours = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+    let texteMatch
+    if (diffJours <= 0)      texteMatch = 'Match ce soir !'
+    else if (diffJours === 1) texteMatch = 'Prochain match demain'
+    else                      texteMatch = `Prochain match dans ${diffJours} jours`
+    messages.push({
+      id:      'prochain_match',
+      icone:   '📅',
+      texte:   texteMatch,
+      couleur: 'var(--text-2)',
+    })
+  }
+
   return messages
 }
 
-function Briefing({ userId, nbPronosAttente = 0 }) {
+function Briefing({ userId, nbPronosAttente = 0, matchs = [] }) {
   const [messages, setMessages] = useState([])
   const [index, setIndex]       = useState(0)
   const [chargement, setCharg]  = useState(true)
+  const timerRef                = useRef(null)
   const navigate                = useNavigate()
 
   useEffect(() => {
     if (!userId) return
-    genererMessages(userId, nbPronosAttente).then(msgs => {
+    genererMessages(userId, nbPronosAttente, matchs).then(msgs => {
       setMessages(msgs)
       setCharg(false)
     })
   }, [userId, nbPronosAttente])
+
+  // Carousel auto 6s — reset à chaque action manuelle
+  useEffect(() => {
+    if (messages.length <= 1) return
+    timerRef.current = setInterval(() => {
+      setIndex(i => (i + 1) % messages.length)
+    }, 6000)
+    return () => clearInterval(timerRef.current)
+  }, [messages])
+
+  const resetTimer = () => {
+    if (timerRef.current) clearInterval(timerRef.current)
+    timerRef.current = setInterval(() => {
+      setIndex(i => (i + 1) % messages.length)
+    }, 6000)
+  }
 
   if (chargement) return null
   if (!messages.length) return null
@@ -160,9 +285,13 @@ function Briefing({ userId, nbPronosAttente = 0 }) {
     const suivants = messages.filter((_, i) => i !== index)
     setMessages(suivants)
     setIndex(i => Math.min(i, suivants.length - 1))
+    resetTimer()
   }
 
-  const handleSuivant = () => setIndex(i => (i + 1) % messages.length)
+  const handleSuivant = () => {
+    setIndex(i => (i + 1) % messages.length)
+    resetTimer()
+  }
 
   const handleClic = () => { if (msg.lien) navigate(msg.lien) }
 
