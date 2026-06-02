@@ -27,7 +27,7 @@ export default function NewsNBA({ onFeedCharge }) {
   if (erreur || (!chargement && news.length === 0)) return null
 
   return (
-    <div style={{ borderLeft: '3px solid var(--orange)', padding: '0 16px 12px 16px' }}>
+    <div style={{ padding: '0 0 12px 0' }}>
       {noSpoil ? (
         <div style={{
           display: 'flex', alignItems: 'center', gap: 8,
@@ -36,14 +36,14 @@ export default function NewsNBA({ onFeedCharge }) {
           borderWidth: 1, borderStyle: 'solid', borderColor: 'rgba(99,102,241,0.15)',
         }}>
           <EyeOff size={14} color="var(--text-3)" />
-          <span style={{ fontSize: 12, color: 'var(--text-3)' }}>
+          <span style={{ fontSize: 12, color: '#6b6b80' }}>
             Actus masquées — mode No Spoil activé
           </span>
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 1, marginTop: 12 }}>
           {chargement ? (
-            <p style={{ fontSize: 12, color: 'var(--text-3)', margin: 0 }}>Chargement…</p>
+            <p style={{ fontSize: 12, color: '#6b6b80', margin: 0 }}>Chargement…</p>
           ) : (
             news.map((article, i) => (
               <a
@@ -56,7 +56,7 @@ export default function NewsNBA({ onFeedCharge }) {
                   padding: '9px 0',
                   borderBottomWidth: i < news.length - 1 ? 1 : 0,
                   borderBottomStyle: 'solid',
-                  borderBottomColor: 'var(--border)',
+                  borderBottomColor: 'rgba(0,0,0,0.1)',
                   textDecoration: 'none',
                 }}
               >
@@ -71,14 +71,14 @@ export default function NewsNBA({ onFeedCharge }) {
                 {/* Texte */}
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <span style={{
-                    fontSize: 12, fontWeight: 600, color: 'var(--text-1)',
+                    fontSize: 12, fontWeight: 600, color: '#1a1a2e',
                     lineHeight: 1.35, display: 'block',
                   }}>
                     {article.titre}
                   </span>
                   {article.resume && (
                     <span style={{
-                      fontSize: 11, color: 'var(--text-3)', lineHeight: 1.35,
+                      fontSize: 11, color: '#6b6b80', lineHeight: 1.35,
                       display: 'block', marginTop: 2,
                     }}>
                       {article.resume}…
@@ -91,10 +91,10 @@ export default function NewsNBA({ onFeedCharge }) {
         </div>
       )}
 
-      <p style={{ fontSize: 10, color: 'var(--text-3)', margin: '10px 0 0' }}>
+      <p style={{ fontSize: 10, color: '#6b6b80', margin: '10px 0 0' }}>
         Source :{' '}
         <a href="https://www.basketusa.com" target="_blank" rel="noopener noreferrer"
-          style={{ color: 'var(--text-3)', textDecoration: 'underline' }}>
+          style={{ color: '#6b6b80', textDecoration: 'underline' }}>
           Basket USA
         </a>
       </p>

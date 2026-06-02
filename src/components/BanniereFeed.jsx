@@ -4,17 +4,32 @@ const RSS2JSON_KEY = '1o9jbu3uki4jnlechzpd32vgz2yqyxkfaufhepl0'
 const FEED_URL     = 'https://www.basketusa.com/feed/'
 const API_URL      = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(FEED_URL)}&api_key=${RSS2JSON_KEY}&count=6`
 
+// Extrait la première image trouvée dans le HTML du content
+function extraireImageContent(html) {
+  if (!html) return null
+  const match = html.match(/<img[^>]+src=["']([^"']+)["']/)
+  return match ? match[1] : null
+}
+
 // Export du fetch pour que NewsNBA puisse réutiliser les données
 export async function fetchFeedBasketUSA() {
   const res  = await fetch(API_URL)
   const data = await res.json()
-  return (data.items || []).map(item => ({
-    titre:     item.title || '',
-    resume:    item.description?.replace(/<[^>]+>/g, '').slice(0, 120) || null,
-    lien:      item.link || null,
-    image:     item.thumbnail || item.enclosure?.link || null,
-    date:      item.pubDate || null,
-  }))
+  return (data.items || []).map(item => {
+    const image =
+      (item.thumbnail && item.thumbnail.startsWith('http') ? item.thumbnail : null) ||
+      (item.enclosure?.link?.startsWith('http') ? item.enclosure.link : null) ||
+      extraireImageContent(item.content) ||
+      extraireImageContent(item.description) ||
+      null
+    return {
+      titre:  item.title || '',
+      resume: item.description?.replace(/<[^>]+>/g, '').slice(0, 120) || null,
+      lien:   item.link || null,
+      image,
+      date:   item.pubDate || null,
+    }
+  })
 }
 
 export default function BanniereFeed({ article }) {

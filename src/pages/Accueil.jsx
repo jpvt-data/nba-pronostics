@@ -218,14 +218,14 @@ function Accueil() {
         {!chargement && <StandingsNBA typeSaison={typeSaisonEffectif} />}
         {!chargement && typeSaisonEffectif === 3 && <BracketPlayoffs saison={saisonActuelle} />}
 
-        {/* ── 7. Actu NBA ── */}
+        {/* ── 7. Actu NBA — fond beige, barre accent ── */}
         {!chargement && user && (
-          <div style={{ padding: '16px 0 20px', borderLeft: '3px solid var(--orange)' }}>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 10, paddingLeft: 16 }}>
-              <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 24, color: 'var(--text-1)', letterSpacing: '0.02em', lineHeight: 1 }}>ACTU</span>
-              <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 24, color: 'var(--orange)', letterSpacing: '0.02em', lineHeight: 1 }}>NBA</span>
+          <div style={{ background: '#f0ede8', marginTop: 16, borderLeft: '3px solid var(--accent)' }}>
+            <div style={{ padding: '14px 16px 0 16px', display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 10 }}>
+              <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 24, color: '#1a1a2e', letterSpacing: '0.02em', lineHeight: 1 }}>ACTU</span>
+              <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 24, color: 'var(--accent)', letterSpacing: '0.02em', lineHeight: 1 }}>NBA</span>
             </div>
-            <div style={{ paddingLeft: 16, paddingRight: 16 }}>
+            <div style={{ paddingLeft: 16, paddingRight: 16, paddingBottom: 16 }}>
               <NewsNBA onFeedCharge={setArticleUne} />
             </div>
           </div>
