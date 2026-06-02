@@ -247,6 +247,7 @@ function Briefing({ userId, nbPronosAttente = 0, matchs = [] }) {
   const [messages, setMessages] = useState([])
   const [index, setIndex]       = useState(0)
   const [chargement, setCharg]  = useState(true)
+  const [anime, setAnime]       = useState(false)
   const timerRef                = useRef(null)
   const navigate                = useNavigate()
 
@@ -258,99 +259,122 @@ function Briefing({ userId, nbPronosAttente = 0, matchs = [] }) {
     })
   }, [userId, nbPronosAttente])
 
-  // Carousel auto 6s — reset à chaque action manuelle
+  const demarrerTimer = (msgs) => {
+    if (timerRef.current) clearInterval(timerRef.current)
+    if (msgs.length <= 2) return
+    timerRef.current = setInterval(() => avancer(msgs), 6000)
+  }
+
+  const avancer = (msgs) => {
+    setAnime(true)
+    setTimeout(() => {
+      setIndex(i => (i + 1) % msgs.length)
+      setAnime(false)
+    }, 300)
+  }
+
   useEffect(() => {
-    if (messages.length <= 1) return
-    timerRef.current = setInterval(() => {
-      setIndex(i => (i + 1) % messages.length)
-    }, 6000)
+    demarrerTimer(messages)
     return () => clearInterval(timerRef.current)
   }, [messages])
 
-  const resetTimer = () => {
-    if (timerRef.current) clearInterval(timerRef.current)
-    timerRef.current = setInterval(() => {
-      setIndex(i => (i + 1) % messages.length)
-    }, 6000)
-  }
+  const resetTimer = () => demarrerTimer(messages)
 
   if (chargement) return null
   if (!messages.length) return null
 
-  const msg     = messages[index]
-  const hasNext = messages.length > 1
+  const hasCarousel = messages.length > 2
 
-  const handleDismiss = () => {
+  // Les 2 messages visibles
+  const msg0 = messages[index % messages.length]
+  const msg1 = messages.length > 1 ? messages[(index + 1) % messages.length] : null
+
+  const handleDismiss = (i) => {
+    const msg = messages[(index + i) % messages.length]
     if (msg.dismissable) dismisser(msg.id)
-    const suivants = messages.filter((_, i) => i !== index)
+    const suivants = messages.filter(m => m.id !== msg.id)
     setMessages(suivants)
-    setIndex(i => Math.min(i, suivants.length - 1))
+    setIndex(idx => Math.min(idx, Math.max(0, suivants.length - 1)))
     resetTimer()
   }
 
   const handleSuivant = () => {
-    setIndex(i => (i + 1) % messages.length)
+    avancer(messages)
     resetTimer()
   }
 
-  const handleClic = () => { if (msg.lien) navigate(msg.lien) }
+  const handleClic = (msg) => { if (msg.lien) navigate(msg.lien) }
+
+  const rendreLigne = (msg, i) => (
+    <div key={msg.id} style={{
+      display: 'flex', alignItems: 'center', gap: 0,
+      background: 'rgba(0,0,0,0.04)',
+      borderLeft: `3px solid ${msg.couleur}`,
+      marginBottom: 4,
+    }}>
+      <div
+        onClick={() => msg.lien ? handleClic(msg) : undefined}
+        style={{
+          flex: 1, display: 'flex', alignItems: 'center', gap: 10,
+          padding: '12px 12px',
+          cursor: msg.lien ? 'pointer' : 'default',
+        }}
+      >
+        <span style={{ fontSize: 18, lineHeight: 1, flexShrink: 0 }}>{msg.icone}</span>
+        <span style={{ fontSize: 13, fontWeight: 600, color: '#1a1a2e', lineHeight: 1.4 }}>
+          {msg.texte}
+        </span>
+      </div>
+      {msg.dismissable && (
+        <button onClick={() => handleDismiss(i)} style={{
+          background: 'none', border: 'none', cursor: 'pointer',
+          fontSize: 12, color: 'rgba(0,0,0,0.5)', padding: '4px 10px',
+          lineHeight: 1, flexShrink: 0,
+        }} title="Ignorer">✕</button>
+      )}
+    </div>
+  )
 
   return (
     <div style={{
       background: '#f0ede8',
-      padding: '10px 16px 12px',
+      padding: '12px 16px 10px',
       marginTop: 12, marginBottom: 4,
     }}>
-      {/* Message */}
+      {/* Zone messages avec overflow caché pour l'animation */}
       <div style={{
-        display: 'flex', alignItems: 'center', gap: 0,
-        background: 'rgba(0,0,0,0.04)',
-        borderLeft: `3px solid ${msg.couleur}`,
+        overflow: 'hidden',
+        transition: anime ? 'none' : undefined,
       }}>
-        {/* Zone cliquable */}
-        <div
-          onClick={msg.lien ? handleClic : undefined}
-          style={{
-            flex: 1, display: 'flex', alignItems: 'center', gap: 10,
-            padding: '10px 12px',
-            cursor: msg.lien ? 'pointer' : 'default',
-          }}
-        >
-          <span style={{ fontSize: 16, lineHeight: 1, flexShrink: 0 }}>{msg.icone}</span>
-          <span style={{ fontSize: 12, fontWeight: 600, color: '#1a1a2e', lineHeight: 1.4 }}>
-            {msg.texte}
-          </span>
+        <div style={{
+          transform: anime ? 'translateY(-100%)' : 'translateY(0)',
+          opacity: anime ? 0 : 1,
+          transition: 'transform 0.3s ease, opacity 0.3s ease',
+        }}>
+          {rendreLigne(msg0, 0)}
+          {msg1 && rendreLigne(msg1, 1)}
         </div>
-
-        {/* Croix dismiss */}
-        {msg.dismissable && (
-          <button onClick={handleDismiss} style={{
-            background: 'none', border: 'none', cursor: 'pointer',
-            fontSize: 12, color: 'rgba(0,0,0,0.5)', padding: '4px 10px',
-            lineHeight: 1, flexShrink: 0,
-          }} title="Ignorer">✕</button>
-        )}
       </div>
 
       {/* Bas : points + bouton Suivant */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 6 }}>
-        <div style={{ display: 'flex', gap: 3, paddingLeft: 2 }}>
-          {messages.map((_, i) => (
-            <div key={i} style={{
-              width: i === index ? 14 : 4, height: 3, borderRadius: 2,
-              background: i === index ? msg.couleur : 'rgba(0,0,0,0.15)',
-              transition: 'width 0.25s ease',
-            }} />
-          ))}
-        </div>
-        {hasNext && (
+      {hasCarousel && (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 6 }}>
+          <div style={{ display: 'flex', gap: 3, paddingLeft: 2 }}>
+            {messages.map((_, i) => (
+              <div key={i} style={{
+                width: i === index ? 14 : 4, height: 3, borderRadius: 2,
+                background: i === index ? msg0.couleur : 'rgba(0,0,0,0.15)',
+                transition: 'width 0.25s ease',
+              }} />
+            ))}
+          </div>
           <button onClick={handleSuivant} style={{
             background: 'none', border: 'none', cursor: 'pointer',
             fontSize: 11, fontWeight: 700, color: 'rgba(0,0,0,0.45)',
             padding: '2px 0', letterSpacing: '0.03em',
           }}>Suivant →</button>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   )
 }

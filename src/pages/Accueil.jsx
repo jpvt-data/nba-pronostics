@@ -131,18 +131,7 @@ function Accueil() {
         </div>
         <BanniereFeed article={articleUne} />
 
-        {/* ── 2. Avant-Match / Briefing ── */}
-        {!chargement && user && (
-          <>
-            <div style={{ paddingLeft: 16, paddingTop: 24, display: 'flex', alignItems: 'baseline', gap: 6 }}>
-              <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 20, color: 'var(--text-1)', letterSpacing: '0.02em', lineHeight: 1 }}>AVANT</span>
-              <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 20, color: 'var(--accent)', letterSpacing: '0.02em', lineHeight: 1 }}>MATCH</span>
-            </div>
-            <Briefing userId={user.id} nbPronosAttente={nbPronosAttente} matchs={matchs} />
-          </>
-        )}
-
-        {/* ── 3. Timeline ── */}
+        {/* ── 2. Timeline ── */}
         <div style={{ padding: '24px 16px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 0 }}>
             <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 28, color: 'var(--text-1)', letterSpacing: '0.02em', lineHeight: 1 }}>TIME</span>
@@ -206,6 +195,17 @@ function Accueil() {
               />
             )}
           </div>
+        )}
+
+        {/* ── 3. Avant-Match / Briefing ── */}
+        {!chargement && user && (
+          <>
+            <div style={{ paddingLeft: 16, paddingTop: 24, display: 'flex', alignItems: 'baseline', gap: 6 }}>
+              <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 24, color: 'var(--text-1)', letterSpacing: '0.02em', lineHeight: 1 }}>AVANT</span>
+              <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 24, color: 'var(--accent)', letterSpacing: '0.02em', lineHeight: 1 }}>MATCH</span>
+            </div>
+            <Briefing userId={user.id} nbPronosAttente={nbPronosAttente} matchs={matchs} />
+          </>
         )}
 
         {/* ── 4. Ligue en cours ── */}
