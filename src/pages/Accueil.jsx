@@ -125,7 +125,7 @@ function Accueil() {
         </div>
 
         {/* ── 1. Bannière actu Basket USA ── */}
-        <div style={{ paddingLeft: 16, paddingTop: 14, display: 'flex', alignItems: 'baseline', gap: 6 }}>
+        <div style={{ paddingLeft: 16, paddingTop: 8, display: 'flex', alignItems: 'baseline', gap: 6 }}>
           <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 20, color: 'var(--text-1)', letterSpacing: '0.02em', lineHeight: 1 }}>À LA</span>
           <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 20, color: 'var(--orange)', letterSpacing: '0.02em', lineHeight: 1 }}>UNE</span>
         </div>
@@ -134,7 +134,7 @@ function Accueil() {
         {/* ── 2. Avant-Match / Briefing ── */}
         {!chargement && user && (
           <>
-            <div style={{ paddingLeft: 16, paddingTop: 14, display: 'flex', alignItems: 'baseline', gap: 6 }}>
+            <div style={{ paddingLeft: 16, paddingTop: 24, display: 'flex', alignItems: 'baseline', gap: 6 }}>
               <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 20, color: 'var(--text-1)', letterSpacing: '0.02em', lineHeight: 1 }}>AVANT</span>
               <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 20, color: 'var(--accent)', letterSpacing: '0.02em', lineHeight: 1 }}>MATCH</span>
             </div>
@@ -143,7 +143,7 @@ function Accueil() {
         )}
 
         {/* ── 3. Timeline ── */}
-        <div style={{ padding: '20px 16px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+        <div style={{ padding: '24px 16px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 0 }}>
             <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 28, color: 'var(--text-1)', letterSpacing: '0.02em', lineHeight: 1 }}>TIME</span>
             <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 28, color: 'var(--accent)', letterSpacing: '0.02em', lineHeight: 1 }}>LINE</span>
@@ -210,7 +210,7 @@ function Accueil() {
 
         {/* ── 4. Ligue en cours ── */}
         {!chargement && user && (
-          <div style={{ borderLeft: '3px solid var(--accent)', padding: '12px 16px 16px 16px', marginTop: 16, marginBottom: 8 }}>
+          <div style={{ borderLeft: '3px solid var(--accent)', padding: '12px 16px 16px 16px', marginTop: 24, marginBottom: 8 }}>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 10 }}>
               <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 24, color: 'var(--text-1)', letterSpacing: '0.02em', lineHeight: 1 }}>LIGUE</span>
               <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 24, color: 'var(--accent)', letterSpacing: '0.02em', lineHeight: 1 }}>EN COURS</span>
@@ -225,12 +225,13 @@ function Accueil() {
         )}
 
         {/* ── 6. NBA data ── */}
+        <div style={{ marginTop: 24 }} />
         {!chargement && <StandingsNBA typeSaison={typeSaisonEffectif} />}
         {!chargement && typeSaisonEffectif === 3 && <BracketPlayoffs saison={saisonActuelle} />}
 
         {/* ── 7. Actu NBA — fond beige, barre accent ── */}
         {!chargement && user && (
-          <div style={{ background: '#f0ede8', marginTop: 16, borderLeft: '3px solid var(--accent)' }}>
+          <div style={{ background: '#f0ede8', marginTop: 24, borderLeft: '3px solid var(--accent)' }}>
             <div style={{ padding: '14px 16px 0 16px', display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 10 }}>
               <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 24, color: '#1a1a2e', letterSpacing: '0.02em', lineHeight: 1 }}>ACTU</span>
               <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 24, color: 'var(--accent)', letterSpacing: '0.02em', lineHeight: 1 }}>NBA</span>
