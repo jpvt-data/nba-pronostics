@@ -7,7 +7,7 @@ import Navigation from '../components/Navigation'
 import BandeMatchs, { FiltreEquipe } from '../components/BandeMatchs'
 import ClassementRapide from '../components/ClassementRapide'
 import PronosAttente from '../components/PronosAttente'
-import Focus from '../components/Focus'
+import Briefing from '../components/Briefing'
 import LeVestiaire from '../components/LeVestiaire'
 import StandingsNBA from '../components/StandingsNBA'
 import BracketPlayoffs from '../components/BracketPlayoffs'
@@ -143,9 +143,9 @@ function Accueil() {
           </div>
         </div>
 
-        {/* ── 1. Focus — spotlight perso ── */}
+        {/* ── 1. Briefing — spotlight perso ── */}
         {!chargement && user && (
-          <Focus userId={user.id} nbPronosAttente={nbPronosAttente} />
+          <Briefing userId={user.id} nbPronosAttente={nbPronosAttente} />
         )}
 
         {/* ── 2. Timeline ── */}
