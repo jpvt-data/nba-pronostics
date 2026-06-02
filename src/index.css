@@ -71,8 +71,8 @@ html, body {
   min-height: 100svh;
   display: flex;
   flex-direction: column;
-  border-left: 1px solid rgba(99, 102, 241, 0.4);
-  border-right: 1px solid rgba(99, 102, 241, 0.4);
+  /*border-left: 1px solid rgba(99, 102, 241, 0.4);*/
+  /*border-right: 1px solid rgba(99, 102, 241, 0.4);*/
   box-shadow: 0 0 100px rgba(99, 102, 241, 0.18);
 }
 
