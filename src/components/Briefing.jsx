@@ -190,7 +190,7 @@ async function genererMessages(userId, nbPronosAttente, matchs = []) {
         messages.push({
           id:      'ligue_active',
           icone,
-          texte:   `"${nom}" ${saison ? `${saison} ` : ''}en cours`,
+          texte:   `"${nom}" en cours`,
           couleur: typeSaison === 3 ? 'var(--gold)' : 'var(--accent)',
         })
       }
@@ -198,7 +198,7 @@ async function genererMessages(userId, nbPronosAttente, matchs = []) {
       messages.push({
         id:      'ligue_active',
         icone,
-        texte:   `"${nom}" ${saison ? `${saison} ` : ''}en cours`,
+        texte:   `"${nom}" en cours`,
         couleur: typeSaison === 3 ? 'var(--gold)' : 'var(--accent)',
       })
     }
