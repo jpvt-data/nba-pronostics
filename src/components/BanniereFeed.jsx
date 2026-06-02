@@ -40,18 +40,18 @@ export default function BanniereFeed({ article }) {
       href={article.lien || '#'}
       target="_blank"
       rel="noopener noreferrer"
-      style={{ display: 'block', textDecoration: 'none', position: 'relative', overflow: 'hidden', height: 160, marginTop: 12 }}
+      style={{ display: 'block', textDecoration: 'none', position: 'relative', overflow: 'hidden', height: 'clamp(160px, 22vw, 240px)', marginTop: 12 }}
     >
       {/* Photo de fond */}
       {article.image && (
         <img
           src={article.image}
           alt=""
-          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', filter: 'brightness(0.55)' }}
+          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', filter: 'brightness(0.75)' }}
         />
       )}
       {!article.image && (
-        <div style={{ position: 'absolute', inset: 0, background: 'var(--bg-1)' }} />
+        <div style={{ position: 'absolute', inset: 0, background: 'rgba(99,102,241,0.18)' }} />
       )}
 
       {/* Dégradé bas */}
