@@ -1,40 +1,33 @@
 import { useState, useEffect } from 'react'
 import { useNoSpoil } from '../context/NoSpoilContext'
 import { EyeOff } from 'lucide-react'
+import { fetchFeedBasketUSA } from './BanniereFeed'
 
-const URL_NEWS = 'https://site.api.espn.com/apis/site/v2/sports/basketball/nba/news?limit=5'
-
-export default function NewsNBA() {
+export default function NewsNBA({ onFeedCharge }) {
   const [news, setNews]             = useState([])
   const [chargement, setChargement] = useState(true)
   const [erreur, setErreur]         = useState(false)
   const { noSpoil }                 = useNoSpoil()
 
   useEffect(() => {
-    const controller = new AbortController()
-    fetch(URL_NEWS, { signal: controller.signal })
-      .then(r => r.json())
-      .then(data => {
-        const articles = (data.articles ?? []).slice(0, 5).map(a => ({
-          titre:  a.headline ?? '',
-          resume: a.description ?? null,
-          lien:   a.links?.web?.href ?? null,
-        }))
-        setNews(articles)
+    fetchFeedBasketUSA()
+      .then(articles => {
+        // Article 0 = bannière (géré dans Accueil) — on passe au parent via callback
+        if (onFeedCharge) onFeedCharge(articles[0] || null)
+        // Articles 1 à 5 ici
+        setNews(articles.slice(1, 6))
         setChargement(false)
       })
       .catch(() => {
         setErreur(true)
         setChargement(false)
       })
-    return () => controller.abort()
   }, [])
 
   if (erreur || (!chargement && news.length === 0)) return null
 
   return (
     <div style={{ borderLeft: '3px solid var(--orange)', padding: '0 16px 12px 16px' }}>
-
       {noSpoil ? (
         <div style={{
           display: 'flex', alignItems: 'center', gap: 8,
@@ -55,32 +48,43 @@ export default function NewsNBA() {
             news.map((article, i) => (
               <a
                 key={i}
-                href={article.lien ?? '#'}
+                href={article.lien || '#'}
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{
-                  display: 'block',
-                  padding: '9px 6px',
+                  display: 'flex', gap: 10, alignItems: 'flex-start',
+                  padding: '9px 0',
                   borderBottomWidth: i < news.length - 1 ? 1 : 0,
                   borderBottomStyle: 'solid',
                   borderBottomColor: 'var(--border)',
                   textDecoration: 'none',
                 }}
               >
-                <span style={{
-                  fontSize: 12, fontWeight: 600, color: 'var(--text-1)',
-                  lineHeight: 1.4, display: 'block',
-                }}>
-                  {article.titre}
-                </span>
-                {article.resume && (
-                  <span style={{
-                    fontSize: 11, color: 'var(--text-3)', lineHeight: 1.4,
-                    display: 'block', marginTop: 2,
-                  }}>
-                    {article.resume}
-                  </span>
+                {/* Thumbnail */}
+                {article.image && (
+                  <img
+                    src={article.image}
+                    alt=""
+                    style={{ width: 56, height: 42, objectFit: 'cover', flexShrink: 0, borderRadius: 2 }}
+                  />
                 )}
+                {/* Texte */}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <span style={{
+                    fontSize: 12, fontWeight: 600, color: 'var(--text-1)',
+                    lineHeight: 1.35, display: 'block',
+                  }}>
+                    {article.titre}
+                  </span>
+                  {article.resume && (
+                    <span style={{
+                      fontSize: 11, color: 'var(--text-3)', lineHeight: 1.35,
+                      display: 'block', marginTop: 2,
+                    }}>
+                      {article.resume}…
+                    </span>
+                  )}
+                </div>
               </a>
             ))
           )}
@@ -88,7 +92,11 @@ export default function NewsNBA() {
       )}
 
       <p style={{ fontSize: 10, color: 'var(--text-3)', margin: '10px 0 0' }}>
-        Source : ESPN
+        Source :{' '}
+        <a href="https://www.basketusa.com" target="_blank" rel="noopener noreferrer"
+          style={{ color: 'var(--text-3)', textDecoration: 'underline' }}>
+          Basket USA
+        </a>
       </p>
     </div>
   )
