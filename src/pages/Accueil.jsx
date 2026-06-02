@@ -125,11 +125,21 @@ function Accueil() {
         </div>
 
         {/* ── 1. Bannière actu Basket USA ── */}
+        <div style={{ paddingLeft: 16, paddingTop: 14, display: 'flex', alignItems: 'baseline', gap: 6 }}>
+          <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 20, color: 'var(--text-1)', letterSpacing: '0.02em', lineHeight: 1 }}>À LA</span>
+          <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 20, color: 'var(--orange)', letterSpacing: '0.02em', lineHeight: 1 }}>UNE</span>
+        </div>
         <BanniereFeed article={articleUne} />
 
-        {/* ── 2. Briefing ── */}
+        {/* ── 2. Avant-Match / Briefing ── */}
         {!chargement && user && (
-          <Briefing userId={user.id} nbPronosAttente={nbPronosAttente} matchs={matchs} />
+          <>
+            <div style={{ paddingLeft: 16, paddingTop: 14, display: 'flex', alignItems: 'baseline', gap: 6 }}>
+              <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 20, color: 'var(--text-1)', letterSpacing: '0.02em', lineHeight: 1 }}>AVANT</span>
+              <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 20, color: 'var(--accent)', letterSpacing: '0.02em', lineHeight: 1 }}>MATCH</span>
+            </div>
+            <Briefing userId={user.id} nbPronosAttente={nbPronosAttente} matchs={matchs} />
+          </>
         )}
 
         {/* ── 3. Timeline ── */}

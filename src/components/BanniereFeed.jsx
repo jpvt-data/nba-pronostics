@@ -63,9 +63,9 @@ export default function BanniereFeed({ article }) {
       {/* Contenu */}
       <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '10px 14px 10px 16px' }}>
         <span style={{
-          display: 'inline-block', fontSize: 9, fontWeight: 700,
-          letterSpacing: '0.12em', color: 'var(--orange)',
-          textTransform: 'uppercase', marginBottom: 4,
+          display: 'inline-block', fontSize: 11, fontWeight: 700,
+          letterSpacing: '0.1em', color: 'var(--orange)',
+          textTransform: 'uppercase', marginBottom: 5,
         }}>Basket USA</span>
         <p style={{
           margin: 0, fontSize: 13, fontWeight: 700,
