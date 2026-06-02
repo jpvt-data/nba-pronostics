@@ -148,8 +148,8 @@ function MesPronos() {
                   style={{
                     marginTop: 10, display: 'flex', alignItems: 'center', gap: 6,
                     padding: '7px 14px',
-                    background: 'linear-gradient(90deg, var(--accent), var(--orange))',
-                    borderWidth: 0, borderRadius: 'var(--radius-sm)',
+                    background: 'var(--accent)',
+                    borderWidth: 0, borderRadius: 0,
                     color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer',
                   }}
                 >
