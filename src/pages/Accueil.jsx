@@ -21,12 +21,14 @@ import { SAISON_ESPN } from '../config'
 const GUTTER = '20px 16px'
 
 function Accueil() {
-  const [matchs, setMatchs]               = useState([])
-  const [user, setUser]                   = useState(null)
-  const [pseudo, setPseudo]               = useState(null)
-  const [chargement, setCharg]            = useState(true)
-  const [nbPronosAttente, setNbPronosAttente] = useState(0)
-  const [equipeFiltre, setEquipeFiltre] = useState(null)
+  const [matchs, setMatchs]                     = useState([])
+  const [user, setUser]                         = useState(null)
+  const [pseudo, setPseudo]                     = useState(null)
+  const [chargement, setCharg]                  = useState(true)
+  const [nbPronosAttente, setNbPronosAttente]   = useState(0)
+  const [equipeFiltre, setEquipeFiltre]         = useState(null)
+  // type_saison max des ligues actives de l'user — fallback si ESPN renvoie null
+  const [typeSaisonLigues, setTypeSaisonLigues] = useState(null)
   const navigate = useNavigate()
   const { noSpoil, toggleNoSpoil } = useNoSpoil()
 
@@ -35,10 +37,29 @@ function Accueil() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
       setUser(user)
+
       const { data: profil } = await supabase
         .from('profils').select('pseudo').eq('id', user.id).single()
       setPseudo(profil?.pseudo || null)
+
       calculerPoints(user.id).catch(() => {})
+
+      // Récupérer le type_saison des ligues actives de l'user
+      const { data: liguesUser } = await supabase
+        .from('membres_groupe')
+        .select('groupes(type_saison, date_fin)')
+        .eq('user_id', user.id)
+        .eq('actif', true)
+
+      const aujourd_hui = new Date().toISOString().split('T')[0]
+      const maxTypeSaison = liguesUser
+        ?.map(m => m.groupes)
+        .filter(g => g && (!g.date_fin || g.date_fin >= aujourd_hui))
+        .map(g => g.type_saison)
+        .filter(Boolean)
+        .reduce((max, v) => Math.max(max, v), 0) || null
+      setTypeSaisonLigues(maxTypeSaison)
+
       const m = await recupererTimeline(15, 15)
       setMatchs(m)
       setCharg(false)
@@ -88,7 +109,9 @@ function Accueil() {
   }
 
   const typeSaisonActuel = matchs[0]?.typeSaisonNum ?? null
-  const saisonActuelle   = matchs[0]?.saisonNum ?? SAISON_ESPN
+  // Fallback sur les ligues si ESPN ne renvoie rien (hors-saison, break…)
+  const typeSaisonEffectif = typeSaisonActuel ?? typeSaisonLigues
+  const saisonActuelle     = matchs[0]?.saisonNum ?? SAISON_ESPN
 
   return (
     <>
@@ -101,14 +124,12 @@ function Accueil() {
           position: 'relative',
           overflow: 'hidden',
         }}>
-          {/* Ligne accent verticale gauche — décalage visuel */}
           <div style={{
             position: 'absolute', left: 0, top: 0, bottom: 0, width: 3,
             background: 'var(--accent)',
           }} />
 
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-            {/* Titre Teko — décalé vers le bas */}
             <div style={{ paddingTop: 4 }}>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 0 }}>
                 <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 36, color: 'var(--text-1)', letterSpacing: '0.02em', lineHeight: 1 }}>
@@ -196,12 +217,9 @@ function Accueil() {
           </div>
         )}
 
-
-        {/* ── 3. Blocs communautaires — sans card arrondie ── */}
+        {/* ── 3. Blocs communautaires ── */}
         {!chargement && user && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 0, padding: '16px 0 0' }}>
-
-            {/* Ligue en cours — bord gauche accent, pas de card */}
             <div style={{ borderLeft: '3px solid var(--accent)', padding: '12px 16px 16px 16px', marginBottom: 8 }}>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 10 }}>
                 <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 24, color: 'var(--text-1)', letterSpacing: '0.02em', lineHeight: 1 }}>LIGUE</span>
@@ -223,9 +241,9 @@ function Accueil() {
           </div>
         )}
 
-        {/* ── NBA data ── */}
-        {!chargement && <StandingsNBA typeSaison={typeSaisonActuel} />}
-        {!chargement && typeSaisonActuel === 3 && <BracketPlayoffs saison={saisonActuelle} />}
+        {/* ── NBA data — basé sur typeSaisonEffectif (ESPN ?? ligues user) ── */}
+        {!chargement && <StandingsNBA typeSaison={typeSaisonEffectif} />}
+        {!chargement && typeSaisonEffectif === 3 && <BracketPlayoffs saison={saisonActuelle} />}
 
         {!chargement && user && (
           <div style={{ padding: '16px 0 20px', borderLeft: '3px solid var(--orange)' }}>
