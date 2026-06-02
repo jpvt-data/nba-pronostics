@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 
-// Clé localStorage pour les dismiss — format "briefing_dismiss_KEY_DATE"
 const DISMISS_KEY = (key) => {
   const today = new Date().toISOString().slice(0, 10)
   return `briefing_dismiss_${key}_${today}`
@@ -17,12 +16,12 @@ async function genererMessages(userId, nbPronosAttente) {
   // 1. Matchs ESPN sans prono — guideline dismissable
   if (nbPronosAttente > 0 && !estDismisse('pronos_attente')) {
     messages.push({
-      id:         'pronos_attente',
-      icone:      '🏀',
-      texte:      `T'as ${nbPronosAttente} match${nbPronosAttente > 1 ? 's' : ''} à pronostiquer !`,
-      couleur:    'var(--orange)',
+      id:          'pronos_attente',
+      icone:       '🏀',
+      texte:       `T'as ${nbPronosAttente} match${nbPronosAttente > 1 ? 's' : ''} à pronostiquer !`,
+      couleur:     'var(--orange)',
       dismissable: true,
-      lien:       '/', // reste sur le board, scroll naturel
+      lien:        '/',
     })
   }
 
@@ -137,10 +136,10 @@ async function genererMessages(userId, nbPronosAttente) {
 }
 
 function Briefing({ userId, nbPronosAttente = 0 }) {
-  const [messages, setMessages]   = useState([])
-  const [index, setIndex]         = useState(0)
-  const [chargement, setCharg]    = useState(true)
-  const navigate                  = useNavigate()
+  const [messages, setMessages] = useState([])
+  const [index, setIndex]       = useState(0)
+  const [chargement, setCharg]  = useState(true)
+  const navigate                = useNavigate()
 
   useEffect(() => {
     if (!userId) return
@@ -153,24 +152,19 @@ function Briefing({ userId, nbPronosAttente = 0 }) {
   if (chargement) return null
   if (!messages.length) return null
 
-  const msg        = messages[index]
-  const hasNext    = messages.length > 1
+  const msg     = messages[index]
+  const hasNext = messages.length > 1
 
   const handleDismiss = () => {
     if (msg.dismissable) dismisser(msg.id)
-    // Retirer le message de la liste locale
     const suivants = messages.filter((_, i) => i !== index)
     setMessages(suivants)
     setIndex(i => Math.min(i, suivants.length - 1))
   }
 
-  const handleSuivant = () => {
-    setIndex(i => (i + 1) % messages.length)
-  }
+  const handleSuivant = () => setIndex(i => (i + 1) % messages.length)
 
-  const handleClic = () => {
-    if (msg.lien) navigate(msg.lien)
-  }
+  const handleClic = () => { if (msg.lien) navigate(msg.lien) }
 
   return (
     <div style={{
@@ -178,12 +172,13 @@ function Briefing({ userId, nbPronosAttente = 0 }) {
       padding: '10px 16px 12px',
       marginTop: 12, marginBottom: 4,
     }}>
+      {/* Message */}
       <div style={{
         display: 'flex', alignItems: 'center', gap: 0,
         background: 'rgba(0,0,0,0.04)',
         borderLeft: `3px solid ${msg.couleur}`,
       }}>
-        {/* Zone message cliquable */}
+        {/* Zone cliquable */}
         <div
           onClick={msg.lien ? handleClic : undefined}
           style={{
@@ -198,30 +193,19 @@ function Briefing({ userId, nbPronosAttente = 0 }) {
           </span>
         </div>
 
-        {/* Actions droite */}
-        <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0, paddingRight: 8, gap: 2 }}>
-          {/* Dismiss — uniquement si dismissable */}
-          {msg.dismissable && (
-            <button onClick={handleDismiss} style={{
-              background: 'none', border: 'none', cursor: 'pointer',
-              fontSize: 11, color: 'rgba(0,0,0,0.25)', padding: '4px 6px',
-              lineHeight: 1,
-            }} title="Ignorer">✕</button>
-          )}
-          {/* Suivant */}
-          {hasNext && (
-            <button onClick={handleSuivant} style={{
-              background: 'none', border: 'none', cursor: 'pointer',
-              fontSize: 14, color: 'rgba(0,0,0,0.3)', padding: '4px 6px',
-              lineHeight: 1, fontWeight: 700,
-            }} title="Message suivant">›</button>
-          )}
-        </div>
+        {/* Croix dismiss */}
+        {msg.dismissable && (
+          <button onClick={handleDismiss} style={{
+            background: 'none', border: 'none', cursor: 'pointer',
+            fontSize: 12, color: 'rgba(0,0,0,0.5)', padding: '4px 10px',
+            lineHeight: 1, flexShrink: 0,
+          }} title="Ignorer">✕</button>
+        )}
       </div>
 
-      {/* Indicateur position */}
-      {hasNext && (
-        <div style={{ display: 'flex', gap: 3, marginTop: 6, paddingLeft: 2 }}>
+      {/* Bas : points + bouton Suivant */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 6 }}>
+        <div style={{ display: 'flex', gap: 3, paddingLeft: 2 }}>
           {messages.map((_, i) => (
             <div key={i} style={{
               width: i === index ? 14 : 4, height: 3, borderRadius: 2,
@@ -230,7 +214,14 @@ function Briefing({ userId, nbPronosAttente = 0 }) {
             }} />
           ))}
         </div>
-      )}
+        {hasNext && (
+          <button onClick={handleSuivant} style={{
+            background: 'none', border: 'none', cursor: 'pointer',
+            fontSize: 11, fontWeight: 700, color: 'rgba(0,0,0,0.45)',
+            padding: '2px 0', letterSpacing: '0.03em',
+          }}>Suivant →</button>
+        )}
+      </div>
     </div>
   )
 }
