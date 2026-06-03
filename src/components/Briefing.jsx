@@ -155,7 +155,7 @@ export default function Briefing({ userId, nbPronosAttente = 0, matchs = [] }) {
 
   // Durée totale : chaque message = 4s (1s glisse entrée + 2.5s pause + 0.5s glisse sortie)
   // On duplique la liste pour boucle seamless
-  const liste = [...visibles, ...visibles]
+  const liste = [...visibles, ...visibles, ...visibles, ...visibles]
   const dureeParMsg = 10 // secondes
   const dureeTotal  = dureeParMsg * visibles.length
 
@@ -170,8 +170,8 @@ export default function Briefing({ userId, nbPronosAttente = 0, matchs = [] }) {
     }}>
       <style>{`
         @keyframes ticker {
-          0%   { transform: translateX(-100%); }
-          100% { transform: translateX(100vw); }
+          0%   { transform: translateX(100vw); }
+          100% { transform: translateX(-100%); }
         }
         .ticker-track {
           display: flex;

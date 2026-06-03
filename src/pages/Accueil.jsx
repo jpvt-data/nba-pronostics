@@ -198,7 +198,7 @@ function Accueil() {
         )}
 
         {/* ── Ticker Briefing ── */}
-        {user && (
+        {!chargement && user && (
           <Briefing userId={user.id} nbPronosAttente={nbPronosAttente} matchs={matchs} />
         )}
 
