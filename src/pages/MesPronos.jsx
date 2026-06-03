@@ -161,10 +161,10 @@ function MesPronos() {
         </div>
 
         {charg && <p style={{ color: 'var(--text-3)', fontSize: 13, padding: '2rem', textAlign: 'center' }}>Chargement…</p>}
-
+        
         {!charg && (
           <div style={{ display: 'flex', flexDirection: 'column', paddingBottom: 32 }}>
-
+            <div style={{ height: 25 }} />
             {/* ── Stats globales — bg-0 + barre accent ── */}
             <div style={{ background: 'var(--bg-0)', padding: '16px 16px 20px', borderLeft: '3px solid var(--accent)' }}>
               <TitreSection mot1="STATS" mot2="GLOBALES" />
@@ -182,7 +182,7 @@ function MesPronos() {
                 ))}
               </div>
             </div>
-
+            <div style={{ height: 25 }} />
             {/* ── Séries — bg-1 + barre gold ── */}
             {stats.total > 0 && (
               <div style={{ background: 'var(--bg-1)', padding: '16px 16px 20px', borderLeft: '3px solid var(--gold)' }}>
@@ -218,7 +218,7 @@ function MesPronos() {
                 </div>
               </div>
             )}
-
+            <div style={{ height: 25 }} />
             {/* ── Forme récente — bg-0 ── */}
             {formeRecente.length > 0 && (
               <div style={{ background: 'var(--bg-0)', padding: '16px 16px 20px' }}>
@@ -245,7 +245,7 @@ function MesPronos() {
                 </div>
               </div>
             )}
-
+            <div style={{ height: 25 }} />
             {/* ── Équipes + Stats ligues — bg-1 + barre orange ── */}
             {((equipes.meilleure || equipes.pire) || statsLigues.length > 0) && (
               <div style={{ background: 'var(--bg-1)', padding: '16px 16px 20px', borderLeft: '3px solid var(--orange)' }}>
@@ -327,7 +327,7 @@ function MesPronos() {
                 )}
               </div>
             )}
-
+            <div style={{ height: 25 }} />
             {/* ── Historique — bg-0 + barre colorée par résultat ── */}
             <div style={{ background: 'var(--bg-0)', padding: '16px 16px 20px', borderLeft: '3px solid var(--border-2)' }}>
               <TitreSection mot1="HISTORIQUE" />
