@@ -247,7 +247,7 @@ function Briefing({ userId, nbPronosAttente = 0, matchs = [] }) {
   const [messages, setMessages] = useState([])
   const [index, setIndex]       = useState(0)
   const [chargement, setCharg]  = useState(true)
-  const [anime, setAnime]       = useState(false)
+  const [visible, setVisible]   = useState(true)
   const timerRef                = useRef(null)
   const navigate                = useNavigate()
 
@@ -259,18 +259,18 @@ function Briefing({ userId, nbPronosAttente = 0, matchs = [] }) {
     })
   }, [userId, nbPronosAttente])
 
+  const avancer = (msgs) => {
+    setVisible(false)
+    setTimeout(() => {
+      setIndex(i => (i + 1) % msgs.length)
+      setVisible(true)
+    }, 350)
+  }
+
   const demarrerTimer = (msgs) => {
     if (timerRef.current) clearInterval(timerRef.current)
     if (msgs.length <= 2) return
     timerRef.current = setInterval(() => avancer(msgs), 6000)
-  }
-
-  const avancer = (msgs) => {
-    setAnime(true)
-    setTimeout(() => {
-      setIndex(i => (i + 1) % msgs.length)
-      setAnime(false)
-    }, 300)
   }
 
   useEffect(() => {
@@ -284,8 +284,6 @@ function Briefing({ userId, nbPronosAttente = 0, matchs = [] }) {
   if (!messages.length) return null
 
   const hasCarousel = messages.length > 2
-
-  // Les 2 messages visibles
   const msg0 = messages[index % messages.length]
   const msg1 = messages.length > 1 ? messages[(index + 1) % messages.length] : null
 
@@ -339,21 +337,16 @@ function Briefing({ userId, nbPronosAttente = 0, matchs = [] }) {
     <div style={{
       background: '#f0ede8',
       padding: '12px 16px 10px',
-      marginTop: 12, marginBottom: 4,
+      marginTop: 8, marginBottom: 4,
+      minHeight: 110,
     }}>
-      {/* Zone messages avec overflow caché pour l'animation */}
+      {/* Zone messages — crossfade global */}
       <div style={{
-        overflow: 'hidden',
-        transition: anime ? 'none' : undefined,
+        opacity: visible ? 1 : 0,
+        transition: 'opacity 0.35s ease',
       }}>
-        <div style={{
-          transform: anime ? 'translateY(-100%)' : 'translateY(0)',
-          opacity: anime ? 0 : 1,
-          transition: 'transform 0.3s ease, opacity 0.3s ease',
-        }}>
-          {rendreLigne(msg0, 0)}
-          {msg1 && rendreLigne(msg1, 1)}
-        </div>
+        {rendreLigne(msg0, 0)}
+        {msg1 && rendreLigne(msg1, 1)}
       </div>
 
       {/* Bas : points + bouton Suivant */}
