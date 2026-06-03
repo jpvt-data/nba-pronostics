@@ -131,7 +131,7 @@ function Accueil() {
         </div>
         <BanniereFeed article={articleUne} />
 
-        <div style={{ height: 32 }} />
+        <div style={{ height: 25 }} />
 
         {/* ── TIMELINE ── */}
         <div style={{ marginTop: 32, padding: '0 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
@@ -199,6 +199,8 @@ function Accueil() {
           </div>
         )}
 
+        <div style={{ height: 25 }} />
+
         {/* ── Ticker Briefing ── */}
         {!chargement && user && (
           <div style={{ marginTop: 16 }}>
@@ -217,12 +219,16 @@ function Accueil() {
           </div>
         )}
 
+        <div style={{ height: 25 }} />
+
         {/* ── LE VESTIAIRE ── */}
         {!chargement && user && (
           <div style={{ marginTop: 32 }}>
             <LeVestiaire userId={user.id} />
           </div>
         )}
+
+        <div style={{ height: 25 }} />
 
         {/* ── CLASSEMENT NBA ── */}
         {!chargement && (
@@ -232,8 +238,8 @@ function Accueil() {
               display: 'flex', alignItems: 'baseline', justifyContent: 'space-between',
             }}>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-                <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 24, color: 'var(--gold)', letterSpacing: '0.02em', lineHeight: 1 }}>CLASSEMENT</span>
-                <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 24, color: 'var(--text-1)', letterSpacing: '0.02em', lineHeight: 1 }}>NBA</span>
+                <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 28, color: 'var(--gold)', letterSpacing: '0.02em', lineHeight: 1 }}>CLASSEMENT</span>
+                <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 28, color: 'var(--text-1)', letterSpacing: '0.02em', lineHeight: 1 }}>NBA</span>
               </div>
               <button
                 onClick={() => navigate('/stats')}
@@ -250,6 +256,8 @@ function Accueil() {
             {typeSaisonEffectif === 3 && <BracketPlayoffs saison={saisonActuelle} />}
           </div>
         )}
+
+        <div style={{ height: 25 }} />
 
         {/* ── ACTU NBA ── */}
         {!chargement && user && (
