@@ -303,9 +303,9 @@ export default function BracketPlayoffs({ saison = 2026 }) {
 
       {/* ── Titre charte ── */}
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 0, marginBottom: 4 }}>
-        <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 22, color: 'var(--text-1)', letterSpacing: '0.02em', lineHeight: 1 }}>NBA PLAY</span>
-        <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 22, color: 'var(--accent)', letterSpacing: '0.02em', lineHeight: 1 }}>OFFS</span>
-        <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 22, color: 'var(--text-3)', letterSpacing: '0.02em', lineHeight: 1, marginLeft: 8 }}>
+        <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 24, color: 'var(--text-1)', letterSpacing: '0.02em', lineHeight: 1 }}>NBA PLAY</span>
+        <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 24, color: 'var(--accent)', letterSpacing: '0.02em', lineHeight: 1 }}>OFFS</span>
+        <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 24, color: 'var(--text-3)', letterSpacing: '0.02em', lineHeight: 1, marginLeft: 8 }}>
           {saison - 1}-{String(saison).slice(2)}
         </span>
       </div>
