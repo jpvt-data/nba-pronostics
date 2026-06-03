@@ -131,6 +131,8 @@ function Accueil() {
         </div>
         <BanniereFeed article={articleUne} />
 
+        <div style={{ height: 32 }} />
+
         {/* ── TIMELINE ── */}
         <div style={{ marginTop: 32, padding: '0 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 0 }}>
