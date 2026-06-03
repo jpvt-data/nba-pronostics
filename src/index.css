@@ -90,7 +90,7 @@ img { display: block; }
 
 /* ── NAVBAR MOBILE (<768px) ──────────────────────────── */
 @media (max-width: 767px) {
-  #root { padding-top: 40px; padding-bottom: 60px; }
+  #root { padding-top: 52px; padding-bottom: 60px; }
 }
 
 /* classes display gérées 100% par CSS — jamais écrasées en inline */
@@ -137,3 +137,4 @@ img { display: block; }
     padding-bottom: max(60px, env(safe-area-inset-bottom));
   }
 }
+

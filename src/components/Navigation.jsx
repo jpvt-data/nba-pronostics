@@ -227,7 +227,7 @@ function Navigation({ nbPronosAttente = 0 }) {
 
       {/* ── MOBILE — barre logo top ── */}
       <nav className="nav-mobile-logo" style={{
-        ...navBase, top: 0, height: 40,
+        ...navBase, top: 0, height: 52,
         background: 'var(--nav-bg)',
         borderBottomWidth: 1, borderBottomStyle: 'solid', borderBottomColor: 'var(--nav-border)',
         alignItems: 'center', justifyContent: 'space-between', padding: '0 6px 0 8px',
