@@ -225,9 +225,33 @@ function Accueil() {
         )}
 
         {/* ── 6. NBA data ── */}
-        <div style={{ marginTop: 24 }} />
-        {!chargement && <StandingsNBA typeSaison={typeSaisonEffectif} />}
-        {!chargement && typeSaisonEffectif === 3 && <BracketPlayoffs saison={saisonActuelle} />}
+        {!chargement && (
+          <div style={{ marginTop: 24 }}>
+            {/* Titre section */}
+            <div style={{
+              paddingLeft: 16, paddingRight: 16, marginBottom: 12,
+              display: 'flex', alignItems: 'baseline', justifyContent: 'space-between',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+                <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 24, color: 'var(--gold)', letterSpacing: '0.02em', lineHeight: 1 }}>CLASSEMENT</span>
+                <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 24, color: 'var(--text-1)', letterSpacing: '0.02em', lineHeight: 1 }}>NBA</span>
+              </div>
+              <button
+                onClick={() => navigate('/stats')}
+                style={{
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  fontSize: 11, fontWeight: 600, color: 'var(--text-3)',
+                  padding: 0, letterSpacing: '0.03em',
+                }}
+              >
+                complet →
+              </button>
+            </div>
+
+            <StandingsNBA typeSaison={typeSaisonEffectif} />
+            {typeSaisonEffectif === 3 && <BracketPlayoffs saison={saisonActuelle} />}
+          </div>
+        )}
 
         {/* ── 7. Actu NBA — fond beige, barre accent ── */}
         {!chargement && user && (
