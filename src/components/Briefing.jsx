@@ -130,11 +130,10 @@ async function genererMessages(userId, nbPronosAttente, matchs = []) {
 
 export default function Briefing({ userId, nbPronosAttente = 0, matchs = [] }) {
   const [messages, setMessages] = useState([])
-  const [indexActif, setIndexActif] = useState(0)
-  const [phase, setPhase]       = useState('entree') // 'entree' | 'pause' | 'sortie'
   const [chargement, setCharg]  = useState(true)
-  const timerRef                = useRef(null)
-  const navigate                = useNavigate()
+  const [tick, setTick]         = useState(0)
+  const [dismisses, setDismisses] = useState({})
+  const navigate = useNavigate()
 
   useEffect(() => {
     if (!userId) return
@@ -144,47 +143,21 @@ export default function Briefing({ userId, nbPronosAttente = 0, matchs = [] }) {
     })
   }, [userId, nbPronosAttente])
 
-  const demarrerCycle = (msgs, idx) => {
-    clearTimeout(timerRef.current)
-    if (!msgs.length) return
-    setPhase('entree')
-    timerRef.current = setTimeout(() => {
-      setPhase('pause')
-      timerRef.current = setTimeout(() => {
-        setPhase('sortie')
-        timerRef.current = setTimeout(() => {
-          const suivant = (idx + 1) % msgs.length
-          setIndexActif(suivant)
-          demarrerCycle(msgs, suivant)
-        }, 600)
-      }, 3000)
-    }, 600)
+  const handleDismiss = (id, dismissable) => {
+    if (dismissable) dismisser(id)
+    setDismisses(d => ({ ...d, [id]: true }))
   }
 
-  useEffect(() => {
-    if (!messages.length) return
-    demarrerCycle(messages, indexActif)
-    return () => clearTimeout(timerRef.current)
-  }, [messages])
+  if (chargement) return null
 
-  const handleDismiss = () => {
-    clearTimeout(timerRef.current)
-    const msg = messages[indexActif]
-    if (msg.dismissable) dismisser(msg.id)
-    const suivants = messages.filter((_, i) => i !== indexActif)
-    if (!suivants.length) { setMessages([]); return }
-    const nouvelIdx = indexActif % suivants.length
-    setMessages(suivants)
-    setIndexActif(nouvelIdx)
-    setTimeout(() => demarrerCycle(suivants, nouvelIdx), 50)
-  }
+  const visibles = messages.filter(m => !dismisses[m.id])
+  if (!visibles.length) return null
 
-  if (chargement || !messages.length) return null
-
-  const msg = messages[indexActif]
-
-  const translateX = phase === 'entree' ? '-110%' : phase === 'pause' ? '0%' : '110%'
-  const transition = phase === 'pause' ? 'none' : 'transform 0.6s cubic-bezier(0.4,0,0.2,1)'
+  // Durée totale : chaque message = 4s (1s glisse entrée + 2.5s pause + 0.5s glisse sortie)
+  // On duplique la liste pour boucle seamless
+  const liste = [...visibles, ...visibles]
+  const dureeParMsg = 4 // secondes
+  const dureeTotal  = dureeParMsg * visibles.length
 
   return (
     <div style={{
@@ -195,55 +168,52 @@ export default function Briefing({ userId, nbPronosAttente = 0, matchs = [] }) {
       position: 'relative',
       display: 'flex', alignItems: 'center',
     }}>
-      {/* Message animé */}
-      <div style={{
-        position: 'absolute', width: '100%',
-        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-        transform: `translateX(${translateX})`,
-        transition,
-        paddingLeft: 16, paddingRight: phase === 'pause' && msg.dismissable ? 40 : 16,
-        boxSizing: 'border-box',
-      }}>
-        <span style={{ fontSize: 15, flexShrink: 0 }}>{msg.icone}</span>
-        <span
-          onClick={() => msg.lien ? navigate(msg.lien) : undefined}
-          style={{
-            fontSize: 12, fontWeight: 600, color: '#1a1a2e', lineHeight: 1.3,
-            cursor: msg.lien ? 'pointer' : 'default',
-            borderLeft: `2px solid ${msg.couleur}`, paddingLeft: 8,
-            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-          }}
-        >
-          {msg.texte}
-        </span>
+      <style>{`
+        @keyframes ticker {
+          0%   { transform: translateX(100vw); }
+          100% { transform: translateX(-100%); }
+        }
+        .ticker-track {
+          display: flex;
+          align-items: center;
+          gap: 60px;
+          white-space: nowrap;
+          animation: ticker ${dureeTotal}s linear infinite;
+          will-change: transform;
+        }
+        .ticker-track:hover { animation-play-state: paused; }
+      `}</style>
+
+      <div className="ticker-track">
+        {liste.map((msg, i) => (
+          <div key={`${msg.id}-${i}`} style={{
+            display: 'inline-flex', alignItems: 'center', gap: 8,
+            flexShrink: 0,
+          }}>
+            <span style={{ fontSize: 14 }}>{msg.icone}</span>
+            <span
+              onClick={() => msg.lien ? navigate(msg.lien) : undefined}
+              style={{
+                fontSize: 12, fontWeight: 600, color: '#1a1a2e',
+                borderLeft: `2px solid ${msg.couleur}`, paddingLeft: 8,
+                cursor: msg.lien ? 'pointer' : 'default',
+              }}
+            >
+              {msg.texte}
+            </span>
+            {msg.dismissable && i < visibles.length && (
+              <button
+                onClick={() => handleDismiss(msg.id, msg.dismissable)}
+                style={{
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  fontSize: 10, color: 'rgba(0,0,0,0.35)', padding: '2px 4px',
+                }}
+              >✕</button>
+            )}
+            <span style={{ color: 'rgba(0,0,0,0.2)', fontSize: 10, marginLeft: 20 }}>·</span>
+          </div>
+        ))}
       </div>
-
-      {/* Croix — uniquement en pause et si dismissable */}
-      {phase === 'pause' && msg.dismissable && (
-        <button onClick={handleDismiss} style={{
-          position: 'absolute', right: 10,
-          background: 'none', border: 'none', cursor: 'pointer',
-          fontSize: 11, color: 'rgba(0,0,0,0.4)', padding: '4px 6px',
-          lineHeight: 1,
-        }}>✕</button>
-      )}
-
-      {/* Points indicateurs */}
-      {messages.length > 1 && (
-        <div style={{
-          position: 'absolute', bottom: 4, left: '50%',
-          transform: 'translateX(-50%)',
-          display: 'flex', gap: 3,
-        }}>
-          {messages.map((_, i) => (
-            <div key={i} style={{
-              width: i === indexActif ? 12 : 3, height: 3, borderRadius: 2,
-              background: i === indexActif ? msg.couleur : 'rgba(0,0,0,0.15)',
-              transition: 'width 0.25s ease',
-            }} />
-          ))}
-        </div>
-      )}
     </div>
   )
 }
