@@ -156,7 +156,7 @@ export default function Briefing({ userId, nbPronosAttente = 0, matchs = [] }) {
   // Durée totale : chaque message = 4s (1s glisse entrée + 2.5s pause + 0.5s glisse sortie)
   // On duplique la liste pour boucle seamless
   const liste = [...visibles, ...visibles, ...visibles, ...visibles]
-  const dureeParMsg = 10 // secondes
+  const dureeParMsg = 15 // secondes
   const dureeTotal  = dureeParMsg * visibles.length
 
   return (
