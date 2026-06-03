@@ -126,8 +126,8 @@ function Accueil() {
 
         {/* ── 1. Bannière actu Basket USA ── */}
         <div style={{ paddingLeft: 16, paddingTop: 24, display: 'flex', alignItems: 'baseline', gap: 6 }}>
-          <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 24, color: 'var(--text-1)', letterSpacing: '0.02em', lineHeight: 1 }}>À LA</span>
-          <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 24, color: 'var(--orange)', letterSpacing: '0.02em', lineHeight: 1 }}>UNE</span>
+          <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 28, color: 'var(--text-1)', letterSpacing: '0.02em', lineHeight: 1 }}>À LA</span>
+          <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 28, color: 'var(--orange)', letterSpacing: '0.02em', lineHeight: 1 }}>UNE</span>
         </div>
         <BanniereFeed article={articleUne} />
 
@@ -201,8 +201,8 @@ function Accueil() {
         {!chargement && user && (
           <>
             <div style={{ paddingLeft: 16, paddingTop: 24, display: 'flex', alignItems: 'baseline', gap: 6 }}>
-              <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 24, color: 'var(--text-1)', letterSpacing: '0.02em', lineHeight: 1 }}>AVANT</span>
-              <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 24, color: 'var(--accent)', letterSpacing: '0.02em', lineHeight: 1 }}>MATCH</span>
+              <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 28, color: 'var(--text-1)', letterSpacing: '0.02em', lineHeight: 1 }}>AVANT</span>
+              <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 28, color: 'var(--accent)', letterSpacing: '0.02em', lineHeight: 1 }}>MATCH</span>
             </div>
             <Briefing userId={user.id} nbPronosAttente={nbPronosAttente} matchs={matchs} />
           </>
@@ -212,8 +212,8 @@ function Accueil() {
         {!chargement && user && (
           <div style={{ borderLeft: '3px solid var(--accent)', padding: '12px 16px 16px 16px', marginTop: 24, marginBottom: 8 }}>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 10 }}>
-              <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 24, color: 'var(--text-1)', letterSpacing: '0.02em', lineHeight: 1 }}>LIGUE</span>
-              <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 24, color: 'var(--accent)', letterSpacing: '0.02em', lineHeight: 1 }}>EN COURS</span>
+              <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 28, color: 'var(--text-1)', letterSpacing: '0.02em', lineHeight: 1 }}>LIGUE</span>
+              <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 28, color: 'var(--accent)', letterSpacing: '0.02em', lineHeight: 1 }}>EN COURS</span>
             </div>
             <ClassementRapide userId={user.id} />
           </div>
@@ -233,8 +233,8 @@ function Accueil() {
         {!chargement && user && (
           <div style={{ background: '#f0ede8', marginTop: 24, borderLeft: '3px solid var(--accent)' }}>
             <div style={{ padding: '14px 16px 0 16px', display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 10 }}>
-              <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 24, color: '#1a1a2e', letterSpacing: '0.02em', lineHeight: 1 }}>ACTU</span>
-              <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 24, color: 'var(--accent)', letterSpacing: '0.02em', lineHeight: 1 }}>NBA</span>
+              <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 28, color: '#1a1a2e', letterSpacing: '0.02em', lineHeight: 1 }}>ACTU</span>
+              <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 28, color: 'var(--accent)', letterSpacing: '0.02em', lineHeight: 1 }}>NBA</span>
             </div>
             <div style={{ paddingLeft: 16, paddingRight: 16, paddingBottom: 16 }}>
               <NewsNBA onFeedCharge={setArticleUne} />
