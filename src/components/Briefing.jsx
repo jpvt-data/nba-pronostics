@@ -195,7 +195,6 @@ export default function Briefing({ userId, nbPronosAttente = 0, matchs = [] }) {
               onClick={() => msg.lien ? navigate(msg.lien) : undefined}
               style={{
                 fontSize: 12, fontWeight: 600, color: '#1a1a2e',
-                borderLeft: `2px solid ${msg.couleur}`, paddingLeft: 8,
                 cursor: msg.lien ? 'pointer' : 'default',
               }}
             >
