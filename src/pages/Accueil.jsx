@@ -200,7 +200,7 @@ function Accueil() {
         {/* ── 3. Avant-Match / Briefing ── */}
         {!chargement && user && (
           <>
-            <div style={{ paddingLeft: 16, paddingTop: 24, display: 'flex', alignItems: 'baseline', gap: 6 }}>
+            <div style={{ paddingLeft: 16, paddingTop: 24, marginBottom: 6, display: 'flex', alignItems: 'baseline', gap: 6 }}>
               <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 28, color: 'var(--text-1)', letterSpacing: '0.02em', lineHeight: 1 }}>AVANT</span>
               <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 28, color: 'var(--accent)', letterSpacing: '0.02em', lineHeight: 1 }}>MATCH</span>
             </div>
