@@ -115,11 +115,6 @@ function Accueil() {
       <Navigation nbPronosAttente={nbPronosAttente} />
       <main style={{ flex: 1 }}>
 
-        {/* ── Ticker Briefing ── */}
-        {user && (
-          <Briefing userId={user.id} nbPronosAttente={nbPronosAttente} matchs={matchs} />
-        )}
-
         {/* ── Header ── */}
         <div style={{ padding: '20px 16px 0 16px', position: 'relative', overflow: 'hidden' }}>
           <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 3, background: 'var(--accent)' }} />
@@ -202,15 +197,9 @@ function Accueil() {
           </div>
         )}
 
-        {/* ── 3. Avant-Match / Briefing ── */}
-        {!chargement && user && (
-          <>
-            <div style={{ paddingLeft: 16, paddingTop: 24, marginBottom: 20, display: 'flex', alignItems: 'baseline', gap: 6 }}>
-              <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 28, color: 'var(--text-1)', letterSpacing: '0.02em', lineHeight: 1 }}>AVANT</span>
-              <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 28, color: 'var(--accent)', letterSpacing: '0.02em', lineHeight: 1 }}>MATCH</span>
-            </div>
-            <Briefing userId={user.id} nbPronosAttente={nbPronosAttente} matchs={matchs} />
-          </>
+        {/* ── Ticker Briefing ── */}
+        {user && (
+          <Briefing userId={user.id} nbPronosAttente={nbPronosAttente} matchs={matchs} />
         )}
 
         {/* ── 4. Ligue en cours ── */}
