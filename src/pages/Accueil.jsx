@@ -124,15 +124,15 @@ function Accueil() {
           </div>
         </div>
 
-        {/* ── 1. Bannière actu Basket USA ── */}
-        <div style={{ paddingLeft: 16, paddingTop: 24, display: 'flex', alignItems: 'baseline', gap: 6 }}>
+        {/* ── À LA UNE ── */}
+        <div style={{ paddingLeft: 16, paddingTop: 28, paddingBottom: 10, display: 'flex', alignItems: 'baseline', gap: 6 }}>
           <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 28, color: 'var(--text-1)', letterSpacing: '0.02em', lineHeight: 1 }}>À LA</span>
           <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 28, color: 'var(--orange)', letterSpacing: '0.02em', lineHeight: 1 }}>UNE</span>
         </div>
         <BanniereFeed article={articleUne} />
 
-        {/* ── 2. Timeline ── */}
-        <div style={{ padding: '24px 16px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+        {/* ── TIMELINE ── */}
+        <div style={{ marginTop: 32, padding: '0 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 0 }}>
             <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 28, color: 'var(--text-1)', letterSpacing: '0.02em', lineHeight: 1 }}>TIME</span>
             <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 28, color: 'var(--accent)', letterSpacing: '0.02em', lineHeight: 1 }}>LINE</span>
@@ -158,7 +158,7 @@ function Accueil() {
         )}
 
         {!chargement && (
-          <div style={{ marginTop: 8 }}>
+          <div style={{ marginTop: 10 }}>
             {matchs.length === 0 ? (
               <div style={{
                 margin: '8px 16px', padding: '14px 16px',
@@ -199,12 +199,14 @@ function Accueil() {
 
         {/* ── Ticker Briefing ── */}
         {!chargement && user && (
-          <Briefing userId={user.id} nbPronosAttente={nbPronosAttente} matchs={matchs} />
+          <div style={{ marginTop: 16 }}>
+            <Briefing userId={user.id} nbPronosAttente={nbPronosAttente} matchs={matchs} />
+          </div>
         )}
 
-        {/* ── 4. Ligue en cours ── */}
+        {/* ── LIGUE EN COURS ── */}
         {!chargement && user && (
-          <div style={{ borderLeft: '3px solid var(--accent)', padding: '12px 16px 16px 16px', marginTop: 24, marginBottom: 8 }}>
+          <div style={{ borderLeft: '3px solid var(--accent)', padding: '12px 16px 16px 16px', marginTop: 32, marginBottom: 8 }}>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 10 }}>
               <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 28, color: 'var(--text-1)', letterSpacing: '0.02em', lineHeight: 1 }}>LIGUE</span>
               <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 28, color: 'var(--accent)', letterSpacing: '0.02em', lineHeight: 1 }}>EN COURS</span>
@@ -213,15 +215,16 @@ function Accueil() {
           </div>
         )}
 
-        {/* ── 5. Le Vestiaire ── */}
+        {/* ── LE VESTIAIRE ── */}
         {!chargement && user && (
-          <LeVestiaire userId={user.id} />
+          <div style={{ marginTop: 32 }}>
+            <LeVestiaire userId={user.id} />
+          </div>
         )}
 
-        {/* ── 6. NBA data ── */}
+        {/* ── CLASSEMENT NBA ── */}
         {!chargement && (
-          <div style={{ marginTop: 24 }}>
-            {/* Titre section */}
+          <div style={{ marginTop: 32 }}>
             <div style={{
               paddingLeft: 16, paddingRight: 16, marginBottom: 12,
               display: 'flex', alignItems: 'baseline', justifyContent: 'space-between',
@@ -241,15 +244,14 @@ function Accueil() {
                 complet →
               </button>
             </div>
-
             <StandingsNBA typeSaison={typeSaisonEffectif} />
             {typeSaisonEffectif === 3 && <BracketPlayoffs saison={saisonActuelle} />}
           </div>
         )}
 
-        {/* ── 7. Actu NBA — fond beige, barre accent ── */}
+        {/* ── ACTU NBA ── */}
         {!chargement && user && (
-          <div style={{ background: '#f0ede8', marginTop: 24, borderLeft: '3px solid var(--accent)' }}>
+          <div style={{ background: '#f0ede8', marginTop: 32, borderLeft: '3px solid var(--accent)' }}>
             <div style={{ padding: '14px 16px 0 16px', display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 10 }}>
               <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 28, color: '#1a1a2e', letterSpacing: '0.02em', lineHeight: 1 }}>ACTU</span>
               <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 28, color: 'var(--accent)', letterSpacing: '0.02em', lineHeight: 1 }}>NBA</span>
@@ -259,6 +261,8 @@ function Accueil() {
             </div>
           </div>
         )}
+
+        <div style={{ height: 32 }} />
 
       </main>
     </>
