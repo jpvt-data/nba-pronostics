@@ -126,8 +126,8 @@ function Accueil() {
 
         {/* ── 1. Bannière actu Basket USA ── */}
         <div style={{ paddingLeft: 16, paddingTop: 24, display: 'flex', alignItems: 'baseline', gap: 6 }}>
-          <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 20, color: 'var(--text-1)', letterSpacing: '0.02em', lineHeight: 1 }}>À LA</span>
-          <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 20, color: 'var(--orange)', letterSpacing: '0.02em', lineHeight: 1 }}>UNE</span>
+          <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 24, color: 'var(--text-1)', letterSpacing: '0.02em', lineHeight: 1 }}>À LA</span>
+          <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 24, color: 'var(--orange)', letterSpacing: '0.02em', lineHeight: 1 }}>UNE</span>
         </div>
         <BanniereFeed article={articleUne} />
 
