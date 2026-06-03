@@ -163,7 +163,7 @@ export default function Briefing({ userId, nbPronosAttente = 0, matchs = [] }) {
     <div style={{
       background: '#f0ede8',
       height: 44,
-      marginTop: 10, marginBottom: 10,
+      marginTop: 20, marginBottom: 10,
       overflow: 'hidden',
       position: 'relative',
       display: 'flex', alignItems: 'center',
