@@ -115,6 +115,11 @@ function Accueil() {
       <Navigation nbPronosAttente={nbPronosAttente} />
       <main style={{ flex: 1 }}>
 
+        {/* ── Ticker Briefing ── */}
+        {user && (
+          <Briefing userId={user.id} nbPronosAttente={nbPronosAttente} matchs={matchs} />
+        )}
+
         {/* ── Header ── */}
         <div style={{ padding: '20px 16px 0 16px', position: 'relative', overflow: 'hidden' }}>
           <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 3, background: 'var(--accent)' }} />
