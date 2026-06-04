@@ -350,6 +350,7 @@ function BandeMatchs({ matchs, userId, onProno, onBadge, equipeFiltre, onFiltreC
     : matchs
 
   const groupes = grouperParJour(matchsFiltres)
+  console.log('matchs tags:', matchsFiltres.map(m => ({ id: m.espn_id, tag: m.tag, headline: m.headline, date: m.date?.slice(0,10) })))
   const aujourdhui = new Date().toISOString().slice(0, 10)
   // Chercher le premier jour avec un match à venir (pas terminé, pas en cours)
   const jourAvecProno = groupes.find(([j, ms]) => 
