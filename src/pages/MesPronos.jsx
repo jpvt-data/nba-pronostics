@@ -363,6 +363,7 @@ function MesPronos() {
   const [badgePopup, setBadgePopup]      = useState(null)
   const [modalInfo, setModalInfo]        = useState(false)
   const [modalHistorique, setModalHistorique] = useState(false)
+  const [profilId, setProfilId]          = useState(null)
   const [charg, setCharg]                = useState(true)
   const [estMoi, setEstMoi]              = useState(true)
   const navigate                         = useNavigate()
@@ -375,6 +376,7 @@ function MesPronos() {
       const cibleId  = params.get('user_id') || user.id
       const vuParMoi = cibleId === user.id
       setEstMoi(vuParMoi)
+      setProfilId(cibleId)
 
       const { data: p } = await supabase
         .from('profils')
@@ -515,28 +517,28 @@ function MesPronos() {
             >ℹ️</button>
           </div>
 
-          {/* Titre RPG + niveau */}
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginTop: 16 }}>
-            <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 22, color: 'var(--gold)', letterSpacing: '0.02em', lineHeight: 1 }}>{titreRPG}</span>
-            <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 14, color: 'var(--text-3)' }}>Niv. {niveau}</span>
+          {/* Titre RPG + niveau + Historique XP sur la même ligne */}
+          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginTop: 14 }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+              <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 22, color: 'var(--gold)', letterSpacing: '0.02em', lineHeight: 1 }}>{titreRPG}</span>
+              <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 14, color: 'var(--text-3)' }}>Niv. {niveau}</span>
+            </div>
+            {estMoi && (
+              <button
+                onClick={() => setModalHistorique(true)}
+                style={{
+                  background: 'none', borderWidth: 0, cursor: 'pointer',
+                  fontSize: 10, color: 'var(--text-3)', padding: 0,
+                  fontWeight: 600, letterSpacing: '0.03em',
+                }}
+              >
+                Historique XP →
+              </button>
+            )}
           </div>
 
           {/* Barre XP */}
-          <div style={{ marginTop: 8 }}>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 4 }}>
-              {estMoi && (
-                <button
-                  onClick={() => setModalHistorique(true)}
-                  style={{
-                    background: 'none', borderWidth: 0, cursor: 'pointer',
-                    fontSize: 10, color: 'var(--text-3)', padding: 0,
-                    fontWeight: 600, letterSpacing: '0.03em',
-                  }}
-                >
-                  Historique XP →
-                </button>
-              )}
-            </div>
+          <div style={{ marginTop: 6 }}>
             <div style={{ height: 5, background: 'var(--bg-2)', overflow: 'hidden', borderRadius: 3 }}>
               <div style={{ height: '100%', width: `${pctBarre}%`, background: 'var(--gold)', transition: 'width 0.6s ease' }} />
             </div>
@@ -815,7 +817,7 @@ function MesPronos() {
 
       {/* Modal historique XP */}
       {modalHistorique && estMoi && (
-        <ModalHistoriqueXP userId={profil?.id || ''} onClose={() => setModalHistorique(false)} />
+        <ModalHistoriqueXP userId={profilId} onClose={() => setModalHistorique(false)} />
       )}
 
       {/* Modal info */}
