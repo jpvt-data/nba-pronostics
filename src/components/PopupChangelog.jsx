@@ -63,7 +63,7 @@ function PopupChangelog({ forceOuvert = false, onFermer }) {
 
   if (!visible) return null
 
-  const MOTS = ['Pronostique.', 'Clashe.', 'Règne.']
+  const MOTS = ['Pronostique.', 'Flambe.', 'Règne.']
   const COULEURS = ['var(--text-1)', 'var(--accent)', 'var(--orange)']
 
   return (

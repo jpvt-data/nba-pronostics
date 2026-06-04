@@ -321,7 +321,7 @@ function Classement() {
             taille={36}
           />
           <p style={{ fontSize: 12, color: 'var(--text-3)', margin: '4px 0 0', lineHeight: 1.5 }}>
-            Chaque prono correct rapporte <strong style={{ color: 'var(--accent)' }}>1 point</strong>. Clashe tes potes.
+            Chaque prono correct rapporte <strong style={{ color: 'var(--accent)' }}>1 point</strong>. Et tu peux flamber.
           </p>
         </div>
 
