@@ -60,6 +60,7 @@ function Accueil() {
 
       const m = await recupererTimeline(15, 15)
       setMatchs(m)
+      console.log('matchs timeline:', m.map(x => ({ id: x.espn_id, tag: x.tag, headline: x.headline, date: x.date?.slice(0,10) })))
       setCharg(false)
     }
     init()
