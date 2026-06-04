@@ -523,6 +523,20 @@ function MesPronos() {
 
           {/* Barre XP */}
           <div style={{ marginTop: 8 }}>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 4 }}>
+              {estMoi && (
+                <button
+                  onClick={() => setModalHistorique(true)}
+                  style={{
+                    background: 'none', borderWidth: 0, cursor: 'pointer',
+                    fontSize: 10, color: 'var(--text-3)', padding: 0,
+                    fontWeight: 600, letterSpacing: '0.03em',
+                  }}
+                >
+                  Historique XP →
+                </button>
+              )}
+            </div>
             <div style={{ height: 5, background: 'var(--bg-2)', overflow: 'hidden', borderRadius: 3 }}>
               <div style={{ height: '100%', width: `${pctBarre}%`, background: 'var(--gold)', transition: 'width 0.6s ease' }} />
             </div>
@@ -536,18 +550,6 @@ function MesPronos() {
                 </span>
               )}
             </div>
-            {estMoi && (
-              <button
-                onClick={() => setModalHistorique(true)}
-                style={{
-                  background: 'none', borderWidth: 0, cursor: 'pointer',
-                  fontSize: 10, color: 'var(--text-3)', padding: '4px 0 0',
-                  fontWeight: 600, letterSpacing: '0.03em',
-                }}
-              >
-                Historique XP →
-              </button>
-            )}
           </div>
 
           {/* Badges obtenus seulement — alignés à gauche, cliquables */}
