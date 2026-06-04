@@ -31,7 +31,7 @@ const detecterType = (seasonType, headline, compTypeAbbr, isSummerLeague = false
   }
   if (c === 'ALLSTAR' || ['all-star', 'allstar', 'all star'].some(p => h.includes(p))) return 'allstar'
   if (seasonType === 2) {
-    if (['nba cup', 'in-season tournament', 'nba cup - group', 'nba cup - knockout', 'nba cup - semifinal', 'nba cup - final'].some(p => h.includes(p))) return 'nbacup'
+    if (['nba cup', 'in-season tournament', 'nba cup - group', 'nba cup - knockout', 'nba cup - semifinal', 'nba cup - final', 'nba cup championship'].some(p => h.includes(p))) return 'nbacup'
     if (['play-in'].some(p => h.includes(p))) return 'playin'
     return 'regular'
   }
@@ -139,7 +139,7 @@ export const recupererDetailMatch = async (espnId) => {
     if (!isSummerLeague && comp.date) {
       try {
         const dateStr = comp.date.slice(0, 10).replace(/-/g, '')
-        const res     = await fetchAvecTimeout(`${BASE_URL}/scoreboard?dates=${dateStr}&limit=100`)
+        const res     = await fetchAvecTimeout(`${BASE_URL}/scoreboard?dates=${dateStr}-${dateStr}&limit=100`)
         const sb      = await res.json()
         const evtSB   = (sb.events || []).find(e => e.id === espnId)
         if (evtSB) {
@@ -152,7 +152,13 @@ export const recupererDetailMatch = async (espnId) => {
             false
           )
         }
-      } catch { /* silencieux — tag déjà calculé depuis season.type */ }
+      } catch { /* silencieux */ }
+    }
+
+    // Fallback Finals depuis seasonseries — filet de sécurité si scoreboard sans headline
+    if (typeSaisonNum === 3 && tag !== 'finals') {
+      const seriePlayoff = data.seasonseries?.find(s => s.type === 'playoff')
+      if (seriePlayoff?.description === 'NBA Finals') tag = 'finals'
     }
 
     // Helpers extraction

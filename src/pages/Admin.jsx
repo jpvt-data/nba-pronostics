@@ -56,7 +56,7 @@ const detecterType = (evt, comp, isSummerLeague = false) => {
   if (compType === 'ALLSTAR' || ['all-star', 'allstar', 'all star'].some(p => headline.includes(p))) return 'allstar'
 
   if (seasonType === 2) {
-    if (['nba cup', 'in-season tournament', 'nba cup - group', 'nba cup - knockout', 'nba cup - semifinal', 'nba cup - final'].some(p => headline.includes(p))) return 'nbacup'
+    if (['nba cup', 'in-season tournament', 'nba cup - group', 'nba cup - knockout', 'nba cup - semifinal', 'nba cup - final', 'nba cup championship'].some(p => headline.includes(p))) return 'nbacup'
     if (['play-in'].some(p => headline.includes(p))) return 'playin'
     return 'regular'
   }
