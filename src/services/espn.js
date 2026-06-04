@@ -146,12 +146,15 @@ export const recupererDetailMatch = async (espnId) => {
         if (evtSB) {
           const compSB = evtSB.competitions?.[0]
           headline     = compSB?.notes?.[0]?.headline || ''
+          console.log('headline brute:', headline)        
+          console.log('tag calculé avant:', tag)
           tag          = detecterType(
             evtSB.season?.type,
             headline,
             compSB?.type?.abbreviation,
             false
           )
+          console.log('tag calculé après:', tag)
         }
       } catch { /* silencieux */ }
     }
