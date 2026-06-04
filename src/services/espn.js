@@ -142,7 +142,11 @@ export const recupererDetailMatch = async (espnId) => {
         const sbBase   = isSummerLeague ? BASE_SL : BASE_URL
         const res      = await fetchAvecTimeout(`${sbBase}/scoreboard?dates=${dateStr}-${dateStr}&limit=100`)
         const sb      = await res.json()
+        console.log('nb events scoreboard:', sb.events?.length)
+        console.log('espnId cherché:', espnId)
+        console.log('ids trouvés:', sb.events?.map(e => e.id).slice(0, 5))
         const evtSB   = (sb.events || []).find(e => e.id === espnId)
+        console.log('evtSB trouvé:', !!evtSB)
         if (evtSB) {
           const compSB = evtSB.competitions?.[0]
           headline     = compSB?.notes?.[0]?.headline || ''
