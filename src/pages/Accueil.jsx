@@ -118,17 +118,17 @@ function Accueil() {
       // +10 prono posé
       await ajouterXP(user.id, 10, 'passif', 'prono_pose')
 
-      // +10 premier prono du jour (1×/jour)
-      const maintenant = new Date()
-      const debutJourParis = new Date(maintenant.toLocaleDateString('en-CA', { timeZone: 'Europe/Paris' }) + 'T00:00:00+02:00')
-      const aujourdhui = debutJourParis.toISOString()
+      // +10 premier prono du jour (1×/jour) — comparaison via date_jour (Paris)
+      const jourParis = new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/Paris' })
       const { data: dejaPronoJour } = await supabase
-        .from('xp_log').select('id')
+        .from('xp_log')
+        .select('date_jour')
         .eq('user_id', user.id)
         .eq('source_id', 'premier_prono_jour')
-        .gte('cree_le', aujourdhui)
+        .order('date_jour', { ascending: false })
         .limit(1)
-      if (!dejaPronoJour || dejaPronoJour.length === 0) {
+      const dernierPronoJour = dejaPronoJour?.[0]?.date_jour?.slice(0, 10)
+      if (dernierPronoJour !== jourParis) {
         await ajouterXP(user.id, 10, 'passif', 'premier_prono_jour')
       }
 

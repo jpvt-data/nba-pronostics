@@ -18,25 +18,23 @@ export function ProfilProvider({ children }) {
         .single()
       setProfil(data)
 
-      // XP — connexion quotidienne (+5, 1×/jour)
-      const maintenant = new Date()
-      const debutJourParis = new Date(maintenant.toLocaleDateString('en-CA', { timeZone: 'Europe/Paris' }) + 'T00:00:00+02:00')
-      const aujourdhui = debutJourParis.toISOString()
+      // XP — connexion quotidienne (+5, 1×/jour) — comparaison via date_jour (Paris)
+      const jourParis = new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/Paris' })
       const { data: dejaConnecte } = await supabase
         .from('xp_log')
-        .select('id')
+        .select('date_jour')
         .eq('user_id', user.id)
         .eq('source_id', 'connexion_quotidienne')
-        .gte('cree_le', aujourdhui)
+        .order('date_jour', { ascending: false })
         .limit(1)
 
-      if (!dejaConnecte || dejaConnecte.length === 0) {
+      const derniereConnexion = dejaConnecte?.[0]?.date_jour?.slice(0, 10)
+      if (derniereConnexion !== jourParis) {
         await ajouterXP(user.id, 5, 'passif', 'connexion_quotidienne')
       }
     }
     charger()
 
-    // Rafraîchir si l'avatar/pseudo change (ex. après édition dans Profil)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => {
       if (session) charger()
       else setProfil(null)
