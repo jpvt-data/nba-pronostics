@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { verifierJalons } from '../services/xp'
 import Navigation from '../components/Navigation'
 import { Avatar } from '../components/Avatar'
 
-// ── Utilitaires (inchangés) ────────────────────────────
 const MEDAILLES = ['🥇', '🥈', '🥉']
 
 const calcTaux = (s) => {
@@ -54,7 +54,6 @@ function plageSemanePrecedente() {
   return { debut, fin }
 }
 
-// ── Titre de section bicolore Teko ────────────────────
 const TitreSection = ({ mot1, mot2, couleur2 = 'var(--accent)', taille = 24 }) => (
   <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 10 }}>
     <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: taille, color: 'var(--text-1)', letterSpacing: '0.02em', lineHeight: 1 }}>{mot1}</span>
@@ -62,7 +61,6 @@ const TitreSection = ({ mot1, mot2, couleur2 = 'var(--accent)', taille = 24 }) =
   </div>
 )
 
-// ── Ligne utilisateur ──────────────────────────────────
 const LigneUser = ({ m, i, statsUser, moi, navigate }) => {
   const estMoi = m.user_id === moi
   const t = calcTaux(statsUser)
@@ -105,7 +103,6 @@ const LigneUser = ({ m, i, statsUser, moi, navigate }) => {
   )
 }
 
-// ── Composant principal ────────────────────────────────
 function Classement() {
   const [searchParams]                 = useSearchParams()
   const ligueParam                     = searchParams.get('ligue')
@@ -187,8 +184,8 @@ function Classement() {
       })
 
       await chargerGeneralFiltre(tousIds, tousGroupeIds, glob, filtre)
-
       await enregistrerGagnantSemanePrecedente(tousGroupeIds)
+
       const { data: gagnantsPrev } = await supabase
         .from('semaines_gagnees')
         .select('user_id, points, profils(pseudo, avatar_url)')
@@ -261,6 +258,7 @@ function Classement() {
         .from('semaines_gagnees').select('id')
         .eq('groupe_id', gid).eq('semaine_iso', iso).maybeSingle()
       if (dejaEnr) continue
+
       const pts = {}
       dedup.filter(p => p.groupe_id === gid).forEach(p => {
         if (!pts[p.user_id]) pts[p.user_id] = 0
@@ -270,8 +268,23 @@ function Classement() {
       const entries = Object.entries(pts).sort((a, b) => b[1] - a[1])
       const [gagnantId, maxPts] = entries[0]
       if (maxPts === 0) continue
-      if (entries.filter(([, p]) => p === maxPts).length > 1) continue  // ex-aequo → pas de MVP
-      await supabase.from('semaines_gagnees').insert({ user_id: gagnantId, groupe_id: gid, semaine_iso: iso, points: maxPts })
+      if (entries.filter(([, p]) => p === maxPts).length > 1) continue // ex-aequo → pas de MVP
+
+      await supabase.from('semaines_gagnees').insert({
+        user_id: gagnantId, groupe_id: gid, semaine_iso: iso, points: maxPts
+      })
+
+      // Jalon semaine gagnée — vérifier badge Champion
+      const { count: nbSemaines } = await supabase
+        .from('semaines_gagnees')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', gagnantId)
+
+      await verifierJalons(gagnantId, {
+        pronos_poses: 0, pronos_corrects: 0,
+        serie_correcte: 0, serie_ratee: 0,
+        win_rate: 0, semaines_gagnees: nbSemaines || 1,
+      })
     }
   }
 
@@ -382,7 +395,6 @@ function Classement() {
             <div style={{ borderLeft: '3px solid var(--accent)', padding: '12px 16px 16px 16px', marginTop: 8 }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
                 <TitreSection mot1="TOTAL" mot2={filtre === 'annee' ? `${labelAnneeNBA()}` : filtre === 'mois' ? 'MOIS' : 'SEMAINE'} taille={20} />
-                {/* Toggle */}
                 <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
                   {['semaine', 'mois', 'annee'].map(f => (
                     <button key={f} onClick={() => changerFiltre(f)} style={{
@@ -418,7 +430,7 @@ function Classement() {
                         borderLeft: estMoi ? '3px solid var(--accent)' : '3px solid transparent',
                         padding: '10px 12px', cursor: 'pointer',
                         borderBottom: '1px solid var(--border)',
-                        marginLeft: -16, // annuler le paddingLeft parent pour aligner le border-left
+                        marginLeft: -16,
                       }}
                     >
                       <span style={{
