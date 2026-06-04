@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { useNavigate } from 'react-router-dom'
 import Navigation from '../components/Navigation'
-import CreerGroupe from '../components/CreerGroupe'
 
 const ADMIN_ID = 'fa55d016-896c-4eb4-b48a-241d6be71ad0'
 const ONGLETS  = ['en_cours', 'a_venir', 'terminees']
@@ -15,13 +14,23 @@ const TitreSection = ({ mot1, mot2 = '', couleur2 = 'var(--accent)', taille = 24
   </div>
 )
 
+
+const TAG_CONFIG = {
+  preseason:    { label: 'Pré-saison',       couleur: '#6366f1' },
+  regular:      { label: 'Saison régulière', couleur: '#9090b0' },
+  nbacup:       { label: 'NBA Cup',          couleur: '#f97316' },
+  allstar:      { label: 'All-Star',         couleur: '#f59e0b' },
+  playin:       { label: 'Play-In',          couleur: '#22c55e' },
+  playoffs:     { label: 'Playoffs',         couleur: '#ef4444' },
+  finals:       { label: 'NBA Finals',       couleur: '#e11d48' },
+  summer_league:{ label: 'Summer League',    couleur: '#06b6d4' },
+}
+
 function Groupes() {
   const [ligues, setLigues]             = useState([])
   const [membres, setMembres]           = useState({})
   const [charg, setCharg]               = useState(true)
   const [userId, setUserId]             = useState(null)
-  const [creerOuvert, setCreerOuvert]   = useState(false)
-  const [ligueEnModif, setLigueEnModif] = useState(null)
   const [onglet, setOnglet]             = useState('en_cours')
   const navigate                        = useNavigate()
 
@@ -63,13 +72,6 @@ function Groupes() {
     charger()
   }
 
-  const supprimer = async (groupeId) => {
-    if (!confirm('Supprimer cette ligue ? Cette action est irréversible.')) return
-    await supabase.from('membres_groupe').delete().eq('groupe_id', groupeId)
-    await supabase.from('groupes').delete().eq('id', groupeId)
-    charger()
-  }
-
   const maintenant = new Date()
 
   const categoriser = (l) => {
@@ -102,6 +104,11 @@ function Groupes() {
             {/* Nom + badges */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 4 }}>
               <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 18, color: 'var(--text-1)', letterSpacing: '0.02em' }}>{ligue.nom}</span>
+              {ligue.tag && TAG_CONFIG[ligue.tag] && (
+                <span style={{ fontSize: 10, fontWeight: 700, background: TAG_CONFIG[ligue.tag].couleur + '22', color: TAG_CONFIG[ligue.tag].couleur, padding: '2px 6px', borderWidth: 1, borderStyle: 'solid', borderColor: TAG_CONFIG[ligue.tag].couleur + '44', borderRadius: 3 }}>
+                  {TAG_CONFIG[ligue.tag].label}
+                </span>
+              )}
               {dedans && (
                 <span style={{ fontSize: 10, fontWeight: 600, background: 'var(--accent-dim)', color: 'var(--accent)', padding: '2px 6px', borderWidth: 1, borderStyle: 'solid', borderColor: 'var(--accent-border)' }}>✓ Inscrit</span>
               )}
@@ -118,6 +125,12 @@ function Groupes() {
               {ligue.date_debut && <span>Du {fmt(ligue.date_debut)}</span>}
               {ligue.date_fin   && <span> au {fmt(ligue.date_fin)}</span>}
             </div>
+            {/* Description */}
+            {ligue.description && (
+              <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 6, lineHeight: 1.5, fontStyle: 'italic' }}>
+                {ligue.description}
+              </div>
+            )}
 
             {/* Points si inscrit */}
             {dedans && membre?.points != null && (
@@ -145,16 +158,7 @@ function Groupes() {
                 Classement
               </button>
             )}
-            {userId === ADMIN_ID && (
-              <>
-                <button onClick={() => { setLigueEnModif(ligue); setCreerOuvert(false) }} style={{ fontSize: 11, color: 'var(--accent)', background: 'none', borderWidth: 1, borderStyle: 'solid', borderColor: 'var(--accent-border)', borderRadius: 'var(--radius-sm)', paddingTop: 5, paddingBottom: 5, paddingLeft: 10, paddingRight: 10, cursor: 'pointer' }}>
-                  Modifier
-                </button>
-                <button onClick={() => supprimer(ligue.id)} style={{ fontSize: 11, color: 'var(--danger)', background: 'none', borderWidth: 1, borderStyle: 'solid', borderColor: 'rgba(239,68,68,0.3)', borderRadius: 'var(--radius-sm)', paddingTop: 5, paddingBottom: 5, paddingLeft: 10, paddingRight: 10, cursor: 'pointer' }}>
-                  Supprimer
-                </button>
-              </>
-            )}
+
           </div>
         </div>
       </div>
@@ -173,23 +177,7 @@ function Groupes() {
           <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 3, background: 'var(--accent)' }} />
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 6 }}>
             <TitreSection mot1="MES" mot2="LIGUES" taille={36} />
-            {userId === ADMIN_ID && (
-              <button
-                onClick={() => { setCreerOuvert(v => !v); setLigueEnModif(null) }}
-                style={{
-                  fontSize: 12, fontWeight: 600, marginTop: 6,
-                  background: creerOuvert ? 'var(--accent-dim)' : 'transparent',
-                  borderWidth: 1, borderStyle: 'solid',
-                  borderColor: creerOuvert ? 'var(--accent-border)' : 'var(--border)',
-                  borderRadius: 'var(--radius-sm)',
-                  color: creerOuvert ? 'var(--accent)' : 'var(--text-2)',
-                  paddingTop: 6, paddingBottom: 6, paddingLeft: 12, paddingRight: 12,
-                  cursor: 'pointer',
-                }}
-              >
-                + Nouvelle ligue
-              </button>
-            )}
+
           </div>
           <p style={{ fontSize: 12, color: 'var(--text-3)', margin: '4px 0 16px', lineHeight: 1.5 }}>
             Rejoins une ligue pour entrer en compétition avec tes potes.
@@ -212,18 +200,6 @@ function Groupes() {
             ))}
           </div>
         </div>
-
-        {/* ── Formulaires admin ── */}
-        {creerOuvert && userId === ADMIN_ID && (
-          <div style={{ padding: '16px 16px 0' }}>
-            <CreerGroupe onSuccess={() => { setCreerOuvert(false); charger() }} />
-          </div>
-        )}
-        {ligueEnModif && userId === ADMIN_ID && (
-          <div style={{ padding: '16px 16px 0' }}>
-            <CreerGroupe ligueExistante={ligueEnModif} onSuccess={() => { setLigueEnModif(null); charger() }} />
-          </div>
-        )}
 
         {charg && <p style={{ color: 'var(--text-3)', fontSize: 13, padding: '2rem', textAlign: 'center' }}>Chargement…</p>}
 
