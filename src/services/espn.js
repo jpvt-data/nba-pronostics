@@ -302,11 +302,14 @@ export const recupererTimeline = async (joursAvant = 15, joursApres = 15) => {
       const venue     = comp.venue
       const dateMatch = new Date(evt.date)
       if (dateMatch < debut || dateMatch > fin) return
+      const headline = comp.notes?.[0]?.headline || ''
       matchs.push({
         espn_id: evt.id, date: evt.date, statut: comp.status.type.name,
         saison: evt.season?.year ? `${evt.season.year - 1}-${String(evt.season.year).slice(2)}` : null,
         typeSaison: TYPE_SAISON[evt.season?.type] || null,
         saisonNum: evt.season?.year ?? null, typeSaisonNum: evt.season?.type ?? null,
+        tag: detecterType(evt.season?.type, headline, comp.type?.abbreviation, false),
+        headline,
         stade: venue?.fullName || null, ville: venue?.address?.city || null,
         canal: comp.broadcasts?.[0]?.names?.[0] || null,
         domicile: { nom: dom.team.displayName, trigramme: dom.team.abbreviation, logo: dom.team.logo, score: dom.score ?? null, color: dom.team.color || null, alternateColor: dom.team.alternateColor || null },

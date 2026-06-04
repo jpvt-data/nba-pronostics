@@ -78,6 +78,17 @@ const EQUIPES_NBA = [
   { tri: 'WAS', nom: 'Wizards',      logo: 'https://a.espncdn.com/i/teamlogos/nba/500/wsh.png' },
 ]
 
+
+const TAG_BANDE = {
+  nbacup:  { label: 'NBA Cup',    couleur: '#f97316' },
+  allstar: { label: 'All-Star',   couleur: '#f59e0b' },
+  playin:  { label: 'Play-In',    couleur: '#22c55e' },
+  playoffs:{ label: 'Playoffs',   couleur: '#ef4444' },
+  finals:  { label: 'NBA Finals', couleur: '#e11d48' },
+  preseason:{ label: 'Pré-saison','couleur': '#6366f1' },
+  summer_league:{ label: 'Summer League', couleur: '#06b6d4' },
+}
+
 function FiltreEquipe({ equipeFiltre, onSelect }) {
   const [ouvert, setOuvert] = useState(false)
   const refModal = useRef(null)
@@ -271,11 +282,29 @@ function GroupeJour({ jour, matchs, pronos, onProno, userId, refEl }) {
   const aujd = estAujourdhui(jour)
   return (
     <div ref={refEl} style={{ flexShrink: 0 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, paddingLeft: 4, marginBottom: 8 }}>
-        {aujd && <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--accent)', boxShadow: '0 0 6px var(--accent)', display: 'inline-block' }} />}
-        <span style={{ fontFamily: 'var(--font-display)', fontSize: 10, fontWeight: 700, color: aujd ? 'var(--accent)' : 'var(--text-3)', letterSpacing: '0.16em' }}>
-          {aujd ? "AUJOURD'HUI" : formaterJourLong(jour)}
-        </span>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6, paddingLeft: 4, marginBottom: 8, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          {aujd && <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--accent)', boxShadow: '0 0 6px var(--accent)', display: 'inline-block' }} />}
+          <span style={{ fontFamily: 'var(--font-display)', fontSize: 10, fontWeight: 700, color: aujd ? 'var(--accent)' : 'var(--text-3)', letterSpacing: '0.16em' }}>
+            {aujd ? "AUJOURD'HUI" : formaterJourLong(jour)}
+          </span>
+        </div>
+        {/* Tags du jour — déduits des matchs */}
+        <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+          {[...new Set(matchs.map(m => m.tag).filter(t => t && TAG_BANDE[t] && t !== 'regular'))].map(tag => (
+            <span key={tag} style={{
+              fontSize: 8, fontWeight: 700, letterSpacing: '0.06em',
+              color: TAG_BANDE[tag].couleur,
+              background: TAG_BANDE[tag].couleur + '22',
+              borderWidth: 1, borderStyle: 'solid', borderColor: TAG_BANDE[tag].couleur + '44',
+              borderRadius: 3, padding: '1px 5px',
+              textTransform: 'uppercase',
+            }}>
+              {/* Headline si spécifique (NBA Cup - QF), sinon label générique */}
+              {matchs.find(m => m.tag === tag && m.headline && !['preseason','regular','playoffs','finals','playin'].includes(tag))?.headline || TAG_BANDE[tag].label}
+            </span>
+          ))}
+        </div>
       </div>
       <div style={{ display: 'flex', gap: 8 }}>
         {matchs.map(match => (
