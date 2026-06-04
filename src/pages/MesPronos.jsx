@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { niveauDepuisXP, xpPourNiveau } from '../services/xp'
 import Navigation from '../components/Navigation'
 import { Avatar } from '../components/Avatar'
 
@@ -36,9 +37,6 @@ function calculerEquipes(termines) {
   return { meilleure: liste[0] || null, pire: liste[liste.length - 1] || null }
 }
 
-// Titre bicolore — mot1 blanc, mot2 couleur accent
-// Pour mots composés : mot1="FORME " mot2="RÉCENTE" (espace dans mot1)
-// Pour mots simples : mot1="SÉRIES" mot2="" ou couleur identique
 const TitreSection = ({ mot1, mot2 = '', couleur2 = 'var(--accent)', taille = 24 }) => (
   <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 10 }}>
     <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: taille, color: 'var(--text-1)', letterSpacing: '0.02em', lineHeight: 1 }}>{mot1}</span>
@@ -46,18 +44,180 @@ const TitreSection = ({ mot1, mot2 = '', couleur2 = 'var(--accent)', taille = 24
   </div>
 )
 
+// Catalogue badges — ordre fixe, position stable
+const BADGES_CATALOGUE = [
+  { slug: 'en_feu',      emoji: '🔥', nom: 'En Feu',      famille: 'performance' },
+  { slug: 'prophete',    emoji: '👑', nom: 'Prophète',     famille: 'performance' },
+  { slug: 'cold_turkey', emoji: '🧊', nom: 'Cold Turkey',  famille: 'performance' },
+  { slug: 'analyste',    emoji: '🧠', nom: 'Analyste',     famille: 'performance' },
+  { slug: 'champion',    emoji: '🏆', nom: 'Champion',     famille: 'performance' },
+  { slug: 'anti_fade',   emoji: '💀', nom: 'Anti-Fade',    famille: 'performance' },
+  { slug: 'marathonien', emoji: '🏃', nom: 'Marathonien',  famille: 'performance' },
+  { slug: 'all_in',      emoji: '🃏', nom: 'All-In',       famille: 'appartenance' },
+  { slug: 'og',          emoji: '🏀', nom: 'OG',           famille: 'appartenance' },
+  { slug: 'survivant',   emoji: '🩹', nom: 'Survivant',    famille: 'appartenance' },
+]
+
+// Titre RPG depuis niveau
+const titrDepuisNiveau = (n) => {
+  if (n <= 10) return 'Rookie'
+  if (n <= 20) return 'Sixième Homme'
+  if (n <= 30) return 'Starter'
+  if (n <= 40) return 'All-Star'
+  if (n <= 60) return 'MVP'
+  if (n <= 80) return 'Hall of Fame'
+  return 'GOAT'
+}
+
+// Modal info XP
+const ModalInfo = ({ onClose }) => {
+  const [onglet, setOnglet] = useState('xp')
+
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)',
+        zIndex: 1000, display: 'flex', alignItems: 'flex-end',
+      }}
+    >
+      <div
+        onClick={e => e.stopPropagation()}
+        style={{
+          width: '100%', maxHeight: '80vh', overflowY: 'auto',
+          background: 'var(--bg-1)', borderTop: '3px solid var(--accent)',
+          padding: '20px 16px 40px',
+        }}
+      >
+        {/* Onglets */}
+        <div style={{ display: 'flex', gap: 4, marginBottom: 20 }}>
+          {[
+            { id: 'xp',       label: 'XP & Niveaux' },
+            { id: 'badges',   label: 'Badges' },
+            { id: 'missions', label: 'Missions' },
+          ].map(o => (
+            <button key={o.id} onClick={() => setOnglet(o.id)} style={{
+              padding: '6px 12px', fontSize: 12, fontWeight: 600, cursor: 'pointer',
+              background: onglet === o.id ? 'var(--accent)' : 'transparent',
+              color: onglet === o.id ? '#fff' : 'var(--text-3)',
+              borderWidth: 1, borderStyle: 'solid',
+              borderColor: onglet === o.id ? 'var(--accent)' : 'var(--border)',
+              borderRadius: 'var(--radius-sm)',
+            }}>{o.label}</button>
+          ))}
+        </div>
+
+        {/* XP & Niveaux */}
+        {onglet === 'xp' && (
+          <div>
+            <TitreSection mot1="COMMENT" mot2="GAGNER DE L'XP" taille={18} />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 20 }}>
+              {[
+                { action: 'Connexion quotidienne',        xp: '+5 XP',  note: '1×/jour' },
+                { action: 'Prono posé',                   xp: '+10 XP', note: 'par prono' },
+                { action: 'Premier prono du jour',        xp: '+10 XP', note: '1×/jour' },
+                { action: 'Prono correct',                xp: '+25 XP', note: 'par prono validé' },
+                { action: 'Semaine 100% pronostiquée',    xp: '+50 XP', note: '1×/semaine' },
+                { action: 'Premier prono de l\'histoire', xp: '+75 XP', note: '1× à vie' },
+              ].map((r, i) => (
+                <div key={i} style={{
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                  padding: '8px 12px', background: 'var(--bg-2)',
+                  borderLeft: '3px solid var(--accent)',
+                }}>
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-1)' }}>{r.action}</div>
+                    <div style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 2 }}>{r.note}</div>
+                  </div>
+                  <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 16, color: 'var(--gold)' }}>{r.xp}</span>
+                </div>
+              ))}
+            </div>
+            <TitreSection mot1="LES" mot2="7 TITRES" taille={18} />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {[
+                { titre: 'Rookie',        niveaux: '1 → 10' },
+                { titre: 'Sixième Homme', niveaux: '11 → 20' },
+                { titre: 'Starter',       niveaux: '21 → 30' },
+                { titre: 'All-Star',      niveaux: '31 → 40' },
+                { titre: 'MVP',           niveaux: '41 → 60' },
+                { titre: 'Hall of Fame',  niveaux: '61 → 80' },
+                { titre: 'GOAT',          niveaux: '81 → 100' },
+              ].map((t, i) => (
+                <div key={i} style={{
+                  display: 'flex', justifyContent: 'space-between',
+                  padding: '6px 12px', borderBottom: '1px solid var(--border)',
+                }}>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-1)' }}>{t.titre}</span>
+                  <span style={{ fontSize: 12, color: 'var(--text-3)', fontFamily: 'var(--font-display)' }}>Niv. {t.niveaux}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Badges */}
+        {onglet === 'badges' && (
+          <div>
+            <TitreSection mot1="LES" mot2="BADGES" taille={18} />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {BADGES_CATALOGUE.map((b, i) => (
+                <div key={i} style={{
+                  display: 'flex', alignItems: 'center', gap: 12,
+                  padding: '10px 12px', background: 'var(--bg-2)',
+                }}>
+                  <span style={{ fontSize: 24 }}>{b.emoji}</span>
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-1)' }}>{b.nom}</div>
+                    <div style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 2, textTransform: 'capitalize' }}>{b.famille}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Missions */}
+        {onglet === 'missions' && (
+          <div>
+            <TitreSection mot1="LES" mot2="MISSIONS" taille={18} />
+            <p style={{ fontSize: 13, color: 'var(--text-3)', lineHeight: 1.6 }}>
+              Des missions quotidiennes, hebdomadaires et événementielles permettent d'accélérer ta progression XP. Consulte le Board pour voir les missions actives.
+            </p>
+          </div>
+        )}
+
+        <button
+          onClick={onClose}
+          style={{
+            marginTop: 24, width: '100%', padding: '12px',
+            background: 'var(--bg-2)', borderWidth: 1, borderStyle: 'solid',
+            borderColor: 'var(--border)', borderRadius: 'var(--radius-sm)',
+            color: 'var(--text-3)', fontSize: 13, fontWeight: 600, cursor: 'pointer',
+          }}
+        >
+          Fermer
+        </button>
+      </div>
+    </div>
+  )
+}
+
 function MesPronos() {
-  const [pronos, setPronos]        = useState([])
-  const [stats, setStats]          = useState({ total: 0, corrects: 0, incorrects: 0 })
-  const [statsLigues, setStatsLig] = useState([])
-  const [profil, setProfil]        = useState(null)
-  const [formeRecente, setForme]   = useState([])
-  const [streaks, setStreaks]       = useState({ actuel: 0, max: 0 })
-  const [equipes, setEquipes]       = useState({ meilleure: null, pire: null })
-  const [charg, setCharg]          = useState(true)
-  const [estMoi, setEstMoi]        = useState(true)
-  const navigate                   = useNavigate()
-  const location                   = useLocation()
+  const [pronos, setPronos]          = useState([])
+  const [stats, setStats]            = useState({ total: 0, corrects: 0, incorrects: 0 })
+  const [statsLigues, setStatsLig]   = useState([])
+  const [profil, setProfil]          = useState(null)
+  const [formeRecente, setForme]     = useState([])
+  const [streaks, setStreaks]         = useState({ actuel: 0, max: 0 })
+  const [equipes, setEquipes]         = useState({ meilleure: null, pire: null })
+  const [xpData, setXpData]          = useState({ xp_total: 0, niveau: 1, badges: [] })
+  const [badgesOuverts, setBadgesOuverts] = useState(false)
+  const [modalInfo, setModalInfo]    = useState(false)
+  const [charg, setCharg]            = useState(true)
+  const [estMoi, setEstMoi]          = useState(true)
+  const navigate                     = useNavigate()
+  const location                     = useLocation()
 
   useEffect(() => {
     const init = async () => {
@@ -68,8 +228,15 @@ function MesPronos() {
       setEstMoi(vuParMoi)
 
       const { data: p } = await supabase
-        .from('profils').select('pseudo, avatar_url, description').eq('id', cibleId).single()
+        .from('profils')
+        .select('pseudo, avatar_url, description, xp_total, niveau, badges')
+        .eq('id', cibleId).single()
       setProfil(p)
+      setXpData({
+        xp_total: p?.xp_total || 0,
+        niveau:   p?.niveau   || 1,
+        badges:   p?.badges   || [],
+      })
 
       let query = supabase
         .from('pronos')
@@ -120,17 +287,30 @@ function MesPronos() {
 
   const taux = (c, i) => (c + i) > 0 ? Math.round(c / (c + i) * 100) : 0
 
+  // Calcul barre XP
+  const niveau      = xpData.niveau
+  const xpActuel    = xpData.xp_total
+  const xpDebutNiv  = xpPourNiveau(niveau)
+  const xpFinNiv    = xpPourNiveau(niveau + 1)
+  const xpDansNiv   = xpActuel - xpDebutNiv
+  const xpNivTotal  = xpFinNiv - xpDebutNiv
+  const pctBarre    = niveau >= 100 ? 100 : Math.min(100, Math.round(xpDansNiv / xpNivTotal * 100))
+  const titreRPG    = titrDepuisNiveau(niveau)
+
+  // Badges à afficher
+  const badgesObtenusSlugs = new Set(xpData.badges || [])
+  const badgesAffichés = badgesOuverts ? BADGES_CATALOGUE : BADGES_CATALOGUE.slice(0, 8)
+
   return (
     <>
       <Navigation />
       <main style={{ flex: 1 }}>
 
-        {/* ── Header profil — sombre + barre accent ── */}
+        {/* ── Header profil ── */}
         <div style={{ background: 'var(--bg-1)', padding: '20px 16px', position: 'relative', borderLeft: '3px solid var(--accent)' }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16 }}>
             <Avatar url={profil?.avatar_url} pseudo={profil?.pseudo} taille={56} fontSize={18} />
             <div style={{ flex: 1, minWidth: 0 }}>
-              {/* Pseudo tout en blanc — pas de découpe aléatoire */}
               <div style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 32, color: 'var(--text-1)', letterSpacing: '0.02em', lineHeight: 1 }}>
                 {profil?.pseudo || '—'}
               </div>
@@ -161,11 +341,12 @@ function MesPronos() {
         </div>
 
         {charg && <p style={{ color: 'var(--text-3)', fontSize: 13, padding: '2rem', textAlign: 'center' }}>Chargement…</p>}
-        
+
         {!charg && (
           <div style={{ display: 'flex', flexDirection: 'column', paddingBottom: 32 }}>
             <div style={{ height: 25 }} />
-            {/* ── Stats globales — bg-0 + barre accent ── */}
+
+            {/* ── Stats globales ── */}
             <div style={{ background: 'var(--bg-0)', padding: '16px 16px 20px', borderLeft: '3px solid var(--accent)' }}>
               <TitreSection mot1="STATS" mot2="GLOBALES" />
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
@@ -182,8 +363,88 @@ function MesPronos() {
                 ))}
               </div>
             </div>
+
             <div style={{ height: 25 }} />
-            {/* ── Séries — bg-1 + barre gold ── */}
+
+            {/* ── Bloc XP & Badges ── */}
+            <div style={{ background: 'var(--bg-1)', padding: '16px 16px 20px', borderLeft: '3px solid var(--gold)' }}>
+
+              {/* Header bloc */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+                  <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 24, color: 'var(--gold)', letterSpacing: '0.02em', lineHeight: 1 }}>{titreRPG}</span>
+                  <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 16, color: 'var(--text-3)' }}>Niv. {niveau}</span>
+                </div>
+                <button
+                  onClick={() => setModalInfo(true)}
+                  style={{
+                    background: 'none', borderWidth: 0, cursor: 'pointer',
+                    fontSize: 16, color: 'var(--text-3)', padding: 4,
+                  }}
+                >ℹ️</button>
+              </div>
+
+              {/* Barre XP */}
+              <div style={{ marginBottom: 6 }}>
+                <div style={{ height: 6, background: 'var(--bg-2)', overflow: 'hidden', borderRadius: 3 }}>
+                  <div style={{
+                    height: '100%', width: `${pctBarre}%`,
+                    background: 'var(--gold)',
+                    transition: 'width 0.6s ease',
+                  }} />
+                </div>
+                <div style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 4, textAlign: 'right', fontFamily: 'var(--font-display)', fontWeight: 600 }}>
+                  {xpActuel.toLocaleString('fr-FR')} XP
+                </div>
+              </div>
+
+              {/* Grille badges */}
+              {BADGES_CATALOGUE.length > 0 && (
+                <div style={{ marginTop: 16 }}>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                    {badgesAffichés.map(b => {
+                      const obtenu = badgesObtenusSlugs.has(b.slug)
+                      return (
+                        <div
+                          key={b.slug}
+                          title={obtenu ? b.nom : ''}
+                          style={{
+                            width: 44, height: 44,
+                            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                            background: obtenu ? 'rgba(245,158,11,0.12)' : 'var(--bg-2)',
+                            borderWidth: 1, borderStyle: 'solid',
+                            borderColor: obtenu ? 'rgba(245,158,11,0.4)' : 'var(--border)',
+                            borderRadius: 'var(--radius-sm)',
+                            opacity: obtenu ? 1 : 0.35,
+                            cursor: 'default',
+                          }}
+                        >
+                          <span style={{ fontSize: 22, filter: obtenu ? 'none' : 'grayscale(1)' }}>{b.emoji}</span>
+                        </div>
+                      )
+                    })}
+                  </div>
+
+                  {/* Voir tout / Réduire */}
+                  {BADGES_CATALOGUE.length > 8 && (
+                    <button
+                      onClick={() => setBadgesOuverts(v => !v)}
+                      style={{
+                        marginTop: 10, background: 'none', borderWidth: 0,
+                        cursor: 'pointer', fontSize: 11, color: 'var(--text-3)',
+                        fontWeight: 600, padding: 0,
+                      }}
+                    >
+                      {badgesOuverts ? '▲ Réduire' : `▼ Voir tout (${BADGES_CATALOGUE.length} badges)`}
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div style={{ height: 25 }} />
+
+            {/* ── Séries ── */}
             {stats.total > 0 && (
               <div style={{ background: 'var(--bg-1)', padding: '16px 16px 20px', borderLeft: '3px solid var(--gold)' }}>
                 <TitreSection mot1="SÉRIES" couleur2="var(--gold)" />
@@ -218,8 +479,10 @@ function MesPronos() {
                 </div>
               </div>
             )}
+
             <div style={{ height: 25 }} />
-            {/* ── Forme récente — bg-0 ── */}
+
+            {/* ── Forme récente ── */}
             {formeRecente.length > 0 && (
               <div style={{ background: 'var(--bg-0)', padding: '16px 16px 20px' }}>
                 <TitreSection mot1="FORME" mot2="RÉCENTE" couleur2="var(--accent)" />
@@ -232,7 +495,7 @@ function MesPronos() {
                         background: p.resultat === 'correct' ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)',
                         borderWidth: 1, borderStyle: 'solid',
                         borderColor: p.resultat === 'correct' ? 'rgba(34,197,94,0.4)' : 'rgba(239,68,68,0.4)',
-                        fontSize: 13, fontWeight: 700,
+                        fontSize: 13, fontWeight: 700, fontFamily: 'var(--font-display)',
                         color: p.resultat === 'correct' ? 'var(--success)' : 'var(--danger)',
                       }}>
                         {p.resultat === 'correct' ? 'W' : 'L'}
@@ -245,11 +508,12 @@ function MesPronos() {
                 </div>
               </div>
             )}
+
             <div style={{ height: 25 }} />
-            {/* ── Équipes + Stats ligues — bg-1 + barre orange ── */}
+
+            {/* ── Équipes + Stats ligues ── */}
             {((equipes.meilleure || equipes.pire) || statsLigues.length > 0) && (
               <div style={{ background: 'var(--bg-1)', padding: '16px 16px 20px', borderLeft: '3px solid var(--orange)' }}>
-
                 {(equipes.meilleure || equipes.pire) && equipes.meilleure !== equipes.pire && (
                   <>
                     <TitreSection mot1="ÉQUIPES" couleur2="var(--orange)" />
@@ -295,7 +559,6 @@ function MesPronos() {
                     </div>
                   </>
                 )}
-
                 {statsLigues.length > 0 && (
                   <>
                     <TitreSection mot1="STATS" mot2="LIGUES" couleur2="var(--orange)" />
@@ -327,8 +590,10 @@ function MesPronos() {
                 )}
               </div>
             )}
+
             <div style={{ height: 25 }} />
-            {/* ── Historique — bg-0 + barre colorée par résultat ── */}
+
+            {/* ── Historique ── */}
             <div style={{ background: 'var(--bg-0)', padding: '16px 16px 20px', borderLeft: '3px solid var(--border-2)' }}>
               <TitreSection mot1="HISTORIQUE" />
               <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -382,6 +647,9 @@ function MesPronos() {
         )}
 
       </main>
+
+      {/* ── Modal Info ── */}
+      {modalInfo && <ModalInfo onClose={() => setModalInfo(false)} />}
     </>
   )
 }
