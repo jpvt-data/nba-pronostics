@@ -1,15 +1,70 @@
 import { supabase } from '../lib/supabase'
 import { recupererGagnant } from './espn'
-import { ajouterXP } from './xp'
+import { ajouterXP, verifierJalons } from './xp'
 
 // Retourne le lundi de la semaine courante en ISO string 'YYYY-MM-DD'
 const lundiFin = () => {
   const aujourd_hui = new Date()
-  const jour = aujourd_hui.getDay() // 0=dim, 1=lun...
+  const jour = aujourd_hui.getDay()
   const diffLundi = (jour === 0 ? -6 : 1 - jour)
   const lundi = new Date(aujourd_hui)
   lundi.setDate(aujourd_hui.getDate() + diffLundi)
   return lundi.toISOString().slice(0, 10)
+}
+
+// Calcule les stats d'un user depuis Supabase pour verifierJalons
+const calculerStatsUser = async (userId) => {
+  // Tous les pronos validés (correct + incorrect), triés du plus récent au plus ancien
+  const { data: pronos } = await supabase
+    .from('pronos')
+    .select('resultat')
+    .eq('user_id', userId)
+    .in('resultat', ['correct', 'incorrect'])
+    .order('cree_le', { ascending: false })
+
+  // Total pronos posés (tous statuts sauf en_attente)
+  const { count: pronos_poses } = await supabase
+    .from('pronos')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', userId)
+    .neq('resultat', 'en_attente')
+
+  const pronos_corrects = pronos?.filter(p => p.resultat === 'correct').length || 0
+
+  // Série correcte en cours (depuis le dernier incorrect)
+  let serie_correcte = 0
+  for (const p of (pronos || [])) {
+    if (p.resultat === 'correct') serie_correcte++
+    else break
+  }
+
+  // Série ratée en cours (depuis le dernier correct)
+  let serie_ratee = 0
+  for (const p of (pronos || [])) {
+    if (p.resultat === 'incorrect') serie_ratee++
+    else break
+  }
+
+  // Win rate sur les 20 derniers pronos validés
+  const vingtDerniers = pronos?.slice(0, 20) || []
+  const win_rate = vingtDerniers.length >= 20
+    ? Math.round(vingtDerniers.filter(p => p.resultat === 'correct').length / 20 * 100)
+    : 0
+
+  // Semaines gagnées
+  const { count: semaines_gagnees } = await supabase
+    .from('semaines_gagnees')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', userId)
+
+  return {
+    pronos_poses:     pronos_poses || 0,
+    pronos_corrects,
+    serie_correcte,
+    serie_ratee,
+    win_rate,
+    semaines_gagnees: semaines_gagnees || 0,
+  }
 }
 
 export const calculerPoints = async () => {
@@ -82,7 +137,7 @@ export const calculerPoints = async () => {
         await ajouterXP(prono.user_id, 25, 'passif', 'prono_correct')
       }
 
-      // Marquer cet user pour vérification semaine 100%
+      // Marquer cet user pour vérification semaine 100% + jalons
       usersTraites.add(prono.user_id)
 
       if (!correct) continue
@@ -111,11 +166,16 @@ export const calculerPoints = async () => {
     }
   }
 
-  // XP — semaine 100% pronostiquée (+50, 1×/semaine)
   const lundi = lundiFin()
 
+  // Post-validation : jalons + semaine 100% par user
   for (const userId of usersTraites) {
-    // Déjà obtenu cette semaine ?
+
+    // Jalons automatiques
+    const stats = await calculerStatsUser(userId)
+    await verifierJalons(userId, stats)
+
+    // XP — semaine 100% pronostiquée (+50, 1×/semaine)
     const { data: dejaXPSemaine } = await supabase
       .from('xp_log')
       .select('id')
@@ -126,7 +186,6 @@ export const calculerPoints = async () => {
 
     if (dejaXPSemaine && dejaXPSemaine.length > 0) continue
 
-    // Tous les matchs terminés cette semaine
     const { data: matchsSemaine } = await supabase
       .from('matchs')
       .select('id')
@@ -135,7 +194,6 @@ export const calculerPoints = async () => {
 
     if (!matchsSemaine?.length) continue
 
-    // Pronos de l'user sur ces matchs (correct ou incorrect = pronostiqué)
     const idMatchs = matchsSemaine.map(m => m.id)
     const { data: pronosUser } = await supabase
       .from('pronos')
