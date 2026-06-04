@@ -136,10 +136,11 @@ export const recupererDetailMatch = async (espnId) => {
     let headline = ''
     let tag      = detecterType(typeSaisonNum, '', comp.type?.abbreviation, isSummerLeague)
 
-    if (!isSummerLeague && comp.date) {
+    if (comp.date) {
       try {
-        const dateStr = comp.date.slice(0, 10).replace(/-/g, '')
-        const res     = await fetchAvecTimeout(`${BASE_URL}/scoreboard?dates=${dateStr}-${dateStr}&limit=100`)
+        const dateStr  = comp.date.slice(0, 10).replace(/-/g, '')
+        const sbBase   = isSummerLeague ? BASE_SL : BASE_URL
+        const res      = await fetchAvecTimeout(`${sbBase}/scoreboard?dates=${dateStr}-${dateStr}&limit=100`)
         const sb      = await res.json()
         const evtSB   = (sb.events || []).find(e => e.id === espnId)
         if (evtSB) {

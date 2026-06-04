@@ -280,17 +280,18 @@ function MatchDetail() {
         <div style={{ padding: '0 16px', display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 8 }}>
           {match.saison     && <span style={S.badge}>{match.saison}</span>}
           {match.typeSaison && <span style={{ ...S.badge, background: 'var(--accent-dim)', color: 'var(--accent)', borderColor: 'var(--accent-border)' }}>{match.typeSaison}</span>}
-          {/* Badge enrichi — uniquement si le tag apporte une info différente de typeSaison */}
-          {/* preseason, regular, summer_league déjà couverts par typeSaison → pas de doublon */}
-          {match.tag && TAG_CONFIG[match.tag] && (
+
+
+          {/* Badge enrichi : headline prioritaire (Abu Dhabi, NBA Cup...), label tag en fallback (Playoffs, Finals...) */}
+          {(match.headline || TAG_CONFIG[match.tag]) && (
             <span style={{
               ...S.badge,
-              background: TAG_CONFIG[match.tag].couleur + '22',
-              color: TAG_CONFIG[match.tag].couleur,
-              borderColor: TAG_CONFIG[match.tag].couleur + '55',
+              background: (TAG_CONFIG[match.tag]?.couleur || 'var(--accent)') + '22',
+              color: TAG_CONFIG[match.tag]?.couleur || 'var(--accent)',
+              borderColor: (TAG_CONFIG[match.tag]?.couleur || 'var(--accent)') + '55',
               fontWeight: 700,
             }}>
-              {match.headline || TAG_CONFIG[match.tag].label}
+              {match.headline || TAG_CONFIG[match.tag]?.label}
             </span>
           )}
           {enCours && <span style={{ ...S.badge, background: 'rgba(34,197,94,0.1)', color: 'var(--success)', borderColor: 'rgba(34,197,94,0.3)' }}>● Live — Q{match.periode} {match.clock}</span>}
