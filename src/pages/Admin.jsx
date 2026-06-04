@@ -49,7 +49,7 @@ const detecterType = (evt, comp, isSummerLeague = false) => {
   if (seasonType === 5) return 'playin'
 
   if (seasonType === 3) {
-    const estFinals = ['nba finals', 'finals - game', 'the finals'].some(p => headline.includes(p))
+    const estFinals = ['nba finals', 'the finals'].some(p => headline.includes(p))
     return estFinals ? 'finals' : 'playoffs'
   }
 

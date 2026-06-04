@@ -27,7 +27,7 @@ const detecterType = (seasonType, headline, compTypeAbbr, isSummerLeague = false
   if (seasonType === 1) return 'preseason'
   if (seasonType === 5) return 'playin'
   if (seasonType === 3) {
-    return ['nba finals', 'finals - game', 'the finals'].some(p => h.includes(p)) ? 'finals' : 'playoffs'
+    return ['nba finals', 'the finals'].some(p => h.includes(p)) ? 'finals' : 'playoffs'
   }
   if (c === 'ALLSTAR' || ['all-star', 'allstar', 'all star'].some(p => h.includes(p))) return 'allstar'
   if (seasonType === 2) {
