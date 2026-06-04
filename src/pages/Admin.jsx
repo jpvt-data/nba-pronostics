@@ -13,6 +13,9 @@ const SAISONS = [
   { label: '2024-25', anneeDebut: 2024, anneeFin: 2025 },
   { label: '2025-26', anneeDebut: 2025, anneeFin: 2026 },
   { label: '2026-27', anneeDebut: 2026, anneeFin: 2027 },
+  { label: '2027-28', anneeDebut: 2027, anneeFin: 2028 },
+  { label: '2028-29', anneeDebut: 2028, anneeFin: 2029 },
+  { label: '2029-30', anneeDebut: 2029, anneeFin: 2030 },
 ]
 
 // Plages juillet N → juin N+1
