@@ -89,7 +89,7 @@ export async function verifierJalons(userId, stats) {
     { slug: 'jalon_serie_10',      condition: stats.serie_correcte >= 10, xp: 250, badge: 'prophete' },
     { slug: 'jalon_winrate_65',    condition: stats.pronos_poses >= 20 && stats.win_rate >= 65, xp: 200, badge: 'analyste' },
     { slug: 'jalon_semaine',       condition: stats.semaines_gagnees >= 1, xp: 150, badge: 'champion' },
-    { slug: 'jalon_serie_ratee_5', condition: stats.serie_ratee >= 5,     xp: 0,   badge: 'cold_turkey' },
+    { slug: 'jalon_serie_ratee_5', condition: stats.serie_ratee >= 5,     xp: 0,   badge: 'en_hibernation' },
   ]
 
   for (const jalon of jalons) {
