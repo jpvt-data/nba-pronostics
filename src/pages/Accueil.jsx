@@ -26,7 +26,6 @@ function Accueil() {
   const [nbPronosAttente, setNbPronosAttente]   = useState(0)
   const [equipeFiltre, setEquipeFiltre]         = useState(null)
   const [typeSaisonLigues, setTypeSaisonLigues] = useState(null)
-  // Article 1 basketusa — remonté depuis NewsNBA via callback
   const [articleUne, setArticleUne]             = useState(null)
   const navigate = useNavigate()
   const { noSpoil } = useNoSpoil()
@@ -43,7 +42,6 @@ function Accueil() {
 
       calculerPoints(user.id).catch(() => {})
 
-      // type_saison max des ligues actives — fallback si ESPN null
       const { data: liguesUser } = await supabase
         .from('membres_groupe')
         .select('groupes(type_saison, date_fin)')
@@ -116,21 +114,30 @@ function Accueil() {
       }, { onConflict: 'user_id,match_id,groupe_id' })
     }
 
-    // XP uniquement si c'est un nouveau prono (pas un changement d'équipe)
     if (estNouveauProno) {
+      // +10 prono posé
       await ajouterXP(user.id, 10, 'passif', 'prono_pose')
 
+      // +10 premier prono du jour (1×/jour)
       const aujourdhui = new Date().toISOString().slice(0, 10)
       const { data: dejaPronoJour } = await supabase
-        .from('xp_log')
-        .select('id')
+        .from('xp_log').select('id')
         .eq('user_id', user.id)
         .eq('source_id', 'premier_prono_jour')
         .gte('cree_le', aujourdhui)
         .limit(1)
-
       if (!dejaPronoJour || dejaPronoJour.length === 0) {
         await ajouterXP(user.id, 10, 'passif', 'premier_prono_jour')
+      }
+
+      // +75 premier prono de l'histoire (1× à vie)
+      const { data: dejaHistoire } = await supabase
+        .from('xp_log').select('id')
+        .eq('user_id', user.id)
+        .eq('source_id', 'premier_prono_histoire')
+        .limit(1)
+      if (!dejaHistoire || dejaHistoire.length === 0) {
+        await ajouterXP(user.id, 75, 'jalon', 'premier_prono_histoire')
       }
     }
   }

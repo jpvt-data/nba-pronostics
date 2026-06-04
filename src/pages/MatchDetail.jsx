@@ -22,7 +22,6 @@ const STATS_LABELS = [
 
 const BASE_CORE = 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/nba'
 
-// Utilitaire couleur équipe
 const estTropSombre = (hex) => {
   if (!hex) return true
   const h = hex.replace('#', '')
@@ -39,7 +38,6 @@ const getCouleur = (eq) => {
   return 'var(--accent)'
 }
 
-// Titre section nouvelle charte
 const TitreSection = ({ mot1, mot2 = '', couleur2 = 'var(--accent)' }) => (
   <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 14 }}>
     <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 20, color: 'var(--text-1)', letterSpacing: '0.02em', lineHeight: 1 }}>{mot1}</span>
@@ -47,7 +45,6 @@ const TitreSection = ({ mot1, mot2 = '', couleur2 = 'var(--accent)' }) => (
   </div>
 )
 
-// Barre stat comparative
 const BarreStat = ({ vE, vD, label, couleurExt, couleurDom }) => {
   if (!vE && !vD) return null
   const nE = parseFloat(vE) || 0
@@ -56,7 +53,6 @@ const BarreStat = ({ vE, vD, label, couleurExt, couleurDom }) => {
   const pctE = total > 0 ? Math.round(nE / total * 100) : 50
   const pctD = 100 - pctE
   const meilleureExt = nE >= nD
-
   const cExt = couleurExt === 'var(--accent)' ? 'var(--accent)' : couleurExt
   const cDom = couleurDom === 'var(--accent)' ? 'var(--orange)' : couleurDom
 
@@ -64,33 +60,17 @@ const BarreStat = ({ vE, vD, label, couleurExt, couleurDom }) => {
     <div style={{ marginBottom: 14 }}>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 52px 1fr', alignItems: 'center', gap: 6, marginBottom: 4 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'flex-end' }}>
-          <span style={{
-            fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 15,
-            color: meilleureExt ? 'var(--text-1)' : 'var(--text-3)',
-            minWidth: 36, textAlign: 'right',
-          }}>{vE ?? '–'}</span>
+          <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 15, color: meilleureExt ? 'var(--text-1)' : 'var(--text-3)', minWidth: 36, textAlign: 'right' }}>{vE ?? '–'}</span>
           <div style={{ flex: 1, height: 6, background: 'var(--bg-2)', display: 'flex', justifyContent: 'flex-end', overflow: 'hidden' }}>
-            <div style={{
-              width: `${pctE}%`, height: '100%',
-              background: meilleureExt ? cExt : 'var(--border-2)',
-              transition: 'width 0.5s ease',
-            }} />
+            <div style={{ width: `${pctE}%`, height: '100%', background: meilleureExt ? cExt : 'var(--border-2)', transition: 'width 0.5s ease' }} />
           </div>
         </div>
         <div style={{ textAlign: 'center', fontSize: 10, color: 'var(--text-3)', fontWeight: 700, letterSpacing: '0.06em' }}>{label}</div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <div style={{ flex: 1, height: 6, background: 'var(--bg-2)', overflow: 'hidden' }}>
-            <div style={{
-              width: `${pctD}%`, height: '100%',
-              background: !meilleureExt ? cDom : 'var(--border-2)',
-              transition: 'width 0.5s ease',
-            }} />
+            <div style={{ width: `${pctD}%`, height: '100%', background: !meilleureExt ? cDom : 'var(--border-2)', transition: 'width 0.5s ease' }} />
           </div>
-          <span style={{
-            fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 15,
-            color: !meilleureExt ? 'var(--text-1)' : 'var(--text-3)',
-            minWidth: 36, textAlign: 'left',
-          }}>{vD ?? '–'}</span>
+          <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 15, color: !meilleureExt ? 'var(--text-1)' : 'var(--text-3)', minWidth: 36, textAlign: 'left' }}>{vD ?? '–'}</span>
         </div>
       </div>
     </div>
@@ -156,8 +136,7 @@ function MatchDetail() {
 
     // Vérifier si un prono existe déjà sur ce match — anti-doublon XP
     const { data: pronoExistant } = await supabase
-      .from('pronos')
-      .select('id')
+      .from('pronos').select('id')
       .eq('user_id', user.id)
       .eq('match_id', matchDB.id)
       .limit(1)
@@ -178,21 +157,30 @@ function MatchDetail() {
       }, { onConflict: 'user_id,match_id,groupe_id' })
     }
 
-    // XP uniquement si c'est un nouveau prono (pas un changement d'équipe)
     if (estNouveauProno) {
+      // +10 prono posé
       await ajouterXP(user.id, 10, 'passif', 'prono_pose')
 
+      // +10 premier prono du jour (1×/jour)
       const aujourdhui = new Date().toISOString().slice(0, 10)
       const { data: dejaPronoJour } = await supabase
-        .from('xp_log')
-        .select('id')
+        .from('xp_log').select('id')
         .eq('user_id', user.id)
         .eq('source_id', 'premier_prono_jour')
         .gte('cree_le', aujourdhui)
         .limit(1)
-
       if (!dejaPronoJour || dejaPronoJour.length === 0) {
         await ajouterXP(user.id, 10, 'passif', 'premier_prono_jour')
+      }
+
+      // +75 premier prono de l'histoire (1× à vie)
+      const { data: dejaHistoire } = await supabase
+        .from('xp_log').select('id')
+        .eq('user_id', user.id)
+        .eq('source_id', 'premier_prono_histoire')
+        .limit(1)
+      if (!dejaHistoire || dejaHistoire.length === 0) {
+        await ajouterXP(user.id, 75, 'jalon', 'premier_prono_histoire')
       }
     }
 
@@ -218,19 +206,16 @@ function MatchDetail() {
   const dateStr    = new Date(match.date).toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long', year:'numeric' })
   const heureStr   = new Date(match.date).toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' })
   const nbPeriodes = Math.max(dom.periodes?.length || 0, ext.periodes?.length || 0)
-
   const couleurExt = getCouleur(ext)
   const couleurDom = getCouleur(dom)
 
-  // ── Carte équipe (affiche principale) ──
   const CarteEquipe = ({ eq, align }) => {
-    const selec     = prono === eq.trigramme
-    const perdant   = !noSpoil && termine && !eq.winner && (dom.score != null || ext.score != null)
-    const couleur   = getCouleur(eq)
-    const estAccent = couleur === 'var(--accent)'
-    const bgSelec   = estAccent ? 'var(--accent-dim)' : `${couleur}18`
-    const borderSelec = estAccent ? 'var(--accent-border)' : `${couleur}66`
-    const txtSelec  = couleur
+    const selec       = prono === eq.trigramme
+    const perdant     = !noSpoil && termine && !eq.winner && (dom.score != null || ext.score != null)
+    const couleur     = getCouleur(eq)
+    const estAccent   = couleur === 'var(--accent)'
+    const bgSelec     = estAccent ? 'var(--accent-dim)' : `${couleur}18`
+    const txtSelec    = couleur
 
     return (
       <button
@@ -260,21 +245,14 @@ function MatchDetail() {
           ? <img src={eq.logo} alt={eq.trigramme} style={{ width: 72, height: 72, objectFit: 'contain', position: 'relative' }} />
           : <div style={{ width: 72, height: 72, borderRadius: '50%', background: 'var(--bg-2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 20, color: 'var(--text-3)' }}>{eq.trigramme}</div>
         }
-        <span style={{
-          fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 26,
-          color: selec ? txtSelec : 'var(--text-1)', letterSpacing: '0.04em',
-          position: 'relative',
-        }}>{eq.trigramme}</span>
+        <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 26, color: selec ? txtSelec : 'var(--text-1)', letterSpacing: '0.04em', position: 'relative' }}>{eq.trigramme}</span>
         <span style={{ fontSize: 11, color: 'var(--text-3)', textAlign: 'center', position: 'relative', lineHeight: 1.3 }}>{eq.nom}</span>
         <span style={{ fontSize: 10, color: 'var(--text-3)', position: 'relative' }}>{align === 'ext' ? 'Extérieur' : 'Domicile'}</span>
         {selec && !termine && (
           <span style={{ fontSize: 11, color: txtSelec, fontWeight: 700, marginTop: 2, position: 'relative' }}>✓ Mon prono</span>
         )}
         {selec && termine && !noSpoil && (
-          <span style={{
-            fontSize: 11, fontWeight: 700, marginTop: 2, position: 'relative',
-            color: resultat === 'correct' ? 'var(--success)' : resultat === 'incorrect' ? 'var(--danger)' : 'var(--text-3)'
-          }}>
+          <span style={{ fontSize: 11, fontWeight: 700, marginTop: 2, position: 'relative', color: resultat === 'correct' ? 'var(--success)' : resultat === 'incorrect' ? 'var(--danger)' : 'var(--text-3)' }}>
             {resultat === 'correct' ? '✓ Correct' : resultat === 'incorrect' ? '✗ Raté' : '⏳'}
           </span>
         )}
@@ -287,14 +265,12 @@ function MatchDetail() {
       <Navigation />
       <main style={{ flex: 1, paddingBottom: 40 }}>
 
-        {/* ── Bouton retour ── */}
         <div style={{ padding: '12px 16px 0' }}>
           <button onClick={() => navigate(-1)} style={S.retour}>
             <ChevronLeft size={16} /> Retour
           </button>
         </div>
 
-        {/* ── Badges saison/type + série ── */}
         <div style={{ padding: '0 16px', display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 8 }}>
           {match.saison     && <span style={S.badge}>{match.saison}</span>}
           {match.typeSaison && <span style={{ ...S.badge, background: 'var(--accent-dim)', color: 'var(--accent)', borderColor: 'var(--accent-border)' }}>{match.typeSaison}</span>}
@@ -319,13 +295,7 @@ function MatchDetail() {
           </div>
         )}
 
-        {/* ── AFFICHE PRINCIPALE ── */}
-        <div style={{
-          background: 'var(--bg-1)',
-          borderTop: '1px solid var(--border)',
-          borderBottom: '1px solid var(--border)',
-          position: 'relative', overflow: 'hidden',
-        }}>
+        <div style={{ background: 'var(--bg-1)', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)', position: 'relative', overflow: 'hidden' }}>
           {!verrou && (
             <div style={{ textAlign: 'center', fontSize: 11, color: 'var(--text-3)', padding: '10px 16px 0', fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
               {prono ? 'Tu peux encore changer d\'avis' : 'Clique sur une équipe pour pronostiquer'}
@@ -342,12 +312,7 @@ function MatchDetail() {
             <div style={{ textAlign: 'center', minWidth: 80, padding: '0 8px' }}>
               {(termine || enCours) && ext.score != null ? (
                 <>
-                  <div style={{
-                    fontFamily: 'var(--font-display)', fontWeight: 700,
-                    fontSize: noSpoil && termine ? 22 : 44,
-                    color: noSpoil && termine ? 'var(--text-3)' : 'var(--text-1)',
-                    lineHeight: 1, whiteSpace: 'nowrap',
-                  }}>
+                  <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: noSpoil && termine ? 22 : 44, color: noSpoil && termine ? 'var(--text-3)' : 'var(--text-1)', lineHeight: 1, whiteSpace: 'nowrap' }}>
                     {noSpoil && termine ? '🙈' : `${ext.score}–${dom.score}`}
                   </div>
                   <div style={{ fontSize: 10, marginTop: 5, fontWeight: enCours ? 700 : 400, color: enCours ? 'var(--success)' : 'var(--text-3)' }}>
@@ -386,7 +351,6 @@ function MatchDetail() {
           )}
         </div>
 
-        {/* ── Infos lieu/date ── */}
         <div style={{ background: 'var(--bg-0)', padding: '10px 16px', borderBottom: '1px solid var(--border)', textAlign: 'center' }}>
           <div style={{ fontSize: 12, color: 'var(--text-2)', fontWeight: 500 }}>{dateStr} à {heureStr}</div>
           {match.stade && (
@@ -398,7 +362,6 @@ function MatchDetail() {
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
 
-          {/* ── Prédiction ESPN ── */}
           {!termine && prediction && (
             <div style={{ background: 'var(--bg-1)', padding: '16px 16px 20px', borderLeft: '3px solid var(--accent)' }}>
               <TitreSection mot1="PRÉDICTION" mot2="ESPN" />
@@ -424,39 +387,34 @@ function MatchDetail() {
             </div>
           )}
 
-          {/* ── Forme récente ── */}
           {(ext.l5?.length > 0 || dom.l5?.length > 0) && (
             <div style={{ background: 'var(--bg-0)', padding: '16px 16px 20px', borderLeft: '3px solid var(--border-2)' }}>
               <TitreSection mot1="FORME" mot2="RÉCENTE" couleur2="var(--text-2)" />
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {[ext, dom].map(eq => {
-                  const c = getCouleur(eq)
-                  return (
-                    <div key={eq.trigramme} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <div style={{ fontSize: 11, color: 'var(--text-3)', fontWeight: 700, minWidth: 32, fontFamily: 'var(--font-display)' }}>{eq.trigramme}</div>
-                      <div style={{ display: 'flex', gap: 4 }}>
-                        {eq.l5?.map((j, i) => (
-                          <div key={i} style={{
-                            width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 13,
-                            background: j.resultat === 'W' ? 'var(--success-dim)' : 'var(--danger-dim)',
-                            color: j.resultat === 'W' ? 'var(--success)' : 'var(--danger)',
-                            borderWidth: 1, borderStyle: 'solid',
-                            borderColor: j.resultat === 'W' ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)',
-                          }}>{j.resultat}</div>
-                        ))}
-                      </div>
+                {[ext, dom].map(eq => (
+                  <div key={eq.trigramme} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <div style={{ fontSize: 11, color: 'var(--text-3)', fontWeight: 700, minWidth: 32, fontFamily: 'var(--font-display)' }}>{eq.trigramme}</div>
+                    <div style={{ display: 'flex', gap: 4 }}>
+                      {eq.l5?.map((j, i) => (
+                        <div key={i} style={{
+                          width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 13,
+                          background: j.resultat === 'W' ? 'var(--success-dim)' : 'var(--danger-dim)',
+                          color: j.resultat === 'W' ? 'var(--success)' : 'var(--danger)',
+                          borderWidth: 1, borderStyle: 'solid',
+                          borderColor: j.resultat === 'W' ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)',
+                        }}>{j.resultat}</div>
+                      ))}
                     </div>
-                  )
-                })}
+                  </div>
+                ))}
               </div>
             </div>
           )}
 
-          {/* ── Stats (barres comparatives) ── */}
           {(dom.stats?.fg || ext.stats?.fg) && (
             <div style={{ background: 'var(--bg-1)', padding: '16px 16px 20px', borderLeft: '3px solid var(--accent)' }}>
-              <TitreSection mot1={termine ? 'STATS' : 'STATS'} mot2={termine ? 'DU MATCH' : 'SAISON'} />
+              <TitreSection mot1="STATS" mot2={termine ? 'DU MATCH' : 'SAISON'} />
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                   {ext.logo && <img src={ext.logo} alt="" style={{ width: 18, height: 18, objectFit: 'contain' }} />}
@@ -474,7 +432,6 @@ function MatchDetail() {
             </div>
           )}
 
-          {/* ── Leaders ── */}
           {(dom.leaders?.length > 0 || ext.leaders?.length > 0) && (
             <div style={{ background: 'var(--bg-0)', padding: '16px 16px 20px', borderLeft: '3px solid var(--gold)' }}>
               <TitreSection mot1="LEADERS" couleur2="var(--gold)" />
@@ -504,7 +461,6 @@ function MatchDetail() {
             </div>
           )}
 
-          {/* ── Blessés ── */}
           {(dom.blessés?.length > 0 || ext.blessés?.length > 0) && (
             <div style={{ background: 'var(--bg-1)', padding: '16px 16px 20px', borderLeft: '3px solid var(--danger)' }}>
               <TitreSection mot1="BLESSÉS" mot2="/ ABSENTS" couleur2="var(--danger)" />
