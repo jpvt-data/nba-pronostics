@@ -19,10 +19,9 @@ export function ProfilProvider({ children }) {
       setProfil(data)
 
       // XP — connexion quotidienne (+5, 1×/jour)
-      const aujourdhui = new Date().toLocaleDateString('fr-FR', {
-        year: 'numeric', month: '2-digit', day: '2-digit',
-        timeZone: 'Europe/Paris'
-      }).split('/').reverse().join('-')
+      const maintenant = new Date()
+      const debutJourParis = new Date(maintenant.toLocaleDateString('en-CA', { timeZone: 'Europe/Paris' }) + 'T00:00:00+02:00')
+      const aujourdhui = debutJourParis.toISOString()
       const { data: dejaConnecte } = await supabase
         .from('xp_log')
         .select('id')
