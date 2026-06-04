@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase'
 import { recupererTimeline } from '../services/espn'
 import { recupererLiguesCibles } from '../services/ligues'
 import { calculerPoints } from '../services/points'
+import { ajouterXP } from '../services/xp'
 import Navigation from '../components/Navigation'
 import BandeMatchs, { FiltreEquipe } from '../components/BandeMatchs'
 import ClassementRapide from '../components/ClassementRapide'
@@ -84,6 +85,15 @@ function Accueil() {
       .select().single()
     if (!matchDB) return
 
+    // Vérifier si un prono existe déjà sur ce match — anti-doublon XP
+    const { data: pronoExistant } = await supabase
+      .from('pronos')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('match_id', matchDB.id)
+      .limit(1)
+    const estNouveauProno = !pronoExistant || pronoExistant.length === 0
+
     const liguesCibles = await recupererLiguesCibles(user.id, match.typeSaisonNum ?? null)
 
     if (liguesCibles.length > 0) {
@@ -104,6 +114,24 @@ function Accueil() {
         resultat:       'en_attente',
         groupe_id:      null,
       }, { onConflict: 'user_id,match_id,groupe_id' })
+    }
+
+    // XP uniquement si c'est un nouveau prono (pas un changement d'équipe)
+    if (estNouveauProno) {
+      await ajouterXP(user.id, 10, 'passif', 'prono_pose')
+
+      const aujourdhui = new Date().toISOString().slice(0, 10)
+      const { data: dejaPronoJour } = await supabase
+        .from('xp_log')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('source_id', 'premier_prono_jour')
+        .gte('cree_le', aujourdhui)
+        .limit(1)
+
+      if (!dejaPronoJour || dejaPronoJour.length === 0) {
+        await ajouterXP(user.id, 10, 'passif', 'premier_prono_jour')
+      }
     }
   }
 

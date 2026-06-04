@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase'
 import { recupererGagnant } from './espn'
+import { ajouterXP } from './xp'
 
 export const calculerPoints = async () => {
   // Tous les pronos en attente, tous users confondus
@@ -28,11 +29,11 @@ export const calculerPoints = async () => {
   const idxESPN = {}
   matchsUniques.forEach((m, i) => { idxESPN[m.espn_id] = resultatsESPN[i] })
   console.log('matchsUniques:', matchsUniques)
-  console.log('resultatsESPN:', resultatsESPN)  
+  console.log('resultatsESPN:', resultatsESPN)
 
   for (const matchLocal of matchsUniques) {
     const resultatESPN = idxESPN[matchLocal.espn_id]
-    if (!resultatESPN) continue // match pas encore terminé selon ESPN
+    if (!resultatESPN) continue
 
     const { gagnant, type_saison, saison } = resultatESPN
 
@@ -62,6 +63,11 @@ export const calculerPoints = async () => {
         .update({ resultat: correct ? 'correct' : 'incorrect', points_gagnes: points })
         .eq('id', prono.id)
       console.log('update prono', prono.id, '→ erreur:', errProno)
+
+      // XP — prono correct
+      if (correct) {
+        await ajouterXP(prono.user_id, 25, 'passif', 'prono_correct')
+      }
 
       if (!correct) continue
 

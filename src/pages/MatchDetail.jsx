@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { recupererLiguesCibles } from '../services/ligues'
 import { recupererDetailMatch, TAG_CONFIG } from '../services/espn'
+import { ajouterXP } from '../services/xp'
 import Navigation from '../components/Navigation'
 import { ChevronLeft } from 'lucide-react'
 import { useNoSpoil } from '../context/NoSpoilContext'
@@ -56,16 +57,12 @@ const BarreStat = ({ vE, vD, label, couleurExt, couleurDom }) => {
   const pctD = 100 - pctE
   const meilleureExt = nE >= nD
 
-  // Couleur avec fallback lisible sur fond sombre
   const cExt = couleurExt === 'var(--accent)' ? 'var(--accent)' : couleurExt
   const cDom = couleurDom === 'var(--accent)' ? 'var(--orange)' : couleurDom
 
   return (
     <div style={{ marginBottom: 14 }}>
-      {/* Barres + valeurs + label */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 52px 1fr', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-
-        {/* Côté extérieur — barre part de droite vers gauche */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'flex-end' }}>
           <span style={{
             fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 15,
@@ -80,11 +77,7 @@ const BarreStat = ({ vE, vD, label, couleurExt, couleurDom }) => {
             }} />
           </div>
         </div>
-
-        {/* Label central */}
         <div style={{ textAlign: 'center', fontSize: 10, color: 'var(--text-3)', fontWeight: 700, letterSpacing: '0.06em' }}>{label}</div>
-
-        {/* Côté domicile — barre part de gauche */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <div style={{ flex: 1, height: 6, background: 'var(--bg-2)', overflow: 'hidden' }}>
             <div style={{
@@ -99,7 +92,6 @@ const BarreStat = ({ vE, vD, label, couleurExt, couleurDom }) => {
             minWidth: 36, textAlign: 'left',
           }}>{vD ?? '–'}</span>
         </div>
-
       </div>
     </div>
   )
@@ -154,12 +146,23 @@ function MatchDetail() {
 
   const faireProno = async (equipe) => {
     if (!match || estVerrouille(match.date, match.statut)) return
+
     const { data: matchDB } = await supabase.from('matchs').upsert({
       espn_id: match.espn_id, date_match: match.date,
       equipe_domicile: match.domicile.trigramme, equipe_exterieur: match.exterieur.trigramme,
       statut: match.statut, type_saison: match.typeSaisonNum ?? null, saison: match.saisonNum ?? null,
     }, { onConflict: 'espn_id' }).select().single()
     if (!matchDB) return
+
+    // Vérifier si un prono existe déjà sur ce match — anti-doublon XP
+    const { data: pronoExistant } = await supabase
+      .from('pronos')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('match_id', matchDB.id)
+      .limit(1)
+    const estNouveauProno = !pronoExistant || pronoExistant.length === 0
+
     const liguesCibles = await recupererLiguesCibles(user.id, match.typeSaisonNum ?? null)
     if (liguesCibles.length > 0) {
       await Promise.all(liguesCibles.map(m =>
@@ -174,6 +177,25 @@ function MatchDetail() {
         resultat: 'en_attente', groupe_id: null,
       }, { onConflict: 'user_id,match_id,groupe_id' })
     }
+
+    // XP uniquement si c'est un nouveau prono (pas un changement d'équipe)
+    if (estNouveauProno) {
+      await ajouterXP(user.id, 10, 'passif', 'prono_pose')
+
+      const aujourdhui = new Date().toISOString().slice(0, 10)
+      const { data: dejaPronoJour } = await supabase
+        .from('xp_log')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('source_id', 'premier_prono_jour')
+        .gte('cree_le', aujourdhui)
+        .limit(1)
+
+      if (!dejaPronoJour || dejaPronoJour.length === 0) {
+        await ajouterXP(user.id, 10, 'passif', 'premier_prono_jour')
+      }
+    }
+
     setProno(equipe); setRes('en_attente')
   }
 
@@ -226,7 +248,6 @@ function MatchDetail() {
           position: 'relative', overflow: 'hidden',
         }}
       >
-        {/* Logo watermark fond */}
         {eq.logo && (
           <img src={eq.logo} alt="" aria-hidden style={{
             position: 'absolute', opacity: selec ? 0.08 : 0.04,
@@ -235,12 +256,10 @@ function MatchDetail() {
             pointerEvents: 'none', filter: 'blur(1px)',
           }} />
         )}
-        {/* Logo principal */}
         {eq.logo
           ? <img src={eq.logo} alt={eq.trigramme} style={{ width: 72, height: 72, objectFit: 'contain', position: 'relative' }} />
           : <div style={{ width: 72, height: 72, borderRadius: '50%', background: 'var(--bg-2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 20, color: 'var(--text-3)' }}>{eq.trigramme}</div>
         }
-        {/* Trigramme */}
         <span style={{
           fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 26,
           color: selec ? txtSelec : 'var(--text-1)', letterSpacing: '0.04em',
@@ -248,7 +267,6 @@ function MatchDetail() {
         }}>{eq.trigramme}</span>
         <span style={{ fontSize: 11, color: 'var(--text-3)', textAlign: 'center', position: 'relative', lineHeight: 1.3 }}>{eq.nom}</span>
         <span style={{ fontSize: 10, color: 'var(--text-3)', position: 'relative' }}>{align === 'ext' ? 'Extérieur' : 'Domicile'}</span>
-        {/* Badge prono */}
         {selec && !termine && (
           <span style={{ fontSize: 11, color: txtSelec, fontWeight: 700, marginTop: 2, position: 'relative' }}>✓ Mon prono</span>
         )}
@@ -280,9 +298,6 @@ function MatchDetail() {
         <div style={{ padding: '0 16px', display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 8 }}>
           {match.saison     && <span style={S.badge}>{match.saison}</span>}
           {match.typeSaison && <span style={{ ...S.badge, background: 'var(--accent-dim)', color: 'var(--accent)', borderColor: 'var(--accent-border)' }}>{match.typeSaison}</span>}
-
-
-          {/* Badge enrichi : headline prioritaire (Abu Dhabi, NBA Cup...), label tag en fallback (Playoffs, Finals...) */}
           {(match.headline || TAG_CONFIG[match.tag]) && (
             <span style={{
               ...S.badge,
@@ -311,7 +326,6 @@ function MatchDetail() {
           borderBottom: '1px solid var(--border)',
           position: 'relative', overflow: 'hidden',
         }}>
-          {/* Message prono */}
           {!verrou && (
             <div style={{ textAlign: 'center', fontSize: 11, color: 'var(--text-3)', padding: '10px 16px 0', fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
               {prono ? 'Tu peux encore changer d\'avis' : 'Clique sur une équipe pour pronostiquer'}
@@ -323,11 +337,8 @@ function MatchDetail() {
             </div>
           )}
 
-          {/* Grid equipes + score */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center' }}>
             <CarteEquipe eq={ext} align="ext" />
-
-            {/* Centre — score ou VS */}
             <div style={{ textAlign: 'center', minWidth: 80, padding: '0 8px' }}>
               {(termine || enCours) && ext.score != null ? (
                 <>
@@ -350,11 +361,9 @@ function MatchDetail() {
                 </>
               )}
             </div>
-
             <CarteEquipe eq={dom} align="dom" />
           </div>
 
-          {/* Quart-temps */}
           {nbPeriodes > 0 && !noSpoil && (
             <div style={{ borderTop: '1px solid var(--border)', padding: '10px 16px', overflowX: 'auto' }}>
               <div style={{ display: 'grid', gridTemplateColumns: `56px repeat(${nbPeriodes}, 1fr) 44px`, gap: 4, fontSize: 11, textAlign: 'center', minWidth: 240 }}>
@@ -448,8 +457,6 @@ function MatchDetail() {
           {(dom.stats?.fg || ext.stats?.fg) && (
             <div style={{ background: 'var(--bg-1)', padding: '16px 16px 20px', borderLeft: '3px solid var(--accent)' }}>
               <TitreSection mot1={termine ? 'STATS' : 'STATS'} mot2={termine ? 'DU MATCH' : 'SAISON'} />
-
-              {/* En-têtes équipes */}
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                   {ext.logo && <img src={ext.logo} alt="" style={{ width: 18, height: 18, objectFit: 'contain' }} />}
@@ -460,7 +467,6 @@ function MatchDetail() {
                   {dom.logo && <img src={dom.logo} alt="" style={{ width: 18, height: 18, objectFit: 'contain' }} />}
                 </div>
               </div>
-
               {STATS_LABELS.map(({ key, label }) => {
                 const vE = ext.stats?.[key]; const vD = dom.stats?.[key]
                 return <BarreStat key={key} vE={vE} vD={vD} label={label} couleurExt={couleurExt} couleurDom={couleurDom} />
