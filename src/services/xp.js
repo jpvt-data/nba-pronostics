@@ -1,9 +1,9 @@
 import { supabase } from '../lib/supabase'
 import { XP_BASE, XP_COEFFICIENT } from '../config'
+import { BADGES_CATALOGUE } from '../data/badges'
 
 /**
  * Calcule le niveau (1-100) depuis un total XP cumulatif.
- * XP requis pour niveau N = XP_BASE * XP_COEFFICIENT^(N-1)
  */
 export function niveauDepuisXP(xpTotal) {
   let xpCumule = 0
@@ -17,7 +17,6 @@ export function niveauDepuisXP(xpTotal) {
 
 /**
  * XP total nécessaire pour ENTRER dans un niveau donné.
- * Utile pour afficher la barre de progression.
  */
 export function xpPourNiveau(niveau) {
   let total = 0
@@ -29,21 +28,17 @@ export function xpPourNiveau(niveau) {
 
 /**
  * Ajoute de l'XP à un utilisateur.
- * - Insert dans xp_log (avec date_jour pour contrainte unique connexion)
- * - Met à jour xp_total + niveau dans profils
- * Retourne { xp_total, niveau } ou null si erreur.
  */
 export async function ajouterXP(userId, xp, source, sourceId = null, meta = {}) {
-  // 1. Insert xp_log
   const { error: errLog } = await supabase
     .from('xp_log')
     .insert({
-      user_id:    userId,
+      user_id:   userId,
       source,
-      source_id:  sourceId,
-      xp_gagne:   xp,
+      source_id: sourceId,
+      xp_gagne:  xp,
       meta,
-      date_jour:  new Date().toISOString().slice(0, 10),
+      date_jour: new Date().toISOString().slice(0, 10),
     })
 
   if (errLog) {
@@ -51,7 +46,6 @@ export async function ajouterXP(userId, xp, source, sourceId = null, meta = {}) 
     return null
   }
 
-  // 2. Récupérer xp_total actuel
   const { data: profil, error: errProfil } = await supabase
     .from('profils')
     .select('xp_total')
@@ -63,7 +57,6 @@ export async function ajouterXP(userId, xp, source, sourceId = null, meta = {}) 
   const nouvelXP      = profil.xp_total + xp
   const nouveauNiveau = niveauDepuisXP(nouvelXP)
 
-  // 3. Mettre à jour profils
   const { error: errUpdate } = await supabase
     .from('profils')
     .update({ xp_total: nouvelXP, niveau: nouveauNiveau })
@@ -77,7 +70,6 @@ export async function ajouterXP(userId, xp, source, sourceId = null, meta = {}) 
 /**
  * Vérifie les jalons automatiques après une action.
  * stats = { pronos_poses, pronos_corrects, serie_correcte, serie_ratee, win_rate, semaines_gagnees }
- * Déclenche ajouterXP + badge si jalon atteint pour la première fois.
  */
 export async function verifierJalons(userId, stats) {
   const { data: profil } = await supabase
@@ -86,13 +78,13 @@ export async function verifierJalons(userId, stats) {
     .eq('id', userId)
     .single()
 
-  const badgesObtenus = profil?.badges || []
+  const badgesObtenus  = profil?.badges || []
   const nouveauxBadges = []
 
   const jalons = [
-    { slug: 'jalon_10_pronos',     condition: stats.pronos_poses >= 10,   xp: 50 },
+    { slug: 'jalon_10_pronos',     condition: stats.pronos_poses >= 10,   xp: 50  },
     { slug: 'jalon_50_pronos',     condition: stats.pronos_poses >= 50,   xp: 150, badge: 'all_in' },
-    { slug: 'jalon_100_pronos',    condition: stats.pronos_poses >= 100,  xp: 300 },
+    { slug: 'jalon_100_pronos',    condition: stats.pronos_poses >= 100,  xp: 300, badge: 'marathonien' },
     { slug: 'jalon_serie_5',       condition: stats.serie_correcte >= 5,  xp: 100, badge: 'en_feu' },
     { slug: 'jalon_serie_10',      condition: stats.serie_correcte >= 10, xp: 250, badge: 'prophete' },
     { slug: 'jalon_winrate_65',    condition: stats.pronos_poses >= 20 && stats.win_rate >= 65, xp: 200, badge: 'analyste' },
@@ -103,7 +95,6 @@ export async function verifierJalons(userId, stats) {
   for (const jalon of jalons) {
     if (!jalon.condition) continue
 
-    // Vérifier si déjà déclenché via xp_log
     const { data: dejaLog } = await supabase
       .from('xp_log')
       .select('id')
@@ -118,11 +109,13 @@ export async function verifierJalons(userId, stats) {
     }
 
     if (jalon.badge && !badgesObtenus.includes(jalon.badge)) {
-      nouveauxBadges.push(jalon.badge)
+      // Vérifier que le badge existe dans le catalogue
+      if (BADGES_CATALOGUE.find(b => b.slug === jalon.badge)) {
+        nouveauxBadges.push(jalon.badge)
+      }
     }
   }
 
-  // Mise à jour badges en une fois
   if (nouveauxBadges.length > 0) {
     await supabase
       .from('profils')
@@ -134,8 +127,7 @@ export async function verifierJalons(userId, stats) {
 }
 
 /**
- * Vérifie et met à jour la progression d'une mission pour un utilisateur.
- * periode = 'YYYY-MM-DD' (quotidienne) | 'YYYY-WNN' (hebdo) | null (permanente/event)
+ * Vérifie et met à jour la progression d'une mission.
  */
 export async function verifierMissions(userId, conditionType, valeur, periode = null) {
   const { data: missions } = await supabase
@@ -165,23 +157,12 @@ export async function verifierMissions(userId, conditionType, valeur, periode = 
     if (existante) {
       await supabase
         .from('missions_utilisateurs')
-        .update({
-          progression,
-          completee,
-          completee_le: completee ? new Date().toISOString() : null,
-        })
+        .update({ progression, completee, completee_le: completee ? new Date().toISOString() : null })
         .eq('id', existante.id)
     } else {
       await supabase
         .from('missions_utilisateurs')
-        .insert({
-          user_id:      userId,
-          mission_id:   mission.id,
-          progression,
-          completee,
-          completee_le: completee ? new Date().toISOString() : null,
-          periode,
-        })
+        .insert({ user_id: userId, mission_id: mission.id, progression, completee, completee_le: completee ? new Date().toISOString() : null, periode })
     }
 
     if (completee) {
