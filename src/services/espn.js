@@ -138,27 +138,24 @@ export const recupererDetailMatch = async (espnId) => {
 
     if (comp.date) {
       try {
-        const dateStr  = comp.date.slice(0, 10).replace(/-/g, '')
-        const sbBase   = isSummerLeague ? BASE_SL : BASE_URL
-        const res      = await fetchAvecTimeout(`${sbBase}/scoreboard?dates=${dateStr}-${dateStr}&limit=100`)
+        // Plage J-1 → J pour couvrir les matchs UTC indexés la veille par ESPN
+        const dateStr    = comp.date.slice(0, 10).replace(/-/g, '')
+        const dateObjM1  = new Date(comp.date)
+        dateObjM1.setDate(dateObjM1.getDate() - 1)
+        const dateMinus1 = dateObjM1.toISOString().slice(0, 10).replace(/-/g, '')
+        const sbBase     = isSummerLeague ? BASE_SL : BASE_URL
+        const res        = await fetchAvecTimeout(`${sbBase}/scoreboard?dates=${dateMinus1}-${dateStr}&limit=200`)
         const sb      = await res.json()
-        console.log('nb events scoreboard:', sb.events?.length)
-        console.log('espnId cherché:', espnId)
-        console.log('ids trouvés:', sb.events?.map(e => e.id).slice(0, 5))
         const evtSB   = (sb.events || []).find(e => e.id === espnId)
-        console.log('evtSB trouvé:', !!evtSB)
         if (evtSB) {
           const compSB = evtSB.competitions?.[0]
           headline     = compSB?.notes?.[0]?.headline || ''
-          console.log('headline brute:', headline)        
-          console.log('tag calculé avant:', tag)
           tag          = detecterType(
             evtSB.season?.type,
             headline,
             compSB?.type?.abbreviation,
             false
           )
-          console.log('tag calculé après:', tag)
         }
       } catch { /* silencieux */ }
     }
