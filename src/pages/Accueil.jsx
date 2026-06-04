@@ -119,7 +119,9 @@ function Accueil() {
       await ajouterXP(user.id, 10, 'passif', 'prono_pose')
 
       // +10 premier prono du jour (1×/jour)
-      const aujourdhui = new Date().toISOString().slice(0, 10)
+      const aujourdhui = new Date().toLocaleDateString('fr-FR', {
+        year: 'numeric', month: '2-digit', day: '2-digit', timeZone: 'Europe/Paris'
+      }).split('/').reverse().join('-')
       const { data: dejaPronoJour } = await supabase
         .from('xp_log').select('id')
         .eq('user_id', user.id)
