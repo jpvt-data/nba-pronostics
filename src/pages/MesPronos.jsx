@@ -106,6 +106,127 @@ const PopupBadge = ({ badge, dateObtention, onClose }) => (
   </div>
 )
 
+// Dictionnaire source_id → label lisible
+const XP_LABELS = {
+  connexion_quotidienne:  { label: 'Connexion quotidienne',        icon: '📅' },
+  prono_pose:             { label: 'Prono posé',                   icon: '🎯' },
+  premier_prono_jour:     { label: 'Premier prono du jour',        icon: '⚡' },
+  prono_correct:          { label: 'Prono correct',                icon: '✅' },
+  semaine_100_pct:        { label: 'Semaine 100% pronostiquée',    icon: '💯' },
+  premier_prono_histoire: { label: 'Premier prono de l\'histoire', icon: '🏆' },
+  jalon_10_pronos:        { label: 'Jalon — 10 pronos posés',      icon: '🎖️' },
+  jalon_50_pronos:        { label: 'Jalon — 50 pronos + Badge All-In', icon: '🃏' },
+  jalon_100_pronos:       { label: 'Jalon — 100 pronos + Badge Marathonien', icon: '🏃' },
+  jalon_serie_5:          { label: 'Jalon — 5 corrects d\'affilée + Badge En Feu', icon: '🔥' },
+  jalon_serie_10:         { label: 'Jalon — 10 corrects d\'affilée + Badge Prophète', icon: '👑' },
+  jalon_winrate_65:       { label: 'Jalon — 65% réussite + Badge Analyste', icon: '🧠' },
+  jalon_semaine:          { label: 'Jalon — Semaine gagnée + Badge Champion', icon: '🏆' },
+  jalon_serie_ratee_5:    { label: 'Badge En Hibernation débloqué', icon: '🧊' },
+}
+
+const formaterDateHeure = (dateStr) =>
+  new Date(dateStr).toLocaleString('fr-FR', {
+    day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit',
+    timeZone: 'Europe/Paris',
+  })
+
+// Modal historique XP
+const ModalHistoriqueXP = ({ userId, onClose }) => {
+  const [logs, setLogs]   = useState([])
+  const [charg, setCharg] = useState(true)
+
+  useEffect(() => {
+    const charger = async () => {
+      const { data } = await supabase
+        .from('xp_log')
+        .select('source_id, xp_gagne, cree_le')
+        .eq('user_id', userId)
+        .order('cree_le', { ascending: false })
+        .limit(100)
+      setLogs(data || [])
+      setCharg(false)
+    }
+    charger()
+  }, [userId])
+
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)',
+        zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center',
+        padding: '16px',
+      }}
+    >
+      <div
+        onClick={e => e.stopPropagation()}
+        style={{
+          width: '100%', maxWidth: 480, maxHeight: '80vh', overflowY: 'auto',
+          background: 'var(--bg-1)', borderTop: '3px solid var(--gold)',
+          padding: '20px 16px 24px', position: 'relative',
+        }}
+      >
+        <button onClick={onClose} style={{
+          position: 'absolute', top: 12, right: 12,
+          background: 'none', borderWidth: 0, cursor: 'pointer',
+          fontSize: 18, color: 'var(--text-3)', lineHeight: 1, padding: 4,
+        }}>✕</button>
+
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 16, paddingRight: 32 }}>
+          <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 20, color: 'var(--text-1)', letterSpacing: '0.02em' }}>HISTORIQUE</span>
+          <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 20, color: 'var(--gold)', letterSpacing: '0.02em' }}>XP</span>
+        </div>
+
+        {charg && <p style={{ fontSize: 12, color: 'var(--text-3)' }}>Chargement…</p>}
+
+        {!charg && logs.length === 0 && (
+          <p style={{ fontSize: 13, color: 'var(--text-3)' }}>Aucun gain XP pour l'instant.</p>
+        )}
+
+        {!charg && logs.length > 0 && (
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            {logs.map((l, i) => {
+              const info = XP_LABELS[l.source_id] || { label: l.source_id, icon: '⚙️' }
+              return (
+                <div key={i} style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
+                  padding: '9px 12px',
+                  borderBottom: '1px solid var(--border)',
+                  borderLeft: '3px solid var(--gold)',
+                  marginLeft: -16,
+                  background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.02)',
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1, minWidth: 0 }}>
+                    <span style={{ fontSize: 16, flexShrink: 0 }}>{info.icon}</span>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-1)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {info.label}
+                      </div>
+                      <div style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 1 }}>
+                        {formaterDateHeure(l.cree_le)}
+                      </div>
+                    </div>
+                  </div>
+                  <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 16, color: 'var(--gold)', flexShrink: 0 }}>
+                    +{l.xp_gagne} XP
+                  </span>
+                </div>
+              )
+            })}
+          </div>
+        )}
+
+        <button onClick={onClose} style={{
+          marginTop: 20, width: '100%', padding: '12px',
+          background: 'var(--bg-2)', borderWidth: 1, borderStyle: 'solid',
+          borderColor: 'var(--border)', borderRadius: 'var(--radius-sm)',
+          color: 'var(--text-3)', fontSize: 13, fontWeight: 600, cursor: 'pointer',
+        }}>Fermer</button>
+      </div>
+    </div>
+  )
+}
+
 // Modal info XP
 const ModalInfo = ({ onClose }) => {
   const [onglet, setOnglet] = useState('xp')
@@ -239,8 +360,9 @@ function MesPronos() {
   const [equipes, setEquipes]             = useState({ meilleure: null, pire: null })
   const [xpData, setXpData]              = useState({ xp_total: 0, niveau: 1, badges: [] })
   const [badgeDatesMap, setBadgeDates]   = useState({}) // slug → date obtention
-  const [badgePopup, setBadgePopup]      = useState(null) // badge cliqué
+  const [badgePopup, setBadgePopup]      = useState(null)
   const [modalInfo, setModalInfo]        = useState(false)
+  const [modalHistorique, setModalHistorique] = useState(false)
   const [charg, setCharg]                = useState(true)
   const [estMoi, setEstMoi]              = useState(true)
   const navigate                         = useNavigate()
@@ -414,6 +536,18 @@ function MesPronos() {
                 </span>
               )}
             </div>
+            {estMoi && (
+              <button
+                onClick={() => setModalHistorique(true)}
+                style={{
+                  background: 'none', borderWidth: 0, cursor: 'pointer',
+                  fontSize: 10, color: 'var(--text-3)', padding: '4px 0 0',
+                  fontWeight: 600, letterSpacing: '0.03em',
+                }}
+              >
+                Historique XP →
+              </button>
+            )}
           </div>
 
           {/* Badges obtenus seulement — alignés à gauche, cliquables */}
@@ -675,6 +809,11 @@ function MesPronos() {
           dateObtention={badgeDatesMap[badgePopup.slug] || null}
           onClose={() => setBadgePopup(null)}
         />
+      )}
+
+      {/* Modal historique XP */}
+      {modalHistorique && estMoi && (
+        <ModalHistoriqueXP userId={profil?.id || ''} onClose={() => setModalHistorique(false)} />
       )}
 
       {/* Modal info */}
