@@ -1,58 +1,21 @@
-const BASE_URL  = 'https://site.api.espn.com/apis/site/v2/sports/basketball/nba'
-const BASE_WEB  = 'https://site.web.api.espn.com/apis/site/v2/sports/basketball/nba'
-const BASE_SL   = 'https://site.api.espn.com/apis/site/v2/sports/basketball/nba-summer-las-vegas'
-const BASE_WEB_SL = 'https://site.web.api.espn.com/apis/site/v2/sports/basketball/nba-summer-las-vegas'
+const BASE_URL = 'https://site.api.espn.com/apis/site/v2/sports/basketball/nba'
+const BASE_WEB = 'https://site.web.api.espn.com/apis/site/v2/sports/basketball/nba'
 
 const formaterDate = (date) => date.toISOString().slice(0, 10).replace(/-/g, '')
 
-const TYPE_SAISON = {
-  1: 'Pré-saison',
-  2: 'Saison régulière',
-  3: 'Playoffs',
-  5: 'Play-In',
-}
+const TYPE_SAISON = { 1: 'Pré-saison', 2: 'Saison régulière', 3: 'Playoffs', 5: 'International' }
 
-// Fetch avec timeout — abandonne après 8s
+// Fetch avec timeout — abandonne après 8s pour éviter le freeze si ESPN lag
 const fetchAvecTimeout = (url, ms = 8000) => {
   const ctrl = new AbortController()
   const id   = setTimeout(() => ctrl.abort(), ms)
   return fetch(url, { signal: ctrl.signal }).finally(() => clearTimeout(id))
 }
 
-// Détection type match — identique Admin et Calendrier
-const detecterType = (evt, comp, isSummerLeague = false) => {
-  if (isSummerLeague) return 'summer_league'
-  const seasonType = evt?.season?.type ?? comp?.seasonType
-  const compType   = comp?.type?.abbreviation || ''
-  const headline   = (comp?.notes?.[0]?.headline || '').toLowerCase()
-  if (seasonType === 1) return 'preseason'
-  if (seasonType === 5) return 'playin'
-  if (seasonType === 3) {
-    return ['nba finals', 'finals - game', 'the finals'].some(p => headline.includes(p)) ? 'finals' : 'playoffs'
-  }
-  if (compType === 'ALLSTAR' || ['all-star', 'allstar', 'all star'].some(p => headline.includes(p))) return 'allstar'
-  if (seasonType === 2) {
-    if (['nba cup', 'in-season tournament', 'nba cup - group', 'nba cup - knockout', 'nba cup - semifinal', 'nba cup - final'].some(p => headline.includes(p))) return 'nbacup'
-    if (['play-in'].some(p => headline.includes(p))) return 'playin'
-    return 'regular'
-  }
-  return 'regular'
-}
-
-// Couleurs par tag — pour badge MatchDetail
-export const TAG_CONFIG = {
-  preseason:    { label: 'Pré-saison',       couleur: '#6366f1' },
-  regular:      { label: 'Saison régulière', couleur: '#9090b0' },
-  nbacup:       { label: 'NBA Cup',          couleur: '#f97316' },
-  allstar:      { label: 'All-Star',         couleur: '#f59e0b' },
-  playin:       { label: 'Play-In',          couleur: '#22c55e' },
-  playoffs:     { label: 'Playoffs',         couleur: '#ef4444' },
-  finals:       { label: 'NBA Finals',       couleur: '#e11d48' },
-  summer_league:{ label: 'Summer League',    couleur: '#06b6d4' },
-}
-
 export const recupererMatchs3Jours = async () => {
   const aujourdhui = new Date()
+
+  // Prépare les 3 dates et lance les fetch en parallèle
   const dates = [0, 1, 2].map(i => {
     const d = new Date(aujourdhui)
     d.setDate(aujourdhui.getDate() + i)
@@ -74,6 +37,7 @@ export const recupererMatchs3Jours = async () => {
       const dom   = comp.competitors.find(c => c.homeAway === 'home')
       const ext   = comp.competitors.find(c => c.homeAway === 'away')
       const venue = comp.venue
+
       matchs.push({
         espn_id:        evt.id,
         date:           evt.date,
@@ -107,34 +71,10 @@ export const recupererMatchs3Jours = async () => {
 }
 
 export const recupererDetailMatch = async (espnId) => {
-  // Essai 1 : endpoint NBA standard
-  let data = null
-  let isSummerLeague = false
-
   try {
-    const res = await fetchAvecTimeout(`${BASE_WEB}/summary?event=${espnId}`)
-    const json = await res.json()
-    // Vérifier que la réponse contient bien des données utilisables
-    if (json?.header?.competitions?.[0]) {
-      data = json
-    }
-  } catch { /* silencieux */ }
+    const res  = await fetchAvecTimeout(`${BASE_WEB}/summary?event=${espnId}`)
+    const data = await res.json()
 
-  // Essai 2 : endpoint Summer League si NBA a échoué ou retourné vide
-  if (!data) {
-    try {
-      const res = await fetchAvecTimeout(`${BASE_WEB_SL}/summary?event=${espnId}`)
-      const json = await res.json()
-      if (json?.header?.competitions?.[0]) {
-        data = json
-        isSummerLeague = true
-      }
-    } catch { /* silencieux */ }
-  }
-
-  if (!data) return null
-
-  try {
     const comp     = data.header?.competitions?.[0]
     const saison   = data.header?.season
     const boxTeams = data.boxscore?.teams || []
@@ -151,19 +91,13 @@ export const recupererDetailMatch = async (espnId) => {
     const typeSaisonNum = saison?.type ?? null
     const termine       = comp.status?.type?.name === 'STATUS_FINAL'
 
-    // Tag et headline pour badge enrichi
-    const headline = comp.notes?.[0]?.headline || ''
-    const tag      = detecterType(
-      { season: { type: typeSaisonNum } },
-      { type: comp.type, notes: comp.notes },
-      isSummerLeague
-    )
-
     const extraireStats = (boxTeam, termine) => {
       if (!boxTeam?.statistics) return {}
       const idx = {}
       boxTeam.statistics.forEach(s => { idx[s.name] = s.displayValue })
+      
       if (termine) {
+        // Stats réelles du match
         return {
           pts: idx['points']                 || null,
           fg:  idx['fieldGoalPct']           || null,
@@ -175,6 +109,7 @@ export const recupererDetailMatch = async (espnId) => {
           to:  idx['turnovers']              || null,
         }
       } else {
+        // Stats moyennes saison (match à venir)
         return {
           pts: idx['avgPoints']              || null,
           fg:  idx['fieldGoalPct']           || null,
@@ -243,12 +178,9 @@ export const recupererDetailMatch = async (espnId) => {
       periode:        comp.status?.period,
       clock:          comp.status?.displayClock,
       saison:         saisonNum ? `${saisonNum - 1}-${String(saisonNum).slice(2)}` : null,
-      typeSaison:     isSummerLeague ? 'Summer League' : (TYPE_SAISON[typeSaisonNum] || null),
+      typeSaison:     TYPE_SAISON[typeSaisonNum] || null,
       saisonNum,
       typeSaisonNum,
-      tag,            // tag detecterType : 'nbacup' | 'allstar' | 'summer_league' | ...
-      headline,       // note ESPN brute : "NBA Cup - Quarter Final" | "NBA Abu Dhabi Game" | ""
-      isSummerLeague,
       stade:          venue?.fullName || null,
       ville:          venue?.address?.city || null,
       serie: serie ? {
@@ -256,32 +188,32 @@ export const recupererDetailMatch = async (espnId) => {
         summary:     serie.summary || null,
       } : null,
       domicile: {
-        nom:            boxDom?.team?.displayName || compDom?.team?.displayName || '',
-        trigramme:      boxDom?.team?.abbreviation || compDom?.team?.abbreviation || '',
-        logo:           boxDom?.team?.logo || compDom?.team?.logo || null,
-        color:          boxDom?.team?.color || compDom?.team?.color || null,
-        alternateColor: boxDom?.team?.alternateColor || compDom?.team?.alternateColor || null,
+        nom:            boxDom?.team?.displayName || '',
+        trigramme:      boxDom?.team?.abbreviation || '',
+        logo:           boxDom?.team?.logo || null,
+        color:          boxDom?.team?.color || null,
+        alternateColor: boxDom?.team?.alternateColor || null,
         score:          compDom?.score ?? null,
-        winner:         compDom?.winner ?? false,
-        periodes:       compDom?.linescores?.map(p => p.displayValue ?? p.value) || [],
-        stats:          extraireStats(boxDom, termine),
-        leaders:        extraireLeaders(leadersDom),
-        l5:             extraireL5(l5Dom),
-        blessés:        extraireBlessés(injDom),
+        winner:    compDom?.winner ?? false,
+        periodes:  compDom?.linescores?.map(p => p.displayValue ?? p.value) || [],
+        stats:     extraireStats(boxDom, termine),
+        leaders:   extraireLeaders(leadersDom),
+        l5:        extraireL5(l5Dom),
+        blessés:   extraireBlessés(injDom),
       },
       exterieur: {
-        nom:            boxExt?.team?.displayName || compExt?.team?.displayName || '',
-        trigramme:      boxExt?.team?.abbreviation || compExt?.team?.abbreviation || '',
-        logo:           boxExt?.team?.logo || compExt?.team?.logo || null,
-        color:          boxExt?.team?.color || compExt?.team?.color || null,
-        alternateColor: boxExt?.team?.alternateColor || compExt?.team?.alternateColor || null,
+        nom:            boxExt?.team?.displayName || '',
+        trigramme:      boxExt?.team?.abbreviation || '',
+        logo:           boxExt?.team?.logo || null,
+        color:          boxExt?.team?.color || null,
+        alternateColor: boxExt?.team?.alternateColor || null,
         score:          compExt?.score ?? null,
-        winner:         compExt?.winner ?? false,
-        periodes:       compExt?.linescores?.map(p => p.displayValue ?? p.value) || [],
-        stats:          extraireStats(boxExt, termine),
-        leaders:        extraireLeaders(leadersExt),
-        l5:             extraireL5(l5Ext),
-        blessés:        extraireBlessés(injExt),
+        winner:    compExt?.winner ?? false,
+        periodes:  compExt?.linescores?.map(p => p.displayValue ?? p.value) || [],
+        stats:     extraireStats(boxExt, termine),
+        leaders:   extraireLeaders(leadersExt),
+        l5:        extraireL5(l5Ext),
+        blessés:   extraireBlessés(injExt),
       },
     }
   } catch (err) {
@@ -292,16 +224,20 @@ export const recupererDetailMatch = async (espnId) => {
 
 export const recupererTimeline = async (joursAvant = 15, joursApres = 15) => {
   const aujourdhui = new Date()
+
   const debut = new Date(aujourdhui)
   debut.setDate(aujourdhui.getDate() - joursAvant)
   debut.setHours(0, 0, 0, 0)
+
   const fin = new Date(aujourdhui)
   fin.setDate(aujourdhui.getDate() + joursApres)
   fin.setHours(23, 59, 59, 999)
 
+  // Construit les plages par mois calendaire
   const plages = []
   let moisCurseur = new Date(debut.getFullYear(), debut.getMonth(), 1)
   const moisFin   = new Date(fin.getFullYear(), fin.getMonth(), 1)
+
   while (moisCurseur <= moisFin) {
     const debutMois = new Date(moisCurseur)
     const finMois   = new Date(moisCurseur.getFullYear(), moisCurseur.getMonth() + 1, 0)
@@ -330,6 +266,7 @@ export const recupererTimeline = async (joursAvant = 15, joursApres = 15) => {
       const venue     = comp.venue
       const dateMatch = new Date(evt.date)
       if (dateMatch < debut || dateMatch > fin) return
+
       matchs.push({
         espn_id:       evt.id,
         date:          evt.date,

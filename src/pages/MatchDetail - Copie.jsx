@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { recupererLiguesCibles } from '../services/ligues'
-import { recupererDetailMatch, TAG_CONFIG } from '../services/espn'
+import { recupererDetailMatch } from '../services/espn'
 import Navigation from '../components/Navigation'
 import { ChevronLeft } from 'lucide-react'
 import { useNoSpoil } from '../context/NoSpoilContext'
@@ -280,18 +280,6 @@ function MatchDetail() {
         <div style={{ padding: '0 16px', display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 8 }}>
           {match.saison     && <span style={S.badge}>{match.saison}</span>}
           {match.typeSaison && <span style={{ ...S.badge, background: 'var(--accent-dim)', color: 'var(--accent)', borderColor: 'var(--accent-border)' }}>{match.typeSaison}</span>}
-          {/* Badge enrichi : NBA Cup, All-Star, Summer League, Paris Game, etc. */}
-          {match.tag && match.tag !== 'regular' && TAG_CONFIG[match.tag] && (
-            <span style={{
-              ...S.badge,
-              background: TAG_CONFIG[match.tag].couleur + '22',
-              color: TAG_CONFIG[match.tag].couleur,
-              borderColor: TAG_CONFIG[match.tag].couleur + '55',
-              fontWeight: 700,
-            }}>
-              {match.headline || TAG_CONFIG[match.tag].label}
-            </span>
-          )}
           {enCours && <span style={{ ...S.badge, background: 'rgba(34,197,94,0.1)', color: 'var(--success)', borderColor: 'rgba(34,197,94,0.3)' }}>● Live — Q{match.periode} {match.clock}</span>}
         </div>
 
