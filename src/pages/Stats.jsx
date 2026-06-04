@@ -884,16 +884,31 @@ function RadarStats({ stats, couleur }) {
 }
 
 // ── FICHE JOUEUR ─────────────────────────────────────────────────────────────
+// Saisons disponibles — depuis 2003 (1ère saison ESPN fiable) jusqu'à saison courante
+const SAISONS_JOUEUR = Array.from(
+  { length: SAISON_ESPN - 2003 + 1 },
+  (_, i) => SAISON_ESPN - i
+)
+
+const TYPE_SAISON_JOUEUR = [
+  { val: 2, label: 'Saison régulière', couleur: 'var(--accent)' },
+  { val: 3, label: 'Playoffs',         couleur: '#ef4444' },
+  { val: 1, label: 'Pré-saison',       couleur: '#6366f1' },
+]
+
 function FicheJoueur({ joueur, equipe, onRetour }) {
-  const [profil, setProfil]         = useState(null)
-  const [stats, setStats]           = useState(null)
-  const [gameLog, setGameLog]       = useState([])
-  const [chargement, setChargement] = useState(true)
+  const [profil, setProfil]             = useState(null)
+  const [stats, setStats]               = useState(null)
+  const [gameLog, setGameLog]           = useState([])
+  const [chargement, setChargement]     = useState(true)
+  const [chargStats, setChargStats]     = useState(false)
+  const [saisonStats, setSaisonStats]   = useState(SAISON_ESPN)
+  const [typeStats, setTypeStats]       = useState(2)
   const couleur = equipe ? couleurEquipe(equipe.couleur) : couleurEquipe(joueur.equipeCouleur)
 
+  // Chargement initial : profil + game log (une seule fois)
   useEffect(() => {
     setChargement(true)
-    // Données de base depuis le roster (athletes/{id} CORS bloqué)
     setProfil({
       nom:        joueur.nom,
       photo:      joueur.photo ?? null,
@@ -905,42 +920,13 @@ function FicheJoueur({ joueur, equipe, onRetour }) {
       experience: '—',
     })
 
-    // Stats moyennes + game log en parallèle
-    Promise.allSettled([
-      fetchAvecTimeout(`${BASE_WEB}/athletes/${joueur.id}/stats?season=${SAISON_ESPN}&seasontype=2`)
-        .then(r => r.json()),
-      fetchAvecTimeout(`${BASE_WEB}/athletes/${joueur.id}/gamelog`)
-        .then(r => r.json()),
-    ]).then(([resStats, resLog]) => {
-      // Stats moyennes
-      if (resStats.status === 'fulfilled') {
-        const data   = resStats.value
-        const catAvg = (data.categories ?? []).find(c => c.name === 'averages')
-        if (catAvg) {
-          const names   = catAvg.names ?? []
-          const statRow = catAvg.statistics?.find(s => s.season?.year === SAISON_ESPN)
-            ?? catAvg.statistics?.[catAvg.statistics.length - 1]
-          const vals = statRow?.stats ?? []
-          const v = (n) => { const i = names.indexOf(n); return i !== -1 ? vals[i] : '—' }
-          setStats({
-            pts: v('avgPoints'), reb: v('avgRebounds'), ast: v('avgAssists'),
-            stl: v('avgSteals'), blk: v('avgBlocks'), min: v('avgMinutes'),
-            fg:  v('fieldGoalPct'), fg3: v('threePointFieldGoalPct'),
-            ft:  v('freeThrowPct'), gp:  v('gamesPlayed'),
-            to:  v('avgTotalTurnovers'),
-          })
-        }
-      }
-
-      // Game log — tous les seasonTypes (playoffs prioritaire si en cours)
-      if (resLog.status === 'fulfilled') {
-        const data      = resLog.value
-        const labels    = data.labels ?? []   // ex: ["MIN","FG","FG%","3PT","3P%","FT","FT%","REB","AST","BLK",...]
-        const eventsMap = data.events ?? {}   // dict eventId → metadata
+    fetchAvecTimeout(`${BASE_WEB}/athletes/${joueur.id}/gamelog`)
+      .then(r => r.json())
+      .then(data => {
+        const labels    = data.labels ?? []
+        const eventsMap = data.events ?? {}
         const lignes    = []
-
         const i = (nom) => labels.indexOf(nom)
-
         ;(data.seasonTypes ?? []).forEach(st => {
           ;(st.categories ?? []).forEach(cat => {
             ;(cat.events ?? []).forEach(ev => {
@@ -954,25 +940,48 @@ function FicheJoueur({ joueur, equipe, onRetour }) {
                 adversaire: meta.opponent?.abbreviation ?? '?',
                 resultat:   meta.gameResult,
                 score:      meta.score,
-                min: s[i('MIN')]  ?? '—',
-                pts: s[i('PTS')]  ?? '—',
-                reb: s[i('REB')]  ?? '—',
-                ast: s[i('AST')]  ?? '—',
-                fg:  s[i('FG%')] ?? '—',
-                tp:  s[i('3P%')] ?? '—',
+                min: s[i('MIN')] ?? '—', pts: s[i('PTS')] ?? '—',
+                reb: s[i('REB')] ?? '—', ast: s[i('AST')] ?? '—',
+                fg:  s[i('FG%')] ?? '—', tp:  s[i('3P%')] ?? '—',
               })
             })
           })
         })
-
-        // Tri chronologique inversé — matchs récents en premier
         lignes.sort((a, b) => new Date(b.date) - new Date(a.date))
         setGameLog(lignes.slice(0, 15))
-      }
-
-      setChargement(false)
-    })
+        setChargement(false)
+      })
+      .catch(() => setChargement(false))
   }, [joueur.id])
+
+  // Chargement stats — rechargé à chaque changement de saison ou type
+  useEffect(() => {
+    setChargStats(true)
+    setStats(null)
+    fetchAvecTimeout(`${BASE_WEB}/athletes/${joueur.id}/stats?season=${saisonStats}&seasontype=${typeStats}`)
+      .then(r => r.json())
+      .then(data => {
+        const catAvg = (data.categories ?? []).find(c => c.name === 'averages')
+        if (catAvg) {
+          const names   = catAvg.names ?? []
+          const statRow = catAvg.statistics?.find(s => s.season?.year === saisonStats)
+            ?? catAvg.statistics?.[catAvg.statistics.length - 1]
+          const vals = statRow?.stats ?? []
+          const v = (n) => { const i = names.indexOf(n); return i !== -1 ? vals[i] : '—' }
+          setStats({
+            pts: v('avgPoints'), reb: v('avgRebounds'), ast: v('avgAssists'),
+            stl: v('avgSteals'), blk: v('avgBlocks'), min: v('avgMinutes'),
+            fg:  v('fieldGoalPct'), fg3: v('threePointFieldGoalPct'),
+            ft:  v('freeThrowPct'), gp:  v('gamesPlayed'),
+            to:  v('avgTotalTurnovers'),
+          })
+        }
+        setChargStats(false)
+      })
+      .catch(() => setChargStats(false))
+  }, [joueur.id, saisonStats, typeStats])
+
+  const typeActuel = TYPE_SAISON_JOUEUR.find(t => t.val === typeStats)
 
   const statItems = stats ? [
     { label: 'PPG', val: stats.pts }, { label: 'RPG', val: stats.reb },
@@ -1028,12 +1037,41 @@ function FicheJoueur({ joueur, equipe, onRetour }) {
         </div>
       </div>
 
-      {chargement && <p style={{ color: 'var(--text-3)', fontSize: 13 }}>Chargement des stats…</p>}
+      {/* Sélecteurs saison + type */}
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12, marginTop: 8, alignItems: 'center' }}>
+        <select
+          value={saisonStats}
+          onChange={e => setSaisonStats(Number(e.target.value))}
+          style={{
+            fontSize: 12, fontWeight: 600, color: 'var(--text-1)', background: 'var(--bg-1)',
+            borderWidth: 1, borderStyle: 'solid', borderColor: 'var(--border)',
+            borderRadius: 'var(--radius-sm)', padding: '5px 10px', cursor: 'pointer',
+          }}
+        >
+          {SAISONS_JOUEUR.map(s => (
+            <option key={s} value={s}>{s - 1}-{String(s).slice(2)}</option>
+          ))}
+        </select>
+        {TYPE_SAISON_JOUEUR.map(({ val, label, couleur: c }) => (
+          <button key={val} onClick={() => setTypeStats(val)} style={{
+            fontSize: 11, fontWeight: 700, cursor: 'pointer',
+            paddingTop: 5, paddingBottom: 5, paddingLeft: 12, paddingRight: 12,
+            borderRadius: 'var(--radius-sm)', borderWidth: 1, borderStyle: 'solid',
+            background:  typeStats === val ? c + '22' : 'transparent',
+            borderColor: typeStats === val ? c + '88' : 'var(--border)',
+            color:       typeStats === val ? c        : 'var(--text-3)',
+          }}>{label}</button>
+        ))}
+      </div>
+
+      {(chargement || chargStats) && <p style={{ color: 'var(--text-3)', fontSize: 13 }}>Chargement des stats…</p>}
 
       {/* Stats moyennes saison */}
-      {!chargement && stats && (
+      {!chargement && !chargStats && stats && (
         <>
-          <LabelSection>Stats saison</LabelSection>
+          <LabelSection>
+            Stats {typeActuel?.label} {saisonStats - 1}-{String(saisonStats).slice(2)}
+          </LabelSection>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 8, marginTop: 10, marginBottom: 20 }}>
             {statItems.map(({ label, val }) => (
               <div key={label} style={{
@@ -1047,7 +1085,7 @@ function FicheJoueur({ joueur, equipe, onRetour }) {
           </div>
         </>
       )}
-      {!chargement && !stats && <p style={{ color: 'var(--text-3)', fontSize: 13, marginBottom: 20 }}>Stats indisponibles.</p>}
+      {!chargement && !chargStats && !stats && <p style={{ color: 'var(--text-3)', fontSize: 13, marginBottom: 20 }}>Stats indisponibles pour cette saison / phase.</p>}
 
       {/* Radar stats */}
       {!chargement && stats && <RadarStats stats={stats} couleur={couleur} />}
