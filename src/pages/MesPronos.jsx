@@ -9,6 +9,9 @@ import { Avatar } from '../components/Avatar'
 const formaterDate = (dateStr) =>
   new Date(dateStr).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' })
 
+const formaterDateComplete = (dateStr) =>
+  new Date(dateStr).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
+
 function calculerStreaks(terminesTries) {
   let courant = 0, dernierResultat = null, max = 0
   for (const p of terminesTries) {
@@ -55,10 +58,55 @@ const titrDepuisNiveau = (n) => {
   return 'GOAT'
 }
 
-const SUPABASE_URL = 'https://fcyhieueuskeooakyla.supabase.co'
-const badgeImageUrl = (slug) =>
-  `${SUPABASE_URL}/storage/v1/object/public/badges/badge_${slug}.webp`
+// Popup visualisation badge (clic sur badge obtenu)
+const PopupBadge = ({ badge, dateObtention, onClose }) => (
+  <div
+    onClick={onClose}
+    style={{
+      position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)',
+      zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center',
+      padding: '24px',
+    }}
+  >
+    <div
+      onClick={e => e.stopPropagation()}
+      style={{
+        width: '100%', maxWidth: 320,
+        background: 'var(--bg-1)', borderTop: '3px solid var(--gold)',
+        padding: '24px 20px 28px', position: 'relative',
+        textAlign: 'center',
+      }}
+    >
+      <button onClick={onClose} style={{
+        position: 'absolute', top: 10, right: 12,
+        background: 'none', borderWidth: 0, cursor: 'pointer',
+        fontSize: 18, color: 'var(--text-3)', lineHeight: 1, padding: 4,
+      }}>✕</button>
 
+      {dateObtention && (
+        <p style={{ fontSize: 11, color: 'var(--text-3)', marginBottom: 16, fontStyle: 'italic' }}>
+          Tu as débloqué ce badge le {formaterDateComplete(dateObtention)}
+        </p>
+      )}
+
+      <img
+        src={badge.image}
+        alt={badge.nom}
+        style={{ width: 120, height: 120, objectFit: 'contain', margin: '0 auto 16px' }}
+        onError={e => { e.target.style.opacity = '0' }}
+      />
+
+      <div style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 22, color: 'var(--gold)', letterSpacing: '0.02em', marginBottom: 8 }}>
+        {badge.nom}
+      </div>
+      <p style={{ fontSize: 13, color: 'var(--text-3)', lineHeight: 1.5 }}>
+        {badge.description}
+      </p>
+    </div>
+  </div>
+)
+
+// Modal info XP
 const ModalInfo = ({ onClose }) => {
   const [onglet, setOnglet] = useState('xp')
   return (
@@ -84,12 +132,11 @@ const ModalInfo = ({ onClose }) => {
           fontSize: 18, color: 'var(--text-3)', lineHeight: 1, padding: 4,
         }}>✕</button>
 
-        {/* Onglets */}
         <div style={{ display: 'flex', gap: 4, marginBottom: 20, paddingRight: 32 }}>
           {[
-            { id: 'xp',      label: 'XP & Niveaux' },
-            { id: 'badges',  label: 'Badges' },
-            { id: 'missions',label: 'Missions' },
+            { id: 'xp',       label: 'XP & Niveaux' },
+            { id: 'badges',   label: 'Badges' },
+            { id: 'missions', label: 'Missions' },
           ].map(o => (
             <button key={o.id} onClick={() => setOnglet(o.id)} style={{
               padding: '6px 12px', fontSize: 12, fontWeight: 600, cursor: 'pointer',
@@ -102,7 +149,6 @@ const ModalInfo = ({ onClose }) => {
           ))}
         </div>
 
-        {/* XP & Niveaux */}
         {onglet === 'xp' && (
           <div>
             <TitreSection mot1="COMMENT" mot2="GAGNER DE L'XP" taille={18} />
@@ -151,34 +197,18 @@ const ModalInfo = ({ onClose }) => {
           </div>
         )}
 
-        {/* Badges */}
         {onglet === 'badges' && (
           <div>
             <TitreSection mot1="LES" mot2="BADGES" taille={18} />
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {BADGES_CATALOGUE.map((b, i) => (
-                <div key={i} style={{
-                  display: 'flex', alignItems: 'center', gap: 14,
-                  padding: '10px 12px', background: 'var(--bg-2)',
-                  borderLeft: '3px solid var(--border-2)',
-                }}>
-                  <img
-                    src={badgeImageUrl(b.slug)}
-                    alt={b.nom}
-                    style={{ width: 48, height: 48, objectFit: 'contain', flexShrink: 0 }}
-                    onError={e => { e.target.style.opacity = '0' }}
-                  />
-                  <div>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-1)' }}>{b.nom}</div>
-                    <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 3, lineHeight: 1.4 }}>{b.description}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <p style={{ fontSize: 13, color: 'var(--text-2)', lineHeight: 1.7 }}>
+              Des badges se débloquent au fil de ton parcours sur Swish League. Certains récompensent la régularité, d'autres l'audace ou la persévérance. Continue à pronostiquer, à jouer, à revenir — et tu finiras par les trouver.
+            </p>
+            <p style={{ fontSize: 12, color: 'var(--text-3)', lineHeight: 1.6, marginTop: 12, fontStyle: 'italic' }}>
+              Les conditions d'obtention ne sont pas toutes révélées. C'est voulu.
+            </p>
           </div>
         )}
 
-        {/* Missions */}
         {onglet === 'missions' && (
           <div>
             <TitreSection mot1="LES" mot2="MISSIONS" taille={18} />
@@ -200,19 +230,21 @@ const ModalInfo = ({ onClose }) => {
 }
 
 function MesPronos() {
-  const [pronos, setPronos]        = useState([])
-  const [stats, setStats]          = useState({ total: 0, corrects: 0, incorrects: 0 })
-  const [statsLigues, setStatsLig] = useState([])
-  const [profil, setProfil]        = useState(null)
-  const [formeRecente, setForme]   = useState([])
-  const [streaks, setStreaks]       = useState({ actuel: 0, max: 0 })
-  const [equipes, setEquipes]       = useState({ meilleure: null, pire: null })
-  const [xpData, setXpData]        = useState({ xp_total: 0, niveau: 1, badges: [] })
-  const [modalInfo, setModalInfo]  = useState(false)
-  const [charg, setCharg]          = useState(true)
-  const [estMoi, setEstMoi]        = useState(true)
-  const navigate = useNavigate()
-  const location = useLocation()
+  const [pronos, setPronos]              = useState([])
+  const [stats, setStats]                = useState({ total: 0, corrects: 0, incorrects: 0 })
+  const [statsLigues, setStatsLig]       = useState([])
+  const [profil, setProfil]              = useState(null)
+  const [formeRecente, setForme]         = useState([])
+  const [streaks, setStreaks]             = useState({ actuel: 0, max: 0 })
+  const [equipes, setEquipes]             = useState({ meilleure: null, pire: null })
+  const [xpData, setXpData]              = useState({ xp_total: 0, niveau: 1, badges: [] })
+  const [badgeDatesMap, setBadgeDates]   = useState({}) // slug → date obtention
+  const [badgePopup, setBadgePopup]      = useState(null) // badge cliqué
+  const [modalInfo, setModalInfo]        = useState(false)
+  const [charg, setCharg]                = useState(true)
+  const [estMoi, setEstMoi]              = useState(true)
+  const navigate                         = useNavigate()
+  const location                         = useLocation()
 
   useEffect(() => {
     const init = async () => {
@@ -227,7 +259,37 @@ function MesPronos() {
         .select('pseudo, avatar_url, description, xp_total, niveau, badges')
         .eq('id', cibleId).single()
       setProfil(p)
-      setXpData({ xp_total: p?.xp_total || 0, niveau: p?.niveau || 1, badges: p?.badges || [] })
+      const badgesSlugs = p?.badges || []
+      setXpData({ xp_total: p?.xp_total || 0, niveau: p?.niveau || 1, badges: badgesSlugs })
+
+      // Récupérer les dates d'obtention depuis xp_log pour chaque badge
+      if (badgesSlugs.length > 0) {
+        const { data: logsJalons } = await supabase
+          .from('xp_log')
+          .select('source_id, cree_le')
+          .eq('user_id', cibleId)
+          .eq('source', 'jalon')
+          .order('cree_le', { ascending: true })
+
+        // Mapper slug badge → date via le jalon correspondant
+        const jalon2badge = {
+          'jalon_50_pronos':    'all_in',
+          'jalon_100_pronos':   'marathonien',
+          'jalon_serie_5':      'en_feu',
+          'jalon_serie_10':     'prophete',
+          'jalon_winrate_65':   'analyste',
+          'jalon_semaine':      'champion',
+          'jalon_serie_ratee_5':'en_hibernation',
+        }
+        const datesMap = {}
+        logsJalons?.forEach(l => {
+          const badgeSlug = jalon2badge[l.source_id]
+          if (badgeSlug && !datesMap[badgeSlug]) {
+            datesMap[badgeSlug] = l.cree_le
+          }
+        })
+        setBadgeDates(datesMap)
+      }
 
       let query = supabase
         .from('pronos')
@@ -287,7 +349,10 @@ function MesPronos() {
   const xpRestant  = xpFinNiv - xpActuel
   const pctBarre   = niveau >= 100 ? 100 : Math.min(100, Math.round(xpDansNiv / xpNivTotal * 100))
   const titreRPG   = titrDepuisNiveau(niveau)
+
+  // Badges obtenus seulement, dans l'ordre du catalogue
   const badgesObtenusSlugs = new Set(xpData.badges || [])
+  const badgesObtenus = BADGES_CATALOGUE.filter(b => badgesObtenusSlugs.has(b.slug))
 
   return (
     <>
@@ -297,7 +362,6 @@ function MesPronos() {
         {/* ── Header fusionné : Profil + XP ── */}
         <div style={{ background: 'var(--bg-1)', padding: '20px 16px 20px', borderLeft: '3px solid var(--gold)' }}>
 
-          {/* Ligne avatar + pseudo + bouton info */}
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16 }}>
             <Avatar url={profil?.avatar_url} pseudo={profil?.pseudo} taille={56} fontSize={18} />
             <div style={{ flex: 1, minWidth: 0 }}>
@@ -352,49 +416,32 @@ function MesPronos() {
             </div>
           </div>
 
-          {/* Grille badges — 1 ligne desktop, 4 colonnes mobile centrées */}
-          <style>{`
-            .badges-grid {
-              display: grid;
-              grid-template-columns: repeat(4, 56px);
-              gap: 10px;
-              margin-top: 14px;
-              justify-content: center;
-            }
-            @media (min-width: 768px) {
-              .badges-grid {
-                grid-template-columns: repeat(${BADGES_CATALOGUE.length}, 48px);
-                justify-content: flex-start;
-              }
-            }
-          `}</style>
-          <div className="badges-grid">
-            {BADGES_CATALOGUE.map(b => {
-              const obtenu = badgesObtenusSlugs.has(b.slug)
-              return (
-                <div
+          {/* Badges obtenus seulement — alignés à gauche, cliquables */}
+          {badgesObtenus.length > 0 && (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginTop: 16 }}>
+              {badgesObtenus.map(b => (
+                <button
                   key={b.slug}
-                  title={obtenu ? b.nom : '?'}
+                  onClick={() => setBadgePopup(b)}
+                  title={b.nom}
                   style={{
-                    width: 56, height: 56,
+                    width: 52, height: 52, padding: 4,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    background: obtenu ? 'rgba(245,158,11,0.12)' : 'var(--bg-2)',
-                    borderWidth: 1, borderStyle: 'solid',
-                    borderColor: obtenu ? 'rgba(245,158,11,0.4)' : 'var(--border)',
-                    borderRadius: 'var(--radius-sm)',
-                    opacity: obtenu ? 1 : 0.3,
+                    background: 'rgba(245,158,11,0.12)',
+                    borderWidth: 1, borderStyle: 'solid', borderColor: 'rgba(245,158,11,0.4)',
+                    borderRadius: 'var(--radius-sm)', cursor: 'pointer',
                   }}
                 >
                   <img
-                    src={badgeImageUrl(b.slug)}
-                    alt={obtenu ? b.nom : ''}
-                    style={{ width: 44, height: 44, objectFit: 'contain', filter: obtenu ? 'none' : 'grayscale(1)' }}
+                    src={b.image}
+                    alt={b.nom}
+                    style={{ width: 40, height: 40, objectFit: 'contain' }}
                     onError={e => { e.target.style.opacity = '0' }}
                   />
-                </div>
-              )
-            })}
-          </div>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {charg && <p style={{ color: 'var(--text-3)', fontSize: 13, padding: '2rem', textAlign: 'center' }}>Chargement…</p>}
@@ -621,6 +668,16 @@ function MesPronos() {
 
       </main>
 
+      {/* Popup visualisation badge */}
+      {badgePopup && (
+        <PopupBadge
+          badge={badgePopup}
+          dateObtention={badgeDatesMap[badgePopup.slug] || null}
+          onClose={() => setBadgePopup(null)}
+        />
+      )}
+
+      {/* Modal info */}
       {modalInfo && <ModalInfo onClose={() => setModalInfo(false)} />}
     </>
   )
