@@ -10,7 +10,7 @@ export const BADGES_CATALOGUE = [
     slug:        'original_gangster',
     nom:         'Original Gangster',
     famille:     'appartenance',
-    description: 'Membre fondateur de Swish League. Là depuis le début.',
+    description: 'Membre fondateur de Swish League. Présent depuis le début.',
     image:       badgeImageUrl('original_gangster'),
   },
   {
