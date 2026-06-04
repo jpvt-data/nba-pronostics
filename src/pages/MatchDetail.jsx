@@ -280,8 +280,9 @@ function MatchDetail() {
         <div style={{ padding: '0 16px', display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 8 }}>
           {match.saison     && <span style={S.badge}>{match.saison}</span>}
           {match.typeSaison && <span style={{ ...S.badge, background: 'var(--accent-dim)', color: 'var(--accent)', borderColor: 'var(--accent-border)' }}>{match.typeSaison}</span>}
-          {/* Badge enrichi : NBA Cup, All-Star, Summer League, Paris Game, etc. */}
-          {match.tag && match.tag !== 'regular' && TAG_CONFIG[match.tag] && (
+          {/* Badge enrichi — uniquement si le tag apporte une info différente de typeSaison */}
+          {/* preseason, regular, summer_league déjà couverts par typeSaison → pas de doublon */}
+          {match.tag && TAG_CONFIG[match.tag] && (
             <span style={{
               ...S.badge,
               background: TAG_CONFIG[match.tag].couleur + '22',
