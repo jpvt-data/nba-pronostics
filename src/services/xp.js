@@ -38,7 +38,7 @@ export async function ajouterXP(userId, xp, source, sourceId = null, meta = {}) 
       source_id: sourceId,
       xp_gagne:  xp,
       meta,
-      date_jour: new Date().toISOString().slice(0, 10),
+      date_jour: new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/Paris' }),
     })
 
   if (errLog) {
