@@ -16,7 +16,7 @@ export const BADGES_CATALOGUE = [
   {
     slug:        'all_in',
     nom:         'All-In',
-    famille:     'appartenance',
+    famille:     'performance',
     description: '50 pronos posés. Tu es dedans pour de bon.',
     image:       badgeImageUrl('all_in'),
   },

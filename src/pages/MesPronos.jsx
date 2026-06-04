@@ -563,17 +563,15 @@ function MesPronos() {
                   onClick={() => setBadgePopup(b)}
                   title={b.nom}
                   style={{
-                    width: 52, height: 52, padding: 4,
+                    width: 56, height: 56, padding: 0,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    background: 'rgba(245,158,11,0.12)',
-                    borderWidth: 1, borderStyle: 'solid', borderColor: 'rgba(245,158,11,0.4)',
-                    borderRadius: 'var(--radius-sm)', cursor: 'pointer',
+                    background: 'none', borderWidth: 0, cursor: 'pointer',
                   }}
                 >
                   <img
                     src={b.image}
                     alt={b.nom}
-                    style={{ width: 40, height: 40, objectFit: 'contain' }}
+                    style={{ width: 56, height: 56, objectFit: 'contain' }}
                     onError={e => { e.target.style.opacity = '0' }}
                   />
                 </button>
