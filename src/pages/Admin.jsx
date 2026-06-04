@@ -5,9 +5,9 @@ import Navigation from '../components/Navigation'
 import { Trash2, Search, ChevronDown, ChevronUp, AlertCircle, CheckCircle } from 'lucide-react'
 
 const ADMIN_ID = 'fa55d016-896c-4eb4-b48a-241d6be71ad0'
-const BASE_ESPN = 'https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard'
+const BASE_NBA = 'https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard'
+const BASE_SL  = 'https://site.api.espn.com/apis/site/v2/sports/basketball/nba-summer-las-vegas/scoreboard'
 
-// Saisons disponibles
 const SAISONS = [
   { label: '2023-24', anneeDebut: 2023, anneeFin: 2024 },
   { label: '2024-25', anneeDebut: 2024, anneeFin: 2025 },
@@ -15,10 +15,11 @@ const SAISONS = [
   { label: '2026-27', anneeDebut: 2026, anneeFin: 2027 },
 ]
 
-// Plages juillet N → juin N+1 (saison complète)
+// Plages juillet N → juin N+1
+// juillet et août : double appel NBA + Summer League
 const plagesMois = (anneeDebut, anneeFin) => [
-  { label: 'Juil',  debut: `${anneeDebut}0701`, fin: `${anneeDebut}0731` },
-  { label: 'Août',  debut: `${anneeDebut}0801`, fin: `${anneeDebut}0831` },
+  { label: 'Juil',  debut: `${anneeDebut}0701`, fin: `${anneeDebut}0731`, summerLeague: true },
+  { label: 'Août',  debut: `${anneeDebut}0801`, fin: `${anneeDebut}0831`, summerLeague: true },
   { label: 'Sep',   debut: `${anneeDebut}0901`, fin: `${anneeDebut}0930` },
   { label: 'Oct',   debut: `${anneeDebut}1001`, fin: `${anneeDebut}1031` },
   { label: 'Nov',   debut: `${anneeDebut}1101`, fin: `${anneeDebut}1130` },
@@ -32,128 +33,46 @@ const plagesMois = (anneeDebut, anneeFin) => [
 ]
 
 // ══════════════════════════════════════════
-// PATTERNS DE DÉTECTION ESPN
-// Listés explicitement pour pouvoir les auditer et affiner
+// DÉTECTION — 6 types + summer_league + inconnu
 // ══════════════════════════════════════════
-const PATTERNS = {
-  preseason: {
-    seasonType: [1],
-  },
-  playin: {
-    seasonType: [5],
-    headlines: ['play-in'],
-  },
-  finals: {
-    seasonType: [3],
-    headlines: ['nba finals', 'finals - game', 'the finals'],
-  },
-  playoffs: {
-    seasonType: [3],
-    // tout season.type=3 qui n'est pas finals
-  },
-  allstar: {
-    compType: ['ALLSTAR'],
-    headlines: ['all-star', 'allstar', 'all star'],
-  },
-  nbacup: {
-    seasonType: [2],
-    headlines: ['nba cup', 'in-season tournament', 'nba cup - group', 'nba cup - knockout', 'nba cup - semifinal', 'nba cup - final'],
-  },
-  paris: {
-    seasonType: [2],
-    headlines: ['paris', 'nba paris', 'nba paris game'],
-    villes: ['paris'],
-  },
-  abudhabi: {
-    seasonType: [2],
-    headlines: ['abu dhabi', 'nba abu dhabi', 'nba global games - abu dhabi', 'global games - abu dhabi', 'uae'],
-    villes: ['abu dhabi', 'abu-dhabi'],
-    pays: ['united arab', 'uae'],
-  },
-  mexico: {
-    seasonType: [2],
-    headlines: ['mexico', 'nba mexico', 'nba mexico city', 'nba global games - mexico', 'global games - mexico'],
-    villes: ['mexico city', 'ciudad de méxico', 'ciudad de mexico'],
-  },
-  berlin: {
-    seasonType: [2],
-    headlines: ['berlin', 'nba berlin', 'nba global games - berlin', 'global games - berlin'],
-    villes: ['berlin'],
-  },
-  uk: {
-    seasonType: [2],
-    headlines: ['london', 'manchester', 'nba london', 'nba manchester', 'nba global games - london', 'global games - london', 'o2 arena'],
-    villes: ['london', 'manchester'],
-  },
-}
+const detecterType = (evt, comp, isSummerLeague = false) => {
+  if (isSummerLeague) return 'summer_league'
 
-// Villes US connues pour neutralSite → ne pas tagger international
-const VILLES_US = [
-  'las vegas', 'inglewood', 'phoenix', 'atlanta', 'chicago', 'dallas',
-  'denver', 'houston', 'miami', 'minneapolis', 'new york', 'brooklyn',
-  'boston', 'philadelphia', 'portland', 'sacramento', 'san antonio',
-  'san francisco', 'oklahoma city', 'memphis', 'new orleans', 'toronto',
-  'milwaukee', 'cleveland', 'detroit', 'charlotte', 'washington', 'orlando',
-  'indianapolis', 'salt lake city', 'buffalo',
-]
-
-const detecterType = (evt, comp) => {
   const seasonType = evt.season?.type
-  const compType = comp.type?.abbreviation || ''
-  const headline = (comp.notes?.[0]?.headline || '').toLowerCase()
-  const ville = (comp.venue?.address?.city || '').toLowerCase()
-  const pays = (comp.venue?.address?.country || '').toLowerCase()
+  const compType   = comp.type?.abbreviation || ''
+  const headline   = (comp.notes?.[0]?.headline || '').toLowerCase()
 
   if (seasonType === 1) return 'preseason'
   if (seasonType === 5) return 'playin'
 
   if (seasonType === 3) {
-    const estFinals = PATTERNS.finals.headlines.some(p => headline.includes(p))
+    const estFinals = ['nba finals', 'finals - game', 'the finals'].some(p => headline.includes(p))
     return estFinals ? 'finals' : 'playoffs'
   }
 
-  if (compType === 'ALLSTAR' || PATTERNS.allstar.headlines.some(p => headline.includes(p))) return 'allstar'
+  if (compType === 'ALLSTAR' || ['all-star', 'allstar', 'all star'].some(p => headline.includes(p))) return 'allstar'
 
   if (seasonType === 2) {
-    if (PATTERNS.nbacup.headlines.some(p => headline.includes(p))) return 'nbacup'
-    if (PATTERNS.playin.headlines.some(p => headline.includes(p))) return 'playin'
-
-    // Matchs internationaux — ordre : plus spécifique en premier
-    if (PATTERNS.paris.headlines.some(p => headline.includes(p)) || PATTERNS.paris.villes.some(v => ville.includes(v))) return 'paris'
-    if (PATTERNS.abudhabi.headlines.some(p => headline.includes(p)) || PATTERNS.abudhabi.villes.some(v => ville.includes(v)) || PATTERNS.abudhabi.pays.some(p => pays.includes(p))) return 'abudhabi'
-    if (PATTERNS.mexico.headlines.some(p => headline.includes(p)) || PATTERNS.mexico.villes.some(v => ville.includes(v))) return 'mexico'
-    if (PATTERNS.berlin.headlines.some(p => headline.includes(p)) || PATTERNS.berlin.villes.some(v => ville.includes(v))) return 'berlin'
-    if (PATTERNS.uk.headlines.some(p => headline.includes(p)) || PATTERNS.uk.villes.some(v => ville.includes(v))) return 'uk'
-
-    // neutralSite hors US → international non identifié
-    if (comp.neutralSite && ville && !VILLES_US.some(v => ville.includes(v))) return 'international'
-
+    if (['nba cup', 'in-season tournament', 'nba cup - group', 'nba cup - knockout', 'nba cup - semifinal', 'nba cup - final'].some(p => headline.includes(p))) return 'nbacup'
+    if (['play-in'].some(p => headline.includes(p))) return 'playin'
     return 'regular'
   }
 
   return 'inconnu'
 }
 
-// ══════════════════════════════════════════
-// CONFIG TYPES
-// OBLIGATOIRES = MANQUANT si absent
-// OPTIONNELS = affiché si trouvé, jamais MANQUANT
-// ══════════════════════════════════════════
+// Types config
+// obligatoire = MANQUANT si absent · optionnel = affiché si trouvé
 const TYPES_CONFIG = {
-  preseason:     { label: 'Pré-saison',          couleur: '#6366f1', obligatoire: true,  priorite: 1 },
-  regular:       { label: 'Saison régulière',     couleur: '#9090b0', obligatoire: true,  priorite: 2 },
-  nbacup:        { label: 'NBA Cup',              couleur: '#f97316', obligatoire: false, priorite: 3 },
-  allstar:       { label: 'All-Star',             couleur: '#f59e0b', obligatoire: true,  priorite: 4 },
-  playin:        { label: 'Play-In',              couleur: '#22c55e', obligatoire: true,  priorite: 5 },
-  playoffs:      { label: 'Playoffs',             couleur: '#ef4444', obligatoire: true,  priorite: 6 },
-  finals:        { label: 'NBA Finals',           couleur: '#e11d48', obligatoire: true,  priorite: 7 },
-  paris:         { label: 'Paris Game',           couleur: '#8b5cf6', obligatoire: false, priorite: 8 },
-  abudhabi:      { label: 'Abu Dhabi Games',      couleur: '#8b5cf6', obligatoire: false, priorite: 9 },
-  mexico:        { label: 'Mexico Game',          couleur: '#8b5cf6', obligatoire: false, priorite: 10 },
-  berlin:        { label: 'Berlin Game',          couleur: '#8b5cf6', obligatoire: false, priorite: 11 },
-  uk:            { label: 'UK Game',              couleur: '#8b5cf6', obligatoire: false, priorite: 12 },
-  international: { label: 'International (autre)','couleur': '#8b5cf6', obligatoire: false, priorite: 13 },
-  inconnu:       { label: 'Non identifié ⚠️',    couleur: '#ef4444', obligatoire: false, priorite: 99 },
+  preseason:    { label: 'Pré-saison',        couleur: '#6366f1', obligatoire: true,  priorite: 1 },
+  regular:      { label: 'Saison régulière',  couleur: '#9090b0', obligatoire: true,  priorite: 2 },
+  nbacup:       { label: 'NBA Cup',           couleur: '#f97316', obligatoire: false, priorite: 3 },
+  allstar:      { label: 'All-Star',          couleur: '#f59e0b', obligatoire: true,  priorite: 4 },
+  playin:       { label: 'Play-In',           couleur: '#22c55e', obligatoire: true,  priorite: 5 },
+  playoffs:     { label: 'Playoffs',          couleur: '#ef4444', obligatoire: true,  priorite: 6 },
+  finals:       { label: 'NBA Finals',        couleur: '#e11d48', obligatoire: true,  priorite: 7 },
+  summer_league:{ label: 'Summer League',     couleur: '#06b6d4', obligatoire: false, priorite: 8 },
+  inconnu:      { label: 'Non identifié ⚠️', couleur: '#ef4444', obligatoire: false, priorite: 99 },
 }
 
 const TYPES_OBLIGS = Object.keys(TYPES_CONFIG).filter(t => TYPES_CONFIG[t].obligatoire)
@@ -164,6 +83,31 @@ const fmtDate = (str) => {
 }
 
 const sleep = (ms) => new Promise(r => setTimeout(r, ms))
+
+// Extrait les matchs d'une réponse ESPN
+const extraireMatchs = (data, isSummerLeague = false) => {
+  const matchs = []
+  ;(data.events || []).forEach(evt => {
+    const comp = evt.competitions?.[0]
+    if (!comp) return
+    const tag = detecterType(evt, comp, isSummerLeague)
+    matchs.push({
+      date:        evt.date?.slice(0, 10),
+      dom:         comp.competitors?.find(c => c.homeAway === 'home')?.team?.abbreviation || '?',
+      ext:         comp.competitors?.find(c => c.homeAway === 'away')?.team?.abbreviation || '?',
+      seasonType:  evt.season?.type,
+      slug:        evt.season?.slug || '',
+      compType:    comp.type?.abbreviation || '',
+      headline:    comp.notes?.[0]?.headline || '',
+      ville:       comp.venue?.address?.city || '',
+      pays:        comp.venue?.address?.country || '',
+      neutralSite: comp.neutralSite || false,
+      source:      isSummerLeague ? 'summer-league' : 'nba',
+      tag,
+    })
+  })
+  return matchs
+}
 
 // ══════════════════════════════════════════
 // PAGE PRINCIPALE
@@ -234,7 +178,7 @@ function OngletScanner() {
     setDetailTag(null)
 
     const plages = plagesMois(saisonConfig.anneeDebut, saisonConfig.anneeFin)
-    setProgression(plages.map(p => ({ label: p.label, statut: 'attente', nb: 0 })))
+    setProgression(plages.map(p => ({ label: p.label, statut: 'attente', nb: 0, nbSL: 0 })))
 
     const tousMatchs = []
 
@@ -243,42 +187,43 @@ function OngletScanner() {
       const plage = plages[i]
       setProgression(prev => prev.map((p, idx) => idx === i ? { ...p, statut: 'en cours' } : p))
 
+      let nbNBA = 0
+      let nbSL  = 0
+
+      // Appel endpoint NBA standard
       try {
-        const res = await fetch(`${BASE_ESPN}?dates=${plage.debut}-${plage.fin}&limit=500`)
+        const res  = await fetch(`${BASE_NBA}?dates=${plage.debut}-${plage.fin}&limit=500`)
         const data = await res.json()
-        const events = data.events || []
+        const matchs = extraireMatchs(data, false)
+        tousMatchs.push(...matchs)
+        nbNBA = matchs.length
+      } catch { /* silencieux */ }
 
-        events.forEach(evt => {
-          const comp = evt.competitions?.[0]
-          if (!comp) return
-          const tag = detecterType(evt, comp)
-          tousMatchs.push({
-            date: evt.date?.slice(0, 10),
-            dom: comp.competitors?.find(c => c.homeAway === 'home')?.team?.abbreviation || '?',
-            ext: comp.competitors?.find(c => c.homeAway === 'away')?.team?.abbreviation || '?',
-            seasonType: evt.season?.type,
-            slug: evt.season?.slug || '',
-            compType: comp.type?.abbreviation || '',
-            headline: comp.notes?.[0]?.headline || '',
-            ville: comp.venue?.address?.city || '',
-            pays: comp.venue?.address?.country || '',
-            neutralSite: comp.neutralSite || false,
-            tag,
-          })
-        })
-
-        setProgression(prev => prev.map((p, idx) =>
-          idx === i ? { ...p, statut: events.length > 0 ? 'ok' : 'vide', nb: events.length } : p
-        ))
-      } catch {
-        setProgression(prev => prev.map((p, idx) =>
-          idx === i ? { ...p, statut: 'erreur', nb: 0 } : p
-        ))
+      // Appel Summer League si juillet ou août
+      if (plage.summerLeague) {
+        await sleep(300)
+        try {
+          const res  = await fetch(`${BASE_SL}?dates=${plage.debut}-${plage.fin}&limit=500`)
+          const data = await res.json()
+          const matchs = extraireMatchs(data, true)
+          tousMatchs.push(...matchs)
+          nbSL = matchs.length
+        } catch { /* silencieux */ }
       }
+
+      setProgression(prev => prev.map((p, idx) =>
+        idx === i ? {
+          ...p,
+          statut: (nbNBA + nbSL) > 0 ? 'ok' : 'vide',
+          nb: nbNBA,
+          nbSL,
+        } : p
+      ))
+
       await sleep(300)
     }
 
-    // Synthèse
+    // Synthèse par tag
     const synthese = {}
     tousMatchs.forEach(m => {
       if (!synthese[m.tag]) synthese[m.tag] = { matchs: [], dateMin: null, dateMax: null }
@@ -297,20 +242,9 @@ function OngletScanner() {
         <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 20, color: 'var(--text-1)', letterSpacing: '0.02em' }}>SCANNER</span>
         <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 20, color: 'var(--accent)', letterSpacing: '0.02em' }}>ESPN</span>
       </div>
-      <p style={{ fontSize: 11, color: 'var(--text-3)', margin: '0 0 4px' }}>
-        Scan complet juillet → juin · 12 mois · détection par patterns ESPN
+      <p style={{ fontSize: 11, color: 'var(--text-3)', margin: '0 0 16px' }}>
+        Scan complet juillet → juin · 12 mois · NBA + Summer League (juil/août) · Notes ESPN conservées pour identifier les matchs spéciaux (Paris, Abu Dhabi, Melbourne…)
       </p>
-
-      {/* Légende patterns */}
-      <div style={{ marginBottom: 16 }}>
-        <button
-          onClick={() => setDetailTag(detailTag === '__patterns__' ? null : '__patterns__')}
-          style={{ fontSize: 10, color: 'var(--accent)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}
-        >
-          {detailTag === '__patterns__' ? '▲ Masquer' : '▼ Voir'} les patterns de détection
-        </button>
-        {detailTag === '__patterns__' && <PanneauPatterns />}
-      </div>
 
       {/* Contrôles */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20, flexWrap: 'wrap' }}>
@@ -329,7 +263,7 @@ function OngletScanner() {
         {resultats && <span style={{ fontSize: 11, color: 'var(--text-3)' }}>{resultats.total} matchs scannés</span>}
       </div>
 
-      {/* Progression mois */}
+      {/* Progression */}
       {progression.length > 0 && (
         <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: 20 }}>
           {progression.map((p, i) => (
@@ -342,12 +276,22 @@ function OngletScanner() {
               borderRadius: 'var(--radius-sm)',
             }}>
               <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-2)' }}>{p.label}</span>
-              <span style={{ fontSize: 9, color: 'var(--text-3)', marginTop: 2 }}>
-                {p.statut === 'en cours' ? '…' : p.statut === 'ok' ? `${p.nb}` : p.statut === 'vide' ? 'vide' : p.statut === 'erreur' ? 'ERR' : '—'}
+              <span style={{ fontSize: 9, color: 'var(--text-3)', marginTop: 1 }}>
+                {p.statut === 'en cours' ? '…'
+                  : p.statut === 'ok' ? `${p.nb}${p.nbSL > 0 ? `+${p.nbSL}` : ''}`
+                  : p.statut === 'vide' ? 'vide'
+                  : p.statut === 'erreur' ? 'ERR' : '—'}
               </span>
             </div>
           ))}
         </div>
+      )}
+
+      {/* Légende progression */}
+      {progression.length > 0 && (
+        <p style={{ fontSize: 10, color: 'var(--text-3)', marginBottom: 16 }}>
+          Format : NBA+SL (ex: 151+48 = 151 matchs NBA + 48 Summer League)
+        </p>
       )}
 
       {/* Résultats */}
@@ -355,11 +299,11 @@ function OngletScanner() {
         <>
           <TableauSynthese
             synthese={resultats.synthese}
-            detailTag={detailTag === '__patterns__' ? null : detailTag}
+            detailTag={detailTag}
             onClickTag={t => setDetailTag(detailTag === t ? null : t)}
           />
 
-          {detailTag && detailTag !== '__patterns__' && resultats.synthese[detailTag] && (
+          {detailTag && resultats.synthese[detailTag] && (
             <>
               <div style={{ height: 20 }} />
               <TableauDetail
@@ -370,7 +314,7 @@ function OngletScanner() {
             </>
           )}
 
-          {/* Inconnus toujours affichés si présents */}
+          {/* Inconnus toujours affichés automatiquement */}
           {resultats.synthese['inconnu'] && detailTag !== 'inconnu' && (
             <>
               <div style={{ height: 20 }} />
@@ -383,54 +327,17 @@ function OngletScanner() {
   )
 }
 
-// ── Panneau patterns de détection ──
-function PanneauPatterns() {
-  return (
-    <div style={{ marginTop: 10, padding: '12px 14px', background: 'var(--bg-1)', borderLeft: '3px solid var(--accent)' }}>
-      <p style={{ fontSize: 11, color: 'var(--accent)', fontWeight: 700, margin: '0 0 10px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-        Patterns de détection ESPN — modifiables dans detecterType()
-      </p>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {Object.entries(PATTERNS).map(([tag, p]) => {
-          const config = TYPES_CONFIG[tag]
-          return (
-            <div key={tag} style={{ display: 'grid', gridTemplateColumns: '110px 1fr', gap: 8 }}>
-              <span style={{ fontSize: 10, fontWeight: 700, fontFamily: 'monospace', background: config.couleur + '22', color: config.couleur, padding: '2px 6px', borderRadius: 3, alignSelf: 'start' }}>
-                {tag}
-              </span>
-              <div style={{ fontSize: 10, color: 'var(--text-3)', lineHeight: 1.6 }}>
-                {p.seasonType && <span style={{ marginRight: 8 }}>season.type: <b style={{ color: 'var(--text-2)' }}>{p.seasonType.join(', ')}</b></span>}
-                {p.compType && <span style={{ marginRight: 8 }}>comp_type: <b style={{ color: 'var(--text-2)' }}>{p.compType.join(', ')}</b></span>}
-                {p.headlines && <div>headlines: <b style={{ color: 'var(--text-2)' }}>{p.headlines.map(h => `"${h}"`).join(' · ')}</b></div>}
-                {p.villes && <div>villes: <b style={{ color: 'var(--text-2)' }}>{p.villes.join(', ')}</b></div>}
-                {p.pays && <div>pays: <b style={{ color: 'var(--text-2)' }}>{p.pays.join(', ')}</b></div>}
-              </div>
-            </div>
-          )
-        })}
-      </div>
-      <p style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 10, marginBottom: 0 }}>
-        Les matchs "international (autre)" = neutralSite hors villes US connues, sans headline identifiée.
-        Les "inconnu" = aucun pattern ne correspond → à analyser dans le tableau détail.
-      </p>
-    </div>
-  )
-}
-
 // ── Tableau synthèse ──
 function TableauSynthese({ synthese, detailTag, onClickTag }) {
   const typesTrouves = Object.keys(synthese)
+  const nbOk = TYPES_OBLIGS.filter(t => typesTrouves.includes(t)).length
 
-  // Lignes : obligatoires d'abord (avec MANQUANT si absent), puis optionnels trouvés, puis inconnus
-  const lignesObligs = TYPES_OBLIGS.map(t => ({ tag: t, manquant: !typesTrouves.includes(t), obligatoire: true }))
+  const lignesObligs    = TYPES_OBLIGS.map(t => ({ tag: t, manquant: !typesTrouves.includes(t) }))
   const lignesOptionnels = typesTrouves
     .filter(t => !TYPES_OBLIGS.includes(t) && t !== 'inconnu')
     .sort((a, b) => (TYPES_CONFIG[a]?.priorite || 99) - (TYPES_CONFIG[b]?.priorite || 99))
-    .map(t => ({ tag: t, manquant: false, obligatoire: false }))
-  const lignesInconnu = typesTrouves.includes('inconnu') ? [{ tag: 'inconnu', manquant: false, obligatoire: false }] : []
-
-  const lignes = [...lignesObligs, ...lignesOptionnels, ...lignesInconnu]
-  const nbOk = TYPES_OBLIGS.filter(t => typesTrouves.includes(t)).length
+    .map(t => ({ tag: t }))
+  const lignesInconnu = typesTrouves.includes('inconnu') ? [{ tag: 'inconnu' }] : []
 
   return (
     <div>
@@ -439,50 +346,55 @@ function TableauSynthese({ synthese, detailTag, onClickTag }) {
           <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 18, color: 'var(--text-1)', letterSpacing: '0.02em' }}>SYNTHÈSE</span>
           <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 18, color: 'var(--accent)', letterSpacing: '0.02em' }}>DÉTECTION</span>
         </div>
-        <div style={{ textAlign: 'right' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <span style={{ fontSize: 12, color: nbOk === TYPES_OBLIGS.length ? 'var(--success)' : 'var(--gold)', fontWeight: 700 }}>
             {nbOk}/{TYPES_OBLIGS.length} obligatoires ✓
           </span>
           {lignesOptionnels.length > 0 && (
-            <span style={{ fontSize: 11, color: 'var(--accent)', marginLeft: 10 }}>
+            <span style={{ fontSize: 11, color: 'var(--accent)' }}>
               +{lignesOptionnels.length} optionnel{lignesOptionnels.length > 1 ? 's' : ''}
             </span>
           )}
         </div>
       </div>
 
-      {/* Séparateur obligatoires */}
-      <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.08em', padding: '4px 6px', background: 'var(--bg-2)', marginBottom: 2 }}>
-        Types obligatoires
-      </div>
-
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 1, marginBottom: 8 }}>
+      {/* Section obligatoires */}
+      <SectionLabel label="Types obligatoires" info="attendus chaque saison" />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 1, marginBottom: 10 }}>
         {lignesObligs.map(({ tag, manquant }, i) => (
-          <LigneSynthese key={tag} tag={tag} data={synthese[tag]} manquant={manquant} obligatoire actif={detailTag === tag} i={i} onClickTag={onClickTag} />
+          <LigneSynthese key={tag} tag={tag} data={synthese[tag]} manquant={manquant} actif={detailTag === tag} i={i} onClickTag={onClickTag} />
         ))}
       </div>
 
-      {/* Séparateur optionnels */}
+      {/* Section optionnels */}
       {(lignesOptionnels.length > 0 || lignesInconnu.length > 0) && (
-        <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.08em', padding: '4px 6px', background: 'var(--bg-2)', marginBottom: 2 }}>
-          Détectés (optionnels)
-        </div>
+        <>
+          <SectionLabel label="Détectés (optionnels)" info="présents cette saison" />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+            {[...lignesOptionnels, ...lignesInconnu].map(({ tag }, i) => (
+              <LigneSynthese key={tag} tag={tag} data={synthese[tag]} manquant={false} actif={detailTag === tag} i={i} onClickTag={onClickTag} />
+            ))}
+          </div>
+        </>
       )}
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-        {[...lignesOptionnels, ...lignesInconnu].map(({ tag }, i) => (
-          <LigneSynthese key={tag} tag={tag} data={synthese[tag]} manquant={false} obligatoire={false} actif={detailTag === tag} i={i} onClickTag={onClickTag} />
-        ))}
-      </div>
-
       <p style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 10 }}>
-        Clique sur une ligne pour voir le détail · ⊕ = terrain neutre · Types obligatoires = attendus chaque saison · Optionnels = détectés si présents
+        Clique sur une ligne pour voir le détail · ⊕ = terrain neutre · La colonne "Notes ESPN" permet d'identifier les matchs spéciaux (Paris, Abu Dhabi, Melbourne…) au sein de leur type parent
       </p>
     </div>
   )
 }
 
-function LigneSynthese({ tag, data, manquant, obligatoire, actif, i, onClickTag }) {
+function SectionLabel({ label, info }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '4px 6px', background: 'var(--bg-2)', marginBottom: 2 }}>
+      <span style={{ fontSize: 9, fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{label}</span>
+      {info && <span style={{ fontSize: 9, color: 'var(--text-3)', opacity: 0.6 }}>— {info}</span>}
+    </div>
+  )
+}
+
+function LigneSynthese({ tag, data, manquant, actif, i, onClickTag }) {
   const config = TYPES_CONFIG[tag] || { label: tag, couleur: '#9090b0' }
   const exNote = data?.matchs?.find(m => m.headline)?.headline || ''
 
@@ -533,10 +445,13 @@ function LigneSynthese({ tag, data, manquant, obligatoire, actif, i, onClickTag 
   )
 }
 
-// ── Tableau détail matchs ──
+// ── Tableau détail ──
 function TableauDetail({ tag, matchs, onClose, initOuvert = false }) {
   const [ouvert, setOuvert] = useState(initOuvert)
   const config = TYPES_CONFIG[tag] || { label: tag, couleur: '#9090b0' }
+
+  // Regrouper les notes ESPN uniques pour ce type (utile pour regular/preseason)
+  const notesUniques = [...new Set(matchs.map(m => m.headline).filter(Boolean))].slice(0, 20)
 
   return (
     <div style={{ background: 'var(--bg-1)', borderLeft: `3px solid ${config.couleur}` }}>
@@ -552,33 +467,49 @@ function TableauDetail({ tag, matchs, onClose, initOuvert = false }) {
       </div>
 
       {ouvert && (
-        <div style={{ overflowX: 'auto', padding: '0 0 12px' }}>
-          <div style={{ minWidth: 680 }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '80px 90px 130px 50px 70px 1fr 100px', borderBottom: '1px solid var(--border)', padding: '0 12px' }}>
-              {['Date', 'Match', 'Ville / Pays', 'S.T.', 'Comp', 'Notes ESPN', 'Tag'].map(h => (
-                <div key={h} style={{ fontSize: 9, fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.06em', padding: '4px 4px' }}>{h}</div>
-              ))}
+        <div style={{ padding: '0 0 12px' }}>
+          {/* Notes ESPN uniques (résumé matchs spéciaux) */}
+          {notesUniques.length > 0 && (
+            <div style={{ padding: '8px 12px', background: 'var(--bg-2)', marginBottom: 8, borderBottom: '1px solid var(--border)' }}>
+              <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Notes ESPN présentes dans ce type : </span>
+              <span style={{ fontSize: 10, color: 'var(--accent)' }}>{notesUniques.map(n => `"${n}"`).join(' · ')}</span>
             </div>
-            {matchs.slice(0, 300).map((m, i) => (
-              <div key={i} style={{ display: 'grid', gridTemplateColumns: '80px 90px 130px 50px 70px 1fr 100px', background: i % 2 === 0 ? 'transparent' : 'var(--bg-2)', padding: '0 12px' }}>
-                <div style={{ padding: '5px 4px', fontSize: 11, color: 'var(--text-2)' }}>{fmtDate(m.date)}</div>
-                <div style={{ padding: '5px 4px', fontSize: 11, fontWeight: 700, color: 'var(--text-1)', fontFamily: 'var(--font-display)' }}>{m.ext}@{m.dom}</div>
-                <div style={{ padding: '5px 4px', fontSize: 10, color: 'var(--text-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {m.ville || '—'}{m.pays ? ` · ${m.pays}` : ''}{m.neutralSite ? ' ⊕' : ''}
-                </div>
-                <div style={{ padding: '5px 4px' }}>
-                  <span style={{ fontSize: 10, fontWeight: 700, fontFamily: 'monospace', color: m.seasonType === 1 ? '#6366f1' : m.seasonType === 3 ? '#ef4444' : m.seasonType === 5 ? '#22c55e' : '#9090b0' }}>
-                    {m.seasonType ?? '?'}
-                  </span>
-                </div>
-                <div style={{ padding: '5px 4px', fontSize: 10, color: 'var(--text-3)', fontFamily: 'monospace' }}>{m.compType || '—'}</div>
-                <div style={{ padding: '5px 4px', fontSize: 10, color: 'var(--text-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.headline || '—'}</div>
-                <div style={{ padding: '5px 4px' }}>
-                  <span style={{ fontSize: 9, fontWeight: 700, fontFamily: 'monospace', background: (TYPES_CONFIG[m.tag]?.couleur || '#9090b0') + '22', color: TYPES_CONFIG[m.tag]?.couleur || '#9090b0', padding: '2px 5px', borderRadius: 3 }}>{m.tag}</span>
-                </div>
+          )}
+
+          <div style={{ overflowX: 'auto' }}>
+            <div style={{ minWidth: 680 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '80px 90px 130px 50px 70px 1fr 60px', borderBottom: '1px solid var(--border)', padding: '0 12px' }}>
+                {['Date', 'Match', 'Ville / Pays', 'S.T.', 'Comp', 'Notes ESPN', 'Source'].map(h => (
+                  <div key={h} style={{ fontSize: 9, fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.06em', padding: '4px 4px' }}>{h}</div>
+                ))}
               </div>
-            ))}
-            {matchs.length > 300 && <p style={{ fontSize: 11, color: 'var(--text-3)', padding: '8px 12px' }}>… {matchs.length - 300} matchs supplémentaires non affichés.</p>}
+              {matchs.slice(0, 300).map((m, i) => (
+                <div key={i} style={{ display: 'grid', gridTemplateColumns: '80px 90px 130px 50px 70px 1fr 60px', background: i % 2 === 0 ? 'transparent' : 'var(--bg-2)', padding: '0 12px' }}>
+                  <div style={{ padding: '5px 4px', fontSize: 11, color: 'var(--text-2)' }}>{fmtDate(m.date)}</div>
+                  <div style={{ padding: '5px 4px', fontSize: 11, fontWeight: 700, color: 'var(--text-1)', fontFamily: 'var(--font-display)' }}>{m.ext}@{m.dom}</div>
+                  <div style={{ padding: '5px 4px', fontSize: 10, color: 'var(--text-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {m.ville || '—'}{m.pays ? ` · ${m.pays}` : ''}{m.neutralSite ? ' ⊕' : ''}
+                  </div>
+                  <div style={{ padding: '5px 4px' }}>
+                    <span style={{ fontSize: 10, fontWeight: 700, fontFamily: 'monospace', color: m.seasonType === 1 ? '#6366f1' : m.seasonType === 3 ? '#ef4444' : m.seasonType === 5 ? '#22c55e' : '#9090b0' }}>
+                      {m.seasonType ?? '?'}
+                    </span>
+                  </div>
+                  <div style={{ padding: '5px 4px', fontSize: 10, color: 'var(--text-3)', fontFamily: 'monospace' }}>{m.compType || '—'}</div>
+                  <div style={{ padding: '5px 4px', fontSize: 10, color: m.headline ? 'var(--text-2)' : 'var(--text-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {m.headline || '—'}
+                  </div>
+                  <div style={{ padding: '5px 4px' }}>
+                    <span style={{ fontSize: 9, color: m.source === 'summer-league' ? '#06b6d4' : 'var(--text-3)' }}>
+                      {m.source === 'summer-league' ? 'SL' : 'NBA'}
+                    </span>
+                  </div>
+                </div>
+              ))}
+              {matchs.length > 300 && (
+                <p style={{ fontSize: 11, color: 'var(--text-3)', padding: '8px 12px' }}>… {matchs.length - 300} matchs supplémentaires non affichés.</p>
+              )}
+            </div>
           </div>
         </div>
       )}
