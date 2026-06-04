@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import Navigation from '../components/Navigation'
 import { Trash2, Search, ChevronDown, ChevronUp, AlertCircle, CheckCircle, Plus, Pencil, X, Check } from 'lucide-react'
+import { BADGES_CATALOGUE } from '../data/badges'
 
 const ADMIN_ID = 'fa55d016-896c-4eb4-b48a-241d6be71ad0'
 const BASE_NBA = 'https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard'
@@ -143,9 +144,10 @@ function Admin() {
 
         <div style={{ display: 'flex', gap: 4, padding: '0 16px 16px', flexWrap: 'wrap' }}>
           {[
-            { key: 'scanner',    label: 'Scanner ESPN' },
-            { key: 'ligues',     label: 'Ligues' },
-            { key: 'moderation', label: 'Modération' },
+            { key: 'scanner',      label: 'Scanner ESPN' },
+            { key: 'ligues',       label: 'Ligues' },
+            { key: 'utilisateurs', label: 'Utilisateurs' },
+            { key: 'moderation',   label: 'Modération' },
           ].map(o => (
             <button key={o.key} onClick={() => setOnglet(o.key)} style={{
               padding: '7px 14px', fontSize: 12, fontWeight: 600,
@@ -166,8 +168,9 @@ function Admin() {
             detailTag={scanDetailTag} setDetailTag={setScanDetailTag}
           />
         )}
-        {onglet === 'ligues'     && <OngletLigues scanResultats={scanResultats} scanSaison={scanSaison} />}
-        {onglet === 'moderation' && <OngletModeration />}
+        {onglet === 'ligues'        && <OngletLigues scanResultats={scanResultats} scanSaison={scanSaison} />}
+        {onglet === 'utilisateurs'  && <OngletUtilisateurs />}
+        {onglet === 'moderation'    && <OngletModeration />}
       </main>
     </>
   )
@@ -680,6 +683,232 @@ function Champ({ label, children }) {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
       <label style={{ fontSize: 11, color: 'var(--text-3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</label>
       {children}
+    </div>
+  )
+}
+
+// ══════════════════════════════════════════
+// ONGLET UTILISATEURS
+// ══════════════════════════════════════════
+
+// Badges attribuables manuellement par l'admin (appartenance + evenement)
+const BADGES_MANUELS = BADGES_CATALOGUE.filter(b =>
+  b.famille === 'appartenance' || b.famille === 'evenement'
+)
+
+function OngletUtilisateurs() {
+  const [recherche, setRecherche]   = useState('')
+  const [users, setUsers]           = useState([])
+  const [userSelec, setUserSelec]   = useState(null) // profil complet
+  const [charg, setCharg]           = useState(false)
+  const [messages, setMessages]     = useState({}) // slug → message feedback
+
+  const chercher = async () => {
+    if (!recherche.trim()) return
+    setCharg(true)
+    setUserSelec(null)
+    const { data } = await supabase
+      .from('profils')
+      .select('id, pseudo, avatar_url, badges, xp_total, niveau')
+      .ilike('pseudo', `%${recherche.trim()}%`)
+      .limit(10)
+    setUsers(data || [])
+    setCharg(false)
+  }
+
+  const selectionner = async (user) => {
+    // Recharger le profil frais avant affichage
+    const { data } = await supabase
+      .from('profils')
+      .select('id, pseudo, avatar_url, badges, xp_total, niveau')
+      .eq('id', user.id)
+      .single()
+    setUserSelec(data)
+    setMessages({})
+  }
+
+  const attribuerBadge = async (badge) => {
+    if (!userSelec) return
+    const badgesActuels = userSelec.badges || []
+
+    if (badgesActuels.includes(badge.slug)) {
+      setMessages(m => ({ ...m, [badge.slug]: { type: 'warn', text: `${userSelec.pseudo} a déjà ce badge !` } }))
+      return
+    }
+
+    const nouveauxBadges = [...badgesActuels, badge.slug]
+    const { error } = await supabase
+      .from('profils')
+      .update({ badges: nouveauxBadges })
+      .eq('id', userSelec.id)
+
+    if (error) {
+      setMessages(m => ({ ...m, [badge.slug]: { type: 'error', text: 'Erreur lors de l\'attribution.' } }))
+      return
+    }
+
+    setUserSelec(prev => ({ ...prev, badges: nouveauxBadges }))
+    setMessages(m => ({ ...m, [badge.slug]: { type: 'ok', text: `Badge "${badge.nom}" attribué !` } }))
+  }
+
+  const retirerBadge = async (badge) => {
+    if (!userSelec) return
+    const badgesActuels = userSelec.badges || []
+    if (!badgesActuels.includes(badge.slug)) return
+
+    const nouveauxBadges = badgesActuels.filter(s => s !== badge.slug)
+    const { error } = await supabase
+      .from('profils')
+      .update({ badges: nouveauxBadges })
+      .eq('id', userSelec.id)
+
+    if (error) {
+      setMessages(m => ({ ...m, [badge.slug]: { type: 'error', text: 'Erreur lors du retrait.' } }))
+      return
+    }
+
+    setUserSelec(prev => ({ ...prev, badges: nouveauxBadges }))
+    setMessages(m => ({ ...m, [badge.slug]: { type: 'ok', text: `Badge "${badge.nom}" retiré.` } }))
+  }
+
+  return (
+    <div style={{ padding: '0 16px 40px' }}>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 4 }}>
+        <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 20, color: 'var(--text-1)', letterSpacing: '0.02em' }}>GESTION</span>
+        <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 20, color: 'var(--danger)', letterSpacing: '0.02em' }}>UTILISATEURS</span>
+      </div>
+      <p style={{ fontSize: 11, color: 'var(--text-3)', margin: '0 0 20px' }}>
+        Recherche un utilisateur par pseudo pour lui attribuer des badges manuels.
+      </p>
+
+      {/* Recherche */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+        <input
+          style={{ ...S.input, flex: 1 }}
+          placeholder="Pseudo…"
+          value={recherche}
+          onChange={e => setRecherche(e.target.value)}
+          onKeyDown={e => e.key === 'Enter' && chercher()}
+        />
+        <button onClick={chercher} style={{
+          display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px',
+          fontSize: 12, fontWeight: 700, background: 'var(--accent)', color: '#fff',
+          borderWidth: 0, borderRadius: 'var(--radius-sm)', cursor: 'pointer',
+        }}>
+          <Search size={13} /> Chercher
+        </button>
+      </div>
+
+      {/* Résultats recherche */}
+      {charg && <p style={{ fontSize: 12, color: 'var(--text-3)' }}>Chargement…</p>}
+      {!charg && users.length > 0 && !userSelec && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 2, marginBottom: 20 }}>
+          {users.map(u => (
+            <div
+              key={u.id}
+              onClick={() => selectionner(u)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 12,
+                padding: '10px 12px', background: 'var(--bg-1)',
+                borderLeft: '3px solid var(--border-2)',
+                cursor: 'pointer',
+              }}
+              onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-2)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'var(--bg-1)'}
+            >
+              <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-1)', flex: 1 }}>{u.pseudo}</span>
+              <span style={{ fontSize: 11, color: 'var(--text-3)' }}>Niv. {u.niveau} · {u.xp_total} XP</span>
+              <span style={{ fontSize: 11, color: 'var(--accent)' }}>Sélectionner →</span>
+            </div>
+          ))}
+        </div>
+      )}
+      {!charg && users.length === 0 && recherche && (
+        <p style={{ fontSize: 12, color: 'var(--text-3)', marginBottom: 16 }}>Aucun utilisateur trouvé.</p>
+      )}
+
+      {/* Profil sélectionné + badges */}
+      {userSelec && (
+        <div style={{ background: 'var(--bg-1)', borderLeft: '3px solid var(--danger)', padding: '16px 16px 20px' }}>
+
+          {/* Header user */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+            <div>
+              <div style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 22, color: 'var(--text-1)', letterSpacing: '0.02em' }}>
+                {userSelec.pseudo}
+              </div>
+              <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 2 }}>
+                Niv. {userSelec.niveau} · {userSelec.xp_total} XP · {(userSelec.badges || []).length} badge{(userSelec.badges || []).length > 1 ? 's' : ''}
+              </div>
+            </div>
+            <button
+              onClick={() => { setUserSelec(null); setUsers([]) }}
+              style={{ background: 'none', borderWidth: 0, cursor: 'pointer', color: 'var(--text-3)', fontSize: 18, padding: 4 }}
+            >✕</button>
+          </div>
+
+          {/* Badges manuels */}
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 12 }}>
+            <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 18, color: 'var(--text-1)', letterSpacing: '0.02em' }}>BADGES</span>
+            <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 18, color: 'var(--danger)', letterSpacing: '0.02em' }}>MANUELS</span>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {BADGES_MANUELS.map(b => {
+              const obtenu = (userSelec.badges || []).includes(b.slug)
+              const msg    = messages[b.slug]
+              return (
+                <div key={b.slug} style={{
+                  padding: '12px 14px',
+                  background: obtenu ? 'rgba(245,158,11,0.06)' : 'var(--bg-2)',
+                  borderLeft: `3px solid ${obtenu ? 'var(--gold)' : 'var(--border-2)'}`,
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: obtenu ? 'var(--gold)' : 'var(--text-1)' }}>
+                        {obtenu && '✓ '}{b.nom}
+                      </div>
+                      <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 2, lineHeight: 1.4 }}>
+                        {b.description}
+                      </div>
+                      {msg && (
+                        <div style={{
+                          fontSize: 11, fontWeight: 600, marginTop: 6,
+                          color: msg.type === 'ok' ? 'var(--success)' : msg.type === 'warn' ? 'var(--gold)' : 'var(--danger)',
+                        }}>
+                          {msg.text}
+                        </div>
+                      )}
+                    </div>
+                    <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+                      {!obtenu ? (
+                        <button
+                          onClick={() => attribuerBadge(b)}
+                          style={{
+                            padding: '6px 12px', fontSize: 12, fontWeight: 700,
+                            background: 'var(--accent)', color: '#fff',
+                            borderWidth: 0, borderRadius: 'var(--radius-sm)', cursor: 'pointer',
+                          }}
+                        >Attribuer</button>
+                      ) : (
+                        <button
+                          onClick={() => retirerBadge(b)}
+                          style={{
+                            padding: '6px 12px', fontSize: 12, fontWeight: 700,
+                            background: 'transparent', color: 'var(--danger)',
+                            borderWidth: 1, borderStyle: 'solid', borderColor: 'var(--danger)',
+                            borderRadius: 'var(--radius-sm)', cursor: 'pointer',
+                          }}
+                        >Retirer</button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
