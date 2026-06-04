@@ -4,3 +4,6 @@
 export const SAISON_ESPN = new Date().getMonth() >= 9
   ? new Date().getFullYear() + 1
   : new Date().getFullYear()
+
+export const XP_BASE = 300
+export const XP_COEFFICIENT = 1.06
