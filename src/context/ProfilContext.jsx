@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import { ajouterXP } from '../services/xp'
 
 const ProfilContext = createContext(null)
 
@@ -16,6 +17,20 @@ export function ProfilProvider({ children }) {
         .eq('id', user.id)
         .single()
       setProfil(data)
+
+      // XP — connexion quotidienne (+5, 1×/jour)
+      const aujourdhui = new Date().toISOString().slice(0, 10)
+      const { data: dejaConnecte } = await supabase
+        .from('xp_log')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('source_id', 'connexion_quotidienne')
+        .gte('cree_le', aujourdhui)
+        .limit(1)
+
+      if (!dejaConnecte || dejaConnecte.length === 0) {
+        await ajouterXP(user.id, 5, 'passif', 'connexion_quotidienne')
+      }
     }
     charger()
 
