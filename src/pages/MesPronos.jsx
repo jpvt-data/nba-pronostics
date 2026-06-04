@@ -44,7 +44,6 @@ const TitreSection = ({ mot1, mot2 = '', couleur2 = 'var(--accent)', taille = 24
   </div>
 )
 
-// Catalogue badges — ordre fixe, position stable
 const BADGES_CATALOGUE = [
   { slug: 'en_feu',      emoji: '🔥', nom: 'En Feu',      famille: 'performance' },
   { slug: 'prophete',    emoji: '👑', nom: 'Prophète',     famille: 'performance' },
@@ -58,7 +57,6 @@ const BADGES_CATALOGUE = [
   { slug: 'survivant',   emoji: '🩹', nom: 'Survivant',    famille: 'appartenance' },
 ]
 
-// Titre RPG depuis niveau
 const titrDepuisNiveau = (n) => {
   if (n <= 10) return 'Rookie'
   if (n <= 20) return 'Sixième Homme'
@@ -69,28 +67,37 @@ const titrDepuisNiveau = (n) => {
   return 'GOAT'
 }
 
-// Modal info XP
 const ModalInfo = ({ onClose }) => {
   const [onglet, setOnglet] = useState('xp')
-
   return (
     <div
       onClick={onClose}
       style={{
         position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)',
-        zIndex: 1000, display: 'flex', alignItems: 'flex-end',
+        zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center',
+        padding: '16px',
       }}
     >
       <div
         onClick={e => e.stopPropagation()}
         style={{
-          width: '100%', maxHeight: '80vh', overflowY: 'auto',
+          width: '100%', maxWidth: 480, maxHeight: '80vh', overflowY: 'auto',
           background: 'var(--bg-1)', borderTop: '3px solid var(--accent)',
-          padding: '20px 16px 40px',
+          padding: '20px 16px 24px', position: 'relative',
         }}
       >
+        {/* Croix fermeture */}
+        <button
+          onClick={onClose}
+          style={{
+            position: 'absolute', top: 12, right: 12,
+            background: 'none', borderWidth: 0, cursor: 'pointer',
+            fontSize: 18, color: 'var(--text-3)', lineHeight: 1, padding: 4,
+          }}
+        >✕</button>
+
         {/* Onglets */}
-        <div style={{ display: 'flex', gap: 4, marginBottom: 20 }}>
+        <div style={{ display: 'flex', gap: 4, marginBottom: 20, paddingRight: 32 }}>
           {[
             { id: 'xp',       label: 'XP & Niveaux' },
             { id: 'badges',   label: 'Badges' },
@@ -107,7 +114,6 @@ const ModalInfo = ({ onClose }) => {
           ))}
         </div>
 
-        {/* XP & Niveaux */}
         {onglet === 'xp' && (
           <div>
             <TitreSection mot1="COMMENT" mot2="GAGNER DE L'XP" taille={18} />
@@ -156,7 +162,6 @@ const ModalInfo = ({ onClose }) => {
           </div>
         )}
 
-        {/* Badges */}
         {onglet === 'badges' && (
           <div>
             <TitreSection mot1="LES" mot2="BADGES" taille={18} />
@@ -177,7 +182,6 @@ const ModalInfo = ({ onClose }) => {
           </div>
         )}
 
-        {/* Missions */}
         {onglet === 'missions' && (
           <div>
             <TitreSection mot1="LES" mot2="MISSIONS" taille={18} />
@@ -195,29 +199,26 @@ const ModalInfo = ({ onClose }) => {
             borderColor: 'var(--border)', borderRadius: 'var(--radius-sm)',
             color: 'var(--text-3)', fontSize: 13, fontWeight: 600, cursor: 'pointer',
           }}
-        >
-          Fermer
-        </button>
+        >Fermer</button>
       </div>
     </div>
   )
 }
 
 function MesPronos() {
-  const [pronos, setPronos]          = useState([])
-  const [stats, setStats]            = useState({ total: 0, corrects: 0, incorrects: 0 })
-  const [statsLigues, setStatsLig]   = useState([])
-  const [profil, setProfil]          = useState(null)
-  const [formeRecente, setForme]     = useState([])
-  const [streaks, setStreaks]         = useState({ actuel: 0, max: 0 })
-  const [equipes, setEquipes]         = useState({ meilleure: null, pire: null })
-  const [xpData, setXpData]          = useState({ xp_total: 0, niveau: 1, badges: [] })
-  const [badgesOuverts, setBadgesOuverts] = useState(false)
-  const [modalInfo, setModalInfo]    = useState(false)
-  const [charg, setCharg]            = useState(true)
-  const [estMoi, setEstMoi]          = useState(true)
-  const navigate                     = useNavigate()
-  const location                     = useLocation()
+  const [pronos, setPronos]        = useState([])
+  const [stats, setStats]          = useState({ total: 0, corrects: 0, incorrects: 0 })
+  const [statsLigues, setStatsLig] = useState([])
+  const [profil, setProfil]        = useState(null)
+  const [formeRecente, setForme]   = useState([])
+  const [streaks, setStreaks]       = useState({ actuel: 0, max: 0 })
+  const [equipes, setEquipes]       = useState({ meilleure: null, pire: null })
+  const [xpData, setXpData]        = useState({ xp_total: 0, niveau: 1, badges: [] })
+  const [modalInfo, setModalInfo]  = useState(false)
+  const [charg, setCharg]          = useState(true)
+  const [estMoi, setEstMoi]        = useState(true)
+  const navigate                   = useNavigate()
+  const location                   = useLocation()
 
   useEffect(() => {
     const init = async () => {
@@ -232,11 +233,7 @@ function MesPronos() {
         .select('pseudo, avatar_url, description, xp_total, niveau, badges')
         .eq('id', cibleId).single()
       setProfil(p)
-      setXpData({
-        xp_total: p?.xp_total || 0,
-        niveau:   p?.niveau   || 1,
-        badges:   p?.badges   || [],
-      })
+      setXpData({ xp_total: p?.xp_total || 0, niveau: p?.niveau || 1, badges: p?.badges || [] })
 
       let query = supabase
         .from('pronos')
@@ -288,26 +285,26 @@ function MesPronos() {
   const taux = (c, i) => (c + i) > 0 ? Math.round(c / (c + i) * 100) : 0
 
   // Calcul barre XP
-  const niveau      = xpData.niveau
-  const xpActuel    = xpData.xp_total
-  const xpDebutNiv  = xpPourNiveau(niveau)
-  const xpFinNiv    = xpPourNiveau(niveau + 1)
-  const xpDansNiv   = xpActuel - xpDebutNiv
-  const xpNivTotal  = xpFinNiv - xpDebutNiv
-  const pctBarre    = niveau >= 100 ? 100 : Math.min(100, Math.round(xpDansNiv / xpNivTotal * 100))
-  const titreRPG    = titrDepuisNiveau(niveau)
-
-  // Badges à afficher
+  const niveau     = xpData.niveau
+  const xpActuel   = xpData.xp_total
+  const xpDebutNiv = xpPourNiveau(niveau)
+  const xpFinNiv   = xpPourNiveau(niveau + 1)
+  const xpDansNiv  = xpActuel - xpDebutNiv
+  const xpNivTotal = xpFinNiv - xpDebutNiv
+  const xpRestant  = xpFinNiv - xpActuel
+  const pctBarre   = niveau >= 100 ? 100 : Math.min(100, Math.round(xpDansNiv / xpNivTotal * 100))
+  const titreRPG   = titrDepuisNiveau(niveau)
   const badgesObtenusSlugs = new Set(xpData.badges || [])
-  const badgesAffichés = badgesOuverts ? BADGES_CATALOGUE : BADGES_CATALOGUE.slice(0, 8)
 
   return (
     <>
       <Navigation />
       <main style={{ flex: 1 }}>
 
-        {/* ── Header profil ── */}
-        <div style={{ background: 'var(--bg-1)', padding: '20px 16px', position: 'relative', borderLeft: '3px solid var(--accent)' }}>
+        {/* ── Header fusionné : Profil + XP ── */}
+        <div style={{ background: 'var(--bg-1)', padding: '20px 16px 20px', position: 'relative', borderLeft: '3px solid var(--gold)' }}>
+
+          {/* Ligne 1 : avatar + pseudo + bouton info */}
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16 }}>
             <Avatar url={profil?.avatar_url} pseudo={profil?.pseudo} taille={56} fontSize={18} />
             <div style={{ flex: 1, minWidth: 0 }}>
@@ -327,8 +324,7 @@ function MesPronos() {
                   onClick={() => navigate(`/h2h?user2=${new URLSearchParams(location.search).get('user_id')}`)}
                   style={{
                     marginTop: 10, display: 'flex', alignItems: 'center', gap: 6,
-                    padding: '7px 14px',
-                    background: 'var(--accent)',
+                    padding: '7px 14px', background: 'var(--accent)',
                     borderWidth: 0, borderRadius: 0,
                     color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer',
                   }}
@@ -337,7 +333,60 @@ function MesPronos() {
                 </button>
               )}
             </div>
+            <button
+              onClick={() => setModalInfo(true)}
+              style={{ background: 'none', borderWidth: 0, cursor: 'pointer', fontSize: 16, color: 'var(--text-3)', padding: 4, flexShrink: 0 }}
+            >ℹ️</button>
           </div>
+
+          {/* Ligne 2 : titre RPG + niveau */}
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginTop: 16 }}>
+            <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 22, color: 'var(--gold)', letterSpacing: '0.02em', lineHeight: 1 }}>{titreRPG}</span>
+            <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 14, color: 'var(--text-3)' }}>Niv. {niveau}</span>
+          </div>
+
+          {/* Barre XP */}
+          <div style={{ marginTop: 8 }}>
+            <div style={{ height: 5, background: 'var(--bg-2)', overflow: 'hidden', borderRadius: 3 }}>
+              <div style={{ height: '100%', width: `${pctBarre}%`, background: 'var(--gold)', transition: 'width 0.6s ease' }} />
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}>
+              <span style={{ fontSize: 10, color: 'var(--text-3)', fontFamily: 'var(--font-display)', fontWeight: 600 }}>
+                {xpActuel.toLocaleString('fr-FR')} XP
+              </span>
+              {niveau < 100 && (
+                <span style={{ fontSize: 10, color: 'var(--text-3)', fontFamily: 'var(--font-display)' }}>
+                  encore {xpRestant.toLocaleString('fr-FR')} XP
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Grille badges */}
+          {BADGES_CATALOGUE.length > 0 && (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 14 }}>
+              {BADGES_CATALOGUE.map(b => {
+                const obtenu = badgesObtenusSlugs.has(b.slug)
+                return (
+                  <div
+                    key={b.slug}
+                    title={obtenu ? b.nom : ''}
+                    style={{
+                      width: 40, height: 40,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      background: obtenu ? 'rgba(245,158,11,0.12)' : 'var(--bg-2)',
+                      borderWidth: 1, borderStyle: 'solid',
+                      borderColor: obtenu ? 'rgba(245,158,11,0.4)' : 'var(--border)',
+                      borderRadius: 'var(--radius-sm)',
+                      opacity: obtenu ? 1 : 0.3,
+                    }}
+                  >
+                    <span style={{ fontSize: 20, filter: obtenu ? 'none' : 'grayscale(1)' }}>{b.emoji}</span>
+                  </div>
+                )
+              })}
+            </div>
+          )}
         </div>
 
         {charg && <p style={{ color: 'var(--text-3)', fontSize: 13, padding: '2rem', textAlign: 'center' }}>Chargement…</p>}
@@ -362,84 +411,6 @@ function MesPronos() {
                   </div>
                 ))}
               </div>
-            </div>
-
-            <div style={{ height: 25 }} />
-
-            {/* ── Bloc XP & Badges ── */}
-            <div style={{ background: 'var(--bg-1)', padding: '16px 16px 20px', borderLeft: '3px solid var(--gold)' }}>
-
-              {/* Header bloc */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-                  <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 24, color: 'var(--gold)', letterSpacing: '0.02em', lineHeight: 1 }}>{titreRPG}</span>
-                  <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 16, color: 'var(--text-3)' }}>Niv. {niveau}</span>
-                </div>
-                <button
-                  onClick={() => setModalInfo(true)}
-                  style={{
-                    background: 'none', borderWidth: 0, cursor: 'pointer',
-                    fontSize: 16, color: 'var(--text-3)', padding: 4,
-                  }}
-                >ℹ️</button>
-              </div>
-
-              {/* Barre XP */}
-              <div style={{ marginBottom: 6 }}>
-                <div style={{ height: 6, background: 'var(--bg-2)', overflow: 'hidden', borderRadius: 3 }}>
-                  <div style={{
-                    height: '100%', width: `${pctBarre}%`,
-                    background: 'var(--gold)',
-                    transition: 'width 0.6s ease',
-                  }} />
-                </div>
-                <div style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 4, textAlign: 'right', fontFamily: 'var(--font-display)', fontWeight: 600 }}>
-                  {xpActuel.toLocaleString('fr-FR')} XP
-                </div>
-              </div>
-
-              {/* Grille badges */}
-              {BADGES_CATALOGUE.length > 0 && (
-                <div style={{ marginTop: 16 }}>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                    {badgesAffichés.map(b => {
-                      const obtenu = badgesObtenusSlugs.has(b.slug)
-                      return (
-                        <div
-                          key={b.slug}
-                          title={obtenu ? b.nom : ''}
-                          style={{
-                            width: 44, height: 44,
-                            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                            background: obtenu ? 'rgba(245,158,11,0.12)' : 'var(--bg-2)',
-                            borderWidth: 1, borderStyle: 'solid',
-                            borderColor: obtenu ? 'rgba(245,158,11,0.4)' : 'var(--border)',
-                            borderRadius: 'var(--radius-sm)',
-                            opacity: obtenu ? 1 : 0.35,
-                            cursor: 'default',
-                          }}
-                        >
-                          <span style={{ fontSize: 22, filter: obtenu ? 'none' : 'grayscale(1)' }}>{b.emoji}</span>
-                        </div>
-                      )
-                    })}
-                  </div>
-
-                  {/* Voir tout / Réduire */}
-                  {BADGES_CATALOGUE.length > 8 && (
-                    <button
-                      onClick={() => setBadgesOuverts(v => !v)}
-                      style={{
-                        marginTop: 10, background: 'none', borderWidth: 0,
-                        cursor: 'pointer', fontSize: 11, color: 'var(--text-3)',
-                        fontWeight: 600, padding: 0,
-                      }}
-                    >
-                      {badgesOuverts ? '▲ Réduire' : `▼ Voir tout (${BADGES_CATALOGUE.length} badges)`}
-                    </button>
-                  )}
-                </div>
-              )}
             </div>
 
             <div style={{ height: 25 }} />
@@ -521,8 +492,7 @@ function MesPronos() {
                       {equipes.meilleure && (
                         <div style={{
                           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                          padding: '10px 14px',
-                          background: 'rgba(34,197,94,0.06)',
+                          padding: '10px 14px', background: 'rgba(34,197,94,0.06)',
                           borderWidth: 1, borderStyle: 'solid', borderColor: 'rgba(34,197,94,0.2)',
                         }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -532,16 +502,13 @@ function MesPronos() {
                               <div style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 1 }}>{equipes.meilleure.corrects}/{equipes.meilleure.total} pronos</div>
                             </div>
                           </div>
-                          <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 22, color: 'var(--success)' }}>
-                            {equipes.meilleure.taux}%
-                          </span>
+                          <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 22, color: 'var(--success)' }}>{equipes.meilleure.taux}%</span>
                         </div>
                       )}
                       {equipes.pire && equipes.pire.nom !== equipes.meilleure?.nom && (
                         <div style={{
                           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                          padding: '10px 14px',
-                          background: 'rgba(239,68,68,0.06)',
+                          padding: '10px 14px', background: 'rgba(239,68,68,0.06)',
                           borderWidth: 1, borderStyle: 'solid', borderColor: 'rgba(239,68,68,0.2)',
                         }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -551,9 +518,7 @@ function MesPronos() {
                               <div style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 1 }}>{equipes.pire.corrects}/{equipes.pire.total} pronos</div>
                             </div>
                           </div>
-                          <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 22, color: 'var(--danger)' }}>
-                            {equipes.pire.taux}%
-                          </span>
+                          <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 22, color: 'var(--danger)' }}>{equipes.pire.taux}%</span>
                         </div>
                       )}
                     </div>
@@ -648,7 +613,6 @@ function MesPronos() {
 
       </main>
 
-      {/* ── Modal Info ── */}
       {modalInfo && <ModalInfo onClose={() => setModalInfo(false)} />}
     </>
   )
