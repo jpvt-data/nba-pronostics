@@ -4,6 +4,7 @@ import { recupererTimeline } from '../services/espn'
 import { recupererLiguesCibles } from '../services/ligues'
 import { calculerPoints } from '../services/points'
 import { ajouterXP } from '../services/xp'
+import { BADGES_CATALOGUE } from '../data/badges'
 import Navigation from '../components/Navigation'
 import BandeMatchs, { FiltreEquipe } from '../components/BandeMatchs'
 import ClassementRapide from '../components/ClassementRapide'
@@ -18,6 +19,70 @@ import { Calendar } from 'lucide-react'
 import { useNoSpoil } from '../context/NoSpoilContext'
 import { SAISON_ESPN } from '../config'
 
+// Popup obtention badge — même structure que PopupBadge dans MesPronos
+const PopupObtentionBadge = ({ badge, onClose, onSuivant, restants }) => (
+  <div
+    onClick={onClose}
+    style={{
+      position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)',
+      zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center',
+      padding: '24px',
+    }}
+  >
+    <div
+      onClick={e => e.stopPropagation()}
+      style={{
+        width: '100%', maxWidth: 320,
+        background: 'var(--bg-1)', borderTop: '3px solid var(--gold)',
+        padding: '24px 20px 28px', position: 'relative',
+        textAlign: 'center',
+      }}
+    >
+      <button onClick={onClose} style={{
+        position: 'absolute', top: 10, right: 12,
+        background: 'none', borderWidth: 0, cursor: 'pointer',
+        fontSize: 18, color: 'var(--text-3)', lineHeight: 1, padding: 4,
+      }}>✕</button>
+
+      <p style={{ fontSize: 13, color: 'var(--gold)', fontWeight: 700, marginBottom: 16 }}>
+        Bravo ! Tu as obtenu le badge
+      </p>
+
+      <img
+        src={badge.image}
+        alt={badge.nom}
+        style={{ width: 120, height: 120, objectFit: 'contain', margin: '0 auto 16px' }}
+        onError={e => { e.target.style.opacity = '0' }}
+      />
+
+      <div style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 22, color: 'var(--gold)', letterSpacing: '0.02em', marginBottom: 8 }}>
+        {badge.nom}
+      </div>
+      <p style={{ fontSize: 13, color: 'var(--text-3)', lineHeight: 1.5, marginBottom: 20 }}>
+        {badge.description}
+      </p>
+
+      {restants > 0 ? (
+        <button onClick={onSuivant} style={{
+          width: '100%', padding: '12px',
+          background: 'var(--gold)', borderWidth: 0,
+          color: '#000', fontSize: 13, fontWeight: 700, cursor: 'pointer',
+          borderRadius: 'var(--radius-sm)',
+        }}>
+          Suivant ({restants} badge{restants > 1 ? 's' : ''} restant{restants > 1 ? 's' : ''})
+        </button>
+      ) : (
+        <button onClick={onClose} style={{
+          width: '100%', padding: '12px',
+          background: 'var(--bg-2)', borderWidth: 1, borderStyle: 'solid',
+          borderColor: 'var(--border)', borderRadius: 'var(--radius-sm)',
+          color: 'var(--text-3)', fontSize: 13, fontWeight: 600, cursor: 'pointer',
+        }}>Super !</button>
+      )}
+    </div>
+  </div>
+)
+
 function Accueil() {
   const [matchs, setMatchs]                     = useState([])
   const [user, setUser]                         = useState(null)
@@ -27,6 +92,8 @@ function Accueil() {
   const [equipeFiltre, setEquipeFiltre]         = useState(null)
   const [typeSaisonLigues, setTypeSaisonLigues] = useState(null)
   const [articleUne, setArticleUne]             = useState(null)
+  // File de badges à afficher un par un
+  const [filesBadges, setFilesBadges]           = useState([])
   const navigate = useNavigate()
   const { noSpoil } = useNoSpoil()
 
@@ -37,8 +104,24 @@ function Accueil() {
       setUser(user)
 
       const { data: profil } = await supabase
-        .from('profils').select('pseudo').eq('id', user.id).single()
+        .from('profils')
+        .select('pseudo, badges')
+        .eq('id', user.id).single()
       setPseudo(profil?.pseudo || null)
+
+      // Détection nouveaux badges depuis dernière visite
+      const badgesActuels = profil?.badges || []
+      const clé = `swish_badges_vus_${user.id}`
+      const badgesVus = JSON.parse(localStorage.getItem(clé) || '[]')
+      const nouveaux = badgesActuels.filter(s => !badgesVus.includes(s))
+      if (nouveaux.length > 0) {
+        const objetsNouveaux = nouveaux
+          .map(s => BADGES_CATALOGUE.find(b => b.slug === s))
+          .filter(Boolean)
+        setFilesBadges(objetsNouveaux)
+        // Mettre à jour localStorage avec tous les badges actuels
+        localStorage.setItem(clé, JSON.stringify(badgesActuels))
+      }
 
       calculerPoints(user.id).catch(() => {})
 
@@ -65,6 +148,9 @@ function Accueil() {
     init()
   }, [])
 
+  const fermerBadge = () => setFilesBadges([])
+  const suivantBadge = () => setFilesBadges(prev => prev.slice(1))
+
   const faireProno = async (match, equipeChoisie) => {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
@@ -83,7 +169,6 @@ function Accueil() {
       .select().single()
     if (!matchDB) return
 
-    // Vérifier si un prono existe déjà sur ce match — anti-doublon XP
     const { data: pronoExistant } = await supabase
       .from('pronos')
       .select('id')
@@ -115,10 +200,8 @@ function Accueil() {
     }
 
     if (estNouveauProno) {
-      // +10 prono posé
       await ajouterXP(user.id, 10, 'passif', 'prono_pose')
 
-      // +10 premier prono du jour (1×/jour) — comparaison via date_jour (Paris)
       const jourParis = new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/Paris' })
       const { data: dejaPronoJour } = await supabase
         .from('xp_log')
@@ -132,7 +215,6 @@ function Accueil() {
         await ajouterXP(user.id, 10, 'passif', 'premier_prono_jour')
       }
 
-      // +75 premier prono de l'histoire (1× à vie)
       const { data: dejaHistoire } = await supabase
         .from('xp_log').select('id')
         .eq('user_id', user.id)
@@ -313,6 +395,16 @@ function Accueil() {
         <div style={{ height: 32 }} />
 
       </main>
+
+      {/* ── Popup obtention badge ── */}
+      {filesBadges.length > 0 && (
+        <PopupObtentionBadge
+          badge={filesBadges[0]}
+          onClose={fermerBadge}
+          onSuivant={suivantBadge}
+          restants={filesBadges.length - 1}
+        />
+      )}
     </>
   )
 }

@@ -1,4 +1,5 @@
-const SUPABASE_URL = 'https://fcyhieueuskeooakyla.supabase.co'
+import { SUPABASE_URL } from '../config'
+
 const BUCKET = 'badges'
 
 export const badgeImageUrl = (slug) =>

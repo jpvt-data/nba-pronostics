@@ -7,3 +7,5 @@ export const SAISON_ESPN = new Date().getMonth() >= 9
 
 export const XP_BASE = 300
 export const XP_COEFFICIENT = 1.06
+
+export const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
