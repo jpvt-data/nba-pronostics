@@ -127,13 +127,17 @@ function OngletClassementsAvecSync({ onEquipeClick, onEquipesChargées }) {
   const [erreur, setErreur]           = useState(false)
   const [labelSaison, setLabelSaison] = useState(`${SAISON_ESPN - 1}-${String(SAISON_ESPN).slice(2)}`)
 
-  const charger = (annee) => {
+  const TYPE_SAISON_NUM = { preseason: 1, reguliere: 2, playoffs: 3 }
+
+  const charger = (annee, type) => {
+    if (type === 'playoffs') return // playoffs = BracketPlayoffs, pas de standings ESPN
     setChargement(true); setErreur(false)
-    fetchAvecTimeout(`${BASE_V2}/standings?season=${annee}&seasontype=2`)
+    const seasontype = TYPE_SAISON_NUM[type] ?? 2
+    fetchAvecTimeout(`${BASE_V2}/standings?season=${annee}&seasontype=${seasontype}`)
       .then(r => r.json())
       .then(data => {
         const saisonsDispos = (data.seasons ?? [])
-          .filter(s => s.types?.some(t => t.id === '2' && t.hasStandings))
+          .filter(s => s.types?.some(t => (t.id === '2' || t.id === '1') && t.hasStandings))
           .map(s => ({ year: s.year, label: s.displayName }))
           .sort((a, b) => b.year - a.year)
         const conferences = data.children ?? []
@@ -152,7 +156,7 @@ function OngletClassementsAvecSync({ onEquipeClick, onEquipesChargées }) {
       .catch(() => { setErreur(true); setChargement(false) })
   }
 
-  useEffect(() => { charger(saison) }, [saison])
+  useEffect(() => { charger(saison, typeSaison) }, [saison, typeSaison])
 
   const liste = onglet === 'est' ? donnees.est : donnees.ouest
 
@@ -171,18 +175,19 @@ function OngletClassementsAvecSync({ onEquipeClick, onEquipesChargées }) {
       </div>
 
       {/* Toggle type de saison */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+      <div style={{ display: 'flex', gap: 6, marginBottom: 12, flexWrap: 'wrap' }}>
         {[
-          { val: 'reguliere', label: 'Saison régulière' },
-          { val: 'playoffs',  label: 'Playoffs' },
-        ].map(({ val, label }) => (
+          { val: 'preseason', label: 'Pré-saison',       couleur: '#6366f1' },
+          { val: 'reguliere', label: 'Saison régulière', couleur: 'var(--orange)' },
+          { val: 'playoffs',  label: 'Playoffs',         couleur: '#ef4444' },
+        ].map(({ val, label, couleur }) => (
           <button key={val} onClick={() => setTypeSaison(val)} style={{
             fontSize: 12, fontWeight: 700, cursor: 'pointer',
             paddingTop: 6, paddingBottom: 6, paddingLeft: 14, paddingRight: 14,
             borderRadius: 'var(--radius-sm)', borderWidth: 1, borderStyle: 'solid',
-            background:  typeSaison === val ? 'rgba(249,115,22,0.14)' : 'transparent',
-            borderColor: typeSaison === val ? 'rgba(249,115,22,0.5)'  : 'var(--border)',
-            color:       typeSaison === val ? 'var(--orange)'          : 'var(--text-3)',
+            background:  typeSaison === val ? couleur + '22' : 'transparent',
+            borderColor: typeSaison === val ? couleur + '88' : 'var(--border)',
+            color:       typeSaison === val ? couleur        : 'var(--text-3)',
           }}>{label}</button>
         ))}
       </div>
@@ -203,8 +208,8 @@ function OngletClassementsAvecSync({ onEquipeClick, onEquipesChargées }) {
       {/* MODE PLAYOFFS */}
       {typeSaison === 'playoffs' && <BracketPlayoffs saison={saison} />}
 
-      {/* MODE SAISON RÉGULIÈRE */}
-      {typeSaison === 'reguliere' && (
+      {/* MODE SAISON RÉGULIÈRE + PRÉ-SAISON */}
+      {(typeSaison === 'reguliere' || typeSaison === 'preseason') && (
         <>
           {chargement && <p style={{ color: 'var(--text-3)', fontSize: 13 }}>Chargement…</p>}
           {erreur    && <p style={{ color: 'var(--danger)', fontSize: 13 }}>Erreur ESPN</p>}
