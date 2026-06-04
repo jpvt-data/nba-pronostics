@@ -1,12 +1,13 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Navigation from '../components/Navigation'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useNoSpoil } from '../context/NoSpoilContext'
-import { BanniereImage } from '../components/UI'
 
-const BASE_URL = 'https://site.api.espn.com/apis/site/v2/sports/basketball/nba'
+const BASE_NBA = 'https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard'
+const BASE_SL  = 'https://site.api.espn.com/apis/site/v2/sports/basketball/nba-summer-las-vegas/scoreboard'
 
+// ── Utilitaires dates ──
 const formaterDateESPN  = (d) => d.toISOString().slice(0, 10).replace(/-/g, '')
 const formaterJourCourt = (d) => d.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' })
 const formaterHeure     = (s) => new Date(s).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
@@ -29,15 +30,74 @@ const memeJour = (a, b) =>
   a.getMonth()    === b.getMonth()    &&
   a.getDate()     === b.getDate()
 
+// ── Détection type match (identique Admin) ──
+const detecterType = (evt, comp, isSummerLeague = false) => {
+  if (isSummerLeague) return 'summer_league'
+  const seasonType = evt.season?.type
+  const compType   = comp.type?.abbreviation || ''
+  const headline   = (comp.notes?.[0]?.headline || '').toLowerCase()
+  if (seasonType === 1) return 'preseason'
+  if (seasonType === 5) return 'playin'
+  if (seasonType === 3) {
+    return ['nba finals', 'finals - game', 'the finals'].some(p => headline.includes(p)) ? 'finals' : 'playoffs'
+  }
+  if (compType === 'ALLSTAR' || ['all-star', 'allstar', 'all star'].some(p => headline.includes(p))) return 'allstar'
+  if (seasonType === 2) {
+    if (['nba cup', 'in-season tournament', 'nba cup - group', 'nba cup - knockout', 'nba cup - semifinal', 'nba cup - final'].some(p => headline.includes(p))) return 'nbacup'
+    if (['play-in'].some(p => headline.includes(p))) return 'playin'
+    return 'regular'
+  }
+  return 'regular'
+}
+
+// Config filtres
+const FILTRES_TYPE = [
+  { value: 'tous',         label: 'Tous types' },
+  { value: 'preseason',    label: 'Pré-saison' },
+  { value: 'regular',      label: 'Saison régulière' },
+  { value: 'nbacup',       label: 'NBA Cup' },
+  { value: 'allstar',      label: 'All-Star' },
+  { value: 'playin',       label: 'Play-In' },
+  { value: 'playoffs',     label: 'Playoffs' },
+  { value: 'finals',       label: 'Finals' },
+  { value: 'summer_league',label: 'Summer League' },
+]
+
+// Mois qui nécessitent un appel Summer League (juillet = mois 6, août = mois 7 en JS)
+const MOIS_SUMMER_LEAGUE = [6, 7]
+
+// Extrait et normalise les matchs d'une réponse ESPN
+const extraireMatchs = (data, isSummerLeague = false) =>
+  (data.events || []).map(evt => {
+    const comp = evt.competitions[0]
+    const dom  = comp.competitors.find(c => c.homeAway === 'home')
+    const ext  = comp.competitors.find(c => c.homeAway === 'away')
+    return {
+      espn_id:    evt.id,
+      date:       evt.date,
+      statut:     comp.status.type.name,
+      typeSaison: evt.season?.type ?? null,
+      tag:        detecterType(evt, comp, isSummerLeague),
+      headline:   comp.notes?.[0]?.headline || '',
+      source:     isSummerLeague ? 'sl' : 'nba',
+      domicile:   { trigramme: dom.team.abbreviation, logo: dom.team.logo, score: dom.score ?? null },
+      exterieur:  { trigramme: ext.team.abbreviation, logo: ext.team.logo, score: ext.score ?? null },
+    }
+  })
+
 function Calendrier() {
   const navigate                    = useNavigate()
   const [vue, setVue]               = useState('7j')
   const [dateRef, setDateRef]       = useState(() => { const d = new Date(); d.setHours(0,0,0,0); return d })
-  const [cache, setCache]           = useState({})
+  const [cache, setCache]           = useState({})   // { 'YYYYMMDD': [matchs] }
+  const [indexTag, setIndexTag]     = useState({})   // { tag: 'YYYY-MM-DD' } → 1er match connu par tag
   const [chargement, setCharg]      = useState(false)
   const [filtreType, setFiltreType] = useState('tous')
   const [filtreEquipe, setFiltreEq] = useState('toutes')
+  const filtreTypeRef               = useRef(filtreType)
+  filtreTypeRef.current             = filtreType
 
+  // ── Calcul des dates affichées ──
   const datesVue = useCallback(() => {
     if (vue === '1j') return [new Date(dateRef)]
     if (vue === '3j') return [0,1,2].map(i => ajouterJours(dateRef, i))
@@ -55,37 +115,66 @@ function Calendrier() {
     return [new Date(dateRef)]
   }, [vue, dateRef])
 
+  // ── Chargement ESPN ──
   const chargerDates = useCallback(async (dates) => {
     const manquantes = dates.filter(d => !cache[formaterDateESPN(d)])
     if (!manquantes.length) return
     setCharg(true)
-    const nouveau = { ...cache }
+
+    const nouveau    = { ...cache }
+    const nouvelIdx  = { ...indexTag }
+
     await Promise.all(manquantes.map(async (date) => {
-      const cle = formaterDateESPN(date)
+      const cle   = formaterDateESPN(date)
+      const moisJS = date.getMonth() // 0-based
+      let matchs  = []
+
+      // Appel NBA standard
       try {
-        const res  = await fetch(`${BASE_URL}/scoreboard?dates=${cle}&limit=50`)
+        const res  = await fetch(`${BASE_NBA}?dates=${cle}&limit=50`)
         const data = await res.json()
-        nouveau[cle] = (data.events || []).map(evt => {
-          const comp = evt.competitions[0]
-          const dom  = comp.competitors.find(c => c.homeAway === 'home')
-          const ext  = comp.competitors.find(c => c.homeAway === 'away')
-          return {
-            espn_id:    evt.id,
-            date:       evt.date,
-            statut:     comp.status.type.name,
-            typeSaison: evt.season?.type ?? null,
-            domicile:   { trigramme: dom.team.abbreviation, logo: dom.team.logo, score: dom.score ?? null },
-            exterieur:  { trigramme: ext.team.abbreviation, logo: ext.team.logo, score: ext.score ?? null },
-          }
-        })
-      } catch { nouveau[cle] = [] }
+        matchs = [...matchs, ...extraireMatchs(data, false)]
+      } catch { /* silencieux */ }
+
+      // Appel Summer League si juillet ou août
+      if (MOIS_SUMMER_LEAGUE.includes(moisJS)) {
+        try {
+          const res  = await fetch(`${BASE_SL}?dates=${cle}&limit=50`)
+          const data = await res.json()
+          matchs = [...matchs, ...extraireMatchs(data, true)]
+        } catch { /* silencieux */ }
+      }
+
+      nouveau[cle] = matchs
+
+      // Mise à jour index tag → 1ère date connue
+      matchs.forEach(m => {
+        const dateStr = m.date?.slice(0, 10)
+        if (!dateStr) return
+        if (!nouvelIdx[m.tag] || dateStr < nouvelIdx[m.tag]) {
+          nouvelIdx[m.tag] = dateStr
+        }
+      })
     }))
+
     setCache(nouveau)
+    setIndexTag(nouvelIdx)
     setCharg(false)
-  }, [cache])
+  }, [cache, indexTag])
 
   useEffect(() => { chargerDates(datesVue()) }, [dateRef, vue])
 
+  // ── Navigation auto quand filtre change ──
+  useEffect(() => {
+    if (filtreType === 'tous') return
+    const dateMin = indexTag[filtreType]
+    if (!dateMin) return // pas encore en cache → on reste sur place
+    const d = new Date(dateMin)
+    d.setHours(0, 0, 0, 0)
+    setDateRef(d)
+  }, [filtreType])
+
+  // ── Navigation période ──
   const naviguer = (dir) => {
     const pas = vue === '1j' ? 1 : vue === '3j' ? 3 : vue === '7j' ? 7 : 30
     setDateRef(prev => ajouterJours(prev, dir * pas))
@@ -95,10 +184,11 @@ function Calendrier() {
     const d = new Date(); d.setHours(0,0,0,0); setDateRef(d)
   }
 
+  // ── Filtrage matchs par jour ──
   const matchsDate = useCallback((date) => {
     const liste = cache[formaterDateESPN(date)] || []
     return liste.filter(m => {
-      if (filtreType !== 'tous' && parseInt(m.typeSaison) !== parseInt(filtreType)) return false
+      if (filtreType !== 'tous' && m.tag !== filtreType) return false
       if (filtreEquipe !== 'toutes' &&
           m.domicile.trigramme  !== filtreEquipe &&
           m.exterieur.trigramme !== filtreEquipe) return false
@@ -122,6 +212,13 @@ function Calendrier() {
     if (vue === 'mois') return formaterMois(dateRef)
     return ''
   }
+
+  // Équipes disponibles dans le cache pour le filtre équipe
+  const equipesCache = [...new Set(
+    Object.values(cache).flat()
+      .flatMap(m => [m.domicile.trigramme, m.exterieur.trigramme])
+      .filter(Boolean)
+  )].sort()
 
   return (
     <>
@@ -173,22 +270,31 @@ function Calendrier() {
           </div>
 
           {/* Filtres */}
-          <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+          <div style={{ display: 'flex', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
+            {/* Filtre type */}
             <select value={filtreType} onChange={e => setFiltreType(e.target.value)} style={S.select}>
-              <option value="tous">Tous types</option>
-              <option value="1">Pré-saison</option>
-              <option value="2">Saison régulière</option>
-              <option value="3">Playoffs</option>
-              <option value="5">International</option>
+              {FILTRES_TYPE.map(f => (
+                <option key={f.value} value={f.value}>{f.label}</option>
+              ))}
             </select>
+
+            {/* Filtre équipe */}
             <select value={filtreEquipe} onChange={e => setFiltreEq(e.target.value)} style={S.select}>
               <option value="toutes">Toutes équipes</option>
-              {[...new Set(
-                Object.values(cache).flat()
-                  .flatMap(m => [m.domicile.trigramme, m.exterieur.trigramme])
-                  .filter(Boolean)
-              )].sort().map(e => <option key={e} value={e}>{e}</option>)}
+              {equipesCache.map(e => <option key={e} value={e}>{e}</option>)}
             </select>
+
+            {/* Info navigation auto */}
+            {filtreType !== 'tous' && !indexTag[filtreType] && (
+              <span style={{ fontSize: 11, color: 'var(--text-3)', alignSelf: 'center', fontStyle: 'italic' }}>
+                Navigue vers la période pour charger les matchs
+              </span>
+            )}
+            {filtreType !== 'tous' && indexTag[filtreType] && (
+              <span style={{ fontSize: 11, color: 'var(--accent)', alignSelf: 'center' }}>
+                → {new Date(indexTag[filtreType]).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })}
+              </span>
+            )}
           </div>
 
         </div>
@@ -263,6 +369,7 @@ function Calendrier() {
   )
 }
 
+// ── Carte match — affichage inchangé ──
 function CarteMatch({ match, compact, onClick }) {
   const { noSpoil } = useNoSpoil()
   const termine = match.statut === 'STATUS_FINAL'
@@ -296,6 +403,7 @@ function CarteMatch({ match, compact, onClick }) {
   )
 }
 
+// ── Grille mois — affichage inchangé ──
 function GrilleMois({ dates, matchsDate, aujourd, navigate, onClicJour }) {
   const premierJour = dates[0].getDay()
   const padding     = premierJour === 0 ? 6 : premierJour - 1
