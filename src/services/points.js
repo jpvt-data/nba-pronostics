@@ -193,6 +193,29 @@ export const calculerPoints = async () => {
         // +2 pts dans membres_groupe si fourchette correcte
         if (correctEcart) {
           await ajouterXP(pe.user_id, 30, 'passif', 'fourchette_correcte')
+
+          // Jalon — 10 fourchettes correctes cumulatives → badge Tireur d'Élite
+          const { data: dejaJalon } = await supabase
+            .from('xp_log').select('id')
+            .eq('user_id', pe.user_id)
+            .eq('source_id', 'jalon_10_fourchettes')
+            .limit(1)
+          if (!dejaJalon || dejaJalon.length === 0) {
+            const { count: nbCorrects } = await supabase
+              .from('pronos_ecart')
+              .select('id', { count: 'exact', head: true })
+              .eq('user_id', pe.user_id)
+              .eq('correct', true)
+            if (nbCorrects >= 10) {
+              await ajouterXP(pe.user_id, 200, 'jalon', 'jalon_10_fourchettes')
+              // Attribution badge
+              const { data: profil } = await supabase.from('profils').select('badges').eq('id', pe.user_id).single()
+              const badges = profil?.badges || []
+              if (!badges.includes('tireur_d_elite')) {
+                await supabase.from('profils').update({ badges: [...badges, 'tireur_d_elite'] }).eq('id', pe.user_id)
+              }
+            }
+          }
           const { data: membres } = await supabase
             .from('membres_groupe')
             .select('id, points, groupes(type_saison, saison)')

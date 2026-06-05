@@ -122,6 +122,7 @@ const XP_LABELS = {
   jalon_100_pronos:       { label: 'Jalon — 100 pronos + Badge Marathonien', icon: '🏃' },
   jalon_serie_5:          { label: 'Jalon — 5 corrects d\'affilée + Badge En Feu', icon: '🔥' },
   jalon_serie_10:         { label: 'Jalon — 10 corrects d\'affilée + Badge Prophète', icon: '👑' },
+  jalon_10_fourchettes:   { label: 'Jalon — 10 fourchettes correctes + Badge Tireur d\'Élite', icon: '🏹' },
   jalon_winrate_65:       { label: 'Jalon — 65% réussite + Badge Analyste', icon: '🧠' },
   jalon_semaine:          { label: 'Jalon — Semaine gagnée + Badge Champion', icon: '🏆' },
   jalon_serie_ratee_5:    { label: 'Badge En Hibernation débloqué', icon: '🧊' },

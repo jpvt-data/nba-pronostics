@@ -97,4 +97,11 @@ export const BADGES_CATALOGUE = [
     description: 'Vainqueur de la ligue NBA Finals.',
     image:       badgeImageUrl('le_sacre'),
   },
+  {
+    slug:        'tireur_d_elite',
+    nom:         'Tireur d\'Élite',
+    famille:     'performance',
+    description: '10 fourchette écarts corrects ! Tu lis les matchs mieux que les bookmakers.',
+    image:       badgeImageUrl('tireur_d_elite'),
+  },
 ]
