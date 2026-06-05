@@ -105,7 +105,7 @@ function MatchDetail() {
       const found = tousLesPronos?.find(p => p.matchs?.espn_id === espn_id)
       if (found) { setProno(found.equipe_choisie); setRes(found.resultat) }
 
-      // Récupérer l'id match DB + fourchette écart existante
+      // Charger fourchette écart si match déjà en DB
       const { data: matchDBRow } = await supabase.from('matchs').select('id').eq('espn_id', espn_id).maybeSingle()
       if (matchDBRow) {
         setMatchDBId(matchDBRow.id)
@@ -158,6 +158,7 @@ function MatchDetail() {
       statut: match.statut, type_saison: match.typeSaisonNum ?? null, saison: match.saisonNum ?? null,
     }, { onConflict: 'espn_id' }).select().single()
     if (!matchDB) return
+    setMatchDBId(matchDB.id)
 
     // Vérifier si un prono existe déjà sur ce match — anti-doublon XP
     const { data: pronoExistant } = await supabase
@@ -385,8 +386,8 @@ function MatchDetail() {
           )}
         </div>
 
-        {/* BONUS ÉCART — avant match (toujours si non verrouillé) ou après si fourchette posée */}
-        {(!verrou || (termine && ecart?.fourchette_choisie)) && (
+        {/* BONUS ÉCART — uniquement si prono vainqueur posé */}
+        {(prono && !termine) || (termine && ecart?.fourchette_choisie) ? (
           <div style={{ background: 'var(--bg-1)', padding: '16px 16px 18px', borderLeft: '3px solid var(--gold)' }}>
             <TitreSection mot1="BONUS" mot2="ÉCART" couleur2="var(--gold)" />
 
@@ -449,7 +450,7 @@ function MatchDetail() {
               </>
             )}
           </div>
-        )}
+        ) : null}
 
         <div style={{ height: 30 }} />
         <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
