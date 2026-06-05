@@ -24,6 +24,8 @@ function H2H() {
   const [profilMoi, setProfilMoi]   = useState(null)
   const [matchs, setMatchs]         = useState([])
   const [bilan, setBilan]           = useState({ moi: 0, eux: 0, nul: 0 })
+  const [bilanEcart, setBilanEcart] = useState({ moi: 0, eux: 0 })
+  const [ecartsMap, setEcartsMap]   = useState({}) // match_id → { moi, eux }
   const [charg, setCharg]           = useState(false)
 
   useEffect(() => {
@@ -90,6 +92,26 @@ function H2H() {
       else nul++
     })
     setBilan({ moi: moiW, eux: euxW, nul })
+
+    // Charger pronos_ecart pour les matchs en commun
+    const matchIds = communs.map(m => m.match_id).filter(Boolean)
+    if (matchIds.length > 0) {
+      const [{ data: ecartsMoi }, { data: ecartsEux }] = await Promise.all([
+        supabase.from('pronos_ecart').select('match_id, fourchette_choisie, fourchette_reelle, correct')
+          .eq('user_id', moi).in('match_id', matchIds),
+        supabase.from('pronos_ecart').select('match_id, fourchette_choisie, fourchette_reelle, correct')
+          .eq('user_id', adversaire.user_id).in('match_id', matchIds),
+      ])
+      const map = {}
+      ecartsMoi?.forEach(e => { if (!map[e.match_id]) map[e.match_id] = {}; map[e.match_id].moi = e })
+      ecartsEux?.forEach(e => { if (!map[e.match_id]) map[e.match_id] = {}; map[e.match_id].eux = e })
+      setEcartsMap(map)
+
+      const ecartMoiCorrects = ecartsMoi?.filter(e => e.correct === true).length || 0
+      const ecartEuxCorrects = ecartsEux?.filter(e => e.correct === true).length || 0
+      setBilanEcart({ moi: ecartMoiCorrects, eux: ecartEuxCorrects })
+    }
+
     setCharg(false)
   }
 
@@ -189,6 +211,22 @@ function H2H() {
                 {bilan.eux > bilan.moi && `😤 ${adversaire.pseudo} mène ${bilan.eux} - ${bilan.moi}`}
                 {bilan.moi === bilan.eux && `🤝 Égalité parfaite`}
               </div>
+
+              {/* Fourchettes bilan */}
+              {(bilanEcart.moi > 0 || bilanEcart.eux > 0) && (
+                <div style={{ marginTop: 10, padding: '8px 12px', background: 'var(--bg-2)', borderLeft: '3px solid var(--gold)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: 10, color: 'var(--text-3)', fontWeight: 700, letterSpacing: '0.05em' }}>FOURCHETTES CORRECTES</span>
+                  <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+                    <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 18, color: bilanEcart.moi >= bilanEcart.eux ? 'var(--gold)' : 'var(--text-3)' }}>
+                      {bilanEcart.moi}<span style={{ fontSize: 10, color: 'var(--text-3)', marginLeft: 2 }}>toi</span>
+                    </span>
+                    <span style={{ fontSize: 11, color: 'var(--text-3)' }}>vs</span>
+                    <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 18, color: bilanEcart.eux > bilanEcart.moi ? 'var(--gold)' : 'var(--text-3)' }}>
+                      {bilanEcart.eux}<span style={{ fontSize: 10, color: 'var(--text-3)', marginLeft: 2 }}>{adversaire.pseudo}</span>
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -198,6 +236,10 @@ function H2H() {
               <TitreSection mot1="MATCH PAR" mot2="MATCH" couleur2="var(--text-2)" />
               <div style={{ display: 'flex', flexDirection: 'column' }}>
                 {matchs.map((m, i) => {
+                  const FL = { serre: 'Serré', modere: 'Modéré', net: 'Net', large: 'Large', domination: 'Domination' }
+                  const ecart = ecartsMap[m.match_id]
+                  const ecartMoi = ecart?.moi
+                  const ecartEux = ecart?.eux
                   const moiGagne = m.resultat_moi === 'correct' && m.resultat_eux === 'incorrect'
                   const euxGagne = m.resultat_eux === 'correct' && m.resultat_moi === 'incorrect'
                   return (
@@ -243,6 +285,32 @@ function H2H() {
                           <span style={{ marginLeft: 4 }}>{m.resultat_eux === 'correct' ? '✅' : '❌'}</span>
                         </div>
                       </div>
+
+                      {/* Fourchettes si posées */}
+                      {(ecartMoi || ecartEux) && (
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, marginTop: 6 }}>
+                          <div style={{ fontSize: 10, color: 'var(--text-3)', padding: '4px 8px', background: 'var(--bg-2)' }}>
+                            {ecartMoi
+                              ? <>🎯 <span style={{ fontWeight: 600, color: ecartMoi.fourchette_reelle == null ? 'var(--gold)' : ecartMoi.correct ? 'var(--success)' : 'var(--danger)' }}>
+                                  {FL[ecartMoi.fourchette_choisie]}
+                                </span>
+                                {ecartMoi.fourchette_reelle != null && (ecartMoi.correct ? ' ✓' : ' ✗')}
+                              </>
+                              : <span style={{ color: 'var(--border-2)' }}>— pas de fourchette</span>
+                            }
+                          </div>
+                          <div style={{ fontSize: 10, color: 'var(--text-3)', padding: '4px 8px', background: 'var(--bg-2)' }}>
+                            {ecartEux
+                              ? <>🎯 <span style={{ fontWeight: 600, color: ecartEux.fourchette_reelle == null ? 'var(--gold)' : ecartEux.correct ? 'var(--success)' : 'var(--danger)' }}>
+                                  {FL[ecartEux.fourchette_choisie]}
+                                </span>
+                                {ecartEux.fourchette_reelle != null && (ecartEux.correct ? ' ✓' : ' ✗')}
+                              </>
+                              : <span style={{ color: 'var(--border-2)' }}>— pas de fourchette</span>
+                            }
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )
                 })}
