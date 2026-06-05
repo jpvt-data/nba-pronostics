@@ -1,10 +1,8 @@
+// src/services/xp.js
 import { supabase } from '../lib/supabase'
 import { XP_BASE, XP_COEFFICIENT } from '../config'
 import { BADGES_CATALOGUE } from '../data/badges'
 
-/**
- * Calcule le niveau (1-100) depuis un total XP cumulatif.
- */
 export function niveauDepuisXP(xpTotal) {
   let xpCumule = 0
   for (let n = 1; n <= 100; n++) {
@@ -15,9 +13,6 @@ export function niveauDepuisXP(xpTotal) {
   return 100
 }
 
-/**
- * XP total nécessaire pour ENTRER dans un niveau donné.
- */
 export function xpPourNiveau(niveau) {
   let total = 0
   for (let n = 1; n < niveau; n++) {
@@ -26,9 +21,6 @@ export function xpPourNiveau(niveau) {
   return total
 }
 
-/**
- * Ajoute de l'XP à un utilisateur.
- */
 export async function ajouterXP(userId, xp, source, sourceId = null, meta = {}) {
   const { error: errLog } = await supabase
     .from('xp_log')
@@ -40,18 +32,13 @@ export async function ajouterXP(userId, xp, source, sourceId = null, meta = {}) 
       meta,
       date_jour: new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/Paris' }),
     })
-
-  if (errLog) {
-    console.error('xp_log insert error', errLog)
-    return null
-  }
+  if (errLog) { console.error('xp_log insert error', errLog); return null }
 
   const { data: profil, error: errProfil } = await supabase
     .from('profils')
     .select('xp_total')
     .eq('id', userId)
     .single()
-
   if (errProfil) return null
 
   const nouvelXP      = profil.xp_total + xp
@@ -61,16 +48,46 @@ export async function ajouterXP(userId, xp, source, sourceId = null, meta = {}) 
     .from('profils')
     .update({ xp_total: nouvelXP, niveau: nouveauNiveau })
     .eq('id', userId)
-
   if (errUpdate) return null
 
   return { xp_total: nouvelXP, niveau: nouveauNiveau }
 }
 
 /**
- * Vérifie les jalons automatiques après une action.
- * stats = { pronos_poses, pronos_corrects, serie_correcte, serie_ratee, win_rate, semaines_gagnees }
+ * Calcule la série de connexions consécutives depuis xp_log.
+ * Retourne le nombre de jours consécutifs jusqu'à aujourd'hui (Paris).
  */
+export async function calculerSerieConnexion(userId) {
+  const { data } = await supabase
+    .from('xp_log')
+    .select('date_jour')
+    .eq('user_id', userId)
+    .eq('source_id', 'connexion_quotidienne')
+    .order('date_jour', { ascending: false })
+    .limit(60)
+
+  if (!data || data.length === 0) return 0
+
+  const jourParis = new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/Paris' })
+  let serie = 0
+  let dateCourante = jourParis
+
+  for (const row of data) {
+    const date = row.date_jour.slice(0, 10)
+    if (date === dateCourante) {
+      serie++
+      // recule d'un jour
+      const d = new Date(dateCourante)
+      d.setDate(d.getDate() - 1)
+      dateCourante = d.toLocaleDateString('en-CA', { timeZone: 'Europe/Paris' })
+    } else {
+      break
+    }
+  }
+
+  return serie
+}
+
 export async function verifierJalons(userId, stats) {
   const { data: profil } = await supabase
     .from('profils')
@@ -104,12 +121,9 @@ export async function verifierJalons(userId, stats) {
 
     if (dejaLog && dejaLog.length > 0) continue
 
-    if (jalon.xp > 0) {
-      await ajouterXP(userId, jalon.xp, 'jalon', jalon.slug)
-    }
+    if (jalon.xp > 0) await ajouterXP(userId, jalon.xp, 'jalon', jalon.slug)
 
     if (jalon.badge && !badgesObtenus.includes(jalon.badge)) {
-      // Vérifier que le badge existe dans le catalogue
       if (BADGES_CATALOGUE.find(b => b.slug === jalon.badge)) {
         nouveauxBadges.push(jalon.badge)
       }
@@ -128,8 +142,10 @@ export async function verifierJalons(userId, stats) {
 
 /**
  * Vérifie et met à jour la progression d'une mission.
+ * mode 'increment' : ajoute valeur à la progression (défaut)
+ * mode 'set'       : remplace la progression par valeur (pour les séries)
  */
-export async function verifierMissions(userId, conditionType, valeur, periode = null) {
+export async function verifierMissions(userId, conditionType, valeur, periode = null, mode = 'increment') {
   const { data: missions } = await supabase
     .from('missions')
     .select('*')
@@ -147,12 +163,15 @@ export async function verifierMissions(userId, conditionType, valeur, periode = 
       .eq('user_id', userId)
       .eq('mission_id', mission.id)
       .eq('periode', periode)
-      .single()
+      .maybeSingle()
 
     if (existante?.completee) continue
 
-    const progression = (existante?.progression || 0) + valeur
-    const completee   = progression >= mission.condition_valeur
+    const progression = mode === 'set'
+      ? valeur
+      : (existante?.progression || 0) + valeur
+
+    const completee = progression >= mission.condition_valeur
 
     if (existante) {
       await supabase
@@ -162,11 +181,16 @@ export async function verifierMissions(userId, conditionType, valeur, periode = 
     } else {
       await supabase
         .from('missions_utilisateurs')
-        .insert({ user_id: userId, mission_id: mission.id, progression, completee, completee_le: completee ? new Date().toISOString() : null, periode })
+        .insert({
+          user_id: userId, mission_id: mission.id,
+          progression, completee,
+          completee_le: completee ? new Date().toISOString() : null,
+          periode
+        })
     }
 
     if (completee) {
-      await ajouterXP(userId, mission.xp_recompense, 'mission', mission.id)
+      await ajouterXP(userId, mission.xp_recompense, 'mission', `mission_${mission.id}`)
       missionsDeclenchees.push(mission)
     }
   }

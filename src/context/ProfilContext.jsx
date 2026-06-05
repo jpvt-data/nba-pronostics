@@ -1,6 +1,7 @@
+// src/context/ProfilContext.jsx
 import { createContext, useContext, useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
-import { ajouterXP } from '../services/xp'
+import { ajouterXP, calculerSerieConnexion, verifierMissions } from '../services/xp'
 
 const ProfilContext = createContext(null)
 
@@ -11,6 +12,7 @@ export function ProfilProvider({ children }) {
     const charger = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
+
       const { data } = await supabase
         .from('profils')
         .select('pseudo, avatar_url')
@@ -18,7 +20,7 @@ export function ProfilProvider({ children }) {
         .single()
       setProfil(data)
 
-      // XP — connexion quotidienne (+5, 1×/jour) — comparaison via date_jour (Paris)
+      // XP connexion quotidienne (+5, 1×/jour)
       const jourParis = new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/Paris' })
       const { data: dejaConnecte } = await supabase
         .from('xp_log')
@@ -32,7 +34,12 @@ export function ProfilProvider({ children }) {
       if (derniereConnexion !== jourParis) {
         await ajouterXP(user.id, 5, 'passif', 'connexion_quotidienne')
       }
+
+      // Missions série connexion — mode set (valeur absolue, pas incrément)
+      const serie = await calculerSerieConnexion(user.id)
+      await verifierMissions(user.id, 'serie_connexion', serie, null, 'set')
     }
+
     charger()
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => {

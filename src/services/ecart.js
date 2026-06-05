@@ -1,6 +1,7 @@
 // src/services/ecart.js
 import { supabase } from '../lib/supabase'
-import { ajouterXP } from './xp'
+import { ajouterXP, verifierMissions } from './xp'
+import { lundiFin } from './points'
 
 // Récupère la fourchette posée par l'user sur un match (null si aucune)
 export const recupererFourchetteEcart = async (userId, matchId) => {
@@ -37,6 +38,9 @@ export const poserFourchetteEcart = async (userId, matchId, fourchetteChoisie) =
   // +5 XP uniquement à la première pose (pas au changement d'avis)
   if (estPremiereFourchette) {
     await ajouterXP(userId, 5, 'passif', 'fourchette_posee')
+
+    // Mission fourchette posée (hebdomadaire — incrément)
+    await verifierMissions(userId, 'fourchette_posee', 1, lundiFin(), 'increment')
   }
 
   return data
