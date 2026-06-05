@@ -1,5 +1,6 @@
 // src/services/ecart.js
 import { supabase } from '../lib/supabase'
+import { ajouterXP } from './xp'
 
 // Récupère la fourchette posée par l'user sur un match (null si aucune)
 export const recupererFourchetteEcart = async (userId, matchId) => {
@@ -14,6 +15,15 @@ export const recupererFourchetteEcart = async (userId, matchId) => {
 
 // Pose ou modifie la fourchette (UPSERT — unique user+match)
 export const poserFourchetteEcart = async (userId, matchId, fourchetteChoisie) => {
+  // Vérifier si c'est la première fourchette posée sur ce match (anti-doublon XP)
+  const { data: existante } = await supabase
+    .from('pronos_ecart')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('match_id', matchId)
+    .maybeSingle()
+  const estPremiereFourchette = !existante
+
   const { data, error } = await supabase
     .from('pronos_ecart')
     .upsert(
@@ -23,5 +33,11 @@ export const poserFourchetteEcart = async (userId, matchId, fourchetteChoisie) =
     .select()
     .single()
   if (error) { console.error('Erreur poserFourchetteEcart:', error); return null }
+
+  // +5 XP uniquement à la première pose (pas au changement d'avis)
+  if (estPremiereFourchette) {
+    await ajouterXP(userId, 5, 'passif', 'fourchette_posee')
+  }
+
   return data
 }

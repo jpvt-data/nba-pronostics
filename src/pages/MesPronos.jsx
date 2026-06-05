@@ -115,6 +115,8 @@ const XP_LABELS = {
   prono_correct:          { label: 'Prono correct',                icon: '✅' },
   semaine_100_pct:        { label: 'Semaine 100% pronostiquée',    icon: '💯' },
   premier_prono_histoire: { label: 'Premier prono de l\'histoire', icon: '🏆' },
+  fourchette_posee:       { label: 'Fourchette d\'écart posée',    icon: '🎯' },
+  fourchette_correcte:    { label: 'Fourchette d\'écart correcte', icon: '🏹' },
   jalon_10_pronos:        { label: 'Jalon — 10 pronos posés',      icon: '🎖️' },
   jalon_50_pronos:        { label: 'Jalon — 50 pronos + Badge All-In', icon: '🃏' },
   jalon_100_pronos:       { label: 'Jalon — 100 pronos + Badge Marathonien', icon: '🏃' },
@@ -282,6 +284,8 @@ const ModalInfo = ({ onClose }) => {
                 { action: 'Prono correct',                xp: '+25 XP', note: 'par prono validé' },
                 { action: 'Semaine 100% pronostiquée',    xp: '+50 XP', note: '1×/semaine' },
                 { action: "Premier prono de l'histoire",  xp: '+75 XP', note: '1× à vie' },
+                { action: 'Fourchette d\'écart posée',    xp: '+5 XP',  note: 'par match (1×)' },
+                { action: 'Fourchette d\'écart correcte', xp: '+30 XP', note: 'par fourchette validée' },
               ].map((r, i) => (
                 <div key={i} style={{
                   display: 'flex', justifyContent: 'space-between', alignItems: 'center',

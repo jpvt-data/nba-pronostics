@@ -192,6 +192,7 @@ export const calculerPoints = async () => {
 
         // +2 pts dans membres_groupe si fourchette correcte
         if (correctEcart) {
+          await ajouterXP(pe.user_id, 30, 'passif', 'fourchette_correcte')
           const { data: membres } = await supabase
             .from('membres_groupe')
             .select('id, points, groupes(type_saison, saison)')
