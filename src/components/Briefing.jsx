@@ -1,6 +1,7 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { BADGES_CATALOGUE } from '../data/badges'
 
 const DISMISS_KEY = (key) => {
   const today = new Date().toISOString().slice(0, 10)
@@ -9,9 +10,166 @@ const DISMISS_KEY = (key) => {
 const estDismisse = (key) => !!localStorage.getItem(DISMISS_KEY(key))
 const dismisser   = (key) => localStorage.setItem(DISMISS_KEY(key), '1')
 
+const titrDepuisNiveau = (n) => {
+  if (n <= 10) return 'Rookie'
+  if (n <= 20) return 'Sixième Homme'
+  if (n <= 30) return 'Starter'
+  if (n <= 40) return 'All-Star'
+  if (n <= 60) return 'MVP'
+  if (n <= 80) return 'Hall of Fame'
+  return 'GOAT'
+}
+
+const TITRES_MESSAGES = {
+  'Sixième Homme': "Tu sors du banc !",
+  'Starter':       "Tu joues les grandes minutes !",
+  'All-Star':      "L'élite te reconnaît !",
+  'MVP':           "Tu domines le classement !",
+  'Hall of Fame':  "Une légende est née !",
+  'GOAT':          "Il n'y a plus rien à prouver.",
+}
+
+// Messages XP jalons (source_id → texte briefing)
+const JALONS_MESSAGES = {
+  premier_prono_histoire: { icone: '🎯', texte: "+75 XP — premier prono de ta vie posé. L'aventure commence !" },
+  semaine_100_pct:        { icone: '💯', texte: "+50 XP — semaine parfaite ! Tu as pronostiqué tous les matchs." },
+  jalon_10_pronos:        { icone: '🎖️', texte: "+50 XP — 10 pronos posés, tu prends tes marques !" },
+  jalon_50_pronos:        { icone: '🃏', texte: "+150 XP — 50 pronos posés ! Badge All-In débloqué." },
+  jalon_100_pronos:       { icone: '🏃', texte: "+300 XP — 100 pronos ! Marathonien confirmé." },
+  jalon_serie_5:          { icone: '🔥', texte: "+100 XP — 5 corrects d'affilée ! Badge En Feu mérité." },
+  jalon_serie_10:         { icone: '👑', texte: "+250 XP — 10 corrects d'affilée ! Tu es un Prophète." },
+  jalon_winrate_65:       { icone: '🧠', texte: "+200 XP — 65% de réussite sur 20 pronos. Analyste de haut vol." },
+  jalon_semaine:          { icone: '🏆', texte: "+150 XP — semaine gagnée ! Badge Champion décroché." },
+  jalon_serie_ratee_5:    { icone: '🧊', texte: "Badge En Hibernation obtenu… ça va aller, ça arrive aux meilleurs." },
+}
+
 async function genererMessages(userId, nbPronosAttente, matchs = []) {
   const messages = []
+  const maintenant = new Date()
+  const il_y_a_24h = new Date(maintenant - 24 * 60 * 60 * 1000).toISOString()
+  const il_y_a_7j  = new Date(maintenant - 7 * 24 * 60 * 60 * 1000).toISOString()
 
+  // ── Jalons XP récents (< 24h) ──
+  const { data: logsRecents } = await supabase
+    .from('xp_log')
+    .select('source_id, cree_le')
+    .eq('user_id', userId)
+    .in('source', ['jalon', 'passif'])
+    .gte('cree_le', il_y_a_24h)
+    .order('cree_le', { ascending: false })
+
+  const jalonsVus = new Set()
+  for (const log of (logsRecents || [])) {
+    const info = JALONS_MESSAGES[log.source_id]
+    if (!info || jalonsVus.has(log.source_id)) continue
+    jalonsVus.add(log.source_id)
+    messages.push({
+      id: `jalon_${log.source_id}`,
+      icone: info.icone,
+      texte: info.texte,
+      couleur: 'var(--gold)',
+    })
+  }
+
+  // ── Badges récemment obtenus (< 7 jours) ──
+  // On détecte via xp_log pour les jalons automatiques
+  const { data: logsJalons7j } = await supabase
+    .from('xp_log')
+    .select('source_id, cree_le')
+    .eq('user_id', userId)
+    .eq('source', 'jalon')
+    .gte('cree_le', il_y_a_7j)
+
+  const jalon2badge = {
+    jalon_50_pronos:    'all_in',
+    jalon_100_pronos:   'marathonien',
+    jalon_serie_5:      'en_feu',
+    jalon_serie_10:     'prophete',
+    jalon_winrate_65:   'analyste',
+    jalon_semaine:      'champion',
+    jalon_serie_ratee_5:'en_hibernation',
+  }
+
+  // Récupérer les badges du profil pour les badges manuels
+  const { data: profil } = await supabase
+    .from('profils')
+    .select('badges, niveau')
+    .eq('id', userId).single()
+
+  const badgesObtenus = profil?.badges || []
+  const niveauActuel  = profil?.niveau || 1
+
+  // Badges auto via jalons récents
+  const badgesAnnonces = new Set()
+  for (const log of (logsJalons7j || [])) {
+    const badgeSlug = jalon2badge[log.source_id]
+    if (!badgeSlug || badgesAnnonces.has(badgeSlug)) continue
+    const badge = BADGES_CATALOGUE.find(b => b.slug === badgeSlug)
+    if (!badge) continue
+    badgesAnnonces.add(badgeSlug)
+    // Ne pas doubler avec le message jalon déjà affiché
+    if (!jalonsVus.has(log.source_id)) {
+      messages.push({
+        id: `badge_${badgeSlug}`,
+        icone: badge.emoji || '🏅',
+        texte: `Badge "${badge.nom}" débloqué — ${badge.description}`,
+        couleur: 'var(--gold)',
+      })
+    }
+  }
+
+  // Badges manuels (original_gangster, événementiels) — détectés via localStorage
+  const cleBadgesVus = `swish_briefing_badges_${userId}`
+  const badgesBriefingVus = JSON.parse(localStorage.getItem(cleBadgesVus) || '[]')
+  const badgesManuelsNouveaux = badgesObtenus.filter(s => {
+    const badge = BADGES_CATALOGUE.find(b => b.slug === s)
+    if (!badge) return false
+    if (badge.famille === 'performance') return false // déjà géré via jalons
+    return !badgesBriefingVus.includes(s)
+  })
+  for (const slug of badgesManuelsNouveaux) {
+    const badge = BADGES_CATALOGUE.find(b => b.slug === slug)
+    if (!badge) continue
+    messages.push({
+      id: `badge_manuel_${slug}`,
+      icone: '🏅',
+      texte: `Badge "${badge.nom}" obtenu — ${badge.description}`,
+      couleur: 'var(--gold)',
+    })
+  }
+  // Mettre à jour localStorage
+  if (badgesManuelsNouveaux.length > 0) {
+    localStorage.setItem(cleBadgesVus, JSON.stringify(badgesObtenus))
+  }
+
+  // ── Changement de niveau / titre ──
+  const cleNiveau = `swish_niveau_${userId}`
+  const dernierNiveau = parseInt(localStorage.getItem(cleNiveau) || '0')
+  if (dernierNiveau > 0 && niveauActuel > dernierNiveau) {
+    const titreActuel   = titrDepuisNiveau(niveauActuel)
+    const titrePrecedent = titrDepuisNiveau(dernierNiveau)
+    if (titreActuel !== titrePrecedent) {
+      // Changement de titre
+      const msgTitre = TITRES_MESSAGES[titreActuel]
+      messages.push({
+        id: `titre_${titreActuel}`,
+        icone: '⬆️',
+        texte: `Tu es maintenant **${titreActuel}** — ${msgTitre}`,
+        couleur: 'var(--gold)',
+      })
+    } else {
+      // Simple montée de niveau
+      messages.push({
+        id: `niveau_${niveauActuel}`,
+        icone: '⬆️',
+        texte: `Bravo ! Tu es passé au niveau ${niveauActuel} !`,
+        couleur: 'var(--gold)',
+      })
+    }
+  }
+  localStorage.setItem(cleNiveau, String(niveauActuel))
+
+  // ── Messages existants ──
   if (nbPronosAttente > 0 && !estDismisse('pronos_attente')) {
     messages.push({
       id: 'pronos_attente', icone: '🏀',
@@ -72,9 +230,9 @@ async function genererMessages(userId, nbPronosAttente, matchs = []) {
   }
 
   if (!estDismisse('profil_incomplet')) {
-    const { data: profil } = await supabase
+    const { data: profilCheck } = await supabase
       .from('profils').select('avatar_url, description').eq('id', userId).single()
-    if (!profil?.avatar_url || !profil?.description) {
+    if (!profilCheck?.avatar_url || !profilCheck?.description) {
       messages.push({
         id: 'profil_incomplet', icone: '👤',
         texte: 'Ton profil est incomplet — ajoute un avatar ou une bio',
@@ -83,9 +241,7 @@ async function genererMessages(userId, nbPronosAttente, matchs = []) {
     }
   }
 
-  const aujourd_hui = new Date()
-  const auj_str     = aujourd_hui.toISOString().slice(0, 10)
-
+  const auj_str = maintenant.toISOString().slice(0, 10)
   const { data: liguesUser } = await supabase
     .from('membres_groupe')
     .select('groupes(nom, type_saison, date_debut, date_fin, saison)')
@@ -94,8 +250,7 @@ async function genererMessages(userId, nbPronosAttente, matchs = []) {
   const ligues       = liguesUser?.map(m => m.groupes).filter(Boolean) || []
   const ligueActive  = ligues.find(g => (!g.date_debut || g.date_debut <= auj_str) && (!g.date_fin || g.date_fin >= auj_str))
   const ligueAVenir  = ligues.filter(g => g.date_debut && g.date_debut > auj_str).sort((a, b) => a.date_debut.localeCompare(b.date_debut))[0]
-  const il_y_a_7j    = new Date(aujourd_hui); il_y_a_7j.setDate(aujourd_hui.getDate() - 7)
-  const il_y_a_7j_str = il_y_a_7j.toISOString().slice(0, 10)
+  const il_y_a_7j_str = new Date(maintenant - 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
   const ligueTerminee = ligues.find(g => g.date_fin && g.date_fin < auj_str && g.date_fin >= il_y_a_7j_str)
 
   const formaterDate = (str) => new Date(str + 'T12:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })
@@ -106,7 +261,7 @@ async function genererMessages(userId, nbPronosAttente, matchs = []) {
     const couleur = typeSaison === 3 ? 'var(--gold)' : 'var(--accent)'
     let texte = `"${nom}" en cours`
     if (date_fin) {
-      const diffFin = Math.floor((new Date(date_fin + 'T12:00:00') - aujourd_hui) / (1000 * 60 * 60 * 24))
+      const diffFin = Math.floor((new Date(date_fin + 'T12:00:00') - maintenant) / (1000 * 60 * 60 * 24))
       if (diffFin <= 7) texte = `"${nom}" se termine dans ${diffFin} jour${diffFin > 1 ? 's' : ''} !`
     }
     messages.push({ id: 'ligue_active', icone, texte, couleur })
@@ -129,9 +284,8 @@ async function genererMessages(userId, nbPronosAttente, matchs = []) {
 }
 
 export default function Briefing({ userId, nbPronosAttente = 0, matchs = [] }) {
-  const [messages, setMessages] = useState([])
-  const [chargement, setCharg]  = useState(true)
-  const [tick, setTick]         = useState(0)
+  const [messages, setMessages]   = useState([])
+  const [chargement, setCharg]    = useState(true)
   const [dismisses, setDismisses] = useState({})
   const navigate = useNavigate()
 
@@ -153,10 +307,8 @@ export default function Briefing({ userId, nbPronosAttente = 0, matchs = [] }) {
   const visibles = messages.filter(m => !dismisses[m.id])
   if (!visibles.length) return null
 
-  // Durée totale : chaque message = 4s (1s glisse entrée + 2.5s pause + 0.5s glisse sortie)
-  // On duplique la liste pour boucle seamless
   const liste = [...visibles, ...visibles, ...visibles, ...visibles]
-  const dureeParMsg = 15 // secondes
+  const dureeParMsg = 15
   const dureeTotal  = dureeParMsg * visibles.length
 
   return (
@@ -209,7 +361,6 @@ export default function Briefing({ userId, nbPronosAttente = 0, matchs = [] }) {
                 }}
               >✕</button>
             )}
-            {/* Séparateur entre messages */}
             <span style={{ color: 'rgba(0,0,0,0.25)', fontSize: 14, marginLeft: 8 }}>|</span>
           </div>
         ))}
