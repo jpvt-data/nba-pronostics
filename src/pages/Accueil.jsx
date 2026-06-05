@@ -3,8 +3,19 @@ import { supabase } from '../lib/supabase'
 import { recupererTimeline } from '../services/espn'
 import { recupererLiguesCibles } from '../services/ligues'
 import { calculerPoints } from '../services/points'
-import { ajouterXP } from '../services/xp'
+import { ajouterXP, xpPourNiveau } from '../services/xp'
 import { BADGES_CATALOGUE } from '../data/badges'
+
+// Titre RPG depuis niveau
+const titrDepuisNiveau = (n) => {
+  if (n <= 10) return 'Rookie'
+  if (n <= 20) return 'Sixième Homme'
+  if (n <= 30) return 'Starter'
+  if (n <= 40) return 'All-Star'
+  if (n <= 60) return 'MVP'
+  if (n <= 80) return 'Hall of Fame'
+  return 'GOAT'
+}
 import Navigation from '../components/Navigation'
 import BandeMatchs, { FiltreEquipe } from '../components/BandeMatchs'
 import ClassementRapide from '../components/ClassementRapide'
@@ -92,7 +103,8 @@ function Accueil() {
   const [equipeFiltre, setEquipeFiltre]         = useState(null)
   const [typeSaisonLigues, setTypeSaisonLigues] = useState(null)
   const [articleUne, setArticleUne]             = useState(null)
-  // File de badges à afficher un par un
+  const [xpData, setXpData]                     = useState({ xp_total: 0, niveau: 1 })
+  const [kpis, setKpis]                         = useState({ total: 0, pct: 0 })
   const [filesBadges, setFilesBadges]           = useState([])
   const navigate = useNavigate()
   const { noSpoil } = useNoSpoil()
@@ -105,9 +117,21 @@ function Accueil() {
 
       const { data: profil } = await supabase
         .from('profils')
-        .select('pseudo, badges')
+        .select('pseudo, badges, xp_total, niveau')
         .eq('id', user.id).single()
       setPseudo(profil?.pseudo || null)
+      setXpData({ xp_total: profil?.xp_total || 0, niveau: profil?.niveau || 1 })
+
+      // KPIs — total pronos + % réussite
+      const { data: pronosKpi } = await supabase
+        .from('pronos')
+        .select('resultat')
+        .eq('user_id', user.id)
+        .in('resultat', ['correct', 'incorrect'])
+      const total    = pronosKpi?.length || 0
+      const corrects = pronosKpi?.filter(p => p.resultat === 'correct').length || 0
+      const pct      = total > 0 ? Math.round(corrects / total * 100) : 0
+      setKpis({ total, pct })
 
       // Détection nouveaux badges depuis dernière visite
       const badgesActuels = profil?.badges || []
@@ -236,11 +260,71 @@ function Accueil() {
       <main style={{ flex: 1 }}>
 
         {/* ── Header ── */}
-        <div style={{ padding: '20px 16px 0 16px', position: 'relative', overflow: 'hidden' }}>
+        <div style={{ padding: '20px 16px 0 16px', position: 'relative' }}>
           <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 3, background: 'var(--accent)' }} />
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 0 }}>
-            <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 36, color: 'var(--text-1)', letterSpacing: '0.02em', lineHeight: 1 }}>Bonjour{' '}</span>
-            <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 36, color: 'var(--accent)', letterSpacing: '0.02em', lineHeight: 1 }}>{pseudo || ''}</span>
+
+          {/* Ligne 1 : Bonjour + KPIs */}
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 0, flexShrink: 1, minWidth: 0 }}>
+              <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 36, color: 'var(--text-1)', letterSpacing: '0.02em', lineHeight: 1 }}>Bonjour{' '}</span>
+              <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 36, color: 'var(--accent)', letterSpacing: '0.02em', lineHeight: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{pseudo || ''}</span>
+            </div>
+
+            {/* KPIs */}
+            {kpis.total > 0 && (
+              <div style={{ display: 'flex', gap: 16, flexShrink: 0, alignItems: 'flex-start' }}>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 'clamp(20px, 5vw, 32px)', color: 'var(--text-1)', lineHeight: 1 }}>
+                    {kpis.total}
+                  </div>
+                  <div style={{ fontSize: 9, color: 'var(--text-3)', marginTop: 2, letterSpacing: '0.04em' }}>PRONOS</div>
+                </div>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 'clamp(20px, 5vw, 32px)', color: 'var(--accent)', lineHeight: 1 }}>
+                    {kpis.pct}%
+                  </div>
+                  <div style={{ fontSize: 9, color: 'var(--text-3)', marginTop: 2, letterSpacing: '0.04em' }}>RÉUSSITE</div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Ligne 2 : Titre RPG + barre XP courte */}
+          <div style={{ marginTop: 14 }}>
+            <div style={{ display: 'inline-flex', alignItems: 'baseline', gap: 8 }}>
+              <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 18, color: 'var(--gold)', letterSpacing: '0.02em', lineHeight: 1 }}>
+                {titrDepuisNiveau(xpData.niveau)}
+              </span>
+              <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 13, color: 'var(--text-3)' }}>
+                Niv. {xpData.niveau}
+              </span>
+            </div>
+            {/* Barre courte — largeur auto selon contenu */}
+            <div style={{ marginTop: 5, display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{ width: 120, height: 4, background: 'var(--bg-2)', overflow: 'hidden', borderRadius: 3, flexShrink: 0 }}>
+                <div style={{
+                  height: '100%',
+                  width: `${xpData.niveau >= 100 ? 100 : Math.min(100, Math.round(
+                    (xpData.xp_total - xpPourNiveau(xpData.niveau)) /
+                    (xpPourNiveau(xpData.niveau + 1) - xpPourNiveau(xpData.niveau)) * 100
+                  ))}%`,
+                  background: 'var(--gold)', transition: 'width 0.6s ease',
+                }} />
+              </div>
+              <span style={{ fontSize: 10, color: 'var(--text-3)', fontFamily: 'var(--font-display)', fontWeight: 600, flexShrink: 0 }}>
+                {xpData.xp_total.toLocaleString('fr-FR')} XP
+              </span>
+              <button
+                onClick={() => navigate('/mes-pronos')}
+                style={{
+                  background: 'none', borderWidth: 0, cursor: 'pointer',
+                  fontSize: 10, color: 'var(--text-3)', padding: 0,
+                  fontWeight: 600, letterSpacing: '0.03em', flexShrink: 0,
+                }}
+              >
+                Mes stats →
+              </button>
+            </div>
           </div>
         </div>
 
