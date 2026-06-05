@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { recupererTimeline } from '../services/espn'
 import { recupererLiguesCibles } from '../services/ligues'
-import { calculerPoints } from '../services/points'
-import { ajouterXP, xpPourNiveau } from '../services/xp'
+import { calculerPoints, lundiFin } from '../services/points'
+import { ajouterXP, xpPourNiveau, verifierMissions } from '../services/xp'
 import { BADGES_CATALOGUE } from '../data/badges'
 import Navigation from '../components/Navigation'
 import BandeMatchs, { FiltreEquipe } from '../components/BandeMatchs'
@@ -222,6 +222,7 @@ function Accueil() {
 
     if (estNouveauProno) {
       await ajouterXP(user.id, 10, 'passif', 'prono_pose')
+      await verifierMissions(user.id, 'pronos_semaine', 1, lundiFin(), 'increment')
 
       const jourParis = new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/Paris' })
       const { data: dejaPronoJour } = await supabase

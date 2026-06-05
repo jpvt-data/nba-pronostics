@@ -2,6 +2,7 @@
 import { createContext, useContext, useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { ajouterXP, calculerSerieConnexion, verifierMissions } from '../services/xp'
+import { lundiFin } from '../services/points'
 
 const ProfilContext = createContext(null)
 
@@ -35,9 +36,19 @@ export function ProfilProvider({ children }) {
         await ajouterXP(user.id, 5, 'passif', 'connexion_quotidienne')
       }
 
-      // Missions série connexion — mode set (valeur absolue, pas incrément)
+      // Missions série connexion consécutive — mode set (valeur absolue)
       const serie = await calculerSerieConnexion(user.id)
       await verifierMissions(user.id, 'serie_connexion', serie, null, 'set')
+
+      // Mission connexion hebdo — jours distincts cette semaine (mode set)
+      const { data: connexionsSemaine } = await supabase
+        .from('xp_log')
+        .select('date_jour')
+        .eq('user_id', user.id)
+        .eq('source_id', 'connexion_quotidienne')
+        .gte('date_jour', lundiFin())
+      const joursDistincts = new Set(connexionsSemaine?.map(r => r.date_jour.slice(0, 10)) || []).size
+      await verifierMissions(user.id, 'connexion_semaine', joursDistincts, lundiFin(), 'set')
     }
 
     charger()
