@@ -329,7 +329,9 @@ export const recupererGagnant = async (espnId) => {
     if (!comp || comp.status?.type?.name !== 'STATUS_FINAL') return null
     const gagnant = comp.competitors.find(c => c.winner === true)
     if (!gagnant) return null
-    return { gagnant: gagnant.team.abbreviation, type_saison: data.header?.season?.type ?? null, saison: data.header?.season?.year ?? null }
+    const scores     = comp.competitors.map(c => parseInt(c.score, 10) || 0)
+    const ecart_final = Math.abs(scores[0] - scores[1])
+    return { gagnant: gagnant.team.abbreviation, type_saison: data.header?.season?.type ?? null, saison: data.header?.season?.year ?? null, ecart_final }
   } catch (err) {
     console.error('Erreur récupération gagnant:', err)
     return null

@@ -103,7 +103,15 @@ export const calculerPoints = async () => {
     const resultatESPN = idxESPN[matchLocal.espn_id]
     if (!resultatESPN) continue
 
-    const { gagnant, type_saison, saison } = resultatESPN
+    const { gagnant, type_saison, saison, ecart_final } = resultatESPN
+
+    // Fourchette réelle calculée depuis l'écart ESPN
+    const fourchetteReelle =
+      ecart_final == null ? null :
+      ecart_final <= 5    ? 'serre'     :
+      ecart_final <= 10   ? 'modere'    :
+      ecart_final <= 20   ? 'net'       :
+      ecart_final <= 30   ? 'large'     : 'domination'
 
     // Mettre à jour le match en cache
     await supabase
@@ -161,6 +169,48 @@ export const calculerPoints = async () => {
             .update({ points: membre.points + 1 })
             .eq('id', membre.id)
           console.log('update membre', membre.id, '→ erreur:', errMembre)
+        }
+      }
+    }
+
+    // Validation pronos_ecart — indépendant des pronos vainqueur
+    if (fourchetteReelle) {
+      const { data: pronosEcart } = await supabase
+        .from('pronos_ecart')
+        .select('id, user_id, fourchette_choisie')
+        .eq('match_id', matchLocal.id)
+        .is('fourchette_reelle', null) // pas encore validés
+
+      for (const pe of (pronosEcart || [])) {
+        const correctEcart   = pe.fourchette_choisie === fourchetteReelle
+        const pointsEcart    = correctEcart ? 2 : 0
+
+        await supabase
+          .from('pronos_ecart')
+          .update({ fourchette_reelle: fourchetteReelle, correct: correctEcart, points_gagnes: pointsEcart })
+          .eq('id', pe.id)
+
+        // +2 pts dans membres_groupe si fourchette correcte
+        if (correctEcart) {
+          const { data: membres } = await supabase
+            .from('membres_groupe')
+            .select('id, points, groupes(type_saison, saison)')
+            .eq('user_id', pe.user_id)
+            .eq('actif', true)
+
+          for (const membre of (membres || [])) {
+            const ligue = membre.groupes
+            if (!ligue) continue
+            const matcheLigue =
+              !ligue.type_saison ||
+              (ligue.type_saison === type_saison && ligue.saison === saison)
+            if (matcheLigue) {
+              await supabase
+                .from('membres_groupe')
+                .update({ points: membre.points + pointsEcart })
+                .eq('id', membre.id)
+            }
+          }
         }
       }
     }

@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase'
 import { recupererLiguesCibles } from '../services/ligues'
 import { recupererDetailMatch, TAG_CONFIG } from '../services/espn'
 import { ajouterXP } from '../services/xp'
+import { recupererFourchetteEcart, poserFourchetteEcart } from '../services/ecart'
 import Navigation from '../components/Navigation'
 import { ChevronLeft } from 'lucide-react'
 import { useNoSpoil } from '../context/NoSpoilContext'
@@ -88,6 +89,8 @@ function MatchDetail() {
   const [charg, setCharg]           = useState(true)
   const [erreur, setErr]            = useState(false)
   const [prediction, setPrediction] = useState(null)
+  const [matchDBId, setMatchDBId]   = useState(null)
+  const [ecart, setEcart]           = useState(null) // { fourchette_choisie, fourchette_reelle, correct, points_gagnes }
 
   useEffect(() => {
     const init = async () => {
@@ -98,9 +101,17 @@ function MatchDetail() {
       setMatch(detail)
 
       const { data: tousLesPronos } = await supabase
-        .from('pronos').select('equipe_choisie, resultat, matchs(espn_id)').eq('user_id', user.id)
+        .from('pronos').select('equipe_choisie, resultat, matchs(espn_id, id)').eq('user_id', user.id)
       const found = tousLesPronos?.find(p => p.matchs?.espn_id === espn_id)
       if (found) { setProno(found.equipe_choisie); setRes(found.resultat) }
+
+      // Récupérer l'id match DB + fourchette écart existante
+      const { data: matchDBRow } = await supabase.from('matchs').select('id').eq('espn_id', espn_id).maybeSingle()
+      if (matchDBRow) {
+        setMatchDBId(matchDBRow.id)
+        const fourchetteExistante = await recupererFourchetteEcart(user.id, matchDBRow.id)
+        if (fourchetteExistante) setEcart(fourchetteExistante)
+      }
       setCharg(false)
 
       if (detail.statut !== 'STATUS_FINAL') {
@@ -123,6 +134,20 @@ function MatchDetail() {
     }
     init()
   }, [espn_id])
+
+  const FOURCHETTES = [
+    { slug: 'serre',      label: 'Serré',      detail: '1-5 pts'  },
+    { slug: 'modere',     label: 'Modéré',     detail: '6-10 pts' },
+    { slug: 'net',        label: 'Net',         detail: '11-20 pts' },
+    { slug: 'large',      label: 'Large',       detail: '21-30 pts' },
+    { slug: 'domination', label: 'Domination',  detail: '31+ pts'  },
+  ]
+
+  const poserEcart = async (slug) => {
+    if (!user || !matchDBId || verrou) return
+    const result = await poserFourchetteEcart(user.id, matchDBId, slug)
+    if (result) setEcart({ ...ecart, fourchette_choisie: slug })
+  }
 
   const faireProno = async (equipe) => {
     if (!match || estVerrouille(match.date, match.statut)) return
@@ -359,6 +384,72 @@ function MatchDetail() {
             </div>
           )}
         </div>
+
+        {/* BONUS ÉCART — avant match (toujours si non verrouillé) ou après si fourchette posée */}
+        {(!verrou || (termine && ecart?.fourchette_choisie)) && (
+          <div style={{ background: 'var(--bg-1)', padding: '16px 16px 18px', borderLeft: '3px solid var(--gold)' }}>
+            <TitreSection mot1="BONUS" mot2="ÉCART" couleur2="var(--gold)" />
+
+            {/* Avant match */}
+            {!termine && (
+              <>
+                <p style={{ fontSize: 12, color: 'var(--text-3)', margin: '0 0 12px', lineHeight: 1.6 }}>
+                  Choisis une <strong style={{ color: 'var(--text-2)' }}>fourchette d'écart</strong> et gagne <strong style={{ color: 'var(--gold)' }}>+2 pts</strong> si tu vises juste.
+                </p>
+                {ecart?.fourchette_choisie && (
+                  <p style={{ fontSize: 11, color: 'var(--accent)', margin: '0 0 10px', fontStyle: 'italic' }}>
+                    Tu as pronostiqué un écart <strong>{FOURCHETTES.find(f => f.slug === ecart.fourchette_choisie)?.label}</strong> — tu peux encore changer !
+                  </p>
+                )}
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
+                  {FOURCHETTES.map(f => {
+                    const selec = ecart?.fourchette_choisie === f.slug
+                    return (
+                      <button
+                        key={f.slug}
+                        onClick={() => poserEcart(f.slug)}
+                        style={{
+                          padding: '6px 12px', fontSize: 12, fontWeight: 700, cursor: 'pointer',
+                          borderRadius: 'var(--radius-sm)', borderWidth: 1, borderStyle: 'solid',
+                          borderColor: selec ? 'var(--gold)' : 'var(--border-2)',
+                          background: selec ? 'var(--gold-dim)' : 'var(--bg-2)',
+                          color: selec ? 'var(--gold)' : 'var(--text-2)',
+                          transition: 'all 0.15s',
+                        }}
+                      >
+                        {f.label}
+                      </button>
+                    )
+                  })}
+                </div>
+                <div style={{ fontSize: 10, color: 'var(--text-3)', lineHeight: 1.8 }}>
+                  {FOURCHETTES.map(f => `${f.label} ${f.detail}`).join(' · ')}
+                </div>
+              </>
+            )}
+
+            {/* Après match — résultat */}
+            {termine && ecart?.fourchette_choisie && (
+              <>
+                <div style={{ fontSize: 12, color: 'var(--text-2)', marginBottom: 8 }}>
+                  Fourchette réelle : <strong style={{ color: 'var(--text-1)' }}>
+                    {FOURCHETTES.find(f => f.slug === ecart.fourchette_reelle)?.label ?? '–'}
+                  </strong>
+                </div>
+                <div style={{ fontSize: 12, color: 'var(--text-2)', marginBottom: 6 }}>
+                  Ta fourchette : <strong style={{ color: 'var(--text-1)' }}>
+                    {FOURCHETTES.find(f => f.slug === ecart.fourchette_choisie)?.label}
+                  </strong>
+                  {' '}
+                  {ecart.correct
+                    ? <span style={{ color: 'var(--success)', fontWeight: 700 }}>✓ +2 pts gagnés !</span>
+                    : <span style={{ color: 'var(--danger)', fontWeight: 700 }}>✗ Raté</span>
+                  }
+                </div>
+              </>
+            )}
+          </div>
+        )}
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
 
