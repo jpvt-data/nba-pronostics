@@ -477,18 +477,52 @@ function MesPronos() {
 
       if (membres?.length > 0) {
         const groupeIds = membres.map(m => m.groupes.id)
+
+        // Pronos match par ligue
         const { data: pronosLigues } = await supabase
           .from('pronos')
-          .select('groupe_id, resultat')
+          .select('groupe_id, resultat, match_id')
           .eq('user_id', cibleId)
           .in('groupe_id', groupeIds)
           .neq('resultat', 'en_attente')
+
+        // Construire match_id → groupe_id depuis pronosLigues
+        const matchIdToGroupeId = {}
+        pronosLigues?.forEach(p => {
+          if (p.match_id && p.groupe_id) matchIdToGroupeId[p.match_id] = p.groupe_id
+        })
+
+        // Pronos_ecart pour les match_ids de ces ligues
+        const ligueMatchIds = [...new Set(pronosLigues?.map(p => p.match_id).filter(Boolean) || [])]
+        let ecartsLigues = []
+        if (ligueMatchIds.length > 0) {
+          const { data: el } = await supabase
+            .from('pronos_ecart')
+            .select('match_id, correct, points_gagnes')
+            .eq('user_id', cibleId)
+            .in('match_id', ligueMatchIds)
+            .not('fourchette_reelle', 'is', null) // validés seulement
+          ecartsLigues = el || []
+        }
+
         const ligueStats = {}
-        membres.forEach(m => { ligueStats[m.groupes.id] = { nom: m.groupes.nom, points: m.points, corrects: 0, incorrects: 0 } })
+        membres.forEach(m => {
+          ligueStats[m.groupes.id] = {
+            nom: m.groupes.nom, points: m.points,
+            corrects: 0, incorrects: 0,
+            ecartCorrects: 0, ecartIncorrects: 0, ecartPts: 0,
+          }
+        })
         pronosLigues?.forEach(p => {
           if (!ligueStats[p.groupe_id]) return
           if (p.resultat === 'correct')   ligueStats[p.groupe_id].corrects++
           if (p.resultat === 'incorrect') ligueStats[p.groupe_id].incorrects++
+        })
+        ecartsLigues.forEach(e => {
+          const gid = matchIdToGroupeId[e.match_id]
+          if (!gid || !ligueStats[gid]) return
+          if (e.correct) { ligueStats[gid].ecartCorrects++; ligueStats[gid].ecartPts += e.points_gagnes }
+          else ligueStats[gid].ecartIncorrects++
         })
         setStatsLig(Object.values(ligueStats).sort((a, b) => b.points - a.points))
       }
@@ -776,29 +810,63 @@ function MesPronos() {
                 {statsLigues.length > 0 && (
                   <>
                     <TitreSection mot1="STATS" mot2="LIGUES" couleur2="var(--orange)" />
-                    <div style={{ display: 'flex', flexDirection: 'column' }}>
-                      {statsLigues.map((l, i) => (
-                        <div key={i} style={{
-                          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                          padding: '8px 12px',
-                          background: i % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'transparent',
-                          borderBottom: '1px solid var(--border)',
-                        }}>
-                          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-1)', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {l.nom}
-                          </span>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
-                            <span style={{ fontSize: 10, color: 'var(--text-3)', whiteSpace: 'nowrap' }}>
-                              <span style={{ color: 'var(--success)' }}>{l.corrects}✓</span>{' '}
-                              <span style={{ color: 'var(--danger)' }}>{l.incorrects}✗</span>
-                              {(l.corrects + l.incorrects) > 0 && <span> · {taux(l.corrects, l.incorrects)}%</span>}
-                            </span>
-                            <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 16, color: 'var(--gold)' }}>
-                              {l.points}<span style={{ fontSize: 10, color: 'var(--text-3)', marginLeft: 2 }}>pts</span>
-                            </span>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                      {statsLigues.map((l, i) => {
+                        const ptsPronos = l.corrects // 1 pt par correct
+                        const ptsEcart  = l.ecartPts
+                        const ecartTotal = l.ecartCorrects + l.ecartIncorrects
+                        return (
+                          <div key={i} style={{
+                            padding: '12px 14px',
+                            background: 'var(--bg-2)',
+                            borderLeft: '3px solid var(--orange)',
+                          }}>
+                            {/* Nom ligue */}
+                            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-1)', marginBottom: 10 }}>{l.nom}</div>
+
+                            {/* Ligne pronos match */}
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                              <span style={{ fontSize: 10, color: 'var(--text-3)', fontWeight: 600, letterSpacing: '0.04em' }}>PRONOS MATCH</span>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                <span style={{ fontSize: 11, color: 'var(--text-3)', whiteSpace: 'nowrap' }}>
+                                  <span style={{ color: 'var(--success)' }}>{l.corrects}✓</span>{' '}
+                                  <span style={{ color: 'var(--danger)' }}>{l.incorrects}✗</span>
+                                  {(l.corrects + l.incorrects) > 0 && <span> · {taux(l.corrects, l.incorrects)}%</span>}
+                                </span>
+                                <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 14, color: 'var(--text-2)' }}>
+                                  {ptsPronos}<span style={{ fontSize: 9, color: 'var(--text-3)', marginLeft: 2 }}>pts</span>
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* Ligne fourchette écart */}
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                              <span style={{ fontSize: 10, color: 'var(--text-3)', fontWeight: 600, letterSpacing: '0.04em' }}>FOURCHETTE ÉCART</span>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                {ecartTotal > 0
+                                  ? <span style={{ fontSize: 11, color: 'var(--text-3)', whiteSpace: 'nowrap' }}>
+                                      <span style={{ color: 'var(--success)' }}>{l.ecartCorrects}✓</span>{' '}
+                                      <span style={{ color: 'var(--danger)' }}>{l.ecartIncorrects}✗</span>
+                                      <span> · {taux(l.ecartCorrects, l.ecartIncorrects)}%</span>
+                                    </span>
+                                  : <span style={{ fontSize: 11, color: 'var(--text-3)' }}>—</span>
+                                }
+                                <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 14, color: 'var(--text-2)' }}>
+                                  {ptsEcart}<span style={{ fontSize: 9, color: 'var(--text-3)', marginLeft: 2 }}>pts</span>
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* Total */}
+                            <div style={{ borderTop: '1px solid var(--border)', paddingTop: 8, display: 'flex', justifyContent: 'flex-end', alignItems: 'baseline', gap: 4 }}>
+                              <span style={{ fontSize: 10, color: 'var(--text-3)', fontWeight: 600, letterSpacing: '0.04em' }}>TOTAL</span>
+                              <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 20, color: 'var(--gold)' }}>
+                                {l.points}<span style={{ fontSize: 11, color: 'var(--text-3)', marginLeft: 3 }}>pts</span>
+                              </span>
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        )
+                      })}
                     </div>
                   </>
                 )}
