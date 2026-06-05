@@ -451,7 +451,7 @@ function MatchDetail() {
           </div>
         )}
 
-        <div style={{ height: 20 }} />
+        <div style={{ height: 30 }} />
         <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
 
           {!termine && prediction && (
