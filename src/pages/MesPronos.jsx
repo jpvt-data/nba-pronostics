@@ -820,6 +820,11 @@ function MesPronos() {
                 {statsLigues.length > 0 && (
                   <>
                     <TitreSection mot1="STATS" mot2="LIGUES" couleur2="var(--orange)" />
+                    {statsLigues.find(l => l.id === ligueActive)?.nom && (
+                      <p style={{ fontSize: 12, color: 'var(--text-3)', margin: '0 0 12px', fontWeight: 600 }}>
+                        {statsLigues.find(l => l.id === ligueActive).nom}
+                      </p>
+                    )}
 
                     {/* Sélecteur dropdown */}
                     {statsLigues.length > 1 && (
