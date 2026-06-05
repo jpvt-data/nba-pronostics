@@ -5,6 +5,7 @@ import { xpPourNiveau } from '../services/xp'
 import { recupererFourchetteEcart } from '../services/ecart'
 import { BADGES_CATALOGUE } from '../data/badges'
 import Navigation from '../components/Navigation'
+import MissionsPopup from '../components/MissionsPopup'
 import { Avatar } from '../components/Avatar'
 
 const formaterDate = (dateStr) =>
@@ -59,7 +60,6 @@ const titrDepuisNiveau = (n) => {
   return 'GOAT'
 }
 
-// Popup visualisation badge (clic sur badge obtenu)
 const PopupBadge = ({ badge, dateObtention, onClose }) => (
   <div
     onClick={onClose}
@@ -107,7 +107,6 @@ const PopupBadge = ({ badge, dateObtention, onClose }) => (
   </div>
 )
 
-// Dictionnaire source_id → label lisible
 const XP_LABELS = {
   connexion_quotidienne:  { label: 'Connexion quotidienne',        icon: '📅' },
   prono_pose:             { label: 'Prono posé',                   icon: '🎯' },
@@ -134,7 +133,6 @@ const formaterDateHeure = (dateStr) =>
     timeZone: 'Europe/Paris',
   })
 
-// Modal historique XP
 const ModalHistoriqueXP = ({ userId, onClose }) => {
   const [logs, setLogs]   = useState([])
   const [charg, setCharg] = useState(true)
@@ -231,7 +229,6 @@ const ModalHistoriqueXP = ({ userId, onClose }) => {
   )
 }
 
-// Modal info XP
 const ModalInfo = ({ onClose }) => {
   const [onglet, setOnglet] = useState('xp')
   return (
@@ -360,18 +357,19 @@ function MesPronos() {
   const [pronos, setPronos]              = useState([])
   const [stats, setStats]                = useState({ total: 0, corrects: 0, incorrects: 0 })
   const [statsEcart, setStatsEcart]      = useState({ tentees: 0, correctes: 0, incorrectes: 0 })
-  const [espnEcartMap, setEspnEcartMap]  = useState({}) // espn_id → pronos_ecart
+  const [espnEcartMap, setEspnEcartMap]  = useState({})
   const [statsLigues, setStatsLig]       = useState([])
-  const [ligueActive, setLigueActive]    = useState(null) // id ligue sélectionnée
+  const [ligueActive, setLigueActive]    = useState(null)
   const [profil, setProfil]              = useState(null)
   const [formeRecente, setForme]         = useState([])
   const [streaks, setStreaks]             = useState({ actuel: 0, max: 0 })
   const [equipes, setEquipes]             = useState({ meilleure: null, pire: null })
   const [xpData, setXpData]              = useState({ xp_total: 0, niveau: 1, badges: [] })
-  const [badgeDatesMap, setBadgeDates]   = useState({}) // slug → date obtention
+  const [badgeDatesMap, setBadgeDates]   = useState({})
   const [badgePopup, setBadgePopup]      = useState(null)
   const [modalInfo, setModalInfo]        = useState(false)
   const [modalHistorique, setModalHistorique] = useState(false)
+  const [missionsOpen, setMissionsOpen]  = useState(false)
   const [profilId, setProfilId]          = useState(null)
   const [charg, setCharg]                = useState(true)
   const [estMoi, setEstMoi]              = useState(true)
@@ -395,7 +393,6 @@ function MesPronos() {
       const badgesSlugs = p?.badges || []
       setXpData({ xp_total: p?.xp_total || 0, niveau: p?.niveau || 1, badges: badgesSlugs })
 
-      // Récupérer les dates d'obtention depuis xp_log pour chaque badge
       if (badgesSlugs.length > 0) {
         const { data: logsJalons } = await supabase
           .from('xp_log')
@@ -404,7 +401,6 @@ function MesPronos() {
           .eq('source', 'jalon')
           .order('cree_le', { ascending: true })
 
-        // Mapper slug badge → date via le jalon correspondant
         const jalon2badge = {
           'jalon_50_pronos':    'all_in',
           'jalon_100_pronos':   'marathonien',
@@ -433,10 +429,8 @@ function MesPronos() {
       const { data } = await query
       setPronos(data || [])
 
-      // Charger tous les pronos_ecart de l'user
       const matchIds = (data || []).map(p => p.matchs?.espn_id).filter(Boolean)
       if (matchIds.length > 0) {
-        // Récupérer les match_id internes depuis les espn_id
         const { data: matchsDB } = await supabase
           .from('matchs').select('id, espn_id').in('espn_id', matchIds)
         const espnToMatchId = {}
@@ -453,7 +447,6 @@ function MesPronos() {
           const ecartMap = {}
           ecarts?.forEach(e => { ecartMap[e.match_id] = e })
 
-          // Construire espnEcartMap : espn_id → ecart
           const espnMap = {}
           matchsDB?.forEach(m => {
             if (ecartMap[m.id]) espnMap[m.espn_id] = ecartMap[m.id]
@@ -480,12 +473,11 @@ function MesPronos() {
       const { data: membres } = await supabase
         .from('membres_groupe')
         .select('points, groupe_id, groupes(id, nom)')
-        .eq('user_id', cibleId) // toutes ligues, actives + terminées
+        .eq('user_id', cibleId)
 
       if (membres?.length > 0) {
         const groupeIds = membres.map(m => m.groupes.id)
 
-        // Pronos match par ligue
         const { data: pronosLigues } = await supabase
           .from('pronos')
           .select('groupe_id, resultat, match_id')
@@ -493,13 +485,11 @@ function MesPronos() {
           .in('groupe_id', groupeIds)
           .neq('resultat', 'en_attente')
 
-        // Construire match_id → groupe_id depuis pronosLigues
         const matchIdToGroupeId = {}
         pronosLigues?.forEach(p => {
           if (p.match_id && p.groupe_id) matchIdToGroupeId[p.match_id] = p.groupe_id
         })
 
-        // Pronos_ecart pour les match_ids de ces ligues
         const ligueMatchIds = [...new Set(pronosLigues?.map(p => p.match_id).filter(Boolean) || [])]
         let ecartsLigues = []
         if (ligueMatchIds.length > 0) {
@@ -508,7 +498,7 @@ function MesPronos() {
             .select('match_id, correct, points_gagnes')
             .eq('user_id', cibleId)
             .in('match_id', ligueMatchIds)
-            .not('fourchette_reelle', 'is', null) // validés seulement
+            .not('fourchette_reelle', 'is', null)
           ecartsLigues = el || []
         }
 
@@ -533,7 +523,7 @@ function MesPronos() {
           else ligueStats[gid].ecartIncorrects++
         })
         const liguesArray = Object.values(ligueStats)
-          .filter(l => (l.corrects + l.incorrects) > 0) // exclure ligues sans pronos validés
+          .filter(l => (l.corrects + l.incorrects) > 0)
           .sort((a, b) => b.points - a.points)
         setStatsLig(liguesArray)
         if (liguesArray.length > 0) setLigueActive(liguesArray[0].id)
@@ -556,7 +546,6 @@ function MesPronos() {
   const pctBarre   = niveau >= 100 ? 100 : Math.min(100, Math.round(xpDansNiv / xpNivTotal * 100))
   const titreRPG   = titrDepuisNiveau(niveau)
 
-  // Badges obtenus seulement, dans l'ordre du catalogue
   const badgesObtenusSlugs = new Set(xpData.badges || [])
   const badgesObtenus = BADGES_CATALOGUE.filter(b => badgesObtenusSlugs.has(b.slug))
 
@@ -599,23 +588,36 @@ function MesPronos() {
             >ℹ️</button>
           </div>
 
-          {/* Titre RPG + niveau + Historique XP sur la même ligne */}
+          {/* Titre RPG + niveau */}
           <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginTop: 34 }}>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
               <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 22, color: 'var(--gold)', letterSpacing: '0.02em', lineHeight: 1 }}>{titreRPG}</span>
               <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 14, color: 'var(--text-3)' }}>Niv. {niveau}</span>
             </div>
+            {/* Bouton Missions + Historique XP sur la même ligne */}
             {estMoi && (
-              <button
-                onClick={() => setModalHistorique(true)}
-                style={{
-                  background: 'none', borderWidth: 0, cursor: 'pointer',
-                  fontSize: 10, color: 'var(--text-3)', padding: 0,
-                  fontWeight: 600, letterSpacing: '0.03em',
-                }}
-              >
-                Historique XP →
-              </button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <button
+                  onClick={() => setMissionsOpen(true)}
+                  style={{
+                    background: 'none', borderWidth: 0, cursor: 'pointer',
+                    fontSize: 10, color: 'var(--gold)', padding: 0,
+                    fontWeight: 700, letterSpacing: '0.03em',
+                  }}
+                >
+                  Missions →
+                </button>
+                <button
+                  onClick={() => setModalHistorique(true)}
+                  style={{
+                    background: 'none', borderWidth: 0, cursor: 'pointer',
+                    fontSize: 10, color: 'var(--text-3)', padding: 0,
+                    fontWeight: 600, letterSpacing: '0.03em',
+                  }}
+                >
+                  Historique XP →
+                </button>
+              </div>
             )}
           </div>
 
@@ -636,7 +638,7 @@ function MesPronos() {
             </div>
           </div>
 
-          {/* Badges obtenus seulement — alignés à gauche, cliquables */}
+          {/* Badges obtenus */}
           {badgesObtenus.length > 0 && (
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginTop: 16 }}>
               {badgesObtenus.map(b => (
@@ -668,7 +670,7 @@ function MesPronos() {
           <div style={{ display: 'flex', flexDirection: 'column', paddingBottom: 32 }}>
             <div style={{ height: 25 }} />
 
-            {/* ── Forme récente ── juste sous le header */}
+            {/* ── Forme récente ── */}
             {formeRecente.length > 0 && (
               <div style={{ background: 'var(--bg-0)', padding: '16px 16px 20px' }}>
                 <TitreSection mot1="FORME" mot2="RÉCENTE" couleur2="var(--accent)" />
@@ -741,7 +743,6 @@ function MesPronos() {
             {/* ── Stats globales ── */}
             <div style={{ background: 'var(--bg-0)', padding: '16px 16px 20px', borderLeft: '3px solid var(--accent)' }}>
               <TitreSection mot1="STATS" mot2="GLOBALES" />
-              {/* Pronos match */}
               <div style={{ fontSize: 10, color: 'var(--text-3)', fontWeight: 700, letterSpacing: '0.06em', marginBottom: 8, textTransform: 'uppercase' }}>Pronos match</div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginBottom: 20 }}>
                 {[
@@ -756,7 +757,6 @@ function MesPronos() {
                   </div>
                 ))}
               </div>
-              {/* Fourchette écart */}
               {statsEcart.tentees > 0 && (
                 <>
                   <div style={{ height: 1, background: 'var(--border)', marginBottom: 12 }} />
@@ -830,8 +830,6 @@ function MesPronos() {
                         {statsLigues.find(l => l.id === ligueActive).nom}
                       </p>
                     )}
-
-                    {/* Sélecteur dropdown */}
                     {statsLigues.length > 1 && (
                       <select
                         value={ligueActive || ''}
@@ -849,16 +847,12 @@ function MesPronos() {
                         ))}
                       </select>
                     )}
-
-                    {/* Détail ligue active */}
                     {statsLigues.filter(l => l.id === ligueActive).map(l => {
                       const ptsPronos  = l.corrects
                       const ptsEcart   = l.ecartPts
                       const ecartTotal = l.ecartCorrects + l.ecartIncorrects
                       return (
                         <div key={l.id} style={{ padding: '14px 16px', background: 'var(--bg-2)', borderLeft: '3px solid var(--orange)' }}>
-
-                          {/* Pronos match — une ligne */}
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
                             <span style={{ fontSize: 10, color: 'var(--text-3)', fontWeight: 700, letterSpacing: '0.06em' }}>PRONOS MATCH</span>
                             <div style={{ display: 'flex', alignItems: 'baseline', gap: 14 }}>
@@ -869,8 +863,6 @@ function MesPronos() {
                               <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 22, color: 'var(--text-2)' }}>{ptsPronos}<span style={{ fontSize: 11, color: 'var(--text-3)', marginLeft: 2 }}>pts</span></span>
                             </div>
                           </div>
-
-                          {/* Fourchette écart — une ligne */}
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
                             <span style={{ fontSize: 10, color: 'var(--text-3)', fontWeight: 700, letterSpacing: '0.06em' }}>FOURCHETTE ÉCART</span>
                             {ecartTotal > 0
@@ -884,8 +876,6 @@ function MesPronos() {
                               : <span style={{ fontSize: 12, color: 'var(--text-3)' }}>—</span>
                             }
                           </div>
-
-                          {/* Total */}
                           <div style={{ borderTop: '1px solid var(--border)', paddingTop: 10, display: 'flex', justifyContent: 'flex-end', alignItems: 'baseline', gap: 6 }}>
                             <span style={{ fontSize: 10, color: 'var(--text-3)', fontWeight: 700, letterSpacing: '0.05em' }}>TOTAL</span>
                             <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 28, color: 'var(--gold)', lineHeight: 1 }}>{l.points}</span>
@@ -937,7 +927,6 @@ function MesPronos() {
                           <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 2 }}>
                             {m ? formaterDate(m.date_match) : ''} · → {p.equipe_choisie}
                           </div>
-                          {/* Fourchette écart */}
                           {ecart && (
                             <div style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 3 }}>
                               {ecart.fourchette_reelle == null
@@ -988,6 +977,11 @@ function MesPronos() {
 
       {/* Modal info */}
       {modalInfo && <ModalInfo onClose={() => setModalInfo(false)} />}
+
+      {/* Popup missions */}
+      {missionsOpen && estMoi && profilId && (
+        <MissionsPopup userId={profilId} onClose={() => setMissionsOpen(false)} />
+      )}
     </>
   )
 }

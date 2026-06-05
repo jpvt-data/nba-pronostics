@@ -5,17 +5,6 @@ import { recupererLiguesCibles } from '../services/ligues'
 import { calculerPoints } from '../services/points'
 import { ajouterXP, xpPourNiveau } from '../services/xp'
 import { BADGES_CATALOGUE } from '../data/badges'
-
-// Titre RPG depuis niveau
-const titrDepuisNiveau = (n) => {
-  if (n <= 10) return 'Rookie'
-  if (n <= 20) return 'Sixième Homme'
-  if (n <= 30) return 'Starter'
-  if (n <= 40) return 'All-Star'
-  if (n <= 60) return 'MVP'
-  if (n <= 80) return 'Hall of Fame'
-  return 'GOAT'
-}
 import Navigation from '../components/Navigation'
 import BandeMatchs, { FiltreEquipe } from '../components/BandeMatchs'
 import ClassementRapide from '../components/ClassementRapide'
@@ -25,12 +14,22 @@ import StandingsNBA from '../components/StandingsNBA'
 import BracketPlayoffs from '../components/BracketPlayoffs'
 import NewsNBA from '../components/NewsNBA'
 import BanniereFeed from '../components/BanniereFeed'
+import MissionsPopup from '../components/MissionsPopup'
 import { useNavigate } from 'react-router-dom'
 import { Calendar } from 'lucide-react'
 import { useNoSpoil } from '../context/NoSpoilContext'
 import { SAISON_ESPN } from '../config'
 
-// Popup obtention badge — même structure que PopupBadge dans MesPronos
+const titrDepuisNiveau = (n) => {
+  if (n <= 10) return 'Rookie'
+  if (n <= 20) return 'Sixième Homme'
+  if (n <= 30) return 'Starter'
+  if (n <= 40) return 'All-Star'
+  if (n <= 60) return 'MVP'
+  if (n <= 80) return 'Hall of Fame'
+  return 'GOAT'
+}
+
 const PopupObtentionBadge = ({ badge, onClose, onSuivant, restants }) => (
   <div
     onClick={onClose}
@@ -106,6 +105,7 @@ function Accueil() {
   const [xpData, setXpData]                     = useState({ xp_total: 0, niveau: 1 })
   const [kpis, setKpis]                         = useState({ total: 0, pct: 0 })
   const [filesBadges, setFilesBadges]           = useState([])
+  const [missionsOpen, setMissionsOpen]         = useState(false)
   const navigate = useNavigate()
   const { noSpoil } = useNoSpoil()
 
@@ -122,7 +122,6 @@ function Accueil() {
       setPseudo(profil?.pseudo || null)
       setXpData({ xp_total: profil?.xp_total || 0, niveau: profil?.niveau || 1 })
 
-      // KPIs — total pronos + % réussite
       const { data: pronosKpi } = await supabase
         .from('pronos')
         .select('resultat')
@@ -133,7 +132,6 @@ function Accueil() {
       const pct      = total > 0 ? Math.round(corrects / total * 100) : 0
       setKpis({ total, pct })
 
-      // Détection nouveaux badges depuis dernière visite
       const badgesActuels = profil?.badges || []
       const clé = `swish_badges_vus_${user.id}`
       const badgesVus = JSON.parse(localStorage.getItem(clé) || '[]')
@@ -143,7 +141,6 @@ function Accueil() {
           .map(s => BADGES_CATALOGUE.find(b => b.slug === s))
           .filter(Boolean)
         setFilesBadges(objetsNouveaux)
-        // Mettre à jour localStorage avec tous les badges actuels
         localStorage.setItem(clé, JSON.stringify(badgesActuels))
       }
 
@@ -289,7 +286,7 @@ function Accueil() {
             )}
           </div>
 
-          {/* Ligne 2 : Titre RPG + barre XP courte */}
+          {/* Ligne 2 : Titre RPG + barre XP + liens */}
           <div style={{ marginTop: 14 }}>
             <div style={{ display: 'inline-flex', alignItems: 'baseline', gap: 8 }}>
               <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 18, color: 'var(--gold)', letterSpacing: '0.02em', lineHeight: 1 }}>
@@ -299,7 +296,6 @@ function Accueil() {
                 Niv. {xpData.niveau}
               </span>
             </div>
-            {/* Barre courte — largeur auto selon contenu */}
             <div style={{ marginTop: 5, display: 'flex', alignItems: 'center', gap: 10 }}>
               <div style={{ width: 120, height: 4, background: 'var(--bg-2)', overflow: 'hidden', borderRadius: 3, flexShrink: 0 }}>
                 <div style={{
@@ -325,6 +321,24 @@ function Accueil() {
                 Mes stats →
               </button>
             </div>
+
+            {/* Bouton Missions — sous la barre XP, aligné à gauche */}
+            {user && (
+              <div style={{ marginTop: 8 }}>
+                <button
+                  onClick={() => setMissionsOpen(true)}
+                  style={{
+                    background: 'var(--gold-dim)', borderWidth: 1, borderStyle: 'solid',
+                    borderColor: 'rgba(245,158,11,0.3)', borderRadius: 'var(--radius-sm)',
+                    cursor: 'pointer', padding: '4px 10px',
+                    fontSize: 10, color: 'var(--gold)', fontWeight: 700,
+                    letterSpacing: '0.04em',
+                  }}
+                >
+                  🎯 Missions
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
@@ -488,6 +502,11 @@ function Accueil() {
           onSuivant={suivantBadge}
           restants={filesBadges.length - 1}
         />
+      )}
+
+      {/* ── Popup missions ── */}
+      {missionsOpen && user && (
+        <MissionsPopup userId={user.id} onClose={() => setMissionsOpen(false)} />
       )}
     </>
   )
