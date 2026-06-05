@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { xpPourNiveau } from '../services/xp'
+import { recupererFourchetteEcart } from '../services/ecart'
 import { BADGES_CATALOGUE } from '../data/badges'
 import Navigation from '../components/Navigation'
 import { Avatar } from '../components/Avatar'
@@ -353,6 +354,8 @@ const ModalInfo = ({ onClose }) => {
 function MesPronos() {
   const [pronos, setPronos]              = useState([])
   const [stats, setStats]                = useState({ total: 0, corrects: 0, incorrects: 0 })
+  const [statsEcart, setStatsEcart]      = useState({ tentees: 0, correctes: 0, incorrectes: 0 })
+  const [espnEcartMap, setEspnEcartMap]  = useState({}) // espn_id → pronos_ecart
   const [statsLigues, setStatsLig]       = useState([])
   const [profil, setProfil]              = useState(null)
   const [formeRecente, setForme]         = useState([])
@@ -423,6 +426,39 @@ function MesPronos() {
       if (!vuParMoi) query = query.neq('resultat', 'en_attente')
       const { data } = await query
       setPronos(data || [])
+
+      // Charger tous les pronos_ecart de l'user
+      const matchIds = (data || []).map(p => p.matchs?.espn_id).filter(Boolean)
+      if (matchIds.length > 0) {
+        // Récupérer les match_id internes depuis les espn_id
+        const { data: matchsDB } = await supabase
+          .from('matchs').select('id, espn_id').in('espn_id', matchIds)
+        const espnToMatchId = {}
+        matchsDB?.forEach(m => { espnToMatchId[m.espn_id] = m.id })
+
+        const internalIds = Object.values(espnToMatchId)
+        if (internalIds.length > 0) {
+          const { data: ecarts } = await supabase
+            .from('pronos_ecart')
+            .select('match_id, fourchette_choisie, fourchette_reelle, correct, points_gagnes')
+            .eq('user_id', cibleId)
+            .in('match_id', internalIds)
+
+          const ecartMap = {}
+          ecarts?.forEach(e => { ecartMap[e.match_id] = e })
+
+          // Construire espnEcartMap : espn_id → ecart
+          const espnMap = {}
+          matchsDB?.forEach(m => {
+            if (ecartMap[m.id]) espnMap[m.espn_id] = ecartMap[m.id]
+          })
+          setEspnEcartMap(espnMap)
+
+          const tentees   = ecarts?.length || 0
+          const correctes = ecarts?.filter(e => e.correct === true).length || 0
+          setStatsEcart({ tentees, correctes, incorrectes: tentees - correctes })
+        }
+      }
 
       const termines   = data?.filter(p => p.resultat !== 'en_attente') || []
       const corrects   = termines.filter(p => p.resultat === 'correct').length
@@ -586,10 +622,41 @@ function MesPronos() {
           <div style={{ display: 'flex', flexDirection: 'column', paddingBottom: 32 }}>
             <div style={{ height: 25 }} />
 
+            {/* ── Forme récente ── juste sous le header */}
+            {formeRecente.length > 0 && (
+              <div style={{ background: 'var(--bg-0)', padding: '16px 16px 20px' }}>
+                <TitreSection mot1="FORME" mot2="RÉCENTE" couleur2="var(--accent)" />
+                <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
+                  {formeRecente.slice().reverse().map((p, i) => (
+                    <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
+                      <div style={{
+                        width: 40, height: 40,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        background: p.resultat === 'correct' ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)',
+                        borderWidth: 1, borderStyle: 'solid',
+                        borderColor: p.resultat === 'correct' ? 'rgba(34,197,94,0.4)' : 'rgba(239,68,68,0.4)',
+                        fontSize: 13, fontWeight: 700, fontFamily: 'var(--font-display)',
+                        color: p.resultat === 'correct' ? 'var(--success)' : 'var(--danger)',
+                      }}>
+                        {p.resultat === 'correct' ? 'W' : 'L'}
+                      </div>
+                      <div style={{ fontSize: 9, color: 'var(--text-3)', textAlign: 'center', maxWidth: 40, lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {p.equipe_choisie}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div style={{ height: 25 }} />
+
             {/* ── Stats globales ── */}
             <div style={{ background: 'var(--bg-0)', padding: '16px 16px 20px', borderLeft: '3px solid var(--accent)' }}>
               <TitreSection mot1="STATS" mot2="GLOBALES" />
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
+              {/* Pronos match */}
+              <div style={{ fontSize: 10, color: 'var(--text-3)', fontWeight: 700, letterSpacing: '0.06em', marginBottom: 8, textTransform: 'uppercase' }}>Pronos match</div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginBottom: 20 }}>
                 {[
                   { label: 'Total',    val: stats.total,      color: 'var(--text-1)'  },
                   { label: 'Corrects', val: stats.corrects,   color: 'var(--success)' },
@@ -602,6 +669,26 @@ function MesPronos() {
                   </div>
                 ))}
               </div>
+              {/* Fourchette écart — light */}
+              {statsEcart.tentees > 0 && (
+                <>
+                  <div style={{ height: 1, background: 'var(--border)', marginBottom: 12 }} />
+                  <div style={{ fontSize: 10, color: 'var(--text-3)', fontWeight: 700, letterSpacing: '0.06em', marginBottom: 8, textTransform: 'uppercase' }}>Fourchette d'écart</div>
+                  <div style={{ display: 'flex', gap: 20 }}>
+                    {[
+                      { label: 'Tentées',   val: statsEcart.tentees,    color: 'var(--text-2)' },
+                      { label: 'Correctes', val: statsEcart.correctes,  color: 'var(--success)' },
+                      { label: 'Ratées',    val: statsEcart.incorrectes, color: 'var(--danger)' },
+                      { label: 'Réussite',  val: `${taux(statsEcart.correctes, statsEcart.incorrectes)}%`, color: 'var(--gold)' },
+                    ].map(s => (
+                      <div key={s.label} style={{ textAlign: 'center' }}>
+                        <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 20, color: s.color, lineHeight: 1 }}>{s.val}</div>
+                        <div style={{ fontSize: 9, color: 'var(--text-3)', marginTop: 2 }}>{s.label}</div>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
 
             <div style={{ height: 25 }} />
@@ -638,35 +725,6 @@ function MesPronos() {
                       <span style={{ fontSize: 11, color: 'var(--text-3)' }}>corrects</span>
                     </div>
                   </div>
-                </div>
-              </div>
-            )}
-
-            <div style={{ height: 25 }} />
-
-            {/* ── Forme récente ── */}
-            {formeRecente.length > 0 && (
-              <div style={{ background: 'var(--bg-0)', padding: '16px 16px 20px' }}>
-                <TitreSection mot1="FORME" mot2="RÉCENTE" couleur2="var(--accent)" />
-                <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
-                  {formeRecente.slice().reverse().map((p, i) => (
-                    <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
-                      <div style={{
-                        width: 40, height: 40,
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        background: p.resultat === 'correct' ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)',
-                        borderWidth: 1, borderStyle: 'solid',
-                        borderColor: p.resultat === 'correct' ? 'rgba(34,197,94,0.4)' : 'rgba(239,68,68,0.4)',
-                        fontSize: 13, fontWeight: 700, fontFamily: 'var(--font-display)',
-                        color: p.resultat === 'correct' ? 'var(--success)' : 'var(--danger)',
-                      }}>
-                        {p.resultat === 'correct' ? 'W' : 'L'}
-                      </div>
-                      <div style={{ fontSize: 9, color: 'var(--text-3)', textAlign: 'center', maxWidth: 40, lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {p.equipe_choisie}
-                      </div>
-                    </div>
-                  ))}
                 </div>
               </div>
             )}
@@ -761,12 +819,15 @@ function MesPronos() {
                     : p.resultat === 'incorrect'
                     ? { barre: 'var(--danger)', txt: 'var(--danger)' }
                     : { barre: 'var(--border)', txt: 'var(--text-3)' }
+
+                  const ecart = m?.espn_id ? espnEcartMap[m.espn_id] : null
+                  const FL = { serre: 'Serré', modere: 'Modéré', net: 'Net', large: 'Large', domination: 'Domination' }
+
                   return (
                     <div
                       key={i}
                       onClick={() => cliquable && navigate(`/match/${m.espn_id}`)}
                       style={{
-                        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                         padding: '10px 12px',
                         borderLeft: `3px solid ${couleur.barre}`,
                         borderBottom: '1px solid var(--border)',
@@ -774,21 +835,34 @@ function MesPronos() {
                         cursor: cliquable ? 'pointer' : 'default',
                       }}
                     >
-                      <div>
-                        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-1)' }}>
-                          {m?.equipe_exterieur} @ {m?.equipe_domicile}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div>
+                          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-1)' }}>
+                            {m?.equipe_exterieur} @ {m?.equipe_domicile}
+                          </div>
+                          <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 2 }}>
+                            {m ? formaterDate(m.date_match) : ''} · → {p.equipe_choisie}
+                          </div>
+                          {/* Fourchette écart */}
+                          {ecart && (
+                            <div style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 3 }}>
+                              {ecart.fourchette_reelle == null
+                                ? <span style={{ color: 'var(--gold)' }}>🎯 Écart : {FL[ecart.fourchette_choisie]} (en attente)</span>
+                                : ecart.correct
+                                  ? <span style={{ color: 'var(--success)' }}>🎯 Écart : {FL[ecart.fourchette_choisie]} ✓ +2 pts</span>
+                                  : <span style={{ color: 'var(--danger)' }}>🎯 Écart : {FL[ecart.fourchette_choisie]} ✗ (réel : {FL[ecart.fourchette_reelle]})</span>
+                              }
+                            </div>
+                          )}
                         </div>
-                        <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 2 }}>
-                          {m ? formaterDate(m.date_match) : ''} · → {p.equipe_choisie}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+                          <span style={{ fontSize: 12, fontWeight: 600, color: couleur.txt }}>
+                            {p.resultat === 'correct'    && `+${p.points_gagnes} pt`}
+                            {p.resultat === 'incorrect'  && 'Raté'}
+                            {p.resultat === 'en_attente' && 'En attente'}
+                          </span>
+                          {cliquable && <span style={{ fontSize: 14, color: 'var(--text-3)' }}>›</span>}
                         </div>
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
-                        <span style={{ fontSize: 12, fontWeight: 600, color: couleur.txt }}>
-                          {p.resultat === 'correct'    && `+${p.points_gagnes} pt`}
-                          {p.resultat === 'incorrect'  && 'Raté'}
-                          {p.resultat === 'en_attente' && 'En attente'}
-                        </span>
-                        {cliquable && <span style={{ fontSize: 14, color: 'var(--text-3)' }}>›</span>}
                       </div>
                     </div>
                   )
