@@ -692,52 +692,13 @@ function MesPronos() {
 
             <div style={{ height: 25 }} />
 
-            {/* ── Stats globales ── */}
-            <div style={{ background: 'var(--bg-0)', padding: '16px 16px 20px', borderLeft: '3px solid var(--accent)' }}>
-              <TitreSection mot1="STATS" mot2="GLOBALES" />
-              {/* Pronos match */}
-              <div style={{ fontSize: 10, color: 'var(--text-3)', fontWeight: 700, letterSpacing: '0.06em', marginBottom: 8, textTransform: 'uppercase' }}>Pronos match</div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginBottom: 20 }}>
-                {[
-                  { label: 'Total',    val: stats.total,      color: 'var(--text-1)'  },
-                  { label: 'Corrects', val: stats.corrects,   color: 'var(--success)' },
-                  { label: 'Ratés',    val: stats.incorrects, color: 'var(--danger)'  },
-                  { label: 'Réussite', val: `${taux(stats.corrects, stats.incorrects)}%`, color: 'var(--accent)' },
-                ].map(s => (
-                  <div key={s.label} style={{ textAlign: 'center' }}>
-                    <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 32, color: s.color, lineHeight: 1 }}>{s.val}</div>
-                    <div style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 2 }}>{s.label}</div>
-                  </div>
-                ))}
-              </div>
-              {/* Fourchette écart — light */}
-              {statsEcart.tentees > 0 && (
-                <>
-                  <div style={{ height: 1, background: 'var(--border)', marginBottom: 12 }} />
-                  <div style={{ fontSize: 10, color: 'var(--text-3)', fontWeight: 700, letterSpacing: '0.06em', marginBottom: 8, textTransform: 'uppercase' }}>Fourchette d'écart</div>
-                  <div style={{ display: 'flex', gap: 20 }}>
-                    {[
-                      { label: 'Tentées',   val: statsEcart.tentees,    color: 'var(--text-2)' },
-                      { label: 'Correctes', val: statsEcart.correctes,  color: 'var(--success)' },
-                      { label: 'Ratées',    val: statsEcart.incorrectes, color: 'var(--danger)' },
-                      { label: 'Réussite',  val: `${taux(statsEcart.correctes, statsEcart.incorrectes)}%`, color: 'var(--gold)' },
-                    ].map(s => (
-                      <div key={s.label} style={{ textAlign: 'center' }}>
-                        <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 20, color: s.color, lineHeight: 1 }}>{s.val}</div>
-                        <div style={{ fontSize: 9, color: 'var(--text-3)', marginTop: 2 }}>{s.label}</div>
-                      </div>
-                    ))}
-                  </div>
-                </>
-              )}
-            </div>
-
-            <div style={{ height: 25 }} />
-
             {/* ── Séries ── */}
             {stats.total > 0 && (
               <div style={{ background: 'var(--bg-1)', padding: '16px 16px 20px', borderLeft: '3px solid var(--gold)' }}>
                 <TitreSection mot1="SÉRIES" couleur2="var(--gold)" />
+                <p style={{ fontSize: 11, color: 'var(--text-3)', margin: '0 0 12px', lineHeight: 1.5 }}>
+                  Série de pronos vainqueur corrects consécutifs.
+                </p>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                   <div style={{
                     padding: '12px 14px',
@@ -769,6 +730,48 @@ function MesPronos() {
                 </div>
               </div>
             )}
+
+            <div style={{ height: 25 }} />
+
+            {/* ── Stats globales ── */}
+            <div style={{ background: 'var(--bg-0)', padding: '16px 16px 20px', borderLeft: '3px solid var(--accent)' }}>
+              <TitreSection mot1="STATS" mot2="GLOBALES" />
+              {/* Pronos match */}
+              <div style={{ fontSize: 10, color: 'var(--text-3)', fontWeight: 700, letterSpacing: '0.06em', marginBottom: 8, textTransform: 'uppercase' }}>Pronos match</div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginBottom: 20 }}>
+                {[
+                  { label: 'Total',    val: stats.total,      color: 'var(--text-1)'  },
+                  { label: 'Corrects', val: stats.corrects,   color: 'var(--success)' },
+                  { label: 'Ratés',    val: stats.incorrects, color: 'var(--danger)'  },
+                  { label: 'Réussite', val: `${taux(stats.corrects, stats.incorrects)}%`, color: 'var(--accent)' },
+                ].map(s => (
+                  <div key={s.label} style={{ textAlign: 'center' }}>
+                    <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 32, color: s.color, lineHeight: 1 }}>{s.val}</div>
+                    <div style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 2 }}>{s.label}</div>
+                  </div>
+                ))}
+              </div>
+              {/* Fourchette écart */}
+              {statsEcart.tentees > 0 && (
+                <>
+                  <div style={{ height: 1, background: 'var(--border)', marginBottom: 12 }} />
+                  <div style={{ fontSize: 10, color: 'var(--text-3)', fontWeight: 700, letterSpacing: '0.06em', marginBottom: 8, textTransform: 'uppercase' }}>Fourchette d'écart</div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
+                    {[
+                      { label: 'Tentées',   val: statsEcart.tentees,     color: 'var(--text-1)'  },
+                      { label: 'Correctes', val: statsEcart.correctes,   color: 'var(--success)' },
+                      { label: 'Ratées',    val: statsEcart.incorrectes, color: 'var(--danger)'  },
+                      { label: 'Réussite',  val: `${taux(statsEcart.correctes, statsEcart.incorrectes)}%`, color: 'var(--gold)' },
+                    ].map(s => (
+                      <div key={s.label} style={{ textAlign: 'center' }}>
+                        <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 32, color: s.color, lineHeight: 1 }}>{s.val}</div>
+                        <div style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 2 }}>{s.label}</div>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
 
             <div style={{ height: 25 }} />
 
@@ -845,61 +848,37 @@ function MesPronos() {
                       return (
                         <div key={l.id} style={{ padding: '14px 16px', background: 'var(--bg-2)', borderLeft: '3px solid var(--orange)' }}>
 
-                          {/* Pronos match */}
-                          <div style={{ fontSize: 10, color: 'var(--text-3)', fontWeight: 700, letterSpacing: '0.06em', marginBottom: 8, textTransform: 'uppercase' }}>Pronos match</div>
-                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginBottom: 20 }}>
-                            {[
-                              { label: 'Total',    val: l.corrects + l.incorrects, color: 'var(--text-1)'  },
-                              { label: 'Corrects', val: l.corrects,                color: 'var(--success)' },
-                              { label: 'Ratés',    val: l.incorrects,              color: 'var(--danger)'  },
-                              { label: 'Réussite', val: `${taux(l.corrects, l.incorrects)}%`, color: 'var(--accent)' },
-                            ].map(s => (
-                              <div key={s.label} style={{ textAlign: 'center' }}>
-                                <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 32, color: s.color, lineHeight: 1 }}>{s.val}</div>
-                                <div style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 2 }}>{s.label}</div>
-                              </div>
-                            ))}
-                          </div>
-                          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
-                            <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 18, color: 'var(--text-2)' }}>
-                              {ptsPronos}<span style={{ fontSize: 11, color: 'var(--text-3)', marginLeft: 3 }}>pts</span>
-                            </span>
+                          {/* Pronos match — une ligne */}
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                            <span style={{ fontSize: 10, color: 'var(--text-3)', fontWeight: 700, letterSpacing: '0.06em' }}>PRONOS MATCH</span>
+                            <div style={{ display: 'flex', alignItems: 'baseline', gap: 14 }}>
+                              <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 22, color: 'var(--text-1)' }}>{l.corrects + l.incorrects}</span>
+                              <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 22, color: 'var(--success)' }}>{l.corrects}<span style={{ fontSize: 12 }}>✓</span></span>
+                              <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 22, color: 'var(--danger)' }}>{l.incorrects}<span style={{ fontSize: 12 }}>✗</span></span>
+                              {(l.corrects + l.incorrects) > 0 && <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 22, color: 'var(--accent)' }}>{taux(l.corrects, l.incorrects)}%</span>}
+                              <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 22, color: 'var(--text-2)' }}>{ptsPronos}<span style={{ fontSize: 11, color: 'var(--text-3)', marginLeft: 2 }}>pts</span></span>
+                            </div>
                           </div>
 
-                          {/* Fourchette écart */}
-                          <div style={{ height: 1, background: 'var(--border)', marginBottom: 12 }} />
-                          <div style={{ fontSize: 10, color: 'var(--text-3)', fontWeight: 700, letterSpacing: '0.06em', marginBottom: 8, textTransform: 'uppercase' }}>Fourchette d'écart</div>
-                          {ecartTotal > 0 ? (
-                            <>
-                              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginBottom: 8 }}>
-                                {[
-                                  { label: 'Tentées',   val: ecartTotal,          color: 'var(--text-1)'  },
-                                  { label: 'Correctes', val: l.ecartCorrects,     color: 'var(--success)' },
-                                  { label: 'Ratées',    val: l.ecartIncorrects,   color: 'var(--danger)'  },
-                                  { label: 'Réussite',  val: `${taux(l.ecartCorrects, l.ecartIncorrects)}%`, color: 'var(--gold)' },
-                                ].map(s => (
-                                  <div key={s.label} style={{ textAlign: 'center' }}>
-                                    <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 32, color: s.color, lineHeight: 1 }}>{s.val}</div>
-                                    <div style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 2 }}>{s.label}</div>
-                                  </div>
-                                ))}
-                              </div>
-                              <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
-                                <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 18, color: 'var(--text-2)' }}>
-                                  {ptsEcart}<span style={{ fontSize: 11, color: 'var(--text-3)', marginLeft: 3 }}>pts</span>
-                                </span>
-                              </div>
-                            </>
-                          ) : (
-                            <div style={{ fontSize: 12, color: 'var(--text-3)', marginBottom: 16 }}>—</div>
-                          )}
+                          {/* Fourchette écart — une ligne */}
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                            <span style={{ fontSize: 10, color: 'var(--text-3)', fontWeight: 700, letterSpacing: '0.06em' }}>FOURCHETTE ÉCART</span>
+                            {ecartTotal > 0
+                              ? <div style={{ display: 'flex', alignItems: 'baseline', gap: 14 }}>
+                                  <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 22, color: 'var(--text-1)' }}>{ecartTotal}</span>
+                                  <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 22, color: 'var(--success)' }}>{l.ecartCorrects}<span style={{ fontSize: 12 }}>✓</span></span>
+                                  <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 22, color: 'var(--danger)' }}>{l.ecartIncorrects}<span style={{ fontSize: 12 }}>✗</span></span>
+                                  <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 22, color: 'var(--gold)' }}>{taux(l.ecartCorrects, l.ecartIncorrects)}%</span>
+                                  <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 22, color: 'var(--text-2)' }}>{ptsEcart}<span style={{ fontSize: 11, color: 'var(--text-3)', marginLeft: 2 }}>pts</span></span>
+                                </div>
+                              : <span style={{ fontSize: 12, color: 'var(--text-3)' }}>—</span>
+                            }
+                          </div>
 
                           {/* Total */}
                           <div style={{ borderTop: '1px solid var(--border)', paddingTop: 10, display: 'flex', justifyContent: 'flex-end', alignItems: 'baseline', gap: 6 }}>
                             <span style={{ fontSize: 10, color: 'var(--text-3)', fontWeight: 700, letterSpacing: '0.05em' }}>TOTAL</span>
-                            <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 28, color: 'var(--gold)', lineHeight: 1 }}>
-                              {l.points}
-                            </span>
+                            <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 28, color: 'var(--gold)', lineHeight: 1 }}>{l.points}</span>
                             <span style={{ fontSize: 12, color: 'var(--text-3)' }}>pts</span>
                           </div>
                         </div>
