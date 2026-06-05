@@ -357,6 +357,7 @@ function MesPronos() {
   const [statsEcart, setStatsEcart]      = useState({ tentees: 0, correctes: 0, incorrectes: 0 })
   const [espnEcartMap, setEspnEcartMap]  = useState({}) // espn_id → pronos_ecart
   const [statsLigues, setStatsLig]       = useState([])
+  const [ligueActive, setLigueActive]    = useState(null) // id ligue sélectionnée
   const [profil, setProfil]              = useState(null)
   const [formeRecente, setForme]         = useState([])
   const [streaks, setStreaks]             = useState({ actuel: 0, max: 0 })
@@ -473,7 +474,7 @@ function MesPronos() {
       const { data: membres } = await supabase
         .from('membres_groupe')
         .select('points, groupe_id, groupes(id, nom)')
-        .eq('user_id', cibleId).eq('actif', true)
+        .eq('user_id', cibleId) // toutes ligues, actives + terminées
 
       if (membres?.length > 0) {
         const groupeIds = membres.map(m => m.groupes.id)
@@ -508,6 +509,7 @@ function MesPronos() {
         const ligueStats = {}
         membres.forEach(m => {
           ligueStats[m.groupes.id] = {
+            id: m.groupes.id,
             nom: m.groupes.nom, points: m.points,
             corrects: 0, incorrects: 0,
             ecartCorrects: 0, ecartIncorrects: 0, ecartPts: 0,
@@ -524,7 +526,9 @@ function MesPronos() {
           if (e.correct) { ligueStats[gid].ecartCorrects++; ligueStats[gid].ecartPts += e.points_gagnes }
           else ligueStats[gid].ecartIncorrects++
         })
-        setStatsLig(Object.values(ligueStats).sort((a, b) => b.points - a.points))
+        const liguesArray = Object.values(ligueStats).sort((a, b) => b.points - a.points)
+        setStatsLig(liguesArray)
+        if (liguesArray.length > 0) setLigueActive(liguesArray[0].id)
       }
 
       setCharg(false)
@@ -810,64 +814,86 @@ function MesPronos() {
                 {statsLigues.length > 0 && (
                   <>
                     <TitreSection mot1="STATS" mot2="LIGUES" couleur2="var(--orange)" />
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                      {statsLigues.map((l, i) => {
-                        const ptsPronos = l.corrects // 1 pt par correct
-                        const ptsEcart  = l.ecartPts
-                        const ecartTotal = l.ecartCorrects + l.ecartIncorrects
-                        return (
-                          <div key={i} style={{
-                            padding: '12px 14px',
-                            background: 'var(--bg-2)',
-                            borderLeft: '3px solid var(--orange)',
-                          }}>
-                            {/* Nom ligue */}
-                            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-1)', marginBottom: 10 }}>{l.nom}</div>
 
-                            {/* Ligne pronos match */}
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                              <span style={{ fontSize: 10, color: 'var(--text-3)', fontWeight: 600, letterSpacing: '0.04em' }}>PRONOS MATCH</span>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                                <span style={{ fontSize: 11, color: 'var(--text-3)', whiteSpace: 'nowrap' }}>
-                                  <span style={{ color: 'var(--success)' }}>{l.corrects}✓</span>{' '}
-                                  <span style={{ color: 'var(--danger)' }}>{l.incorrects}✗</span>
-                                  {(l.corrects + l.incorrects) > 0 && <span> · {taux(l.corrects, l.incorrects)}%</span>}
-                                </span>
-                                <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 14, color: 'var(--text-2)' }}>
-                                  {ptsPronos}<span style={{ fontSize: 9, color: 'var(--text-3)', marginLeft: 2 }}>pts</span>
-                                </span>
-                              </div>
-                            </div>
+                    {/* Sélecteur ligues */}
+                    {statsLigues.length > 1 && (
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 14 }}>
+                        {statsLigues.map(l => (
+                          <button
+                            key={l.id}
+                            onClick={() => setLigueActive(l.id)}
+                            style={{
+                              padding: '5px 12px', fontSize: 11, fontWeight: 600, cursor: 'pointer',
+                              borderRadius: 'var(--radius-sm)', borderWidth: 1, borderStyle: 'solid',
+                              borderColor: ligueActive === l.id ? 'var(--orange)' : 'var(--border-2)',
+                              background: ligueActive === l.id ? 'rgba(249,115,22,0.12)' : 'var(--bg-2)',
+                              color: ligueActive === l.id ? 'var(--orange)' : 'var(--text-3)',
+                            }}
+                          >{l.nom}</button>
+                        ))}
+                      </div>
+                    )}
 
-                            {/* Ligne fourchette écart */}
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-                              <span style={{ fontSize: 10, color: 'var(--text-3)', fontWeight: 600, letterSpacing: '0.04em' }}>FOURCHETTE ÉCART</span>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                                {ecartTotal > 0
-                                  ? <span style={{ fontSize: 11, color: 'var(--text-3)', whiteSpace: 'nowrap' }}>
-                                      <span style={{ color: 'var(--success)' }}>{l.ecartCorrects}✓</span>{' '}
-                                      <span style={{ color: 'var(--danger)' }}>{l.ecartIncorrects}✗</span>
-                                      <span> · {taux(l.ecartCorrects, l.ecartIncorrects)}%</span>
-                                    </span>
-                                  : <span style={{ fontSize: 11, color: 'var(--text-3)' }}>—</span>
+                    {/* Détail ligue active */}
+                    {statsLigues.filter(l => l.id === ligueActive).map(l => {
+                      const ptsPronos  = l.corrects
+                      const ptsEcart   = l.ecartPts
+                      const ecartTotal = l.ecartCorrects + l.ecartIncorrects
+                      return (
+                        <div key={l.id} style={{ padding: '14px 16px', background: 'var(--bg-2)', borderLeft: '3px solid var(--orange)' }}>
+
+                          {/* Ligne pronos match */}
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                            <span style={{ fontSize: 10, color: 'var(--text-3)', fontWeight: 700, letterSpacing: '0.05em' }}>PRONOS MATCH</span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                              <span style={{ fontSize: 13, whiteSpace: 'nowrap' }}>
+                                <span style={{ color: 'var(--success)', fontWeight: 700, fontFamily: 'var(--font-display)', fontSize: 18 }}>{l.corrects}</span>
+                                <span style={{ color: 'var(--success)', fontSize: 11 }}>✓</span>
+                                {'  '}
+                                <span style={{ color: 'var(--danger)', fontWeight: 700, fontFamily: 'var(--font-display)', fontSize: 18 }}>{l.incorrects}</span>
+                                <span style={{ color: 'var(--danger)', fontSize: 11 }}>✗</span>
+                                {(l.corrects + l.incorrects) > 0 &&
+                                  <span style={{ color: 'var(--text-3)', fontSize: 12 }}> · {taux(l.corrects, l.incorrects)}%</span>
                                 }
-                                <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 14, color: 'var(--text-2)' }}>
-                                  {ptsEcart}<span style={{ fontSize: 9, color: 'var(--text-3)', marginLeft: 2 }}>pts</span>
-                                </span>
-                              </div>
-                            </div>
-
-                            {/* Total */}
-                            <div style={{ borderTop: '1px solid var(--border)', paddingTop: 8, display: 'flex', justifyContent: 'flex-end', alignItems: 'baseline', gap: 4 }}>
-                              <span style={{ fontSize: 10, color: 'var(--text-3)', fontWeight: 600, letterSpacing: '0.04em' }}>TOTAL</span>
-                              <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 20, color: 'var(--gold)' }}>
-                                {l.points}<span style={{ fontSize: 11, color: 'var(--text-3)', marginLeft: 3 }}>pts</span>
+                              </span>
+                              <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 20, color: 'var(--text-1)' }}>
+                                {ptsPronos}<span style={{ fontSize: 11, color: 'var(--text-3)', marginLeft: 2 }}>pts</span>
                               </span>
                             </div>
                           </div>
-                        )
-                      })}
-                    </div>
+
+                          {/* Ligne fourchette écart */}
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+                            <span style={{ fontSize: 10, color: 'var(--text-3)', fontWeight: 700, letterSpacing: '0.05em' }}>FOURCHETTE ÉCART</span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                              {ecartTotal > 0
+                                ? <span style={{ fontSize: 13, whiteSpace: 'nowrap' }}>
+                                    <span style={{ color: 'var(--success)', fontWeight: 700, fontFamily: 'var(--font-display)', fontSize: 18 }}>{l.ecartCorrects}</span>
+                                    <span style={{ color: 'var(--success)', fontSize: 11 }}>✓</span>
+                                    {'  '}
+                                    <span style={{ color: 'var(--danger)', fontWeight: 700, fontFamily: 'var(--font-display)', fontSize: 18 }}>{l.ecartIncorrects}</span>
+                                    <span style={{ color: 'var(--danger)', fontSize: 11 }}>✗</span>
+                                    <span style={{ color: 'var(--text-3)', fontSize: 12 }}> · {taux(l.ecartCorrects, l.ecartIncorrects)}%</span>
+                                  </span>
+                                : <span style={{ fontSize: 12, color: 'var(--text-3)' }}>—</span>
+                              }
+                              <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 20, color: 'var(--text-1)' }}>
+                                {ptsEcart}<span style={{ fontSize: 11, color: 'var(--text-3)', marginLeft: 2 }}>pts</span>
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Total */}
+                          <div style={{ borderTop: '1px solid var(--border)', paddingTop: 10, display: 'flex', justifyContent: 'flex-end', alignItems: 'baseline', gap: 6 }}>
+                            <span style={{ fontSize: 10, color: 'var(--text-3)', fontWeight: 700, letterSpacing: '0.05em' }}>TOTAL</span>
+                            <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 28, color: 'var(--gold)', lineHeight: 1 }}>
+                              {l.points}
+                            </span>
+                            <span style={{ fontSize: 12, color: 'var(--text-3)' }}>pts</span>
+                          </div>
+                        </div>
+                      )
+                    })}
                   </>
                 )}
               </div>
