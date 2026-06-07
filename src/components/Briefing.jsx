@@ -394,7 +394,7 @@ export default function Briefing({ userId, nbPronosAttente = 0, matchs = [] }) {
   if (!visibles.length) return null
 
   const liste = [...visibles, ...visibles]
-  const dureeParMsg = 15
+  const dureeParMsg = 10
   const dureeTotal  = dureeParMsg * visibles.length
 
   return (
