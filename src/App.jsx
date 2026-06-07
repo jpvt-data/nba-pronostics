@@ -20,12 +20,22 @@ import Admin from './pages/Admin'
 
 function App() {
   const [session, setSession] = useState(undefined)
+  const [popupFerme, setPopupFerme] = useState(false)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => setSession(session))
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => setSession(session))
     return () => subscription.unsubscribe()
   }, [])
+
+  // Bloquer le scroll immédiatement si session connue (popup va s'afficher)
+  useEffect(() => {
+    if (session && !popupFerme) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+  }, [session, popupFerme])
 
   if (session === undefined) return null
 
@@ -36,7 +46,7 @@ function App() {
     <NoSpoilProvider>
       <ProfilProvider>
         <BrowserRouter>
-          {session && <PopupChangelog />}
+          {session && !popupFerme && <PopupChangelog onFermer={() => setPopupFerme(true)} />}
           <Routes>
             <Route path="/connexion"      element={public_(<Connexion />)} />
             <Route path="/inscription"    element={<Inscription />} />
