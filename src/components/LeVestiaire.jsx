@@ -173,7 +173,13 @@ function ChatMiniLigue({ groupe, userId }) {
   const intervalRef = useRef(null)
   const messagesEndRef = useRef(null)
 
-  const scrollBas = () => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  const scrollBas = () => {
+    const el = messagesEndRef.current
+    if (!el) return
+    // Scroller uniquement le container du chat, pas la page entière
+    const container = el.parentElement
+    if (container) container.scrollTop = container.scrollHeight
+  }
 
   const charger = async () => {
     const msgs = await chargerMessages(groupe.groupe_id)
