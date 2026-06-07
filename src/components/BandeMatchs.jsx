@@ -78,17 +78,6 @@ const EQUIPES_NBA = [
   { tri: 'WAS', nom: 'Wizards',      logo: 'https://a.espncdn.com/i/teamlogos/nba/500/wsh.png' },
 ]
 
-
-const TAG_BANDE = {
-  nbacup:  { label: 'NBA Cup',    couleur: '#f97316' },
-  allstar: { label: 'All-Star',   couleur: '#f59e0b' },
-  playin:  { label: 'Play-In',    couleur: '#22c55e' },
-  playoffs:{ label: 'Playoffs',   couleur: '#ef4444' },
-  finals:  { label: 'NBA Finals', couleur: '#e11d48' },
-  preseason:{ label: 'Pré-saison','couleur': '#6366f1' },
-  summer_league:{ label: 'Summer League', couleur: '#06b6d4' },
-}
-
 function FiltreEquipe({ equipeFiltre, onSelect }) {
   const [ouvert, setOuvert] = useState(false)
   const refModal = useRef(null)
@@ -150,7 +139,7 @@ function FiltreEquipe({ equipeFiltre, onSelect }) {
 function CarteMatch({ match, pronoData, onProno, userId }) {
   const navigate = useNavigate()
   const { noSpoil } = useNoSpoil()
-  // pronoData = { equipe, resultat } ou null.
+  // pronoData = { equipe, resultat } ou null
   const [pronoLocal, setPronoLocal] = useState(pronoData?.equipe || null)
   const [loading, setLoading] = useState(false)
 
@@ -201,6 +190,22 @@ function CarteMatch({ match, pronoData, onProno, userId }) {
       <img src={dom.logo} alt="" style={{ position: 'absolute', right: -40, top: '50%', transform: 'translateY(-50%)', width: 220, height: 220, objectFit: 'contain', opacity: 0.1, pointerEvents: 'none', filter: 'saturate(0.3) brightness(1.5)' }} />
       <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg, ${c1}, ${c2})` }} />
       <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '45%', background: 'linear-gradient(0deg, rgba(6,6,8,0.95) 0%, transparent 100%)' }} />
+
+      {/* Label type de saison — haut-centre, flottant au-dessus des logos */}
+      {match.typeSaisonNum && (
+        <div style={{ position: 'absolute', top: 6, left: 0, right: 0, display: 'flex', justifyContent: 'center', zIndex: 10, pointerEvents: 'none' }}>
+          <span style={{
+            fontFamily: 'var(--font-display)', fontSize: 8, fontWeight: 700,
+            letterSpacing: '0.14em', color: 'rgba(255,255,255,0.28)',
+            textTransform: 'uppercase',
+          }}>
+            {match.typeSaisonNum === 1 ? 'Pré-saison'
+              : match.typeSaisonNum === 2 ? 'Saison régulière'
+              : match.typeSaisonNum === 3 ? 'Playoffs'
+              : null}
+          </span>
+        </div>
+      )}
 
       <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column' }}>
         {/* Logos + score */}
@@ -282,29 +287,11 @@ function GroupeJour({ jour, matchs, pronos, onProno, userId, refEl }) {
   const aujd = estAujourdhui(jour)
   return (
     <div ref={refEl} style={{ flexShrink: 0 }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6, paddingLeft: 4, marginBottom: 8, flexWrap: 'wrap' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          {aujd && <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--accent)', boxShadow: '0 0 6px var(--accent)', display: 'inline-block' }} />}
-          <span style={{ fontFamily: 'var(--font-display)', fontSize: 10, fontWeight: 700, color: aujd ? 'var(--accent)' : 'var(--text-3)', letterSpacing: '0.16em' }}>
-            {aujd ? "AUJOURD'HUI" : formaterJourLong(jour)}
-          </span>
-        </div>
-        {/* Tags du jour — déduits des matchs */}
-        <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-          {[...new Set(matchs.map(m => m.tag).filter(t => t && TAG_BANDE[t] && t !== 'regular'))].map(tag => (
-            <span key={tag} style={{
-              fontSize: 8, fontWeight: 700, letterSpacing: '0.06em',
-              color: TAG_BANDE[tag].couleur,
-              background: TAG_BANDE[tag].couleur + '22',
-              borderWidth: 1, borderStyle: 'solid', borderColor: TAG_BANDE[tag].couleur + '44',
-              borderRadius: 3, padding: '1px 5px',
-              textTransform: 'uppercase',
-            }}>
-              {/* Headline si spécifique (NBA Cup - QF), sinon label générique */}
-              {matchs.find(m => m.tag === tag && m.headline && !['preseason','regular','playoffs','finals','playin'].includes(tag))?.headline || TAG_BANDE[tag].label}
-            </span>
-          ))}
-        </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, paddingLeft: 4, marginBottom: 8 }}>
+        {aujd && <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--accent)', boxShadow: '0 0 6px var(--accent)', display: 'inline-block' }} />}
+        <span style={{ fontFamily: 'var(--font-display)', fontSize: 10, fontWeight: 700, color: aujd ? 'var(--accent)' : 'var(--text-3)', letterSpacing: '0.16em' }}>
+          {aujd ? "AUJOURD'HUI" : formaterJourLong(jour)}
+        </span>
       </div>
       <div style={{ display: 'flex', gap: 8 }}>
         {matchs.map(match => (
@@ -325,6 +312,25 @@ function BandeMatchs({ matchs, userId, onProno, onBadge, equipeFiltre, onFiltreC
   const [pronos, setPronos] = useState({})
   const scrollRef      = useRef(null)
   const cibleScrollRef = useRef(null)
+  const [hovered, setHovered]       = useState(false)
+  const [peutGauche, setPeutGauche] = useState(false)
+  const [peutDroite, setPeutDroite] = useState(true)
+
+  const mettreAJourFleches = () => {
+    const c = scrollRef.current
+    if (!c) return
+    setPeutGauche(c.scrollLeft > 10)
+    setPeutDroite(c.scrollLeft < c.scrollWidth - c.clientWidth - 10)
+  }
+
+  const scrollerGauche = () => {
+    scrollRef.current?.scrollBy({ left: -400, behavior: 'smooth' })
+    setTimeout(mettreAJourFleches, 350)
+  }
+  const scrollerDroite = () => {
+    scrollRef.current?.scrollBy({ left: 400, behavior: 'smooth' })
+    setTimeout(mettreAJourFleches, 350)
+  }
 
   useEffect(() => {
     const charger = async () => {
@@ -353,7 +359,12 @@ function BandeMatchs({ matchs, userId, onProno, onBadge, equipeFiltre, onFiltreC
     if (!cibleScrollRef.current || !scrollRef.current) return
     const container = scrollRef.current
     const el = cibleScrollRef.current
-    setTimeout(() => { container.scrollLeft = Math.max(0, el.offsetLeft - 16) }, 100)
+    // Centrer le groupe cible dans le container (fix desktop)
+    setTimeout(() => {
+      const centre = el.offsetLeft - (container.clientWidth / 2) + (el.offsetWidth / 2)
+      container.scrollLeft = Math.max(0, centre)
+      mettreAJourFleches()
+    }, 100)
   }, [matchs])
 
   if (!matchs.length) return null
@@ -363,6 +374,7 @@ function BandeMatchs({ matchs, userId, onProno, onBadge, equipeFiltre, onFiltreC
     : matchs
 
   const groupes = grouperParJour(matchsFiltres)
+  console.log('matchs tags:', matchsFiltres.map(m => ({ id: m.espn_id, tag: m.tag, headline: m.headline, date: m.date?.slice(0,10) })))
   const aujourdhui = new Date().toISOString().slice(0, 10)
   // Chercher le premier jour avec un match à venir (pas terminé, pas en cours)
   const jourAvecProno = groupes.find(([j, ms]) => 
@@ -376,22 +388,51 @@ function BandeMatchs({ matchs, userId, onProno, onBadge, equipeFiltre, onFiltreC
     </div>
   )
 
+  const styleFleche = (visible) => ({
+    position: 'absolute', top: '50%', transform: 'translateY(-50%)',
+    zIndex: 10, width: 36, height: 36,
+    background: 'rgba(13,13,18,0.85)', border: '1px solid var(--border)',
+    borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+    cursor: 'pointer', fontSize: 18, color: 'var(--text-1)',
+    opacity: visible ? 1 : 0,
+    pointerEvents: visible ? 'auto' : 'none',
+    transition: 'opacity 0.2s',
+    userSelect: 'none',
+  })
+
   return (
-    <div ref={scrollRef} style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', paddingTop: 10, paddingBottom: 16 }}>
+    <div
+      style={{ position: 'relative' }}
+      onMouseEnter={() => { setHovered(true); mettreAJourFleches() }}
+      onMouseLeave={() => setHovered(false)}
+    >
       <style>{`@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }`}</style>
-      <div style={{ display: 'flex', flexDirection: 'row', gap: 20, paddingLeft: 16, paddingRight: 16, width: 'max-content', alignItems: 'flex-start' }}>
-        {groupes.map(([jour, matchsJour]) => (
-          <GroupeJour
-            key={jour}
-            jour={jour}
-            matchs={matchsJour}
-            pronos={pronos}
-            onProno={onProno}
-            userId={userId}
-            refEl={jour === jourCible ? cibleScrollRef : null}
-          />
-        ))}
+
+      {/* Flèche gauche */}
+      <div style={{ ...styleFleche(hovered && peutGauche), left: 6 }} onClick={scrollerGauche}>‹</div>
+
+      <div
+        ref={scrollRef}
+        onScroll={mettreAJourFleches}
+        style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', paddingTop: 10, paddingBottom: 16 }}
+      >
+        <div style={{ display: 'flex', flexDirection: 'row', gap: 20, paddingLeft: 16, paddingRight: 16, width: 'max-content', alignItems: 'flex-start' }}>
+          {groupes.map(([jour, matchsJour]) => (
+            <GroupeJour
+              key={jour}
+              jour={jour}
+              matchs={matchsJour}
+              pronos={pronos}
+              onProno={onProno}
+              userId={userId}
+              refEl={jour === jourCible ? cibleScrollRef : null}
+            />
+          ))}
+        </div>
       </div>
+
+      {/* Flèche droite */}
+      <div style={{ ...styleFleche(hovered && peutDroite), right: 6 }} onClick={scrollerDroite}>›</div>
     </div>
   )
 }
