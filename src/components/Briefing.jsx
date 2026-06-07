@@ -93,9 +93,35 @@ async function genererMessages(userId, nbPronosAttente, matchs = []) {
   // ── Missions en cours proches de la complétion (>= 50%) ──
   const { data: missionsEnCours } = await supabase
     .from('missions_utilisateurs')
-    .select('progression, missions(id, titre, condition_valeur)')
+    .select('progression, missions(id, slug, titre, condition_type, condition_valeur)')
     .eq('user_id', userId)
     .eq('completee', false)
+
+  const libelleMissionProche = (slug, titre, restant) => {
+    const s = restant > 1 ? 's' : ''
+    switch (slug) {
+      case 'connexion_5j':
+        return `Plus que ${restant} jour${s} de connexion pour décrocher la mission "${titre}" !`
+      case 'connexion_10j':
+        return `Encore ${restant} jour${s} de suite pour valider la mission "${titre}" !`
+      case 'connexion_30j':
+        return `Il te manque ${restant} jour${s} de connexion pour terminer la mission "${titre}" !`
+      case 'serie_3_corrects':
+        return `Plus que ${restant} prono${s} correct${s} d'affilée pour valider la mission "${titre}" !`
+      case 'serie_5_corrects':
+        return `Encore ${restant} prono${s} correct${s} d'affilée pour décrocher la mission "${titre}" !`
+      case 'fourchettes_3_semaine':
+        return `Il te manque ${restant} fourchette${s} à poser pour compléter la mission "${titre}" !`
+      case 'fourchettes_2_correctes':
+        return `Plus qu'${restant} fourchette${s} correcte${s} pour valider la mission "${titre}" !`
+      case 'connexion_5j_semaine':
+        return `Encore ${restant} jour${s} connecté cette semaine pour terminer la mission "${titre}" !`
+      case 'pronos_5_semaine':
+        return `Plus que ${restant} prono${s} à poser cette semaine pour décrocher la mission "${titre}" !`
+      default:
+        return `Plus que ${restant} étape${s} pour terminer la mission "${titre}" !`
+    }
+  }
 
   for (const mu of (missionsEnCours || [])) {
     const m = mu.missions
@@ -106,7 +132,7 @@ async function genererMessages(userId, nbPronosAttente, matchs = []) {
       messages.push({
         id: `mission_proche_${m.id}`,
         icone: '⚡',
-        texte: `"${m.titre}" — encore ${restant} pour compléter !`,
+        texte: libelleMissionProche(m.slug, m.titre, restant),
         couleur: 'var(--accent)',
       })
     }
@@ -357,7 +383,14 @@ export default function Briefing({ userId, nbPronosAttente = 0, matchs = [] }) {
 
   if (chargement) return null
 
-  const visibles = messages.filter(m => !dismisses[m.id])
+  // Dédupliquer par texte — évite les doublons si une mission génère plusieurs entrées
+  const texteVus = new Set()
+  const visibles = messages.filter(m => {
+    if (dismisses[m.id]) return false
+    if (texteVus.has(m.texte)) return false
+    texteVus.add(m.texte)
+    return true
+  })
   if (!visibles.length) return null
 
   const liste = [...visibles, ...visibles, ...visibles, ...visibles]
