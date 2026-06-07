@@ -855,28 +855,31 @@ function MesPronos() {
                       const ecartTotal = l.ecartCorrects + l.ecartIncorrects
                       return (
                         <div key={l.id} style={{ padding: '14px 16px', background: 'var(--bg-2)', borderLeft: '3px solid var(--orange)' }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-                            <span style={{ fontSize: 10, color: 'var(--text-3)', fontWeight: 700, letterSpacing: '0.06em' }}>PRONOS MATCH</span>
-                            <div style={{ display: 'flex', alignItems: 'baseline', gap: 14 }}>
-                              <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 22, color: 'var(--text-1)' }}>{l.corrects + l.incorrects}</span>
-                              <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 22, color: 'var(--success)' }}>{l.corrects}<span style={{ fontSize: 12 }}>✓</span></span>
-                              <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 22, color: 'var(--danger)' }}>{l.incorrects}<span style={{ fontSize: 12 }}>✗</span></span>
-                              {(l.corrects + l.incorrects) > 0 && <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 22, color: 'var(--accent)' }}>{taux(l.corrects, l.incorrects)}%</span>}
-                              <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 22, color: 'var(--text-2)' }}>{ptsPronos}<span style={{ fontSize: 11, color: 'var(--text-3)', marginLeft: 2 }}>pts</span></span>
-                            </div>
-                          </div>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                            <span style={{ fontSize: 10, color: 'var(--text-3)', fontWeight: 700, letterSpacing: '0.06em' }}>FOURCHETTE ÉCART</span>
-                            {ecartTotal > 0
-                              ? <div style={{ display: 'flex', alignItems: 'baseline', gap: 14 }}>
-                                  <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 22, color: 'var(--text-1)' }}>{ecartTotal}</span>
-                                  <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 22, color: 'var(--success)' }}>{l.ecartCorrects}<span style={{ fontSize: 12 }}>✓</span></span>
-                                  <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 22, color: 'var(--danger)' }}>{l.ecartIncorrects}<span style={{ fontSize: 12 }}>✗</span></span>
-                                  <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 22, color: 'var(--gold)' }}>{taux(l.ecartCorrects, l.ecartIncorrects)}%</span>
-                                  <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 22, color: 'var(--text-2)' }}>{ptsEcart}<span style={{ fontSize: 11, color: 'var(--text-3)', marginLeft: 2 }}>pts</span></span>
-                                </div>
-                              : <span style={{ fontSize: 12, color: 'var(--text-3)' }}>—</span>
-                            }
+                          {/* Grille tableau alignée */}
+                          <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr 1fr 1fr 1fr 1fr', gap: '6px 14px', alignItems: 'baseline', marginBottom: 12 }}>
+                            {/* Header labels */}
+                            <div />
+                            <span style={{ fontSize: 10, color: 'var(--text-3)', fontWeight: 700, textAlign: 'center' }}>Total</span>
+                            <span style={{ fontSize: 10, color: 'var(--text-3)', fontWeight: 700, textAlign: 'center' }}>✓</span>
+                            <span style={{ fontSize: 10, color: 'var(--text-3)', fontWeight: 700, textAlign: 'center' }}>✗</span>
+                            <span style={{ fontSize: 10, color: 'var(--text-3)', fontWeight: 700, textAlign: 'center' }}>%</span>
+                            <span style={{ fontSize: 10, color: 'var(--text-3)', fontWeight: 700, textAlign: 'center' }}>Pts</span>
+                            {/* Ligne PRONOS MATCH */}
+                            <span style={{ fontSize: 10, color: 'var(--text-3)', fontWeight: 700, letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>PRONOS MATCH</span>
+                            <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 20, color: 'var(--text-1)', textAlign: 'center' }}>{l.corrects + l.incorrects}</span>
+                            <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 20, color: 'var(--success)', textAlign: 'center' }}>{l.corrects}</span>
+                            <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 20, color: 'var(--danger)', textAlign: 'center' }}>{l.incorrects}</span>
+                            <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 20, color: 'var(--accent)', textAlign: 'center' }}>{(l.corrects + l.incorrects) > 0 ? taux(l.corrects, l.incorrects) : 0}%</span>
+                            <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 20, color: 'var(--text-2)', textAlign: 'center' }}>{ptsPronos}</span>
+                            {/* Ligne FOURCHETTE ÉCART */}
+                            <span style={{ fontSize: 10, color: 'var(--text-3)', fontWeight: 700, letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>FOURCHETTE ÉCART</span>
+                            {ecartTotal > 0 ? <>
+                              <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 20, color: 'var(--text-1)', textAlign: 'center' }}>{ecartTotal}</span>
+                              <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 20, color: 'var(--success)', textAlign: 'center' }}>{l.ecartCorrects}</span>
+                              <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 20, color: 'var(--danger)', textAlign: 'center' }}>{l.ecartIncorrects}</span>
+                              <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 20, color: 'var(--gold)', textAlign: 'center' }}>{taux(l.ecartCorrects, l.ecartIncorrects)}%</span>
+                              <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 20, color: 'var(--text-2)', textAlign: 'center' }}>{ptsEcart}</span>
+                            </> : <span style={{ fontSize: 12, color: 'var(--text-3)', gridColumn: 'span 5' }}>—</span>}
                           </div>
                           <div style={{ borderTop: '1px solid var(--border)', paddingTop: 10, display: 'flex', justifyContent: 'flex-end', alignItems: 'baseline', gap: 6 }}>
                             <span style={{ fontSize: 10, color: 'var(--text-3)', fontWeight: 700, letterSpacing: '0.05em' }}>TOTAL</span>
