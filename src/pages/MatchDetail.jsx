@@ -127,25 +127,48 @@ const BlocCotes = ({ cotes, prediction, ext, dom, couleurExt, couleurDom, termin
     </div>
   )
 
-  // Carte bookmaker individuelle
+  // Carte bookmaker individuelle — camembert SVG
   const CarteBook = ({ label, pctExt, pctDom }) => {
     if (!pctExt || !pctDom) return (
-      <div style={{ background: 'var(--bg-2)', padding: '8px 10px' }}>
-        <div style={{ fontSize: 10, color: 'var(--text-3)', fontWeight: 700, marginBottom: 4 }}>{label}</div>
-        <div style={{ fontSize: 11, color: 'var(--text-3)', fontStyle: 'italic' }}>Non disponible</div>
+      <div style={{ background: 'var(--bg-2)', padding: '8px 10px', display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--bg-1)', flexShrink: 0 }} />
+        <div>
+          <div style={{ fontSize: 10, color: 'var(--text-3)', fontWeight: 700, marginBottom: 2 }}>{label}</div>
+          <div style={{ fontSize: 10, color: 'var(--text-3)', fontStyle: 'italic' }}>N/D</div>
+        </div>
       </div>
     )
+
+    // Calcul arc SVG pour camembert
+    const r = 14, cx = 16, cy = 16
+    const angle = (pctExt / 100) * 2 * Math.PI
+    const x1 = cx + r * Math.sin(0)
+    const y1 = cy - r * Math.cos(0)
+    const x2 = cx + r * Math.sin(angle)
+    const y2 = cy - r * Math.cos(angle)
+    const largeArc = pctExt > 50 ? 1 : 0
+
     return (
-      <div style={{ background: 'var(--bg-2)', padding: '8px 10px' }}>
-        <div style={{ fontSize: 10, color: 'var(--text-3)', fontWeight: 700, marginBottom: 5 }}>{label}</div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-          <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 13, color: cExt }}>{pctExt}%</span>
-          <span style={{ fontSize: 10, color: 'var(--text-3)', flex: 1, textAlign: 'center' }}>–</span>
-          <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 13, color: cDom }}>{pctDom}%</span>
-        </div>
-        <div style={{ height: 3, background: 'var(--bg-1)', display: 'flex', overflow: 'hidden' }}>
-          <div style={{ width: `${pctExt}%`, background: cExt, opacity: 0.6 }} />
-          <div style={{ width: `${pctDom}%`, background: cDom, opacity: 0.6 }} />
+      <div style={{ background: 'var(--bg-2)', padding: '8px 10px', display: 'flex', alignItems: 'center', gap: 8 }}>
+        <svg width="32" height="32" viewBox="0 0 32 32" style={{ flexShrink: 0 }}>
+          {/* Fond domicile */}
+          <circle cx={cx} cy={cy} r={r} fill={cDom} opacity={0.7} />
+          {/* Part extérieur */}
+          <path
+            d={`M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2} Z`}
+            fill={cExt}
+            opacity={0.85}
+          />
+          {/* Séparateur central */}
+          <circle cx={cx} cy={cy} r={4} fill="var(--bg-2)" />
+        </svg>
+        <div style={{ minWidth: 0 }}>
+          <div style={{ fontSize: 10, color: 'var(--text-3)', fontWeight: 700, marginBottom: 3 }}>{label}</div>
+          <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+            <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 12, color: cExt }}>{pctExt}%</span>
+            <span style={{ fontSize: 9, color: 'var(--text-3)' }}>–</span>
+            <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 12, color: cDom }}>{pctDom}%</span>
+          </div>
         </div>
       </div>
     )
