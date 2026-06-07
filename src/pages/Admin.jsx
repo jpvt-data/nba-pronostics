@@ -1105,7 +1105,10 @@ function OngletDashboard() {
 
   if (charg) return <p style={{ padding: 24, color: 'var(--text-3)', fontSize: 13 }}>Chargement dashboard…</p>
 
-  const { events, profils, pronos } = data
+  const { events: eventsRaw, profils, pronos } = data
+
+  // Exclure l'admin des stats tracking (conservé uniquement pour Historique XP)
+  const events = eventsRaw.filter(e => e.user_id !== ADMIN_ID)
 
   // Calculs
   const sessions       = events.filter(e => e.event_type === 'session_start')
