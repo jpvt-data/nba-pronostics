@@ -312,6 +312,25 @@ function BandeMatchs({ matchs, userId, onProno, onBadge, equipeFiltre, onFiltreC
   const [pronos, setPronos] = useState({})
   const scrollRef      = useRef(null)
   const cibleScrollRef = useRef(null)
+  const [hovered, setHovered]       = useState(false)
+  const [peutGauche, setPeutGauche] = useState(false)
+  const [peutDroite, setPeutDroite] = useState(true)
+
+  const mettreAJourFleches = () => {
+    const c = scrollRef.current
+    if (!c) return
+    setPeutGauche(c.scrollLeft > 10)
+    setPeutDroite(c.scrollLeft < c.scrollWidth - c.clientWidth - 10)
+  }
+
+  const scrollerGauche = () => {
+    scrollRef.current?.scrollBy({ left: -400, behavior: 'smooth' })
+    setTimeout(mettreAJourFleches, 350)
+  }
+  const scrollerDroite = () => {
+    scrollRef.current?.scrollBy({ left: 400, behavior: 'smooth' })
+    setTimeout(mettreAJourFleches, 350)
+  }
 
   useEffect(() => {
     const charger = async () => {
@@ -340,7 +359,12 @@ function BandeMatchs({ matchs, userId, onProno, onBadge, equipeFiltre, onFiltreC
     if (!cibleScrollRef.current || !scrollRef.current) return
     const container = scrollRef.current
     const el = cibleScrollRef.current
-    setTimeout(() => { container.scrollLeft = Math.max(0, el.offsetLeft - 16) }, 100)
+    // Centrer le groupe cible dans le container (fix desktop)
+    setTimeout(() => {
+      const centre = el.offsetLeft - (container.clientWidth / 2) + (el.offsetWidth / 2)
+      container.scrollLeft = Math.max(0, centre)
+      mettreAJourFleches()
+    }, 100)
   }, [matchs])
 
   if (!matchs.length) return null
@@ -364,22 +388,51 @@ function BandeMatchs({ matchs, userId, onProno, onBadge, equipeFiltre, onFiltreC
     </div>
   )
 
+  const styleFleche = (visible) => ({
+    position: 'absolute', top: '50%', transform: 'translateY(-50%)',
+    zIndex: 10, width: 36, height: 36,
+    background: 'rgba(13,13,18,0.85)', border: '1px solid var(--border)',
+    borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+    cursor: 'pointer', fontSize: 18, color: 'var(--text-1)',
+    opacity: visible ? 1 : 0,
+    pointerEvents: visible ? 'auto' : 'none',
+    transition: 'opacity 0.2s',
+    userSelect: 'none',
+  })
+
   return (
-    <div ref={scrollRef} style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', paddingTop: 10, paddingBottom: 16 }}>
+    <div
+      style={{ position: 'relative' }}
+      onMouseEnter={() => { setHovered(true); mettreAJourFleches() }}
+      onMouseLeave={() => setHovered(false)}
+    >
       <style>{`@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }`}</style>
-      <div style={{ display: 'flex', flexDirection: 'row', gap: 20, paddingLeft: 16, paddingRight: 16, width: 'max-content', alignItems: 'flex-start' }}>
-        {groupes.map(([jour, matchsJour]) => (
-          <GroupeJour
-            key={jour}
-            jour={jour}
-            matchs={matchsJour}
-            pronos={pronos}
-            onProno={onProno}
-            userId={userId}
-            refEl={jour === jourCible ? cibleScrollRef : null}
-          />
-        ))}
+
+      {/* Flèche gauche */}
+      <div style={{ ...styleFleche(hovered && peutGauche), left: 6 }} onClick={scrollerGauche}>‹</div>
+
+      <div
+        ref={scrollRef}
+        onScroll={mettreAJourFleches}
+        style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', paddingTop: 10, paddingBottom: 16 }}
+      >
+        <div style={{ display: 'flex', flexDirection: 'row', gap: 20, paddingLeft: 16, paddingRight: 16, width: 'max-content', alignItems: 'flex-start' }}>
+          {groupes.map(([jour, matchsJour]) => (
+            <GroupeJour
+              key={jour}
+              jour={jour}
+              matchs={matchsJour}
+              pronos={pronos}
+              onProno={onProno}
+              userId={userId}
+              refEl={jour === jourCible ? cibleScrollRef : null}
+            />
+          ))}
+        </div>
       </div>
+
+      {/* Flèche droite */}
+      <div style={{ ...styleFleche(hovered && peutDroite), right: 6 }} onClick={scrollerDroite}>›</div>
     </div>
   )
 }
