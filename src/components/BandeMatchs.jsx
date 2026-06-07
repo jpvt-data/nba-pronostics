@@ -150,7 +150,7 @@ function FiltreEquipe({ equipeFiltre, onSelect }) {
 function CarteMatch({ match, pronoData, onProno, userId }) {
   const navigate = useNavigate()
   const { noSpoil } = useNoSpoil()
-  // pronoData = { equipe, resultat } ou null
+  // pronoData = { equipe, resultat } ou null.
   const [pronoLocal, setPronoLocal] = useState(pronoData?.equipe || null)
   const [loading, setLoading] = useState(false)
 
