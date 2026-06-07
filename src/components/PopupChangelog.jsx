@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate, useLocation, Link } from 'react-router-dom'
 import { VERSION_COURANTE } from '../data/changelog'
 
 const CLE_STORAGE = `popup_vu_${VERSION_COURANTE}`
@@ -14,7 +14,8 @@ function PopupChangelog({ forceOuvert = false, onFermer }) {
   const [mdp, setMdp]           = useState('')
   const [erreur, setErreur]     = useState(null)
   const [charg, setCharg]       = useState(false)
-  const navigate                = useNavigate()
+  const navigate = useNavigate()
+  const location  = useLocation()
 
   useEffect(() => {
     setVisible(true)
@@ -48,7 +49,8 @@ function PopupChangelog({ forceOuvert = false, onFermer }) {
   const fermer = () => {
     setVisible(false)
     onFermer?.()
-    if (connecte) navigate('/accueil')
+    if (document.activeElement) document.activeElement.blur()
+    if (connecte && location.pathname !== '/accueil') navigate('/accueil')
   }
 
   const seConnecter = async () => {
