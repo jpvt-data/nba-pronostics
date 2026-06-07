@@ -312,6 +312,7 @@ function BandeMatchs({ matchs, userId, onProno, onBadge, equipeFiltre, onFiltreC
   const [pronos, setPronos] = useState({})
   const scrollRef      = useRef(null)
   const cibleScrollRef = useRef(null)
+  const groupesRefsArr = useRef([])  // refs sur chaque GroupeJour
   const [hovered, setHovered]       = useState(false)
   const [peutGauche, setPeutGauche] = useState(false)
   const [peutDroite, setPeutDroite] = useState(true)
@@ -323,13 +324,36 @@ function BandeMatchs({ matchs, userId, onProno, onBadge, equipeFiltre, onFiltreC
     setPeutDroite(c.scrollLeft < c.scrollWidth - c.clientWidth - 10)
   }
 
-  const scrollerGauche = () => {
-    scrollRef.current?.scrollBy({ left: -400, behavior: 'smooth' })
+  // Trouver le groupe le plus centré à l'écran actuellement
+  const indexGroupeCourant = () => {
+    const c = scrollRef.current
+    if (!c) return 0
+    const centreCourant = c.scrollLeft + c.clientWidth / 2
+    let plusProche = 0, distMin = Infinity
+    groupesRefsArr.current.forEach((el, i) => {
+      if (!el) return
+      const dist = Math.abs(el.offsetLeft + el.offsetWidth / 2 - centreCourant)
+      if (dist < distMin) { distMin = dist; plusProche = i }
+    })
+    return plusProche
+  }
+
+  const scrollerVersGroupe = (idx) => {
+    const c = scrollRef.current
+    const el = groupesRefsArr.current[idx]
+    if (!c || !el) return
+    const centre = el.offsetLeft - (c.clientWidth / 2) + (el.offsetWidth / 2)
+    c.scrollTo({ left: Math.max(0, centre), behavior: 'smooth' })
     setTimeout(mettreAJourFleches, 350)
   }
+
+  const scrollerGauche = () => {
+    const idx = indexGroupeCourant()
+    scrollerVersGroupe(Math.max(0, idx - 1))
+  }
   const scrollerDroite = () => {
-    scrollRef.current?.scrollBy({ left: 400, behavior: 'smooth' })
-    setTimeout(mettreAJourFleches, 350)
+    const idx = indexGroupeCourant()
+    scrollerVersGroupe(Math.min(groupesRefsArr.current.length - 1, idx + 1))
   }
 
   useEffect(() => {
