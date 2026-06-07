@@ -391,9 +391,10 @@ function BandeMatchs({ matchs, userId, onProno, onBadge, equipeFiltre, onFiltreC
   const styleFleche = (visible) => ({
     position: 'absolute', top: '50%', transform: 'translateY(-50%)',
     zIndex: 10, width: 36, height: 36,
-    background: 'rgba(13,13,18,0.85)', border: '1px solid var(--border)',
+    background: '#f0ede8', border: 'none',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.5)',
     borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-    cursor: 'pointer', fontSize: 18, color: 'var(--text-1)',
+    cursor: 'pointer', fontSize: 20, color: '#1a1a2e',
     opacity: visible ? 1 : 0,
     pointerEvents: visible ? 'auto' : 'none',
     transition: 'opacity 0.2s',
