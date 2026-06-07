@@ -10,6 +10,32 @@ import Navigation from '../components/Navigation'
 import { ChevronLeft } from 'lucide-react'
 import { useNoSpoil } from '../context/NoSpoilContext'
 
+const ODDS_API_KEY = import.meta.env.VITE_ODDS_API_KEY
+const ODDS_API_URL = 'https://api.the-odds-api.com/v4/sports/basketball_nba/odds'
+
+// Bookmakers FR affichés section 2
+const BOOKS_FR = ['betclic_fr', 'unibet_fr', 'winamax_fr', 'pmu_fr']
+const BOOKS_FR_LABELS = { betclic_fr: 'Betclic', unibet_fr: 'Unibet', winamax_fr: 'Winamax', pmu_fr: 'PMU' }
+
+// Bookmakers US/référence affichés section 3
+const BOOKS_US = ['draftkings', 'fanduel', 'espnbet', 'pinnacle']
+const BOOKS_US_LABELS = { draftkings: 'DraftKings', fanduel: 'FanDuel', espnbet: 'ESPN BET', pinnacle: 'Pinnacle ★' }
+
+// Convertit une cote décimale en probabilité implicite normalisée (%)
+const coteEnPct = (coteEq1, coteEq2) => {
+  if (!coteEq1 || !coteEq2) return null
+  const p1 = 1 / coteEq1
+  const p2 = 1 / coteEq2
+  const total = p1 + p2
+  return { pct1: Math.round(p1 / total * 100), pct2: Math.round(p2 / total * 100) }
+}
+
+// Convertit moneyline US en cote décimale
+const mlEnDecimal = (ml) => {
+  if (!ml) return null
+  return ml > 0 ? parseFloat((ml / 100 + 1).toFixed(2)) : parseFloat((100 / Math.abs(ml) + 1).toFixed(2))
+}
+
 const estVerrouille = (dateStr, statut) => {
   if (statut === 'STATUS_FINAL' || statut === 'STATUS_IN_PROGRESS') return true
   return new Date() >= new Date(dateStr)
@@ -79,6 +105,251 @@ const BarreStat = ({ vE, vD, label, couleurExt, couleurDom }) => {
   )
 }
 
+// ─── Composant BlocCotes ─────────────────────────────────────────────────────
+const BlocCotes = ({ cotes, prediction, ext, dom, couleurExt, couleurDom, termine }) => {
+  const [modalVisible, setModalVisible] = useState(false)
+
+  const cExt = couleurExt !== 'var(--accent)' ? couleurExt : 'var(--accent)'
+  const cDom = couleurDom !== 'var(--accent)' ? couleurDom : 'var(--orange)'
+
+  // Barre de probabilité
+  const BarreProb = ({ pctExt, pctDom, opacite = 1, label }) => (
+    <div style={{ marginBottom: 10 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+        <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 13, color: cExt, opacity: opacite }}>{pctExt}%</span>
+        <span style={{ fontSize: 10, color: 'var(--text-3)' }}>{label}</span>
+        <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 13, color: cDom, opacity: opacite }}>{pctDom}%</span>
+      </div>
+      <div style={{ height: 6, background: 'var(--bg-2)', display: 'flex', overflow: 'hidden' }}>
+        <div style={{ width: `${pctExt}%`, background: cExt, opacity: opacite, transition: 'width 0.5s ease' }} />
+        <div style={{ width: `${pctDom}%`, background: cDom, opacity: opacite, transition: 'width 0.5s ease' }} />
+      </div>
+    </div>
+  )
+
+  // Carte bookmaker individuelle
+  const CarteBook = ({ label, pctExt, pctDom }) => {
+    if (!pctExt || !pctDom) return (
+      <div style={{ background: 'var(--bg-2)', padding: '8px 10px' }}>
+        <div style={{ fontSize: 10, color: 'var(--text-3)', fontWeight: 700, marginBottom: 4 }}>{label}</div>
+        <div style={{ fontSize: 11, color: 'var(--text-3)', fontStyle: 'italic' }}>Non disponible</div>
+      </div>
+    )
+    return (
+      <div style={{ background: 'var(--bg-2)', padding: '8px 10px' }}>
+        <div style={{ fontSize: 10, color: 'var(--text-3)', fontWeight: 700, marginBottom: 5 }}>{label}</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+          <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 13, color: cExt }}>{pctExt}%</span>
+          <span style={{ fontSize: 10, color: 'var(--text-3)', flex: 1, textAlign: 'center' }}>–</span>
+          <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 13, color: cDom }}>{pctDom}%</span>
+        </div>
+        <div style={{ height: 3, background: 'var(--bg-1)', display: 'flex', overflow: 'hidden' }}>
+          <div style={{ width: `${pctExt}%`, background: cExt, opacity: 0.6 }} />
+          <div style={{ width: `${pctDom}%`, background: cDom, opacity: 0.6 }} />
+        </div>
+      </div>
+    )
+  }
+
+  // Extraction probabilités consensus (moyenne normalisée de tous les books h2h)
+  const consensusPct = (() => {
+    if (!cotes?.books || cotes.books.length === 0) return null
+    let sumExt = 0, sumDom = 0, count = 0
+    cotes.books.forEach(b => {
+      const h2h = b.markets?.find(m => m.key === 'h2h')
+      if (!h2h) return
+      const extOdds = h2h.outcomes?.find(o => o.name === cotes.nomExt)?.price
+      const domOdds = h2h.outcomes?.find(o => o.name === cotes.nomDom)?.price
+      const p = coteEnPct(extOdds, domOdds)
+      if (p) { sumExt += p.pct1; sumDom += p.pct2; count++ }
+    })
+    if (count === 0) return null
+    return { pctExt: Math.round(sumExt / count), pctDom: Math.round(sumDom / count) }
+  })()
+
+  // Extraction probabilités par bookmaker
+  const probsParBook = (bookKey) => {
+    if (!cotes?.books) return null
+    const book = cotes.books.find(b => b.key === bookKey)
+    if (!book) return null
+    const h2h = book.markets?.find(m => m.key === 'h2h')
+    if (!h2h) return null
+    const extOdds = h2h.outcomes?.find(o => o.name === cotes.nomExt)?.price
+    const domOdds = h2h.outcomes?.find(o => o.name === cotes.nomDom)?.price
+    return coteEnPct(extOdds, domOdds)
+  }
+
+  // Données Pinnacle pour section 4
+  const pinnacle = cotes?.books?.find(b => b.key === 'pinnacle')
+  const spreadPinnacle = (() => {
+    const s = pinnacle?.markets?.find(m => m.key === 'spreads')
+    if (!s) return null
+    const extSpread = s.outcomes?.find(o => o.name === cotes.nomExt)
+    if (!extSpread?.point) return null
+    const val = extSpread.point
+    const favori = val < 0 ? ext.trigramme : dom.trigramme
+    return { valeur: Math.abs(val), favori }
+  })()
+  const totalPinnacle = (() => {
+    const t = pinnacle?.markets?.find(m => m.key === 'totals')
+    if (!t) return null
+    return t.outcomes?.find(o => o.name === 'Over')?.point ?? null
+  })()
+
+  // Données ESPN pickcenter pour section 4 (fallback si pas Pinnacle)
+  const spreadEspn = cotes?.espnSpread
+  const totalEspn = cotes?.espnTotal
+
+  const spreadAffiche = spreadPinnacle ?? spreadEspn
+  const totalAffiche = totalPinnacle ?? (totalEspn ? Math.round(totalEspn) : null)
+
+  return (
+    <>
+      {/* Modal explicatif */}
+      {modalVisible && (
+        <div
+          onClick={() => setModalVisible(false)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 200, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{ background: 'var(--bg-1)', borderRadius: '12px 12px 0 0', padding: '20px 16px 36px', width: '100%', maxWidth: 480 }}
+          >
+            <div style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 20, color: 'var(--text-1)', marginBottom: 16 }}>Comment lire les cotes ?</div>
+            <div style={{ marginBottom: 14 }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-1)', marginBottom: 4 }}>Probabilité de victoire (%)</div>
+              <div style={{ fontSize: 12, color: 'var(--text-2)', lineHeight: 1.6 }}>Calculée depuis les cotes des bookmakers. 56% = le marché pense que cette équipe a 56 chances sur 100 de gagner. Plus c'est proche de 50%, plus le match est ouvert.</div>
+            </div>
+            <div style={{ marginBottom: 14 }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-1)', marginBottom: 4 }}>Écart de points</div>
+              <div style={{ fontSize: 12, color: 'var(--text-2)', lineHeight: 1.6 }}>Le bookmaker de référence (Pinnacle) estime que le favori gagne d'environ X points. Utile pour choisir ta fourchette dans le Bonus Écart.</div>
+            </div>
+            <div style={{ marginBottom: 14 }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-1)', marginBottom: 4 }}>Total points attendus</div>
+              <div style={{ fontSize: 12, color: 'var(--text-2)', lineHeight: 1.6 }}>Nombre total de points cumulés attendus par les deux équipes. En NBA, 216 = match à rythme standard. En dessous = match serré défensivement.</div>
+            </div>
+            <button
+              onClick={() => setModalVisible(false)}
+              style={{ width: '100%', marginTop: 8, padding: '10px', borderWidth: 1, borderStyle: 'solid', borderColor: 'var(--border)', background: 'none', cursor: 'pointer', fontSize: 13, color: 'var(--text-2)' }}
+            >
+              Fermer
+            </button>
+          </div>
+        </div>
+      )}
+
+      <div style={{ background: 'var(--bg-1)', borderLeft: '3px solid var(--accent)' }}>
+
+        {/* Header */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 16px 0' }}>
+          <TitreSection mot1="CONTEXTE" mot2="COTES" />
+          <button
+            onClick={() => setModalVisible(true)}
+            style={{ width: 22, height: 22, borderRadius: '50%', borderWidth: 1, borderStyle: 'solid', borderColor: 'var(--border-2)', background: 'none', cursor: 'pointer', fontSize: 11, color: 'var(--text-3)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+          >
+            ?
+          </button>
+        </div>
+
+        {/* Labels équipes */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0 16px 8px' }}>
+          <span style={{ fontSize: 11, fontWeight: 700, color: cExt, fontFamily: 'var(--font-display)' }}>{ext.trigramme}</span>
+          <span style={{ fontSize: 11, fontWeight: 700, color: cDom, fontFamily: 'var(--font-display)' }}>{dom.trigramme}</span>
+        </div>
+
+        {/* Section 1 — Probabilités de victoire */}
+        <div style={{ padding: '0 16px 14px', borderBottom: '1px solid var(--border)' }}>
+          <div style={{ fontSize: 10, color: 'var(--text-3)', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 10 }}>Probabilités de victoire</div>
+
+          {prediction ? (
+            <BarreProb pctExt={prediction.extPct} pctDom={prediction.domPct} opacite={1} label="Algorithme ESPN" />
+          ) : (
+            <div style={{ fontSize: 11, color: 'var(--text-3)', fontStyle: 'italic', marginBottom: 8 }}>Prédiction ESPN non disponible</div>
+          )}
+
+          {consensusPct ? (
+            <BarreProb pctExt={consensusPct.pctExt} pctDom={consensusPct.pctDom} opacite={0.6} label={`Consensus marché (${cotes.books.length} bookmakers)`} />
+          ) : (
+            <div style={{ fontSize: 11, color: 'var(--text-3)', fontStyle: 'italic' }}>Consensus marché non disponible</div>
+          )}
+        </div>
+
+        {/* Section 2 — Bookmakers FR */}
+        <div style={{ padding: '12px 16px 14px', borderBottom: '1px solid var(--border)' }}>
+          <div style={{ fontSize: 10, color: 'var(--text-3)', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 10 }}>
+            Bookmakers FR
+            {cotes?.books && <span style={{ marginLeft: 6, display: 'inline-block', width: 6, height: 6, borderRadius: '50%', background: 'var(--success)', verticalAlign: 'middle' }} />}
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+            {BOOKS_FR.map(key => {
+              const p = probsParBook(key)
+              return <CarteBook key={key} label={BOOKS_FR_LABELS[key]} pctExt={p?.pct1} pctDom={p?.pct2} />
+            })}
+          </div>
+        </div>
+
+        {/* Section 3 — Bookmakers US / référence */}
+        <div style={{ padding: '12px 16px 14px', borderBottom: '1px solid var(--border)' }}>
+          <div style={{ fontSize: 10, color: 'var(--text-3)', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 10 }}>Bookmakers US / référence</div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+            {BOOKS_US.map(key => {
+              const p = probsParBook(key)
+              return <CarteBook key={key} label={BOOKS_US_LABELS[key]} pctExt={p?.pct1} pctDom={p?.pct2} />
+            })}
+          </div>
+          {/* ESPN pickcenter — toujours dans les US */}
+          {(() => {
+            const espnPct = cotes?.espnPickcenter
+            return espnPct ? (
+              <div style={{ marginTop: 6 }}>
+                <CarteBook label="ESPN BET (pickcenter)" pctExt={espnPct.extPct} pctDom={espnPct.domPct} />
+              </div>
+            ) : null
+          })()}
+        </div>
+
+        {/* Section 4 — Prédictions marché */}
+        <div style={{ padding: '12px 16px 16px' }}>
+          <div style={{ fontSize: 10, color: 'var(--text-3)', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 10 }}>
+            Prédictions marché
+            <span style={{ marginLeft: 6, fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>· Source {spreadPinnacle || totalPinnacle ? 'Pinnacle' : 'ESPN'}</span>
+          </div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <div style={{ flex: 1, background: 'var(--bg-2)', padding: '10px 12px' }}>
+              <div style={{ fontSize: 10, color: 'var(--text-3)', fontWeight: 700, letterSpacing: '0.04em', marginBottom: 6 }}>Écart de points</div>
+              {spreadAffiche ? (
+                <>
+                  <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 20, color: 'var(--text-1)' }}>{spreadAffiche.valeur} pts</div>
+                  <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 3 }}>{spreadAffiche.favori} favori</div>
+                </>
+              ) : (
+                <div style={{ fontSize: 11, color: 'var(--text-3)', fontStyle: 'italic' }}>Non disponible</div>
+              )}
+            </div>
+            <div style={{ flex: 1, background: 'var(--bg-2)', padding: '10px 12px' }}>
+              <div style={{ fontSize: 10, color: 'var(--text-3)', fontWeight: 700, letterSpacing: '0.04em', marginBottom: 6 }}>Total points attendus</div>
+              {totalAffiche ? (
+                <>
+                  <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 20, color: 'var(--text-1)' }}>{totalAffiche} pts</div>
+                  <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 3 }}>Score cumulé des 2 équipes</div>
+                </>
+              ) : (
+                <div style={{ fontSize: 11, color: 'var(--text-3)', fontStyle: 'italic' }}>Non disponible</div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div style={{ padding: '0 16px 12px', textAlign: 'right' }}>
+          <span style={{ fontSize: 10, color: 'var(--text-3)' }}>Source : ESPN · The Odds API — à titre informatif</span>
+        </div>
+
+      </div>
+    </>
+  )
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 function MatchDetail() {
   const { espn_id } = useParams()
   const navigate    = useNavigate()
@@ -91,7 +362,8 @@ function MatchDetail() {
   const [erreur, setErr]            = useState(false)
   const [prediction, setPrediction] = useState(null)
   const [matchDBId, setMatchDBId]   = useState(null)
-  const [ecart, setEcart]           = useState(null) // { fourchette_choisie, fourchette_reelle, correct, points_gagnes }
+  const [ecart, setEcart]           = useState(null)
+  const [cotes, setCotes]           = useState(null) // { books, nomExt, nomDom, espnSpread, espnTotal, espnPickcenter }
 
   useEffect(() => {
     const init = async () => {
@@ -107,7 +379,6 @@ function MatchDetail() {
       const found = tousLesPronos?.find(p => p.matchs?.espn_id === espn_id)
       if (found) { setProno(found.equipe_choisie); setRes(found.resultat) }
 
-      // Charger fourchette écart si match déjà en DB
       const { data: matchDBRow } = await supabase.from('matchs').select('id').eq('espn_id', espn_id).maybeSingle()
       if (matchDBRow) {
         setMatchDBId(matchDBRow.id)
@@ -117,6 +388,7 @@ function MatchDetail() {
       setCharg(false)
 
       if (detail.statut !== 'STATUS_FINAL') {
+        // Prédiction ESPN (endpoint core API)
         try {
           const resPred = await fetch(
             `${BASE_CORE}/events/${espn_id}/competitions/${espn_id}/predictor`
@@ -132,6 +404,72 @@ function MatchDetail() {
             setPrediction({ domPct: Math.round(domVal), extPct: Math.round(extVal), equipePrediite })
           }
         } catch { /* silencieux */ }
+
+        // ESPN summary — pickcenter (spread + total + moneyline US)
+        let espnSpread = null
+        let espnTotal = null
+        let espnPickcenter = null
+        try {
+          const resSummary = await fetch(
+            `https://site.web.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=${espn_id}`
+          ).then(r => r.json())
+          const pc = resSummary?.pickcenter?.[0]
+          if (pc) {
+            // Spread ESPN
+            const spreadLine = pc.pointSpread?.home?.close?.line
+            if (spreadLine) {
+              const val = parseFloat(spreadLine)
+              const favori = val < 0 ? detail.domicile.trigramme : detail.exterieur.trigramme
+              espnSpread = { valeur: Math.abs(val), favori }
+            }
+            // Total ESPN
+            espnTotal = pc.overUnder ?? null
+            // Moneyline ESPN → probabilité
+            const mlDom = pc.homeTeamOdds?.moneyLine
+            const mlExt = pc.awayTeamOdds?.moneyLine
+            if (mlDom && mlExt) {
+              const coteDom = mlEnDecimal(mlDom)
+              const coteExt = mlEnDecimal(mlExt)
+              const p = coteEnPct(coteExt, coteDom)
+              if (p) espnPickcenter = { extPct: p.pct1, domPct: p.pct2 }
+            }
+          }
+        } catch { /* silencieux */ }
+
+        // The Odds API — tous bookmakers
+        try {
+          const resOdds = await fetch(
+            `${ODDS_API_URL}?apiKey=${ODDS_API_KEY}&regions=eu,us&markets=h2h,spreads,totals&oddsFormat=decimal`
+          ).then(r => r.json())
+
+          // Trouver le match ESPN dans la liste The Odds API par nom d'équipe
+          const nomExt = detail.exterieur.nom
+          const nomDom = detail.domicile.nom
+          const matchOdds = resOdds.find(m =>
+            (m.away_team?.includes(detail.exterieur.trigramme) || m.away_team === nomExt) &&
+            (m.home_team?.includes(detail.domicile.trigramme) || m.home_team === nomDom)
+          ) ?? resOdds.find(m =>
+            m.away_team?.toLowerCase().includes(detail.exterieur.trigramme.toLowerCase()) ||
+            m.home_team?.toLowerCase().includes(detail.domicile.trigramme.toLowerCase())
+          )
+
+          if (matchOdds) {
+            setCotes({
+              books: matchOdds.bookmakers,
+              nomExt: matchOdds.away_team,
+              nomDom: matchOdds.home_team,
+              espnSpread,
+              espnTotal,
+              espnPickcenter,
+            })
+          } else {
+            // Pas de match trouvé dans The Odds API — on garde quand même ESPN
+            setCotes({ books: [], nomExt: detail.exterieur.nom, nomDom: detail.domicile.nom, espnSpread, espnTotal, espnPickcenter })
+          }
+        } catch {
+          // Fallback ESPN only
+          setCotes({ books: [], nomExt: detail.exterieur.nom, nomDom: detail.domicile.nom, espnSpread, espnTotal, espnPickcenter })
+        }
       }
     }
     init()
@@ -163,7 +501,6 @@ function MatchDetail() {
     if (!matchDB) return
     setMatchDBId(matchDB.id)
 
-    // Vérifier si un prono existe déjà sur ce match — anti-doublon XP
     const { data: pronoExistant } = await supabase
       .from('pronos').select('id')
       .eq('user_id', user.id)
@@ -187,10 +524,7 @@ function MatchDetail() {
     }
 
     if (estNouveauProno) {
-      // +10 prono posé
       await ajouterXP(user.id, 10, 'passif', 'prono_pose')
-
-      // +10 premier prono du jour (1×/jour)
       const aujourdhui = new Date().toISOString().slice(0, 10)
       const { data: dejaPronoJour } = await supabase
         .from('xp_log').select('id')
@@ -201,8 +535,6 @@ function MatchDetail() {
       if (!dejaPronoJour || dejaPronoJour.length === 0) {
         await ajouterXP(user.id, 10, 'passif', 'premier_prono_jour')
       }
-
-      // +75 premier prono de l'histoire (1× à vie)
       const { data: dejaHistoire } = await supabase
         .from('xp_log').select('id')
         .eq('user_id', user.id)
@@ -389,12 +721,10 @@ function MatchDetail() {
           )}
         </div>
 
-        {/* BONUS ÉCART — uniquement si prono vainqueur posé */}
+        {/* BONUS ÉCART */}
         {(prono && !termine) || (termine && ecart?.fourchette_choisie) ? (
           <div style={{ background: 'var(--bg-1)', padding: '16px 16px 18px', borderLeft: '3px solid var(--gold)' }}>
             <TitreSection mot1="BONUS" mot2="ÉCART" couleur2="var(--gold)" />
-
-            {/* Avant match */}
             {!termine && (
               <>
                 <p style={{ fontSize: 12, color: 'var(--text-3)', margin: '0 0 12px', lineHeight: 1.6 }}>
@@ -431,15 +761,11 @@ function MatchDetail() {
                 </div>
               </>
             )}
-
-            {/* Après match — résultat */}
             {termine && ecart?.fourchette_choisie && (
               <>
                 <div style={{ fontSize: 12, color: 'var(--text-2)', marginBottom: 8 }}>
                   Fourchette réelle : <strong style={{ color: 'var(--text-1)' }}>
-                    {ecart.fourchette_reelle
-                      ? FOURCHETTES.find(f => f.slug === ecart.fourchette_reelle)?.label
-                      : '–'}
+                    {ecart.fourchette_reelle ? FOURCHETTES.find(f => f.slug === ecart.fourchette_reelle)?.label : '–'}
                   </strong>
                 </div>
                 <div style={{ fontSize: 12, color: 'var(--text-2)', marginBottom: 6 }}>
@@ -462,29 +788,17 @@ function MatchDetail() {
         <div style={{ height: 30 }} />
         <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
 
-          {!termine && prediction && (
-            <div style={{ background: 'var(--bg-1)', padding: '16px 16px 20px', borderLeft: '3px solid var(--accent)' }}>
-              <TitreSection mot1="PRÉDICTION" mot2="ESPN" />
-              <p style={{ fontSize: 12, color: 'var(--text-3)', margin: '0 0 14px', lineHeight: 1.6 }}>
-                Probabilités de victoire selon la forme et les stats de la saison.
-              </p>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-1)' }}>{ext.trigramme}</span>
-                <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-1)' }}>{dom.trigramme}</span>
-              </div>
-              <div style={{ display: 'flex', height: 8, overflow: 'hidden', gap: 2, marginBottom: 6 }}>
-                <div style={{ width: `${prediction.extPct}%`, background: couleurExt !== 'var(--accent)' ? couleurExt : 'var(--accent)', transition: 'width 0.4s' }} />
-                <div style={{ width: `${prediction.domPct}%`, background: couleurDom !== 'var(--accent)' ? couleurDom : 'var(--orange)', transition: 'width 0.4s' }} />
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
-                <span style={{ fontSize: 14, fontWeight: 800, color: 'var(--accent)', fontFamily: 'var(--font-display)' }}>{prediction.extPct}%</span>
-                <span style={{ fontSize: 14, fontWeight: 800, color: 'var(--orange)', fontFamily: 'var(--font-display)' }}>{prediction.domPct}%</span>
-              </div>
-              <p style={{ fontSize: 12, color: 'var(--text-2)', margin: 0, textAlign: 'center' }}>
-                ESPN prédit une victoire des <strong style={{ color: 'var(--text-1)' }}>{prediction.equipePrediite}</strong>.
-              </p>
-              <p style={{ fontSize: 10, color: 'var(--text-3)', margin: '8px 0 0', textAlign: 'right' }}>Source : ESPN</p>
-            </div>
+          {/* BLOC CONTEXTE COTES — uniquement pré-match */}
+          {!termine && (prediction || cotes) && (
+            <BlocCotes
+              cotes={cotes}
+              prediction={prediction}
+              ext={ext}
+              dom={dom}
+              couleurExt={couleurExt}
+              couleurDom={couleurDom}
+              termine={termine}
+            />
           )}
 
           {(ext.l5?.length > 0 || dom.l5?.length > 0) && (
