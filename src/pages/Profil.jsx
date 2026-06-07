@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import Navigation from '../components/Navigation'
+import { track } from '../services/tracker'
 import { Camera, Check, X, Pencil } from 'lucide-react'
 import { couleurAvatar } from '../components/Avatar'
 
@@ -81,6 +82,7 @@ function Profil() {
   useEffect(() => {
     const init = async () => {
       const { data: { user } } = await supabase.auth.getUser()
+      track(user.id, 'page_view', '/profil')
       const { data: p } = await supabase
         .from('profils')
         .select('id, pseudo, avatar_url, description, cree_le')

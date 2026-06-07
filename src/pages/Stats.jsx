@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react'
+import { supabase } from '../lib/supabase'
+import { track } from '../services/tracker'
 import Navigation from '../components/Navigation'
 import { BanniereImage, LabelSection } from '../components/UI'
 import { Search, ChevronRight, ArrowLeft } from 'lucide-react'
@@ -1199,6 +1201,12 @@ const ONGLETS = [
 ]
 
 export default function Stats() {
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) track(user.id, 'page_view', '/stats')
+    })
+  }, [])
+
   const [onglet, setOnglet]                     = useState('classements')
   const [equipesStandings, setEquipesStandings] = useState([])
   const [equipeViaClassement, setEquipeViaClassement] = useState(null)
