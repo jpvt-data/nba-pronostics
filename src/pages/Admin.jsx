@@ -953,16 +953,24 @@ function BlocXPUsers({ profils }) {
   const [userXP, setUserXP]     = useState(null)
   const [userSelec, setUserS]   = useState(null)
   const [charg, setCharg]       = useState(false)
+  const [missionsMap, setMissionsMap] = useState({})
 
   const chargerXP = async (userId) => {
     setCharg(true)
     setUserS(userId)
-    const { data } = await supabase
-      .from('xp_log')
-      .select('source_id, xp_gagne, cree_le, source')
-      .eq('user_id', userId)
-      .order('cree_le', { ascending: false })
-      .limit(100)
+    const [{ data }, { data: missions }] = await Promise.all([
+      supabase
+        .from('xp_log')
+        .select('source_id, xp_gagne, cree_le, source')
+        .eq('user_id', userId)
+        .order('cree_le', { ascending: false })
+        .limit(100),
+      supabase.from('missions').select('id, titre'),
+    ])
+    // Construire map mission_<id> → titre
+    const mmap = {}
+    for (const m of (missions || [])) mmap[`mission_${m.id}`] = `Mission "${m.titre}"`
+    setMissionsMap(mmap)
     setUserXP(data || [])
     setCharg(false)
   }
@@ -1010,7 +1018,7 @@ function BlocXPUsers({ profils }) {
               }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-1)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {XP_LABELS_ADMIN[l.source_id] || l.source_id}
+                    {XP_LABELS_ADMIN[l.source_id] || missionsMap[l.source_id] || l.source_id}
                   </div>
                   <div style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 1 }}>
                     {fmt(l.cree_le)}
