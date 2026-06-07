@@ -149,6 +149,7 @@ function Admin() {
             { key: 'ligues',       label: 'Ligues' },
             { key: 'utilisateurs', label: 'Utilisateurs' },
             { key: 'moderation',   label: 'Modération' },
+            { key: 'missions',     label: 'Missions' },
           ].map(o => (
             <button key={o.key} onClick={() => setOnglet(o.key)} style={{
               padding: '7px 14px', fontSize: 12, fontWeight: 600,
@@ -173,6 +174,7 @@ function Admin() {
         {onglet === 'ligues'        && <OngletLigues scanResultats={scanResultats} scanSaison={scanSaison} />}
         {onglet === 'utilisateurs'  && <OngletUtilisateurs />}
         {onglet === 'moderation'    && <OngletModeration />}
+        {onglet === 'missions'      && <OngletMissions />}
       </main>
     </>
   )
@@ -1357,6 +1359,140 @@ function OngletDashboard() {
         </div>
       </div>
 
+    </div>
+  )
+}
+
+// ══════════════════════════════════════════
+// ONGLET MISSIONS
+// ══════════════════════════════════════════
+function OngletMissions() {
+  const [missions, setMissions]   = useState([])
+  const [completions, setCompl]   = useState({}) // mission_id → nb completions
+  const [charg, setCharg]         = useState(true)
+  const [toggling, setToggling]   = useState(null) // id en cours de toggle
+
+  useEffect(() => { charger() }, [])
+
+  const charger = async () => {
+    setCharg(true)
+    const [{ data: ms }, { data: mu }] = await Promise.all([
+      supabase.from('missions').select('*').order('type').order('titre'),
+      supabase.from('missions_utilisateurs').select('mission_id').eq('completee', true),
+    ])
+    // Compter les completions par mission
+    const counts = {}
+    for (const row of (mu || [])) {
+      counts[row.mission_id] = (counts[row.mission_id] || 0) + 1
+    }
+    setMissions(ms || [])
+    setCompl(counts)
+    setCharg(false)
+  }
+
+  const toggleActif = async (mission) => {
+    setToggling(mission.id)
+    await supabase.from('missions').update({ actif: !mission.actif }).eq('id', mission.id)
+    setMissions(prev => prev.map(m => m.id === mission.id ? { ...m, actif: !m.actif } : m))
+    setToggling(null)
+  }
+
+  const COULEUR_TYPE = { permanente: 'var(--accent)', hebdomadaire: 'var(--gold)' }
+
+  const LABEL_CONDITION = {
+    serie_connexion:     'Série connexion',
+    serie_correcte:      'Série pronos corrects',
+    connexion_semaine:   'Connexions / semaine',
+    pronos_semaine:      'Pronos / semaine',
+    fourchette_posee:    'Fourchettes posées',
+    fourchette_correcte: 'Fourchettes correctes',
+  }
+
+  if (charg) return <p style={{ padding: 24, color: 'var(--text-3)', fontSize: 13 }}>Chargement missions…</p>
+
+  const permanentes   = missions.filter(m => m.type === 'permanente')
+  const hebdomadaires = missions.filter(m => m.type === 'hebdomadaire')
+
+  const BlocGroupe = ({ titre, couleur, liste }) => (
+    <div style={{ marginBottom: 24 }}>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 10 }}>
+        <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 20, color: 'var(--text-1)', letterSpacing: '0.02em' }}>MISSIONS</span>
+        <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 20, color: couleur, letterSpacing: '0.02em' }}>{titre}</span>
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+        {liste.map(m => {
+          const nb = completions[m.id] || 0
+          const enCours = toggling === m.id
+          return (
+            <div key={m.id} style={{
+              display: 'flex', alignItems: 'center', gap: 10,
+              padding: '10px 12px', background: 'var(--bg-2)',
+              borderLeft: `3px solid ${m.actif ? couleur : 'var(--border)'}`,
+              opacity: m.actif ? 1 : 0.5,
+            }}>
+              {/* Infos mission */}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-1)' }}>{m.titre}</span>
+                  <span style={{
+                    fontSize: 10, fontWeight: 700, padding: '1px 6px',
+                    background: couleur + '22', color: couleur,
+                    borderRadius: 'var(--radius-sm)',
+                  }}>{m.type}</span>
+                </div>
+                <div style={{ fontSize: 11, color: 'var(--text-3)', marginBottom: 3 }}>{m.description}</div>
+                <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: 10, color: 'var(--text-3)' }}>
+                    {LABEL_CONDITION[m.condition_type] || m.condition_type} : <strong style={{ color: 'var(--text-2)' }}>{m.condition_valeur}</strong>
+                  </span>
+                  <span style={{ fontSize: 10, color: 'var(--gold)', fontWeight: 700 }}>+{m.xp_recompense} XP</span>
+                </div>
+              </div>
+              {/* Stat completions */}
+              <div style={{ textAlign: 'center', flexShrink: 0, minWidth: 40 }}>
+                <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 20, color: nb > 0 ? 'var(--success)' : 'var(--text-3)' }}>{nb}</div>
+                <div style={{ fontSize: 9, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>complét.</div>
+              </div>
+              {/* Toggle actif */}
+              <button
+                onClick={() => toggleActif(m)}
+                disabled={enCours}
+                style={{
+                  flexShrink: 0, padding: '6px 14px', fontSize: 11, fontWeight: 700,
+                  cursor: enCours ? 'wait' : 'pointer',
+                  borderRadius: 'var(--radius-sm)', borderWidth: 1, borderStyle: 'solid',
+                  background: m.actif ? 'var(--success)' : 'var(--bg-1)',
+                  color: m.actif ? '#000' : 'var(--text-3)',
+                  borderColor: m.actif ? 'var(--success)' : 'var(--border)',
+                  transition: 'all 0.15s',
+                }}
+              >
+                {enCours ? '…' : m.actif ? 'ON' : 'OFF'}
+              </button>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+
+  return (
+    <div style={{ padding: '0 16px 40px' }}>
+      {/* Récap global */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginBottom: 24 }}>
+        {[
+          { label: 'TOTAL',    val: missions.length,                        couleur: 'var(--text-1)' },
+          { label: 'ACTIVES',  val: missions.filter(m => m.actif).length,   couleur: 'var(--success)' },
+          { label: 'INACTIVES',val: missions.filter(m => !m.actif).length,  couleur: 'var(--danger)' },
+        ].map(k => (
+          <div key={k.label} style={{ padding: '10px 12px', background: 'var(--bg-2)', textAlign: 'center' }}>
+            <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 28, color: k.couleur }}>{k.val}</div>
+            <div style={{ fontSize: 9, color: 'var(--text-3)', fontWeight: 700, letterSpacing: '0.06em', marginTop: 2 }}>{k.label}</div>
+          </div>
+        ))}
+      </div>
+      <BlocGroupe titre="PERMANENTES"   couleur="var(--accent)" liste={permanentes} />
+      <BlocGroupe titre="HEBDOMADAIRES" couleur="var(--gold)"   liste={hebdomadaires} />
     </div>
   )
 }
