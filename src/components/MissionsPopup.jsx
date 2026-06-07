@@ -1,6 +1,7 @@
 // src/components/MissionsPopup.jsx
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import { lundiFin } from '../services/points'
 
 const TitreSection = ({ mot1, mot2 = '', couleur2 = 'var(--gold)', taille = 22 }) => (
   <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
@@ -83,17 +84,30 @@ export default function MissionsPopup({ userId, onClose }) {
 
       if (!missionsList) { setCharg(false); return }
 
-      const { data: progressions } = await supabase
+      const periodeHebdo = lundiFin()
+
+      // Missions permanentes (periode IS NULL)
+      const { data: progPermanentes } = await supabase
         .from('missions_utilisateurs')
         .select('mission_id, progression, completee')
         .eq('user_id', userId)
+        .is('periode', null)
+
+      // Missions hebdo — uniquement la semaine courante
+      const { data: progHebdo } = await supabase
+        .from('missions_utilisateurs')
+        .select('mission_id, progression, completee')
+        .eq('user_id', userId)
+        .eq('periode', periodeHebdo)
 
       const map = {}
-      for (const p of (progressions || [])) {
-        // Garder la progression la plus élevée (missions hebdo peuvent avoir plusieurs périodes)
+      for (const p of (progPermanentes || [])) {
         if (!map[p.mission_id] || p.progression > map[p.mission_id].progression) {
           map[p.mission_id] = { progression: p.progression, completee: p.completee }
         }
+      }
+      for (const p of (progHebdo || [])) {
+        map[p.mission_id] = { progression: p.progression, completee: p.completee }
       }
 
       setMissions(missionsList)
