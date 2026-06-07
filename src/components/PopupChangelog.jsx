@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
-import { useNavigate, useLocation, Link } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { VERSION_COURANTE } from '../data/changelog'
 
 const CLE_STORAGE = `popup_vu_${VERSION_COURANTE}`
@@ -14,11 +14,13 @@ function PopupChangelog({ forceOuvert = false, onFermer }) {
   const [mdp, setMdp]           = useState('')
   const [erreur, setErreur]     = useState(null)
   const [charg, setCharg]       = useState(false)
-  const navigate = useNavigate()
-  const location  = useLocation()
+  const navigate                = useNavigate()
 
   useEffect(() => {
     setVisible(true)
+    // Bloquer le scroll de la page pendant que le popup est ouvert
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = '' }
   }, [forceOuvert])
 
   useEffect(() => {
@@ -47,10 +49,12 @@ function PopupChangelog({ forceOuvert = false, onFermer }) {
   }, [visible])
 
   const fermer = () => {
+    document.body.style.overflow = ''
     setVisible(false)
     onFermer?.()
     if (document.activeElement) document.activeElement.blur()
-    if (connecte && location.pathname !== '/accueil') navigate('/accueil')
+    window.scrollTo(0, 0)
+    if (connecte && window.location.pathname !== '/accueil') navigate('/accueil')
   }
 
   const seConnecter = async () => {
