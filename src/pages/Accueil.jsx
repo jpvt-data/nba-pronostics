@@ -111,6 +111,7 @@ function Accueil() {
   const { noSpoil } = useNoSpoil()
 
   useEffect(() => {
+    window.scrollTo(0, 0)
     const init = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
@@ -179,7 +180,11 @@ function Accueil() {
     init()
   }, [])
 
-  const fermerBadge = () => setFilesBadges([])
+  const fermerBadge = () => {
+    setFilesBadges([])
+    if (document.activeElement) document.activeElement.blur()
+    window.scrollTo(0, 0)
+  }
   const suivantBadge = () => setFilesBadges(prev => prev.slice(1))
 
   const faireProno = async (match, equipeChoisie) => {
@@ -519,7 +524,11 @@ function Accueil() {
 
       {/* ── Popup missions ── */}
       {missionsOpen && user && (
-        <MissionsPopup userId={user.id} onClose={() => setMissionsOpen(false)} />
+        <MissionsPopup userId={user.id} onClose={() => {
+          setMissionsOpen(false)
+          if (document.activeElement) document.activeElement.blur()
+          window.scrollTo(0, 0)
+        }} />
       )}
     </>
   )
