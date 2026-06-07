@@ -3,14 +3,46 @@ import { supabase } from '../lib/supabase'
 import { recupererGagnant } from './espn'
 import { ajouterXP, verifierJalons, verifierMissions } from './xp'
 
-// Retourne le lundi de la semaine courante en ISO string 'YYYY-MM-DD'
+// Retourne le lundi de la semaine courante en ISO string 'YYYY-MM-DD' (Paris)
+// Utilisé pour les missions hebdomadaires
 export const lundiFin = () => {
   const aujourd_hui = new Date()
-  const jour = aujourd_hui.getDay()
+  const paris = new Date(aujourd_hui.toLocaleString('en-US', { timeZone: 'Europe/Paris' }))
+  const jour = paris.getDay()
   const diffLundi = (jour === 0 ? -6 : 1 - jour)
-  const lundi = new Date(aujourd_hui)
-  lundi.setDate(aujourd_hui.getDate() + diffLundi)
+  const lundi = new Date(paris)
+  lundi.setDate(paris.getDate() + diffLundi)
   return lundi.toISOString().slice(0, 10)
+}
+
+// Retourne les bornes UTC de la semaine Paris précédente
+// lundi 00h01 → dimanche 23h59 heure Paris, converti en UTC pour Supabase
+// Retourne null si on n'est pas lundi heure Paris
+const bornesSemainePrecedente = () => {
+  const maintenant = new Date()
+  const paris = new Date(maintenant.toLocaleString('en-US', { timeZone: 'Europe/Paris' }))
+
+  // Attribution uniquement le lundi
+  if (paris.getDay() !== 1) return null
+
+  // Calcul de l'offset Paris↔UTC au moment du calcul (gère heure été/hiver)
+  const offsetMs = maintenant.getTime() - paris.getTime()
+
+  // Lundi précédent 00h01 Paris
+  const lundiDebut = new Date(paris)
+  lundiDebut.setDate(paris.getDate() - 7)
+  lundiDebut.setHours(0, 1, 0, 0)
+
+  // Dimanche précédent 23h59 Paris
+  const dimancheFin = new Date(paris)
+  dimancheFin.setDate(paris.getDate() - 1)
+  dimancheFin.setHours(23, 59, 59, 999)
+
+  // Conversion en UTC
+  return {
+    debut: new Date(lundiDebut.getTime() + offsetMs).toISOString(),
+    fin:   new Date(dimancheFin.getTime() + offsetMs).toISOString(),
+  }
 }
 
 // Calcule les stats d'un user depuis Supabase pour verifierJalons
@@ -245,21 +277,29 @@ export const calculerPoints = async () => {
     const stats = await calculerStatsUser(userId)
     await verifierJalons(userId, stats)
 
+    // Semaine 100% : attribution uniquement le lundi, sur la semaine Paris précédente
+    const bornes = bornesSemainePrecedente()
+    if (!bornes) continue // pas lundi heure Paris → on skip
+
+    // Anti-doublon : déjà attribué cette semaine ?
     const { data: dejaXPSemaine } = await supabase
       .from('xp_log')
       .select('id')
       .eq('user_id', userId)
       .eq('source_id', 'semaine_100_pct')
-      .gte('cree_le', lundi)
+      .gte('cree_le', bornes.debut)
+      .lte('cree_le', bornes.fin)
       .limit(1)
 
-    if (dejaXPSemaine && dejaXPSemaine.length > 0) continue
+    if (dejaXPSemaine?.length > 0) continue
 
+    // Matchs terminés dans la fenêtre Paris de la semaine précédente
     const { data: matchsSemaine } = await supabase
       .from('matchs')
       .select('id')
       .eq('statut', 'termine')
-      .gte('date_match', lundi)
+      .gte('date_match', bornes.debut)
+      .lte('date_match', bornes.fin)
 
     if (!matchsSemaine?.length) continue
 
