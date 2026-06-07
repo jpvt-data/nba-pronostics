@@ -157,13 +157,17 @@ export async function verifierMissions(userId, conditionType, valeur, periode = 
   const missionsDeclenchees = []
 
   for (const mission of missions) {
-    const { data: existante } = await supabase
+    // Pour les missions permanentes (periode = null), filtrer IS NULL explicitement
+    // car SQL NULL != NULL → .eq('periode', null) ne matche rien
+    let query = supabase
       .from('missions_utilisateurs')
       .select('*')
       .eq('user_id', userId)
       .eq('mission_id', mission.id)
-      .eq('periode', periode)
-      .maybeSingle()
+
+    query = periode ? query.eq('periode', periode) : query.is('periode', null)
+
+    const { data: existante } = await query.maybeSingle()
 
     if (existante?.completee) continue
 
