@@ -3,8 +3,21 @@ import { supabase } from '../lib/supabase'
 import { Send } from 'lucide-react'
 import { track } from '../services/tracker'
 
+// Map jalon → badge pour retrouver la date d'obtention via xp_log
+const JALON_BADGE_MAP = {
+  jalon_serie_5:       { badge: 'en_feu',       nom: 'En Feu' },
+  jalon_serie_10:      { badge: 'prophete',      nom: 'Prophète' },
+  jalon_50_pronos:     { badge: 'all_in',        nom: 'All-In' },
+  jalon_100_pronos:    { badge: 'marathonien',   nom: 'Marathonien' },
+  jalon_winrate_65:    { badge: 'analyste',      nom: 'Analyste' },
+  jalon_semaine:       { badge: 'champion',      nom: 'Champion' },
+  jalon_10_fourchettes:{ badge: 'tireur_d_elite',nom: "Tireur d'Élite" },
+}
+
 async function genererEvenements(userId) {
   const evenements = []
+  const maintenant = new Date()
+  const il_y_a_5j  = new Date(maintenant - 5 * 24 * 3600 * 1000).toISOString()
 
   const { data: membres } = await supabase
     .from('membres_groupe')
@@ -28,6 +41,7 @@ async function genererEvenements(userId) {
   for (const pote of potesUniques) {
     const pseudo = pote.profils?.pseudo || 'Un pote'
 
+    // ── Pronos streak ──
     const { data: pronos } = await supabase
       .from('pronos')
       .select('resultat')
@@ -36,45 +50,106 @@ async function genererEvenements(userId) {
       .order('cree_le', { ascending: false })
       .limit(20)
 
-    if (!pronos?.length) continue
-
-    const dernier = pronos[0].resultat
-    let streak = 0
-    for (const p of pronos) {
-      if (p.resultat === dernier) streak++
-      else break
-    }
-
-    // Série en cours ≥ 2
-    if (streak >= 2) {
-      const feu = dernier === 'correct'
-      evenements.push({
-        icone: feu ? '🔥' : '❄️',
-        texte: feu
-          ? `${pseudo} est sur une série de ${streak} pronos réussis !`
-          : `${pseudo} est sur une série de ${streak} pronos ratés ! Aïe aïe !`,
-        couleur: feu ? 'var(--success)' : 'var(--danger)',
-      })
-      continue
-    }
-
-    // Série cassée — vérifier si avant le dernier prono il y avait une série ≥ 2
-    if (pronos.length >= 3) {
-      const avantDernier = pronos[1].resultat
-      let streakPrecedent = 0
-      for (let i = 1; i < pronos.length; i++) {
-        if (pronos[i].resultat === avantDernier) streakPrecedent++
+    if (pronos?.length) {
+      const dernier = pronos[0].resultat
+      let streak = 0
+      for (const p of pronos) {
+        if (p.resultat === dernier) streak++
         else break
       }
 
-      // Série précédente ≥ 2 correcte, maintenant cassée
-      if (streakPrecedent >= 2 && avantDernier === 'correct' && dernier === 'incorrect') {
+      if (streak >= 2) {
+        const feu = dernier === 'correct'
         evenements.push({
-          icone: '💔',
-          texte: `${pseudo} vient de briser sa série de ${streakPrecedent} pronos réussis ! Aïe !`,
-          couleur: 'var(--orange)',
+          icone: feu ? '🔥' : '❄️',
+          texte: feu
+            ? `${pseudo} est sur une série de ${streak} pronos réussis !`
+            : `${pseudo} est sur une série de ${streak} pronos ratés ! Aïe aïe !`,
+          couleur: feu ? 'var(--success)' : 'var(--danger)',
         })
+      } else if (pronos.length >= 3) {
+        const avantDernier = pronos[1].resultat
+        let streakPrecedent = 0
+        for (let i = 1; i < pronos.length; i++) {
+          if (pronos[i].resultat === avantDernier) streakPrecedent++
+          else break
+        }
+        if (streakPrecedent >= 2 && avantDernier === 'correct' && dernier === 'incorrect') {
+          evenements.push({
+            icone: '💔',
+            texte: `${pseudo} vient de briser sa série de ${streakPrecedent} pronos réussis ! Aïe !`,
+            couleur: 'var(--orange)',
+          })
+        }
       }
+    }
+
+    // ── Fourchettes récentes ──
+    const { data: fourchettes } = await supabase
+      .from('pronos_ecart')
+      .select('correct, cree_le')
+      .eq('user_id', pote.user_id)
+      .eq('correct', true)
+      .order('cree_le', { ascending: false })
+      .limit(5)
+
+    if (fourchettes?.length >= 1) {
+      const derniereDate = new Date(fourchettes[0].cree_le)
+      const ageDerniere  = (maintenant - derniereDate) / (1000 * 3600 * 24)
+
+      if (ageDerniere <= 5) {
+        if (fourchettes.length >= 2) {
+          evenements.push({
+            icone: '🎯',
+            texte: `${pseudo} enchaîne 2 fourchettes correctes d'affilée !`,
+            couleur: 'var(--gold)',
+          })
+        } else {
+          evenements.push({
+            icone: '🎯',
+            texte: `${pseudo} a réussi sa fourchette d'écart !`,
+            couleur: 'var(--gold)',
+          })
+        }
+      }
+    }
+
+    // ── Missions complétées < 5 jours ──
+    const { data: missionsComp } = await supabase
+      .from('missions_utilisateurs')
+      .select('completee_le, missions(titre)')
+      .eq('user_id', pote.user_id)
+      .eq('completee', true)
+      .gte('completee_le', il_y_a_5j)
+
+    for (const mu of (missionsComp || [])) {
+      const titre = mu.missions?.titre
+      if (!titre) continue
+      evenements.push({
+        icone: '⚡',
+        texte: `${pseudo} a accompli la mission "${titre}" !`,
+        couleur: 'var(--accent)',
+      })
+    }
+
+    // ── Badges obtenus < 5 jours (via xp_log jalons) ──
+    const jalonsSlug = Object.keys(JALON_BADGE_MAP)
+    const { data: jalonsRecents } = await supabase
+      .from('xp_log')
+      .select('source_id, cree_le')
+      .eq('user_id', pote.user_id)
+      .eq('source', 'jalon')
+      .in('source_id', jalonsSlug)
+      .gte('cree_le', il_y_a_5j)
+
+    for (const j of (jalonsRecents || [])) {
+      const info = JALON_BADGE_MAP[j.source_id]
+      if (!info) continue
+      evenements.push({
+        icone: '🏅',
+        texte: `${pseudo} a obtenu le badge "${info.nom}" !`,
+        couleur: 'var(--gold)',
+      })
     }
   }
 
@@ -87,7 +162,7 @@ async function chargerMessages(groupeId) {
     .select('id, contenu, cree_le, user_id, profils(pseudo)')
     .eq('groupe_id', groupeId)
     .order('cree_le', { ascending: false })
-    .limit(3)
+    .limit(50)
   return (data || []).reverse()
 }
 
@@ -96,6 +171,9 @@ function ChatMiniLigue({ groupe, userId }) {
   const [texte, setTexte] = useState('')
   const [envoi, setEnvoi] = useState(false)
   const intervalRef = useRef(null)
+  const messagesEndRef = useRef(null)
+
+  const scrollBas = () => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
 
   const charger = async () => {
     const msgs = await chargerMessages(groupe.groupe_id)
@@ -104,10 +182,11 @@ function ChatMiniLigue({ groupe, userId }) {
 
   useEffect(() => {
     charger()
-    // Polling 30s
     intervalRef.current = setInterval(charger, 30000)
     return () => clearInterval(intervalRef.current)
   }, [groupe.groupe_id])
+
+  useEffect(() => { scrollBas() }, [messages])
 
   const envoyer = async () => {
     const contenu = texte.trim()
@@ -140,7 +219,7 @@ function ChatMiniLigue({ groupe, userId }) {
       </div>
 
       {/* Messages */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 8 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 8, maxHeight: 280, overflowY: 'auto', paddingRight: 2 }}>
         {messages.length === 0 ? (
           <p style={{ fontSize: 12, color: '#888', margin: 0, paddingLeft: 4 }}>
             Aucun message — soyez les premiers à chambrer 🏀
@@ -174,6 +253,7 @@ function ChatMiniLigue({ groupe, userId }) {
             </div>
           ))
         )}
+        <div ref={messagesEndRef} />
       </div>
 
       {/* Input envoi */}
