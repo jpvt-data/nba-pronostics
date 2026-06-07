@@ -337,10 +337,10 @@ async function genererMessages(userId, nbPronosAttente, matchs = []) {
     const { type_saison: typeSaison, nom, date_fin } = ligueActive
     const icone = typeSaison === 3 ? '🏆' : '🏀'
     const couleur = typeSaison === 3 ? 'var(--gold)' : 'var(--accent)'
-    let texte = `"${nom}" en cours`
+    let texte = `La ligue "${nom}" est en cours !`
     if (date_fin) {
       const diffFin = Math.floor((new Date(date_fin + 'T12:00:00') - maintenant) / (1000 * 60 * 60 * 24))
-      if (diffFin <= 7) texte = `"${nom}" se termine dans ${diffFin} jour${diffFin > 1 ? 's' : ''} !`
+      if (diffFin <= 15) texte = `La ligue "${nom}" se termine bientôt — plus que ${diffFin} jour${diffFin > 1 ? 's' : ''} !`
     }
     messages.push({ id: 'ligue_active', icone, texte, couleur })
   } else if (ligueAVenir) {
@@ -393,7 +393,7 @@ export default function Briefing({ userId, nbPronosAttente = 0, matchs = [] }) {
   })
   if (!visibles.length) return null
 
-  const liste = [...visibles, ...visibles, ...visibles, ...visibles]
+  const liste = [...visibles, ...visibles]
   const dureeParMsg = 15
   const dureeTotal  = dureeParMsg * visibles.length
 
@@ -408,13 +408,13 @@ export default function Briefing({ userId, nbPronosAttente = 0, matchs = [] }) {
     }}>
       <style>{`
         @keyframes ticker {
-          0%   { transform: translateX(100vw); }
-          100% { transform: translateX(-100%); }
+          0%   { transform: translateX(0); }
+          100% { transform: translateX(-50%); }
         }
         .ticker-track {
           display: flex;
           align-items: center;
-          gap: 24px;
+          gap: 0px;
           white-space: nowrap;
           animation: ticker ${dureeTotal}s linear infinite;
           will-change: transform;
@@ -426,7 +426,7 @@ export default function Briefing({ userId, nbPronosAttente = 0, matchs = [] }) {
         {liste.map((msg, i) => (
           <div key={`${msg.id}-${i}`} style={{
             display: 'inline-flex', alignItems: 'center', gap: 8,
-            flexShrink: 0,
+            flexShrink: 0, marginRight: 32,
           }}>
             <span style={{ fontSize: 14 }}>{msg.icone}</span>
             <span
