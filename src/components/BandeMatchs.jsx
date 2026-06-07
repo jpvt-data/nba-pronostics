@@ -431,10 +431,10 @@ function BandeMatchs({ matchs, userId, onProno, onBadge, equipeFiltre, onFiltreC
       onMouseEnter={() => { setHovered(true); mettreAJourFleches() }}
       onMouseLeave={() => setHovered(false)}
     >
-      <style>{`@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }`}</style>
+      <style>{`@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} } .fleche-bande { display: flex; } @media (max-width: 768px) { .fleche-bande { display: none !important; } }`}</style>
 
       {/* Flèche gauche */}
-      <div style={{ ...styleFleche(hovered && peutGauche), left: 6 }} onClick={scrollerGauche}>‹</div>
+      <div className="fleche-bande" style={{ ...styleFleche(hovered && peutGauche), left: 6 }} onClick={scrollerGauche}>‹</div>
 
       <div
         ref={scrollRef}
@@ -457,7 +457,7 @@ function BandeMatchs({ matchs, userId, onProno, onBadge, equipeFiltre, onFiltreC
       </div>
 
       {/* Flèche droite */}
-      <div style={{ ...styleFleche(hovered && peutDroite), right: 6 }} onClick={scrollerDroite}>›</div>
+      <div className="fleche-bande" style={{ ...styleFleche(hovered && peutDroite), right: 6 }} onClick={scrollerDroite}>›</div>
     </div>
   )
 }
