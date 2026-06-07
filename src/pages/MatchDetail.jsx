@@ -148,7 +148,7 @@ function MatchDetail() {
   const poserEcart = async (slug) => {
     if (!user || !matchDBId || verrou) return
     const result = await poserFourchetteEcart(user.id, matchDBId, slug)
-    track(user.id, 'clic_fourchette', '/match', { fourchette: slug, espn_id: detail?.espn_id })
+    track(user.id, 'clic_fourchette', '/match', { fourchette: slug, espn_id: match?.espn_id })
     if (result) setEcart({ ...ecart, fourchette_choisie: slug })
   }
 
