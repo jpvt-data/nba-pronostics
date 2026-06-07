@@ -437,7 +437,9 @@ function MatchDetail() {
               <>
                 <div style={{ fontSize: 12, color: 'var(--text-2)', marginBottom: 8 }}>
                   Fourchette réelle : <strong style={{ color: 'var(--text-1)' }}>
-                    {FOURCHETTES.find(f => f.slug === ecart.fourchette_reelle)?.label ?? '–'}
+                    {ecart.fourchette_reelle
+                      ? FOURCHETTES.find(f => f.slug === ecart.fourchette_reelle)?.label
+                      : '–'}
                   </strong>
                 </div>
                 <div style={{ fontSize: 12, color: 'var(--text-2)', marginBottom: 6 }}>
@@ -445,9 +447,11 @@ function MatchDetail() {
                     {FOURCHETTES.find(f => f.slug === ecart.fourchette_choisie)?.label}
                   </strong>
                   {' '}
-                  {ecart.correct
+                  {ecart.correct === true
                     ? <span style={{ color: 'var(--success)', fontWeight: 700 }}>✓ +2 pts gagnés !</span>
-                    : <span style={{ color: 'var(--danger)', fontWeight: 700 }}>✗ Raté</span>
+                    : ecart.correct === false
+                      ? <span style={{ color: 'var(--danger)', fontWeight: 700 }}>✗ Raté</span>
+                      : <span style={{ color: 'var(--text-3)', fontWeight: 600 }}>⏳ En attente</span>
                   }
                 </div>
               </>

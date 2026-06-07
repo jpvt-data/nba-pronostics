@@ -38,9 +38,39 @@ export const poserFourchetteEcart = async (userId, matchId, fourchetteChoisie) =
   // +5 XP uniquement à la première pose (pas au changement d'avis)
   if (estPremiereFourchette) {
     await ajouterXP(userId, 5, 'passif', 'fourchette_posee')
-
-    // Mission fourchette posée (hebdomadaire — incrément)
     await verifierMissions(userId, 'fourchette_posee', 1, lundiFin(), 'increment')
+  }
+
+  // Si le match est déjà terminé en base, résoudre immédiatement la fourchette
+  const { data: match } = await supabase
+    .from('matchs')
+    .select('statut, score_domicile, score_exterieur')
+    .eq('id', matchId)
+    .maybeSingle()
+
+  if (match?.statut === 'termine' && match.score_domicile != null && match.score_exterieur != null) {
+    const ecartFinal = Math.abs(match.score_domicile - match.score_exterieur)
+    const fourchetteReelle =
+      ecartFinal <= 5  ? 'serre'     :
+      ecartFinal <= 10 ? 'modere'    :
+      ecartFinal <= 20 ? 'net'       :
+      ecartFinal <= 30 ? 'large'     : 'domination'
+
+    const correctEcart = fourchetteChoisie === fourchetteReelle
+    const pointsEcart  = correctEcart ? 2 : 0
+
+    await supabase
+      .from('pronos_ecart')
+      .update({ fourchette_reelle: fourchetteReelle, correct: correctEcart, points_gagnes: pointsEcart })
+      .eq('user_id', userId)
+      .eq('match_id', matchId)
+
+    if (correctEcart) {
+      await ajouterXP(userId, 30, 'passif', 'fourchette_correcte')
+      await verifierMissions(userId, 'fourchette_correcte', 1, lundiFin(), 'increment')
+    }
+
+    return { ...data, fourchette_reelle: fourchetteReelle, correct: correctEcart, points_gagnes: pointsEcart }
   }
 
   return data
