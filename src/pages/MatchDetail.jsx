@@ -427,38 +427,60 @@ function MatchDetail() {
           }
         } catch { /* silencieux */ }
 
-        // The Odds API — tous bookmakers
+        // The Odds API — avec cache Supabase (TTL 6h)
         try {
-          const resOdds = await fetch(
-            `${ODDS_API_URL}?apiKey=${ODDS_API_KEY}&regions=eu,us&markets=h2h,spreads,totals&oddsFormat=decimal`
-          ).then(r => r.json())
+          const aujourd = new Date().toISOString().slice(0, 10).replace(/-/g, '')
+          const cleCache = `odds_nba_${aujourd}`
+          const TTL_MS = 6 * 60 * 60 * 1000 // 6 heures
 
-          // Trouver le match ESPN dans la liste The Odds API par nom d'équipe
-          const nomExt = detail.exterieur.nom
-          const nomDom = detail.domicile.nom
-          const matchOdds = resOdds.find(m =>
-            (m.away_team?.includes(detail.exterieur.trigramme) || m.away_team === nomExt) &&
-            (m.home_team?.includes(detail.domicile.trigramme) || m.home_team === nomDom)
-          ) ?? resOdds.find(m =>
-            m.away_team?.toLowerCase().includes(detail.exterieur.trigramme.toLowerCase()) ||
-            m.home_team?.toLowerCase().includes(detail.domicile.trigramme.toLowerCase())
-          )
+          // Lire le cache Supabase
+          let booksData = null
+          const { data: cache } = await supabase
+            .from('cotes_cache')
+            .select('data, fetched_at')
+            .eq('cle', cleCache)
+            .maybeSingle()
 
-          if (matchOdds) {
-            setCotes({
-              books: matchOdds.bookmakers,
-              nomExt: matchOdds.away_team,
-              nomDom: matchOdds.home_team,
-              espnSpread,
-              espnTotal,
-              espnPickcenter,
-            })
+          const cacheValide = cache && (Date.now() - new Date(cache.fetched_at).getTime()) < TTL_MS
+
+          if (cacheValide) {
+            // Cache frais → on utilise directement
+            booksData = cache.data
           } else {
-            // Pas de match trouvé dans The Odds API — on garde quand même ESPN
+            // Cache absent ou périmé → appel The Odds API
+            const resOdds = await fetch(
+              `${ODDS_API_URL}?apiKey=${ODDS_API_KEY}&regions=eu,us&markets=h2h,spreads,totals&oddsFormat=decimal`
+            ).then(r => r.json())
+
+            if (Array.isArray(resOdds)) {
+              booksData = resOdds
+              // Mise à jour cache Supabase (upsert sur la clé du jour)
+              await supabase.from('cotes_cache').upsert(
+                { cle: cleCache, data: resOdds, fetched_at: new Date().toISOString() },
+                { onConflict: 'cle' }
+              )
+            }
+          }
+
+          // Trouver le match dans les données
+          if (Array.isArray(booksData)) {
+            const matchOdds = booksData.find(m =>
+              (m.away_team?.includes(detail.exterieur.trigramme) || m.away_team === detail.exterieur.nom) &&
+              (m.home_team?.includes(detail.domicile.trigramme) || m.home_team === detail.domicile.nom)
+            ) ?? booksData.find(m =>
+              m.away_team?.toLowerCase().includes(detail.exterieur.trigramme.toLowerCase()) ||
+              m.home_team?.toLowerCase().includes(detail.domicile.trigramme.toLowerCase())
+            )
+
+            if (matchOdds) {
+              setCotes({ books: matchOdds.bookmakers, nomExt: matchOdds.away_team, nomDom: matchOdds.home_team, espnSpread, espnTotal, espnPickcenter })
+            } else {
+              setCotes({ books: [], nomExt: detail.exterieur.nom, nomDom: detail.domicile.nom, espnSpread, espnTotal, espnPickcenter })
+            }
+          } else {
             setCotes({ books: [], nomExt: detail.exterieur.nom, nomDom: detail.domicile.nom, espnSpread, espnTotal, espnPickcenter })
           }
         } catch {
-          // Fallback ESPN only
           setCotes({ books: [], nomExt: detail.exterieur.nom, nomDom: detail.domicile.nom, espnSpread, espnTotal, espnPickcenter })
         }
       }
