@@ -3,11 +3,13 @@ import { supabase } from '../lib/supabase'
 import { recupererGagnant } from './espn'
 import { ajouterXP, verifierJalons, verifierMissions } from './xp'
 
-// Retourne le lundi de la semaine courante en ISO string 'YYYY-MM-DD' (Paris)
+// Retourne le lundi de la semaine courante en ISO string 'YYYY-MM-DD' heure Paris
 // Utilisé pour les missions hebdomadaires
 export const lundiFin = () => {
-  const aujourd_hui = new Date()
-  const paris = new Date(aujourd_hui.toLocaleString('en-US', { timeZone: 'Europe/Paris' }))
+  const maintenant = new Date()
+  // Date Paris — pas UTC
+  const dateStrParis = maintenant.toLocaleDateString('en-CA', { timeZone: 'Europe/Paris' })
+  const paris = new Date(dateStrParis + 'T12:00:00') // midi pour éviter les décalages DST
   const jour = paris.getDay()
   const diffLundi = (jour === 0 ? -6 : 1 - jour)
   const lundi = new Date(paris)
