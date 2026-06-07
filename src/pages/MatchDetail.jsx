@@ -18,8 +18,8 @@ const BOOKS_FR = ['betclic_fr', 'unibet_fr', 'winamax_fr', 'pmu_fr']
 const BOOKS_FR_LABELS = { betclic_fr: 'Betclic', unibet_fr: 'Unibet', winamax_fr: 'Winamax', pmu_fr: 'PMU' }
 
 // Bookmakers US/référence affichés section 3
-const BOOKS_US = ['draftkings', 'fanduel', 'espnbet', 'pinnacle']
-const BOOKS_US_LABELS = { draftkings: 'DraftKings', fanduel: 'FanDuel', espnbet: 'ESPN BET', pinnacle: 'Pinnacle ★' }
+const BOOKS_US = ['draftkings', 'fanduel', 'betmgm', 'pinnacle']
+const BOOKS_US_LABELS = { draftkings: 'DraftKings', fanduel: 'FanDuel', betmgm: 'BetMGM', pinnacle: 'Pinnacle ★' }
 
 // Convertit une cote décimale en probabilité implicite normalisée (%)
 const coteEnPct = (coteEq1, coteEq2) => {
@@ -297,15 +297,6 @@ const BlocCotes = ({ cotes, prediction, ext, dom, couleurExt, couleurDom, termin
               return <CarteBook key={key} label={BOOKS_US_LABELS[key]} pctExt={p?.pct1} pctDom={p?.pct2} />
             })}
           </div>
-          {/* ESPN pickcenter — toujours dans les US */}
-          {(() => {
-            const espnPct = cotes?.espnPickcenter
-            return espnPct ? (
-              <div style={{ marginTop: 6 }}>
-                <CarteBook label="ESPN BET (pickcenter)" pctExt={espnPct.extPct} pctDom={espnPct.domPct} />
-              </div>
-            ) : null
-          })()}
         </div>
 
         {/* Section 4 — Prédictions marché */}
