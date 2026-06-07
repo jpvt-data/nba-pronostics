@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { BADGES_CATALOGUE } from '../data/badges'
+import { lundiFin } from '../services/points'
 
 const DISMISS_KEY = (key) => {
   const today = new Date().toISOString().slice(0, 10)
@@ -91,11 +92,23 @@ async function genererMessages(userId, nbPronosAttente, matchs = []) {
   }
 
   // ── Missions en cours proches de la complétion (>= 50%) ──
-  const { data: missionsEnCours } = await supabase
+  const periodeHebdo = lundiFin()
+
+  const { data: missionsPermEnCours } = await supabase
     .from('missions_utilisateurs')
     .select('progression, missions(id, slug, titre, condition_type, condition_valeur)')
     .eq('user_id', userId)
     .eq('completee', false)
+    .is('periode', null)
+
+  const { data: missionsHebdoEnCours } = await supabase
+    .from('missions_utilisateurs')
+    .select('progression, missions(id, slug, titre, condition_type, condition_valeur)')
+    .eq('user_id', userId)
+    .eq('completee', false)
+    .eq('periode', periodeHebdo)
+
+  const missionsEnCours = [...(missionsPermEnCours || []), ...(missionsHebdoEnCours || [])]
 
   const libelleMissionProche = (slug, titre, restant) => {
     const s = restant > 1 ? 's' : ''
