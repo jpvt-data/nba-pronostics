@@ -204,10 +204,14 @@ export default function BracketPlayoffs({ saison = 2026 }) {
 
   useEffect(() => {
     if (!bracket || !scrollRef.current || !finaleRef.current) return
-    const container = scrollRef.current
-    const el        = finaleRef.current
-    const elCenter  = el.offsetLeft + el.offsetWidth / 2
-    container.scrollLeft = elCenter - container.clientWidth / 2
+    // rAF garantit que le layout est calculé (clientWidth=0 sinon = scroll page entière)
+    requestAnimationFrame(() => {
+      const container = scrollRef.current
+      const el        = finaleRef.current
+      if (!container || !el || container.clientWidth === 0) return
+      const elCenter  = el.offsetLeft + el.offsetWidth / 2
+      container.scrollLeft = elCenter - container.clientWidth / 2
+    })
   }, [bracket])
 
   useEffect(() => {
