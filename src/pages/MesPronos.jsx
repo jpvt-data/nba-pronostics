@@ -5,6 +5,7 @@ import { xpPourNiveau } from '../services/xp'
 import { recupererFourchetteEcart } from '../services/ecart'
 import { BADGES_CATALOGUE } from '../data/badges'
 import Navigation from '../components/Navigation'
+import { track } from '../services/tracker'
 import MissionsPopup from '../components/MissionsPopup'
 import { Avatar } from '../components/Avatar'
 
@@ -384,6 +385,7 @@ function MesPronos() {
       const vuParMoi = cibleId === user.id
       setEstMoi(vuParMoi)
       setProfilId(cibleId)
+      track(user.id, 'page_view', '/mes-pronos', { cible_id: cibleId, est_moi: vuParMoi })
 
       const { data: p } = await supabase
         .from('profils')

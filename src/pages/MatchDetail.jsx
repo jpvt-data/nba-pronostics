@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { track } from '../services/tracker'
 import { recupererLiguesCibles } from '../services/ligues'
 import { recupererDetailMatch, TAG_CONFIG } from '../services/espn'
 import { ajouterXP } from '../services/xp'
@@ -96,6 +97,7 @@ function MatchDetail() {
     const init = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       setUser(user)
+      track(user.id, 'page_view', '/match', { espn_id })
       const detail = await recupererDetailMatch(espn_id)
       if (!detail) { setErr(true); setCharg(false); return }
       setMatch(detail)
@@ -146,6 +148,7 @@ function MatchDetail() {
   const poserEcart = async (slug) => {
     if (!user || !matchDBId || verrou) return
     const result = await poserFourchetteEcart(user.id, matchDBId, slug)
+    track(user.id, 'clic_fourchette', '/match', { fourchette: slug, espn_id: detail?.espn_id })
     if (result) setEcart({ ...ecart, fourchette_choisie: slug })
   }
 

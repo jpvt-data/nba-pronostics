@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { Home, Trophy, BarChart2, Menu, X, Swords, LogOut, Calendar, Sparkles, TrendingUp, Shield } from 'lucide-react'
 import { useProfil } from '../context/ProfilContext'
+import { track } from '../services/tracker'
 import { Avatar } from '../components/Avatar'
 import swishLogo from '../assets/swish_league_logo.png'
 
@@ -38,7 +39,12 @@ function Navigation({ nbPronosAttente = 0 }) {
     navigate('/connexion')
   }
 
-  const aller = (chemin) => { navigate(chemin); setOuvert(false) }
+  const aller = (chemin) => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) track(user.id, 'clic_nav', chemin, { destination: chemin })
+    })
+    navigate(chemin); setOuvert(false)
+  }
 
   // Logo Teko — SWISH noir, LEAGUE violet + accroche dessous
   const LogoTeko = ({ size = 20 }) => (

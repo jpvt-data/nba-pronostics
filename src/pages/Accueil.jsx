@@ -15,6 +15,7 @@ import BracketPlayoffs from '../components/BracketPlayoffs'
 import NewsNBA from '../components/NewsNBA'
 import BanniereFeed from '../components/BanniereFeed'
 import MissionsPopup from '../components/MissionsPopup'
+import { track } from '../services/tracker'
 import { useNavigate } from 'react-router-dom'
 import { Calendar } from 'lucide-react'
 import { useNoSpoil } from '../context/NoSpoilContext'
@@ -114,6 +115,15 @@ function Accueil() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
       setUser(user)
+
+      // Tracking — session_start + page_view accueil
+      const { data: profilTrack } = await supabase
+        .from('profils').select('niveau, xp_total').eq('id', user.id).single()
+      track(user.id, 'session_start', '/accueil', {
+        niveau:   profilTrack?.niveau   || 1,
+        xp_total: profilTrack?.xp_total || 0,
+      })
+      track(user.id, 'page_view', '/accueil')
 
       const { data: profil } = await supabase
         .from('profils')
@@ -219,6 +229,8 @@ function Accueil() {
         groupe_id:      null,
       }, { onConflict: 'user_id,match_id,groupe_id' })
     }
+
+    track(user.id, 'clic_prono', '/accueil', { equipe: equipeChoisie, espn_id: match.espn_id, tag: match.tag })
 
     if (estNouveauProno) {
       await ajouterXP(user.id, 10, 'passif', 'prono_pose')

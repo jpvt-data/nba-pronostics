@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { track } from '../services/tracker'
 import Navigation from '../components/Navigation'
 import { Avatar } from '../components/Avatar'
 import { ArrowLeft } from 'lucide-react'
@@ -31,6 +32,7 @@ function H2H() {
   useEffect(() => {
     const init = async () => {
       const { data: { user } } = await supabase.auth.getUser()
+      track(user?.id, 'page_view', '/h2h')
       setMoi(user.id)
       const { data: profil } = await supabase
         .from('profils').select('pseudo, avatar_url').eq('id', user.id).single()

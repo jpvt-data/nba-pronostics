@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import Navigation from '../components/Navigation'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useNoSpoil } from '../context/NoSpoilContext'
+import { supabase } from '../lib/supabase'
+import { track } from '../services/tracker'
 
 const BASE_NBA = 'https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard'
 const BASE_SL  = 'https://site.api.espn.com/apis/site/v2/sports/basketball/nba-summer-las-vegas/scoreboard'
@@ -87,6 +89,14 @@ const extraireMatchs = (data, isSummerLeague = false) =>
 
 function Calendrier() {
   const navigate                    = useNavigate()
+
+  useEffect(() => {
+    const trackPage = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) track(user.id, 'page_view', '/calendrier')
+    }
+    trackPage()
+  }, [])
   const [vue, setVue]               = useState('7j')
   const [dateRef, setDateRef]       = useState(() => { const d = new Date(); d.setHours(0,0,0,0); return d })
   const [cache, setCache]           = useState({})   // { 'YYYYMMDD': [matchs] }

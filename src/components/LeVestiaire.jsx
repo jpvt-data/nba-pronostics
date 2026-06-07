@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { Send } from 'lucide-react'
+import { track } from '../services/tracker'
 
 async function genererEvenements(userId) {
   const evenements = []
@@ -117,6 +118,7 @@ function ChatMiniLigue({ groupe, userId }) {
       groupe_id: groupe.groupe_id,
       contenu,
     })
+    track(userId, 'clic_vestiaire', '/accueil', { action: 'message', groupe_id: groupe.groupe_id })
     setTexte('')
     await charger()
     setEnvoi(false)

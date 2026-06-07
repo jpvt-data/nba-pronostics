@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { verifierJalons } from '../services/xp'
+import { track } from '../services/tracker'
 import Navigation from '../components/Navigation'
 import { Avatar } from '../components/Avatar'
 
@@ -120,6 +121,7 @@ function Classement() {
     const init = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       setMoi(user.id)
+      track(user.id, 'page_view', '/classement')
 
       const maintenant = new Date()
 

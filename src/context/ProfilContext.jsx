@@ -3,6 +3,7 @@ import { createContext, useContext, useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { ajouterXP, calculerSerieConnexion, verifierMissions } from '../services/xp'
 import { lundiFin } from '../services/points'
+import { track } from '../services/tracker'
 
 const ProfilContext = createContext(null)
 
@@ -35,6 +36,23 @@ export function ProfilProvider({ children }) {
       if (derniereConnexion !== jourParis) {
         await ajouterXP(user.id, 5, 'passif', 'connexion_quotidienne')
       }
+
+      // Tracking session_start avec snapshot profil enrichi
+      const { data: snap } = await supabase
+        .from('profils').select('niveau, xp_total, badges').eq('id', user.id).single()
+      const { count: nbPronos } = await supabase
+        .from('pronos').select('id', { count: 'exact', head: true })
+        .eq('user_id', user.id).neq('resultat', 'en_attente')
+      const { count: nbLigues } = await supabase
+        .from('membres_groupe').select('id', { count: 'exact', head: true })
+        .eq('user_id', user.id).eq('actif', true)
+      track(user.id, 'session_start', '/accueil', {
+        niveau:    snap?.niveau   || 1,
+        xp_total:  snap?.xp_total || 0,
+        nb_badges: snap?.badges?.length || 0,
+        nb_pronos: nbPronos || 0,
+        nb_ligues: nbLigues || 0,
+      })
 
       // Missions série connexion consécutive — mode set (valeur absolue)
       const serie = await calculerSerieConnexion(user.id)
