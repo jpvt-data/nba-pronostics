@@ -229,7 +229,7 @@ function CarteMatch({ match, pronoData, onProno, userId }) {
                 </div>
                 {enCours && <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, marginTop: 2 }}><span style={{ width: 5, height: 5, borderRadius: '50%', background: '#22c55e', boxShadow: '0 0 6px #22c55e', animation: 'blink 1.2s infinite', display: 'inline-block' }} /><span style={{ fontFamily: 'var(--font-display)', fontSize: 10, color: '#22c55e', fontWeight: 700, letterSpacing: '0.12em' }}>LIVE</span></div>}
               </>
-            : <div style={{ fontFamily: 'var(--font-display)', fontSize: 24, fontWeight: 700, color: '#fff', lineHeight: 1 }}>{formaterHeure(match.date)}</div>}
+            ) : <div style={{ fontFamily: 'var(--font-display)', fontSize: 24, fontWeight: 700, color: '#fff', lineHeight: 1 }}>{formaterHeure(match.date)}</div>}
           </div>
 
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, opacity: pronoLocal && !domChoise ? 0.6 : 1, transition: 'opacity 0.2s' }}>
