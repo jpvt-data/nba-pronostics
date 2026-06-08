@@ -221,14 +221,14 @@ function ChatMiniLigue({ groupe, userId }) {
         textTransform: 'uppercase', letterSpacing: '0.08em',
         marginBottom: 6, display: 'flex', alignItems: 'center', gap: 6,
       }}>
-        <span>💬</span> {groupe.nom}
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#555', flexShrink: 0 }}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> {groupe.nom}
       </div>
 
       {/* Messages */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 8, maxHeight: 280, overflowY: 'auto', paddingRight: 2 }}>
         {messages.length === 0 ? (
           <p style={{ fontSize: 12, color: '#888', margin: 0, paddingLeft: 4 }}>
-            Aucun message — soyez les premiers à chambrer 🏀
+            Aucun message — soyez les premiers à chambrer.
           </p>
         ) : (
           messages.map(msg => (
@@ -360,7 +360,10 @@ function LeVestiaire({ userId }) {
                 background: 'rgba(0,0,0,0.04)',
                 borderLeft: `3px solid ${evt.couleur}`,
               }}>
-                <span style={{ fontSize: 16, lineHeight: 1, flexShrink: 0 }}>{evt.icone}</span>
+                <span style={{
+                  width: 7, height: 7, borderRadius: '50%', flexShrink: 0,
+                  background: evt.couleur, display: 'inline-block',
+                }} />
                 <span style={{ fontSize: 13, color: '#1a1a2e', fontWeight: 500, lineHeight: 1.4 }}>
                   {evt.texte}
                 </span>

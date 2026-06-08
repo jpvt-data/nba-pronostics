@@ -313,7 +313,7 @@ export default function BracketPlayoffs({ saison = 2026 }) {
           {saison - 1}-{String(saison).slice(2)}
         </span>
       </div>
-      {noSpoil && <div style={{ fontSize: 10, color: 'var(--text-3)', marginBottom: 8, fontStyle: 'italic' }}>🙈 No Spoil actif</div>}
+
 
       <div ref={scrollRef} style={{ overflowX: 'auto', paddingBottom: 8, display: 'flex', justifyContent: 'center', marginTop: 12 }}>
         <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'flex-start', gap: colGap, padding: '0 8px' }}>
