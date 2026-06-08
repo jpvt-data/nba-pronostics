@@ -298,13 +298,13 @@ function Accueil() {
                 onClick={() => navigate('/mes-pronos')}
                 style={{ display: 'flex', alignItems: 'baseline', gap: 8, cursor: 'pointer', flexWrap: 'wrap' }}
               >
-                <span style={{ fontFamily: 'var(--font-title)', fontWeight: 700, fontSize: 38, color: 'var(--accent)', letterSpacing: '-0.01em', lineHeight: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <span style={{ fontFamily: 'var(--font-title)', fontWeight: 700, fontSize: 'clamp(26px, 6vw, 38px)', color: 'var(--accent)', letterSpacing: '-0.01em', lineHeight: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {pseudo || ''}
                 </span>
-                <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 26, color: 'var(--gold)', letterSpacing: '0.02em', lineHeight: 1, whiteSpace: 'nowrap' }}>
+                <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 'clamp(20px, 4vw, 26px)', color: 'var(--gold)', letterSpacing: '0.02em', lineHeight: 1, whiteSpace: 'nowrap' }}>
                   {titrDepuisNiveau(xpData.niveau)}
                 </span>
-                <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 16, color: 'var(--text-3)', whiteSpace: 'nowrap' }}>
+                <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 'clamp(13px, 2.5vw, 16px)', color: 'var(--text-3)', whiteSpace: 'nowrap' }}>
                   Niv. {xpData.niveau}
                 </span>
               </div>
