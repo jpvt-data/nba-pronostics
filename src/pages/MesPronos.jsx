@@ -135,18 +135,22 @@ const formaterDateHeure = (dateStr) =>
   })
 
 const ModalHistoriqueXP = ({ userId, onClose }) => {
-  const [logs, setLogs]   = useState([])
-  const [charg, setCharg] = useState(true)
+  const [logs, setLogs]       = useState([])
+  const [missions, setMissions] = useState({}) // uuid → titre
+  const [charg, setCharg]     = useState(true)
 
   useEffect(() => {
     const charger = async () => {
-      const { data } = await supabase
-        .from('xp_log')
-        .select('source_id, xp_gagne, cree_le')
-        .eq('user_id', userId)
-        .order('cree_le', { ascending: false })
-        .limit(100)
-      setLogs(data || [])
+      const [{ data: logsData }, { data: missionsData }] = await Promise.all([
+        supabase.from('xp_log').select('source_id, source, xp_gagne, cree_le')
+          .eq('user_id', userId).order('cree_le', { ascending: false }).limit(100),
+        supabase.from('missions').select('id, titre'),
+      ])
+      // Map uuid → titre pour résoudre les source_id mission
+      const map = {}
+      for (const m of (missionsData || [])) map[m.id] = m.titre
+      setMissions(map)
+      setLogs(logsData || [])
       setCharg(false)
     }
     charger()
@@ -189,7 +193,9 @@ const ModalHistoriqueXP = ({ userId, onClose }) => {
         {!charg && logs.length > 0 && (
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             {logs.map((l, i) => {
-              const info = XP_LABELS[l.source_id] || { label: l.source_id, icon: '⚙️' }
+              const missionTitre = missions[l.source_id]
+              const info = XP_LABELS[l.source_id]
+                || (missionTitre ? { label: `Mission — ${missionTitre}`, icon: '⚡' } : { label: l.source_id, icon: '⚙️' })
               return (
                 <div key={i} style={{
                   display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
