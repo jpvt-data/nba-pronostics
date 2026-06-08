@@ -127,7 +127,7 @@ export const calculerPoints = async () => {
     const resultatESPN = idxESPN[matchLocal.espn_id]
     if (!resultatESPN) continue
 
-    const { gagnant, type_saison, saison, ecart_final, score_domicile, score_exterieur } = resultatESPN
+    const { gagnant, type_saison, saison, ecart_final, score_domicile, score_exterieur, tag } = resultatESPN
 
     const fourchetteReelle =
       ecart_final == null ? null :
@@ -138,7 +138,7 @@ export const calculerPoints = async () => {
 
     await supabase
       .from('matchs')
-      .update({ statut: 'termine', gagnant, type_saison, saison, score_domicile, score_exterieur })
+      .update({ statut: 'termine', gagnant, type_saison, saison, score_domicile, score_exterieur, tag })
       .eq('id', matchLocal.id)
 
     const { data: tousLesPronos } = await supabase

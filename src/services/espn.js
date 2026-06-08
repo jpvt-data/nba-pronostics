@@ -334,7 +334,16 @@ export const recupererGagnant = async (espnId) => {
     const score_domicile  = parseInt(dom?.score, 10) || 0
     const score_exterieur = parseInt(ext?.score, 10) || 0
     const ecart_final = Math.abs(score_domicile - score_exterieur)
-    return { gagnant: gagnant.team.abbreviation, type_saison: data.header?.season?.type ?? null, saison: data.header?.season?.year ?? null, ecart_final, score_domicile, score_exterieur }
+    // Calcul tag depuis season.type (sans appel scoreboard supplémentaire — headline non dispo ici)
+    const typeSaisonNum = data.header?.season?.type ?? null
+    let tag = detecterType(typeSaisonNum, '', comp.type?.abbreviation, false)
+    // Fallback Finals via seasonseries si pas de headline
+    if (typeSaisonNum === 3 && tag !== 'finals') {
+      const serie = data.seasonseries?.find(s => s.type === 'playoff')
+      if (serie?.description === 'NBA Finals') tag = 'finals'
+    }
+
+    return { gagnant: gagnant.team.abbreviation, type_saison: typeSaisonNum, saison: data.header?.season?.year ?? null, ecart_final, score_domicile, score_exterieur, tag }
   } catch (err) {
     console.error('Erreur récupération gagnant:', err)
     return null
