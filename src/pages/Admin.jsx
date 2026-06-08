@@ -1366,11 +1366,36 @@ function OngletDashboard() {
 // ══════════════════════════════════════════
 // ONGLET MISSIONS
 // ══════════════════════════════════════════
+
+// Types de conditions disponibles + leur mode de vérification
+const CONDITIONS_DISPONIBLES = [
+  { value: 'serie_connexion',     label: 'Série connexion',          mode: 'set',       hint: 'Connexions consécutives (ex: 5 = 5 jours de suite)' },
+  { value: 'serie_correcte',      label: 'Série pronos corrects',    mode: 'set',       hint: 'Pronos corrects consécutifs (ex: 3 = 3 de suite)' },
+  { value: 'connexion_semaine',   label: 'Connexions / semaine',     mode: 'increment', hint: 'Nombre de connexions dans la semaine (max 7)' },
+  { value: 'pronos_semaine',      label: 'Pronos posés / semaine',   mode: 'increment', hint: 'Nombre de pronos posés dans la semaine' },
+  { value: 'fourchette_posee',    label: 'Fourchettes posées',       mode: 'increment', hint: 'Fourchettes d\'écart posées dans la semaine' },
+  { value: 'fourchette_correcte', label: 'Fourchettes correctes',    mode: 'increment', hint: 'Fourchettes d\'écart correctes dans la semaine' },
+]
+
+// Valeurs vides pour une nouvelle mission
+const MISSION_VIDE = {
+  slug: '', titre: '', description: '',
+  type: 'permanente', xp_recompense: 50,
+  condition_type: 'serie_connexion', condition_valeur: 3,
+  actif: true,
+}
+
 function OngletMissions() {
-  const [missions, setMissions]   = useState([])
-  const [completions, setCompl]   = useState({}) // mission_id → nb completions
-  const [charg, setCharg]         = useState(true)
-  const [toggling, setToggling]   = useState(null) // id en cours de toggle
+  const [missions, setMissions]     = useState([])
+  const [completions, setCompl]     = useState({}) // mission_id → nb completions
+  const [charg, setCharg]           = useState(true)
+  const [toggling, setToggling]     = useState(null)   // id en cours de toggle
+  const [modeForm, setModeForm]     = useState(null)   // null | 'creer' | 'modifier'
+  const [formData, setFormData]     = useState(MISSION_VIDE)
+  const [missionEdit, setMissionEdit] = useState(null) // mission en cours d'édition
+  const [saving, setSaving]         = useState(false)
+  const [errForm, setErrForm]       = useState('')
+  const [confirmSuppr, setConfirmSuppr] = useState(null) // id mission à supprimer
 
   useEffect(() => { charger() }, [])
 
@@ -1380,7 +1405,6 @@ function OngletMissions() {
       supabase.from('missions').select('*').order('type').order('titre'),
       supabase.from('missions_utilisateurs').select('mission_id').eq('completee', true),
     ])
-    // Compter les completions par mission
     const counts = {}
     for (const row of (mu || [])) {
       counts[row.mission_id] = (counts[row.mission_id] || 0) + 1
@@ -1397,21 +1421,175 @@ function OngletMissions() {
     setToggling(null)
   }
 
+  // Ouvrir le formulaire de création
+  const ouvrirCreer = () => {
+    setFormData({ ...MISSION_VIDE })
+    setMissionEdit(null)
+    setErrForm('')
+    setModeForm('creer')
+  }
+
+  // Ouvrir le formulaire de modification
+  const ouvrirModifier = (m) => {
+    setFormData({
+      slug: m.slug, titre: m.titre, description: m.description || '',
+      type: m.type, xp_recompense: m.xp_recompense,
+      condition_type: m.condition_type, condition_valeur: m.condition_valeur,
+      actif: m.actif,
+    })
+    setMissionEdit(m)
+    setErrForm('')
+    setModeForm('modifier')
+  }
+
+  const fermerForm = () => { setModeForm(null); setMissionEdit(null); setErrForm('') }
+
+  // Validation formulaire
+  const validerForm = () => {
+    if (!formData.slug.trim()) return 'Le slug est obligatoire.'
+    if (!/^[a-z0-9_]+$/.test(formData.slug)) return 'Slug : lettres minuscules, chiffres et _ uniquement.'
+    if (!formData.titre.trim()) return 'Le titre est obligatoire.'
+    if (!formData.description.trim()) return 'La description est obligatoire.'
+    if (formData.xp_recompense < 1) return 'XP doit être > 0.'
+    if (formData.condition_valeur < 1) return 'Valeur condition doit être > 0.'
+    // Vérifier unicité du slug (hors modification de la même mission)
+    const doublon = missions.find(m => m.slug === formData.slug && m.id !== missionEdit?.id)
+    if (doublon) return `Slug "${formData.slug}" déjà utilisé par "${doublon.titre}".`
+    return null
+  }
+
+  // Sauvegarder (créer ou modifier)
+  const sauvegarder = async () => {
+    const err = validerForm()
+    if (err) { setErrForm(err); return }
+    setSaving(true)
+    const payload = {
+      slug: formData.slug.trim(),
+      titre: formData.titre.trim(),
+      description: formData.description.trim(),
+      type: formData.type,
+      xp_recompense: parseInt(formData.xp_recompense),
+      condition_type: formData.condition_type,
+      condition_valeur: parseInt(formData.condition_valeur),
+      actif: formData.actif,
+    }
+    if (modeForm === 'creer') {
+      const { data, error } = await supabase.from('missions').insert(payload).select().single()
+      if (error) { setErrForm('Erreur création : ' + error.message); setSaving(false); return }
+      setMissions(prev => [...prev, data].sort((a, b) => a.type.localeCompare(b.type) || a.titre.localeCompare(b.titre)))
+    } else {
+      const { error } = await supabase.from('missions').update(payload).eq('id', missionEdit.id)
+      if (error) { setErrForm('Erreur modification : ' + error.message); setSaving(false); return }
+      setMissions(prev => prev.map(m => m.id === missionEdit.id ? { ...m, ...payload } : m))
+    }
+    setSaving(false)
+    fermerForm()
+  }
+
+  // Supprimer une mission
+  const supprimer = async (id) => {
+    // Supprimer aussi les progressions liées
+    await supabase.from('missions_utilisateurs').delete().eq('mission_id', id)
+    await supabase.from('missions').delete().eq('id', id)
+    setMissions(prev => prev.filter(m => m.id !== id))
+    const newCompl = { ...completions }
+    delete newCompl[id]
+    setCompl(newCompl)
+    setConfirmSuppr(null)
+  }
+
   const COULEUR_TYPE = { permanente: 'var(--accent)', hebdomadaire: 'var(--gold)' }
 
-  const LABEL_CONDITION = {
-    serie_connexion:     'Série connexion',
-    serie_correcte:      'Série pronos corrects',
-    connexion_semaine:   'Connexions / semaine',
-    pronos_semaine:      'Pronos / semaine',
-    fourchette_posee:    'Fourchettes posées',
-    fourchette_correcte: 'Fourchettes correctes',
-  }
+  const LABEL_CONDITION = Object.fromEntries(CONDITIONS_DISPONIBLES.map(c => [c.value, c.label]))
 
   if (charg) return <p style={{ padding: 24, color: 'var(--text-3)', fontSize: 13 }}>Chargement missions…</p>
 
   const permanentes   = missions.filter(m => m.type === 'permanente')
   const hebdomadaires = missions.filter(m => m.type === 'hebdomadaire')
+
+  // Ligne mission dans la liste
+  const LigneMission = ({ m, couleur }) => {
+    const nb = completions[m.id] || 0
+    const enCours = toggling === m.id
+    return (
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 10,
+        padding: '10px 12px', background: 'var(--bg-2)',
+        borderLeft: `3px solid ${m.actif ? couleur : 'var(--border)'}`,
+        opacity: m.actif ? 1 : 0.5,
+      }}>
+        {/* Infos mission */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
+            <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-1)' }}>{m.titre}</span>
+            <span style={{
+              fontSize: 10, fontWeight: 700, padding: '1px 6px',
+              background: couleur + '22', color: couleur, borderRadius: 'var(--radius-sm)',
+            }}>{m.type}</span>
+            <span style={{ fontSize: 9, color: 'var(--text-3)', fontFamily: 'monospace' }}>{m.slug}</span>
+          </div>
+          <div style={{ fontSize: 11, color: 'var(--text-3)', marginBottom: 3 }}>{m.description}</div>
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+            <span style={{ fontSize: 10, color: 'var(--text-3)' }}>
+              {LABEL_CONDITION[m.condition_type] || m.condition_type} : <strong style={{ color: 'var(--text-2)' }}>{m.condition_valeur}</strong>
+            </span>
+            <span style={{ fontSize: 10, color: 'var(--gold)', fontWeight: 700 }}>+{m.xp_recompense} XP</span>
+          </div>
+        </div>
+        {/* Stat completions */}
+        <div style={{ textAlign: 'center', flexShrink: 0, minWidth: 40 }}>
+          <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 20, color: nb > 0 ? 'var(--success)' : 'var(--text-3)' }}>{nb}</div>
+          <div style={{ fontSize: 9, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>complét.</div>
+        </div>
+        {/* Actions */}
+        <div style={{ display: 'flex', gap: 6, flexShrink: 0, alignItems: 'center' }}>
+          {/* Modifier */}
+          <button onClick={() => ouvrirModifier(m)} title="Modifier" style={{
+            background: 'var(--bg-1)', borderWidth: 1, borderStyle: 'solid', borderColor: 'var(--border)',
+            borderRadius: 'var(--radius-sm)', padding: '5px 8px', cursor: 'pointer', color: 'var(--text-3)',
+            display: 'flex', alignItems: 'center',
+          }}>
+            <Pencil size={12} />
+          </button>
+          {/* Supprimer */}
+          {confirmSuppr === m.id ? (
+            <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+              <span style={{ fontSize: 10, color: 'var(--danger)' }}>Confirmer ?</span>
+              <button onClick={() => supprimer(m.id)} style={{
+                background: 'var(--danger)', borderWidth: 0, borderRadius: 'var(--radius-sm)',
+                padding: '5px 8px', cursor: 'pointer', color: '#fff', display: 'flex', alignItems: 'center',
+              }}><Check size={11} /></button>
+              <button onClick={() => setConfirmSuppr(null)} style={{
+                background: 'var(--bg-1)', borderWidth: 1, borderStyle: 'solid', borderColor: 'var(--border)',
+                borderRadius: 'var(--radius-sm)', padding: '5px 8px', cursor: 'pointer', color: 'var(--text-3)',
+                display: 'flex', alignItems: 'center',
+              }}><X size={11} /></button>
+            </div>
+          ) : (
+            <button onClick={() => setConfirmSuppr(m.id)} title="Supprimer" style={{
+              background: 'var(--bg-1)', borderWidth: 1, borderStyle: 'solid', borderColor: 'var(--border)',
+              borderRadius: 'var(--radius-sm)', padding: '5px 8px', cursor: 'pointer', color: 'var(--danger)',
+              display: 'flex', alignItems: 'center',
+            }}>
+              <Trash2 size={12} />
+            </button>
+          )}
+          {/* Toggle actif */}
+          <button onClick={() => toggleActif(m)} disabled={enCours} style={{
+            flexShrink: 0, padding: '6px 12px', fontSize: 11, fontWeight: 700,
+            cursor: enCours ? 'wait' : 'pointer',
+            borderRadius: 'var(--radius-sm)', borderWidth: 1, borderStyle: 'solid',
+            background: m.actif ? 'var(--success)' : 'var(--bg-1)',
+            color: m.actif ? '#000' : 'var(--text-3)',
+            borderColor: m.actif ? 'var(--success)' : 'var(--border)',
+            transition: 'all 0.15s',
+          }}>
+            {enCours ? '…' : m.actif ? 'ON' : 'OFF'}
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   const BlocGroupe = ({ titre, couleur, liste }) => (
     <div style={{ marginBottom: 24 }}>
@@ -1419,80 +1597,215 @@ function OngletMissions() {
         <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 20, color: 'var(--text-1)', letterSpacing: '0.02em' }}>MISSIONS</span>
         <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 20, color: couleur, letterSpacing: '0.02em' }}>{titre}</span>
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-        {liste.map(m => {
-          const nb = completions[m.id] || 0
-          const enCours = toggling === m.id
-          return (
-            <div key={m.id} style={{
-              display: 'flex', alignItems: 'center', gap: 10,
-              padding: '10px 12px', background: 'var(--bg-2)',
-              borderLeft: `3px solid ${m.actif ? couleur : 'var(--border)'}`,
-              opacity: m.actif ? 1 : 0.5,
-            }}>
-              {/* Infos mission */}
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-1)' }}>{m.titre}</span>
-                  <span style={{
-                    fontSize: 10, fontWeight: 700, padding: '1px 6px',
-                    background: couleur + '22', color: couleur,
-                    borderRadius: 'var(--radius-sm)',
-                  }}>{m.type}</span>
-                </div>
-                <div style={{ fontSize: 11, color: 'var(--text-3)', marginBottom: 3 }}>{m.description}</div>
-                <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: 10, color: 'var(--text-3)' }}>
-                    {LABEL_CONDITION[m.condition_type] || m.condition_type} : <strong style={{ color: 'var(--text-2)' }}>{m.condition_valeur}</strong>
-                  </span>
-                  <span style={{ fontSize: 10, color: 'var(--gold)', fontWeight: 700 }}>+{m.xp_recompense} XP</span>
-                </div>
-              </div>
-              {/* Stat completions */}
-              <div style={{ textAlign: 'center', flexShrink: 0, minWidth: 40 }}>
-                <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 20, color: nb > 0 ? 'var(--success)' : 'var(--text-3)' }}>{nb}</div>
-                <div style={{ fontSize: 9, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>complét.</div>
-              </div>
-              {/* Toggle actif */}
-              <button
-                onClick={() => toggleActif(m)}
-                disabled={enCours}
-                style={{
-                  flexShrink: 0, padding: '6px 14px', fontSize: 11, fontWeight: 700,
-                  cursor: enCours ? 'wait' : 'pointer',
-                  borderRadius: 'var(--radius-sm)', borderWidth: 1, borderStyle: 'solid',
-                  background: m.actif ? 'var(--success)' : 'var(--bg-1)',
-                  color: m.actif ? '#000' : 'var(--text-3)',
-                  borderColor: m.actif ? 'var(--success)' : 'var(--border)',
-                  transition: 'all 0.15s',
-                }}
-              >
-                {enCours ? '…' : m.actif ? 'ON' : 'OFF'}
-              </button>
-            </div>
-          )
-        })}
-      </div>
+      {liste.length === 0 ? (
+        <p style={{ fontSize: 12, color: 'var(--text-3)', padding: '10px 12px', background: 'var(--bg-2)' }}>Aucune mission dans cette catégorie.</p>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          {liste.map(m => <LigneMission key={m.id} m={m} couleur={couleur} />)}
+        </div>
+      )}
     </div>
   )
 
+  // Champ de formulaire réutilisable
+  const Champ = ({ label, hint, children }) => (
+    <div style={{ marginBottom: 14 }}>
+      <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--text-2)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{label}</label>
+      {children}
+      {hint && <p style={{ fontSize: 10, color: 'var(--text-3)', margin: '4px 0 0' }}>{hint}</p>}
+    </div>
+  )
+
+  // Formulaire création / modification
+  const conditionSelectionnee = CONDITIONS_DISPONIBLES.find(c => c.value === formData.condition_type)
+
   return (
     <div style={{ padding: '0 16px 40px' }}>
-      {/* Récap global */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginBottom: 24 }}>
+
+      {/* Récap global + bouton créer */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 24, alignItems: 'stretch' }}>
         {[
-          { label: 'TOTAL',    val: missions.length,                        couleur: 'var(--text-1)' },
-          { label: 'ACTIVES',  val: missions.filter(m => m.actif).length,   couleur: 'var(--success)' },
-          { label: 'INACTIVES',val: missions.filter(m => !m.actif).length,  couleur: 'var(--danger)' },
+          { label: 'TOTAL',     val: missions.length,                      couleur: 'var(--text-1)' },
+          { label: 'ACTIVES',   val: missions.filter(m => m.actif).length,  couleur: 'var(--success)' },
+          { label: 'INACTIVES', val: missions.filter(m => !m.actif).length, couleur: 'var(--danger)' },
         ].map(k => (
-          <div key={k.label} style={{ padding: '10px 12px', background: 'var(--bg-2)', textAlign: 'center' }}>
+          <div key={k.label} style={{ flex: 1, padding: '10px 12px', background: 'var(--bg-2)', textAlign: 'center' }}>
             <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 28, color: k.couleur }}>{k.val}</div>
             <div style={{ fontSize: 9, color: 'var(--text-3)', fontWeight: 700, letterSpacing: '0.06em', marginTop: 2 }}>{k.label}</div>
           </div>
         ))}
+        <button onClick={ouvrirCreer} style={{
+          display: 'flex', alignItems: 'center', gap: 6, padding: '10px 16px',
+          background: 'var(--accent)', color: '#fff', borderWidth: 0,
+          borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontSize: 12, fontWeight: 700,
+          flexShrink: 0,
+        }}>
+          <Plus size={14} /> Nouvelle mission
+        </button>
       </div>
+
+      {/* ── FORMULAIRE CRÉATION / MODIFICATION ── */}
+      {modeForm && (
+        <div style={{
+          background: 'var(--bg-2)', borderWidth: 1, borderStyle: 'solid',
+          borderColor: modeForm === 'creer' ? 'var(--accent-border)' : 'var(--gold)',
+          borderRadius: 0, marginBottom: 24, padding: '16px 16px 8px',
+        }}>
+          {/* En-tête formulaire */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+              <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 18, color: 'var(--text-1)', letterSpacing: '0.02em' }}>
+                {modeForm === 'creer' ? 'NOUVELLE' : 'MODIFIER'}
+              </span>
+              <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 18, color: modeForm === 'creer' ? 'var(--accent)' : 'var(--gold)', letterSpacing: '0.02em' }}>
+                MISSION
+              </span>
+            </div>
+            <button onClick={fermerForm} style={{ background: 'none', border: 'none', color: 'var(--text-3)', cursor: 'pointer' }}>
+              <X size={16} />
+            </button>
+          </div>
+
+          {/* Ligne 1 — Slug + Titre */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 12 }}>
+            <Champ label="Slug *" hint="Identifiant unique, jamais modifiable après création. Ex: serie_7j">
+              <input
+                value={formData.slug}
+                onChange={e => setFormData(p => ({ ...p, slug: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '') }))}
+                disabled={modeForm === 'modifier'} // slug immuable après création
+                placeholder="ex: connexion_7j"
+                style={{ ...S.input, opacity: modeForm === 'modifier' ? 0.5 : 1 }}
+              />
+            </Champ>
+            <Champ label="Titre affiché *" hint="Nom visible par les utilisateurs. Court et accrocheur.">
+              <input
+                value={formData.titre}
+                onChange={e => setFormData(p => ({ ...p, titre: e.target.value }))}
+                placeholder="ex: Assidu Pro"
+                style={S.input}
+              />
+            </Champ>
+          </div>
+
+          {/* Description */}
+          <Champ label="Description *" hint="Phrase explicative affichée sous le titre. Ex: Connecte-toi 7 jours de suite">
+            <input
+              value={formData.description}
+              onChange={e => setFormData(p => ({ ...p, description: e.target.value }))}
+              placeholder="ex: Connecte-toi 7 jours de suite"
+              style={S.input}
+            />
+          </Champ>
+
+          {/* Ligne 2 — Type + XP + Actif */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 120px', gap: 12 }}>
+            <Champ label="Type *" hint="Permanente = objectif global. Hebdomadaire = reset chaque lundi.">
+              <select value={formData.type} onChange={e => setFormData(p => ({ ...p, type: e.target.value }))} style={{ ...S.select, width: '100%' }}>
+                <option value="permanente">Permanente</option>
+                <option value="hebdomadaire">Hebdomadaire</option>
+              </select>
+            </Champ>
+            <Champ label="XP récompense *" hint="XP accordé à la complétion.">
+              <input
+                type="number" min="1" max="9999"
+                value={formData.xp_recompense}
+                onChange={e => setFormData(p => ({ ...p, xp_recompense: e.target.value }))}
+                style={S.input}
+              />
+            </Champ>
+            <Champ label="Active dès création">
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
+                <button onClick={() => setFormData(p => ({ ...p, actif: !p.actif }))} style={{
+                  padding: '6px 14px', fontSize: 11, fontWeight: 700, cursor: 'pointer',
+                  borderRadius: 'var(--radius-sm)', borderWidth: 1, borderStyle: 'solid',
+                  background: formData.actif ? 'var(--success)' : 'var(--bg-1)',
+                  color: formData.actif ? '#000' : 'var(--text-3)',
+                  borderColor: formData.actif ? 'var(--success)' : 'var(--border)',
+                }}>
+                  {formData.actif ? 'ON' : 'OFF'}
+                </button>
+              </div>
+            </Champ>
+          </div>
+
+          {/* Ligne 3 — Condition */}
+          <div style={{ background: 'var(--bg-1)', borderWidth: 1, borderStyle: 'solid', borderColor: 'var(--border)', padding: '12px', marginBottom: 14 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-2)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 10 }}>Condition de complétion</div>
+            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 12, marginBottom: 8 }}>
+              <Champ label="Type de condition *" hint={conditionSelectionnee?.hint || ''}>
+                <select value={formData.condition_type} onChange={e => setFormData(p => ({ ...p, condition_type: e.target.value }))} style={{ ...S.select, width: '100%' }}>
+                  {CONDITIONS_DISPONIBLES.map(c => (
+                    <option key={c.value} value={c.value}>{c.label}</option>
+                  ))}
+                </select>
+              </Champ>
+              <Champ label="Valeur cible *" hint="Nombre à atteindre pour valider la mission.">
+                <input
+                  type="number" min="1"
+                  value={formData.condition_valeur}
+                  onChange={e => setFormData(p => ({ ...p, condition_valeur: e.target.value }))}
+                  style={S.input}
+                />
+              </Champ>
+            </div>
+            {/* Résumé condition */}
+            <div style={{ fontSize: 11, color: 'var(--accent)', padding: '6px 8px', background: 'var(--accent-dim)', borderRadius: 'var(--radius-sm)' }}>
+              {`→ Mission complétée quand : ${conditionSelectionnee?.label || formData.condition_type} atteint ${formData.condition_valeur}`}
+              {conditionSelectionnee && <span style={{ color: 'var(--text-3)', marginLeft: 8 }}>
+                (mode : {conditionSelectionnee.mode === 'set' ? 'valeur absolue' : 'incrémental'})
+              </span>}
+            </div>
+          </div>
+
+          {/* Erreur */}
+          {errForm && (
+            <div style={{ fontSize: 12, color: 'var(--danger)', padding: '8px 10px', background: 'var(--danger-dim)', marginBottom: 12, borderRadius: 'var(--radius-sm)' }}>
+              ⚠ {errForm}
+            </div>
+          )}
+
+          {/* Boutons */}
+          <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+            <button onClick={fermerForm} style={{
+              padding: '8px 16px', fontSize: 12, fontWeight: 600, cursor: 'pointer',
+              background: 'transparent', borderWidth: 1, borderStyle: 'solid', borderColor: 'var(--border)',
+              borderRadius: 'var(--radius-sm)', color: 'var(--text-3)',
+            }}>Annuler</button>
+            <button onClick={sauvegarder} disabled={saving} style={{
+              padding: '8px 20px', fontSize: 12, fontWeight: 700, cursor: saving ? 'wait' : 'pointer',
+              background: modeForm === 'creer' ? 'var(--accent)' : 'var(--gold)',
+              borderWidth: 0, borderRadius: 'var(--radius-sm)', color: modeForm === 'creer' ? '#fff' : '#000',
+              opacity: saving ? 0.7 : 1,
+            }}>
+              {saving ? '…' : modeForm === 'creer' ? 'Créer la mission' : 'Enregistrer les modifications'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── LISTES ── */}
       <BlocGroupe titre="PERMANENTES"   couleur="var(--accent)" liste={permanentes} />
       <BlocGroupe titre="HEBDOMADAIRES" couleur="var(--gold)"   liste={hebdomadaires} />
+
+      {/* Guide des conditions */}
+      <div style={{ background: 'var(--bg-2)', borderWidth: 1, borderStyle: 'solid', borderColor: 'var(--border)', padding: '12px 14px', marginTop: 8 }}>
+        <div style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 16, color: 'var(--text-1)', letterSpacing: '0.02em', marginBottom: 10 }}>
+          GUIDE <span style={{ color: 'var(--accent)' }}>CONDITIONS</span>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {CONDITIONS_DISPONIBLES.map(c => (
+            <div key={c.value} style={{ display: 'grid', gridTemplateColumns: '190px 1fr 80px', gap: 8, alignItems: 'start' }}>
+              <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-2)', fontFamily: 'monospace' }}>{c.value}</span>
+              <span style={{ fontSize: 11, color: 'var(--text-3)' }}>{c.hint}</span>
+              <span style={{ fontSize: 10, color: c.mode === 'set' ? 'var(--accent)' : 'var(--gold)', fontWeight: 700 }}>{c.mode === 'set' ? 'absolu' : 'incrément'}</span>
+            </div>
+          ))}
+        </div>
+        <p style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 10, marginBottom: 0 }}>
+          <strong style={{ color: 'var(--accent)' }}>Absolu</strong> : la valeur est écrasée à chaque vérification (ex: série connexion).{' '}
+          <strong style={{ color: 'var(--gold)' }}>Incrément</strong> : la valeur s'additionne (ex: fourchettes posées cette semaine).
+        </p>
+      </div>
     </div>
   )
 }
