@@ -126,6 +126,7 @@ const XP_LABELS = {
   jalon_winrate_65:       { label: 'Jalon — 65% réussite + Badge Analyste',           couleur: 'var(--accent)' },
   jalon_semaine:          { label: 'Jalon — Semaine gagnée + Badge Champion',         couleur: 'var(--gold)' },
   jalon_serie_ratee_5:    { label: 'Badge En Hibernation débloqué',                   couleur: 'var(--text-3)' },
+  roue_quotidienne:       { label: 'Roue du jour',                                    couleur: 'var(--accent)' },
 }
 
 const formaterDateHeure = (dateStr) =>
@@ -196,7 +197,8 @@ const ModalHistoriqueXP = ({ userId, onClose }) => {
               const missionId = l.source_id?.startsWith('mission_') ? l.source_id.slice(8) : null
               const missionTitre = missionId ? missions[missionId] : null
               const info = XP_LABELS[l.source_id]
-                || (missionTitre ? { label: `Mission — ${missionTitre}`, couleur: 'var(--accent)' } : { label: l.source_id, couleur: 'var(--text-3)' })
+                || XP_LABELS[l.source]
+                || (missionTitre ? { label: `Mission — ${missionTitre}`, couleur: 'var(--accent)' } : { label: l.source, couleur: 'var(--text-3)' })
               return (
                 <div key={i} style={{
                   display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
