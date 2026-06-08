@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import { xpPourNiveau } from '../services/xp'
+import { xpPourNiveau, niveauDepuisXP } from '../services/xp'
 import { recupererFourchetteEcart } from '../services/ecart'
 import { BADGES_CATALOGUE } from '../data/badges'
 import Navigation from '../components/Navigation'
@@ -545,7 +545,7 @@ function MesPronos() {
 
   const taux = (c, i) => (c + i) > 0 ? Math.round(c / (c + i) * 100) : 0
 
-  const niveau     = xpData.niveau
+  const niveau     = niveauDepuisXP(xpData.xp_total)
   const xpActuel   = xpData.xp_total
   const xpDebutNiv = xpPourNiveau(niveau)
   const xpFinNiv   = xpPourNiveau(niveau + 1)
