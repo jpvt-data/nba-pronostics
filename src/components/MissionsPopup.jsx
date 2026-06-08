@@ -112,7 +112,16 @@ export default function MissionsPopup({ userId, onClose }) {
         map[p.mission_id] = { progression: p.progression, completee: p.completee }
       }
 
-      setMissions(missionsList)
+      // Masquer les missions dont le prérequis n'est pas complété
+      const slugCompletés = new Set(
+        missionsList
+          .filter(m => map[m.id]?.completee)
+          .map(m => m.slug)
+      )
+      const visibles = missionsList.filter(m =>
+        !m.prerequis_slug || slugCompletés.has(m.prerequis_slug)
+      )
+      setMissions(visibles)
       setProgMap(map)
       setCharg(false)
     }

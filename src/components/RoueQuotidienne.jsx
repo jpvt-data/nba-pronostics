@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
-import { ajouterXP } from '../services/xp'
+import { ajouterXP, verifierMissions } from '../services/xp'
+import { lundiFin } from '../services/points'
 import { X } from 'lucide-react'
 
 // Segments de la roue — ordre affiché, couleurs, probabilités
@@ -70,16 +71,15 @@ function RoueQuotidienne({ userId, onClose, onGain }) {
 
       if (segment.xp > 0) {
         try {
-          console.log('ajouterXP call', userId, segment.xp, 'passif', `roue_${jourParis}`)
           const res = await ajouterXP(
             userId, segment.xp,
-            'passif',              // source = catégorie
-            'roue_quotidienne',    // source_id = identifiant fixe
-            { gain: segment.label, date: jourParis }
+            'roue_quotidienne', `roue_${jourParis}`,
+            { gain: segment.label }
           )
-          console.log('ajouterXP result', res)
           // Remonter xp_total et niveau mis à jour vers Accueil
-          onGain(res?.xp_total ?? segment.xp, res?.niveau ?? null)
+          if (res?.xp_total ?? segment.xp) {
+            onGain(res?.xp_total ?? segment.xp, res?.niveau ?? null)
+          }
         } catch (e) {
           setErreur("Erreur lors de l'enregistrement XP")
           onGain(segment.xp, null)
@@ -87,6 +87,12 @@ function RoueQuotidienne({ userId, onClose, onGain }) {
       } else {
         onGain(0, null)
       }
+
+      // Incrémenter missions roue
+      try {
+        await verifierMissions(userId, 'roue_tiree', 1, null)
+        await verifierMissions(userId, 'roue_tiree_semaine', 1, lundiFin())
+      } catch (e) { /* silencieux */ }
 
       // Marquer jouée aujourd'hui
       localStorage.setItem(`swish_roue_${userId}_${jourParis}`, '1')
