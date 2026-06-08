@@ -139,14 +139,17 @@ function PopupChangelog({ forceOuvert = false, onFermer }) {
             <p style={{ fontSize: 14, color: 'var(--text-2)', margin: 0, textAlign: 'center', lineHeight: 1.5 }}>
               Content de te revoir,{' '}
               <span style={{ fontFamily: 'var(--font-title)', fontSize: 18, color: 'var(--text-1)', fontWeight: 600 }}>{pseudo}</span>
-              {' '}👋
             </p>
             <button onClick={fermer} style={{
               width: '100%', padding: '12px',
               background: 'var(--accent)', borderWidth: 0, borderRadius: 'var(--radius-sm)',
               color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', letterSpacing: '0.06em',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
             }}>
-              C'EST PARTI 🏀
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polygon points="5 3 19 12 5 21 5 3" />
+              </svg>
+              C'EST PARTI
             </button>
           </div>
         )}
