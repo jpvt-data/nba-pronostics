@@ -220,7 +220,7 @@ function CarteMatch({ match, pronoData, onProno, userId }) {
           </div>
 
           <div style={{ minWidth: 90, textAlign: 'center', paddingBottom: 2 }}>
-            {(termine || enCours) && !noSpoil ? (
+            {(termine || enCours) ? (
               <>
                 <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: 3 }}>
                   <span style={{ fontFamily: 'var(--font-display)', fontSize: 38, fontWeight: 700, color: '#fff', lineHeight: 1, letterSpacing: '-0.02em' }}>{ext.score}</span>
