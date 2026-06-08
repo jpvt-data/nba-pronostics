@@ -154,9 +154,28 @@ export async function verifierMissions(userId, conditionType, valeur, periode = 
 
   if (!missions || missions.length === 0) return []
 
+  // Filtrer les missions dont le prérequis n'est pas encore complété
+  const missionsFiltrées = []
+  for (const mission of missions) {
+    if (!mission.prerequis_slug) {
+      missionsFiltrées.push(mission)
+      continue
+    }
+    // Vérifier si le prérequis est complété
+    const { data: prereqMission } = await supabase
+      .from('missions').select('id').eq('slug', mission.prerequis_slug).single()
+    if (!prereqMission) continue
+    const { data: prereqProg } = await supabase
+      .from('missions_utilisateurs')
+      .select('completee').eq('user_id', userId).eq('mission_id', prereqMission.id)
+      .is('periode', null).maybeSingle()
+    if (prereqProg?.completee) missionsFiltrées.push(mission)
+  }
+  const missionsFiltréesFinal = missionsFiltrées
+
   const missionsDeclenchees = []
 
-  for (const mission of missions) {
+  for (const mission of missionsFiltréesFinal) {
     // Pour les missions permanentes (periode = null), filtrer IS NULL explicitement
     // car SQL NULL != NULL → .eq('periode', null) ne matche rien
     let query = supabase
