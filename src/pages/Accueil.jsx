@@ -285,115 +285,112 @@ function Accueil() {
       <main style={{ flex: 1 }}>
 
         {/* ── Header ── */}
-        <div style={{ padding: '20px 16px 0 16px', position: 'relative' }}>
+        <div style={{ padding: '16px 16px 0 16px', position: 'relative' }}>
           <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 3, background: 'var(--accent)' }} />
 
-          {/* Ligne 1 : Bonjour + KPIs */}
-          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 0, flexShrink: 1, minWidth: 0 }}>
-              <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 36, color: 'var(--text-1)', letterSpacing: '0.02em', lineHeight: 1 }}>Bonjour{' '}</span>
-              <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 36, color: 'var(--accent)', letterSpacing: '0.02em', lineHeight: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{pseudo || ''}</span>
+          {/* Ligne 1 : user + KPIs */}
+          <div style={{ display: 'flex', alignItems: 'stretch', justifyContent: 'space-between', gap: 12 }}>
+
+            {/* Bloc gauche — pseudo + titre/niveau + barre XP */}
+            <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', flexShrink: 1, minWidth: 0 }}>
+              {/* Pseudo + titre + niveau */}
+              <div
+                onClick={() => navigate('/mes-pronos')}
+                style={{ display: 'flex', alignItems: 'baseline', gap: 8, cursor: 'pointer', flexWrap: 'wrap' }}
+              >
+                <span style={{ fontFamily: 'var(--font-title)', fontWeight: 700, fontSize: 28, color: 'var(--accent)', letterSpacing: '-0.01em', lineHeight: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {pseudo || ''}
+                </span>
+                <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 18, color: 'var(--gold)', letterSpacing: '0.02em', lineHeight: 1, whiteSpace: 'nowrap' }}>
+                  {titrDepuisNiveau(xpData.niveau)}
+                </span>
+                <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 12, color: 'var(--text-3)', whiteSpace: 'nowrap' }}>
+                  Niv. {xpData.niveau}
+                </span>
+              </div>
+
+              {/* Barre XP */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
+                <div style={{ width: 140, height: 4, background: 'var(--bg-2)', overflow: 'hidden', borderRadius: 3, flexShrink: 0 }}>
+                  <div style={{
+                    height: '100%',
+                    width: `${xpData.niveau >= 100 ? 100 : Math.min(100, Math.round(
+                      (xpData.xp_total - xpPourNiveau(xpData.niveau)) /
+                      (xpPourNiveau(xpData.niveau + 1) - xpPourNiveau(xpData.niveau)) * 100
+                    ))}%`,
+                    background: 'var(--gold)', transition: 'width 0.6s ease',
+                  }} />
+                </div>
+                <span style={{ fontSize: 10, color: 'var(--text-3)', fontFamily: 'var(--font-display)', fontWeight: 600, flexShrink: 0 }}>
+                  {xpData.xp_total.toLocaleString('fr-FR')} XP
+                </span>
+              </div>
             </div>
 
-            {/* KPIs */}
+            {/* Bloc droit — KPIs */}
             {kpis.total > 0 && (
-              <div style={{ display: 'flex', gap: 16, flexShrink: 0, alignItems: 'flex-start' }}>
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 'clamp(20px, 5vw, 32px)', color: 'var(--text-1)', lineHeight: 1 }}>
-                    {kpis.total}
+              <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', alignItems: 'flex-end', flexShrink: 0 }}>
+                <div style={{ display: 'flex', gap: 16 }}>
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 'clamp(20px, 5vw, 30px)', color: 'var(--text-1)', lineHeight: 1 }}>
+                      {kpis.total}
+                    </div>
+                    <div style={{ fontSize: 9, color: 'var(--text-3)', marginTop: 2, letterSpacing: '0.04em' }}>PRONOS</div>
                   </div>
-                  <div style={{ fontSize: 9, color: 'var(--text-3)', marginTop: 2, letterSpacing: '0.04em' }}>PRONOS</div>
-                </div>
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 'clamp(20px, 5vw, 32px)', color: 'var(--accent)', lineHeight: 1 }}>
-                    {kpis.pct}%
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 'clamp(20px, 5vw, 30px)', color: 'var(--accent)', lineHeight: 1 }}>
+                      {kpis.pct}%
+                    </div>
+                    <div style={{ fontSize: 9, color: 'var(--text-3)', marginTop: 2, letterSpacing: '0.04em' }}>RÉUSSITE</div>
                   </div>
-                  <div style={{ fontSize: 9, color: 'var(--text-3)', marginTop: 2, letterSpacing: '0.04em' }}>RÉUSSITE</div>
                 </div>
               </div>
             )}
           </div>
 
-          {/* Ligne 2 : Titre RPG + barre XP + liens */}
-          <div style={{ marginTop: 14 }}>
-            <div style={{ display: 'inline-flex', alignItems: 'baseline', gap: 8 }}>
-              <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 18, color: 'var(--gold)', letterSpacing: '0.02em', lineHeight: 1 }}>
-                {titrDepuisNiveau(xpData.niveau)}
-              </span>
-              <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 13, color: 'var(--text-3)' }}>
-                Niv. {xpData.niveau}
-              </span>
-            </div>
-            <div style={{ marginTop: 5, display: 'flex', alignItems: 'center', gap: 10 }}>
-              <div style={{ width: 120, height: 4, background: 'var(--bg-2)', overflow: 'hidden', borderRadius: 3, flexShrink: 0 }}>
-                <div style={{
-                  height: '100%',
-                  width: `${xpData.niveau >= 100 ? 100 : Math.min(100, Math.round(
-                    (xpData.xp_total - xpPourNiveau(xpData.niveau)) /
-                    (xpPourNiveau(xpData.niveau + 1) - xpPourNiveau(xpData.niveau)) * 100
-                  ))}%`,
-                  background: 'var(--gold)', transition: 'width 0.6s ease',
-                }} />
-              </div>
-              <span style={{ fontSize: 10, color: 'var(--text-3)', fontFamily: 'var(--font-display)', fontWeight: 600, flexShrink: 0 }}>
-                {xpData.xp_total.toLocaleString('fr-FR')} XP
-              </span>
+          {/* Ligne 2 : chips gamification */}
+          {user && (
+            <div style={{ marginTop: 10, display: 'flex', gap: 8 }}>
+
+              {/* Chip Missions */}
               <button
-                onClick={() => navigate('/mes-pronos')}
+                onClick={() => setMissionsOpen(true)}
                 style={{
-                  background: 'none', borderWidth: 0, cursor: 'pointer',
-                  fontSize: 10, color: 'var(--text-3)', padding: 0,
-                  fontWeight: 600, letterSpacing: '0.03em', flexShrink: 0,
+                  display: 'inline-flex', alignItems: 'center', gap: 6,
+                  background: 'var(--bg-2)',
+                  border: '1px solid var(--border)',
+                  borderRadius: 'var(--radius-sm)',
+                  padding: '5px 11px',
+                  cursor: 'pointer',
+                  fontSize: 11, fontWeight: 700, color: 'var(--text-2)',
+                  letterSpacing: '0.03em',
                 }}
               >
-                Mes stats →
+                <Target size={12} strokeWidth={2} color="var(--accent)" />
+                Missions
               </button>
+
+              {/* Chip Roue */}
+              <button
+                onClick={() => {/* TODO : ouvrir modal roue */}}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 6,
+                  background: 'var(--bg-2)',
+                  border: '1px solid var(--border)',
+                  borderRadius: 'var(--radius-sm)',
+                  padding: '5px 11px',
+                  cursor: roueDispo ? 'pointer' : 'default',
+                  fontSize: 11, fontWeight: 700, color: 'var(--text-2)',
+                  letterSpacing: '0.03em',
+                  opacity: roueDispo ? 1 : 0.4,
+                }}
+              >
+                <RefreshCw size={12} strokeWidth={2} color="var(--accent)" />
+                {roueDispo ? 'Roue' : 'Roue jouée'}
+              </button>
+
             </div>
-
-            {/* ── Barre chips gamification ── */}
-            {user && (
-              <div style={{ marginTop: 10, display: 'flex', gap: 8 }}>
-
-                {/* Chip Missions */}
-                <button
-                  onClick={() => setMissionsOpen(true)}
-                  style={{
-                    display: 'inline-flex', alignItems: 'center', gap: 6,
-                    background: 'var(--bg-2)',
-                    border: '1px solid var(--border)',
-                    borderRadius: 'var(--radius-sm)',
-                    padding: '5px 11px',
-                    cursor: 'pointer',
-                    fontSize: 11, fontWeight: 700, color: 'var(--text-2)',
-                    letterSpacing: '0.03em',
-                  }}
-                >
-                  <Target size={12} strokeWidth={2} color="var(--accent)" />
-                  Missions
-                </button>
-
-                {/* Chip Roue */}
-                <button
-                  onClick={() => {/* TODO : ouvrir modal roue */}}
-                  style={{
-                    display: 'inline-flex', alignItems: 'center', gap: 6,
-                    background: 'var(--bg-2)',
-                    border: '1px solid var(--border)',
-                    borderRadius: 'var(--radius-sm)',
-                    padding: '5px 11px',
-                    cursor: roueDispo ? 'pointer' : 'default',
-                    fontSize: 11, fontWeight: 700, color: 'var(--text-2)',
-                    letterSpacing: '0.03em',
-                    opacity: roueDispo ? 1 : 0.4,
-                  }}
-                >
-                  <RefreshCw size={12} strokeWidth={2} color="var(--accent)" />
-                  {roueDispo ? 'Roue' : 'Roue jouée'}
-                </button>
-
-              </div>
-            )}
-          </div>
+          )}
         </div>
 
         {/* ── À LA UNE ── */}
