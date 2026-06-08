@@ -17,7 +17,7 @@ import BanniereFeed from '../components/BanniereFeed'
 import MissionsPopup from '../components/MissionsPopup'
 import { track } from '../services/tracker'
 import { useNavigate } from 'react-router-dom'
-import { Calendar } from 'lucide-react'
+import { Calendar, Target, RefreshCw } from 'lucide-react'
 import { useNoSpoil } from '../context/NoSpoilContext'
 import { SAISON_ESPN } from '../config'
 
@@ -107,6 +107,7 @@ function Accueil() {
   const [kpis, setKpis]                         = useState({ total: 0, pct: 0 })
   const [filesBadges, setFilesBadges]           = useState([])
   const [missionsOpen, setMissionsOpen]         = useState(false)
+  const [roueDispo, setRoueDispo]               = useState(false)
   const navigate = useNavigate()
   const { noSpoil } = useNoSpoil()
 
@@ -156,6 +157,11 @@ function Accueil() {
       }
 
       calculerPoints(user.id).catch(() => {})
+
+      // Vérif roue quotidienne — dispo si pas jouée aujourd'hui
+      const jourParis = new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/Paris' })
+      const cléRoue = `swish_roue_${user.id}_${jourParis}`
+      setRoueDispo(!localStorage.getItem(cléRoue))
 
       const { data: liguesUser } = await supabase
         .from('membres_groupe')
@@ -340,21 +346,48 @@ function Accueil() {
               </button>
             </div>
 
-            {/* Bouton Missions — sous la barre XP, aligné à gauche */}
+            {/* ── Barre chips gamification ── */}
             {user && (
-              <div style={{ marginTop: 8 }}>
+              <div style={{ marginTop: 10, display: 'flex', gap: 8 }}>
+
+                {/* Chip Missions */}
                 <button
                   onClick={() => setMissionsOpen(true)}
                   style={{
-                    background: 'var(--gold-dim)', borderWidth: 1, borderStyle: 'solid',
-                    borderColor: 'rgba(245,158,11,0.3)', borderRadius: 'var(--radius-sm)',
-                    cursor: 'pointer', padding: '4px 10px',
-                    fontSize: 10, color: 'var(--gold)', fontWeight: 700,
-                    letterSpacing: '0.04em',
+                    display: 'inline-flex', alignItems: 'center', gap: 6,
+                    background: 'var(--bg-2)',
+                    border: '1px solid var(--border)',
+                    borderRadius: 'var(--radius-sm)',
+                    padding: '5px 11px',
+                    cursor: 'pointer',
+                    fontSize: 11, fontWeight: 700, color: 'var(--text-2)',
+                    letterSpacing: '0.03em',
                   }}
                 >
-                  🎯 Missions
+                  <Target size={12} strokeWidth={2} color="var(--accent)" />
+                  Missions
                 </button>
+
+                {/* Chip Roue */}
+                <button
+                  onClick={() => {/* TODO : ouvrir modal roue */}}
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 6,
+                    background: roueDispo ? 'var(--accent-dim)' : 'var(--bg-2)',
+                    border: `1px solid ${roueDispo ? 'var(--accent-border)' : 'var(--border)'}`,
+                    borderRadius: 'var(--radius-sm)',
+                    padding: '5px 11px',
+                    cursor: roueDispo ? 'pointer' : 'default',
+                    fontSize: 11, fontWeight: 700,
+                    color: roueDispo ? 'var(--accent)' : 'var(--text-3)',
+                    letterSpacing: '0.03em',
+                    opacity: roueDispo ? 1 : 0.5,
+                  }}
+                >
+                  <RefreshCw size={12} strokeWidth={2} />
+                  {roueDispo ? 'Roue dispo' : 'Roue jouée'}
+                </button>
+
               </div>
             )}
           </div>
