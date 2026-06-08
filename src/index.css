@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Barlow+Condensed:wght@600;700&family=Teko:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&family=Teko:wght@400;500;600;700&display=swap');
 
 /* ── TOKENS ─────────────────────────────────────────── */
 :root {
@@ -25,7 +25,7 @@
   --radius-lg: 14px;
   --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
   --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.5);
-  --font-body: 'Inter', system-ui, sans-serif;
+  --font-body: 'Outfit', system-ui, sans-serif;
   --font-display: 'Barlow Condensed', system-ui, sans-serif;
   --font-title: 'Teko', system-ui, sans-serif;
 

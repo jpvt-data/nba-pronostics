@@ -373,19 +373,18 @@ function Accueil() {
                   onClick={() => {/* TODO : ouvrir modal roue */}}
                   style={{
                     display: 'inline-flex', alignItems: 'center', gap: 6,
-                    background: roueDispo ? 'var(--accent-dim)' : 'var(--bg-2)',
-                    border: `1px solid ${roueDispo ? 'var(--accent-border)' : 'var(--border)'}`,
+                    background: 'var(--bg-2)',
+                    border: '1px solid var(--border)',
                     borderRadius: 'var(--radius-sm)',
                     padding: '5px 11px',
                     cursor: roueDispo ? 'pointer' : 'default',
-                    fontSize: 11, fontWeight: 700,
-                    color: roueDispo ? 'var(--accent)' : 'var(--text-3)',
+                    fontSize: 11, fontWeight: 700, color: 'var(--text-2)',
                     letterSpacing: '0.03em',
-                    opacity: roueDispo ? 1 : 0.5,
+                    opacity: roueDispo ? 1 : 0.4,
                   }}
                 >
-                  <RefreshCw size={12} strokeWidth={2} />
-                  {roueDispo ? 'Roue dispo' : 'Roue jouée'}
+                  <RefreshCw size={12} strokeWidth={2} color="var(--accent)" />
+                  {roueDispo ? 'Roue' : 'Roue jouée'}
                 </button>
 
               </div>
