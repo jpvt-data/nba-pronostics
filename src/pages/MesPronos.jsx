@@ -83,7 +83,7 @@ const PopupBadge = ({ badge, dateObtention, onClose }) => (
         position: 'absolute', top: 10, right: 12,
         background: 'none', borderWidth: 0, cursor: 'pointer',
         fontSize: 18, color: 'var(--text-3)', lineHeight: 1, padding: 4,
-      }}>✕</button>
+      }}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
 
       {dateObtention && (
         <p style={{ fontSize: 11, color: 'var(--text-3)', marginBottom: 16, fontStyle: 'italic' }}>
@@ -109,23 +109,23 @@ const PopupBadge = ({ badge, dateObtention, onClose }) => (
 )
 
 const XP_LABELS = {
-  connexion_quotidienne:  { label: 'Connexion quotidienne',        icon: '📅' },
-  prono_pose:             { label: 'Prono posé',                   icon: '🎯' },
-  premier_prono_jour:     { label: 'Premier prono du jour',        icon: '⚡' },
-  prono_correct:          { label: 'Prono correct',                icon: '✅' },
-  semaine_100_pct:        { label: 'Semaine 100% pronostiquée',    icon: '💯' },
-  premier_prono_histoire: { label: 'Premier prono de l\'histoire', icon: '🏆' },
-  fourchette_posee:       { label: 'Fourchette d\'écart posée',    icon: '🎯' },
-  fourchette_correcte:    { label: 'Fourchette d\'écart correcte', icon: '🏹' },
-  jalon_10_pronos:        { label: 'Jalon — 10 pronos posés',      icon: '🎖️' },
-  jalon_50_pronos:        { label: 'Jalon — 50 pronos + Badge All-In', icon: '🃏' },
-  jalon_100_pronos:       { label: 'Jalon — 100 pronos + Badge Marathonien', icon: '🏃' },
-  jalon_serie_5:          { label: 'Jalon — 5 corrects d\'affilée + Badge En Feu', icon: '🔥' },
-  jalon_serie_10:         { label: 'Jalon — 10 corrects d\'affilée + Badge Prophète', icon: '👑' },
-  jalon_10_fourchettes:   { label: 'Jalon — 10 fourchettes correctes + Badge Tireur d\'Élite', icon: '🏹' },
-  jalon_winrate_65:       { label: 'Jalon — 65% réussite + Badge Analyste', icon: '🧠' },
-  jalon_semaine:          { label: 'Jalon — Semaine gagnée + Badge Champion', icon: '🏆' },
-  jalon_serie_ratee_5:    { label: 'Badge En Hibernation débloqué', icon: '🧊' },
+  connexion_quotidienne:  { label: 'Connexion quotidienne',                           couleur: 'var(--accent)' },
+  prono_pose:             { label: 'Prono posé',                                      couleur: 'var(--text-3)' },
+  premier_prono_jour:     { label: 'Premier prono du jour',                           couleur: 'var(--accent)' },
+  prono_correct:          { label: 'Prono correct',                                   couleur: 'var(--success)' },
+  semaine_100_pct:        { label: 'Semaine 100% pronostiquée',                       couleur: 'var(--gold)' },
+  premier_prono_histoire: { label: 'Premier prono de l\'histoire',                    couleur: 'var(--gold)' },
+  fourchette_posee:       { label: 'Fourchette d\'écart posée',                       couleur: 'var(--text-3)' },
+  fourchette_correcte:    { label: 'Fourchette d\'écart correcte',                    couleur: 'var(--success)' },
+  jalon_10_pronos:        { label: 'Jalon — 10 pronos posés',                         couleur: 'var(--gold)' },
+  jalon_50_pronos:        { label: 'Jalon — 50 pronos + Badge All-In',                couleur: 'var(--gold)' },
+  jalon_100_pronos:       { label: 'Jalon — 100 pronos + Badge Marathonien',          couleur: 'var(--gold)' },
+  jalon_serie_5:          { label: 'Jalon — 5 corrects d\'affilée + Badge En Feu',    couleur: 'var(--success)' },
+  jalon_serie_10:         { label: 'Jalon — 10 corrects d\'affilée + Badge Prophète', couleur: 'var(--gold)' },
+  jalon_10_fourchettes:   { label: 'Jalon — 10 fourchettes correctes + Badge Tireur d\'Élite', couleur: 'var(--gold)' },
+  jalon_winrate_65:       { label: 'Jalon — 65% réussite + Badge Analyste',           couleur: 'var(--accent)' },
+  jalon_semaine:          { label: 'Jalon — Semaine gagnée + Badge Champion',         couleur: 'var(--gold)' },
+  jalon_serie_ratee_5:    { label: 'Badge En Hibernation débloqué',                   couleur: 'var(--text-3)' },
 }
 
 const formaterDateHeure = (dateStr) =>
@@ -177,7 +177,7 @@ const ModalHistoriqueXP = ({ userId, onClose }) => {
           position: 'absolute', top: 12, right: 12,
           background: 'none', borderWidth: 0, cursor: 'pointer',
           fontSize: 18, color: 'var(--text-3)', lineHeight: 1, padding: 4,
-        }}>✕</button>
+        }}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
 
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 16, paddingRight: 32 }}>
           <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 20, color: 'var(--text-1)', letterSpacing: '0.02em' }}>HISTORIQUE</span>
@@ -196,7 +196,7 @@ const ModalHistoriqueXP = ({ userId, onClose }) => {
               const missionId = l.source_id?.startsWith('mission_') ? l.source_id.slice(8) : null
               const missionTitre = missionId ? missions[missionId] : null
               const info = XP_LABELS[l.source_id]
-                || (missionTitre ? { label: `Mission — ${missionTitre}`, icon: '⚡' } : { label: l.source_id, icon: '⚙️' })
+                || (missionTitre ? { label: `Mission — ${missionTitre}`, couleur: 'var(--accent)' } : { label: l.source_id, couleur: 'var(--text-3)' })
               return (
                 <div key={i} style={{
                   display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
@@ -207,7 +207,7 @@ const ModalHistoriqueXP = ({ userId, onClose }) => {
                   background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.02)',
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1, minWidth: 0 }}>
-                    <span style={{ fontSize: 16, flexShrink: 0 }}>{info.icon}</span>
+                    <span style={{ width: 7, height: 7, borderRadius: '50%', background: info.couleur || 'var(--text-3)', flexShrink: 0, display: 'inline-block' }} />
                     <div style={{ minWidth: 0 }}>
                       <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-1)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {info.label}
@@ -260,7 +260,7 @@ const ModalInfo = ({ onClose }) => {
           position: 'absolute', top: 12, right: 12,
           background: 'none', borderWidth: 0, cursor: 'pointer',
           fontSize: 18, color: 'var(--text-3)', lineHeight: 1, padding: 4,
-        }}>✕</button>
+        }}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
 
         <div style={{ display: 'flex', gap: 4, marginBottom: 20, paddingRight: 32 }}>
           {[
@@ -588,7 +588,10 @@ function MesPronos() {
                     padding: '7px 14px', background: 'var(--accent)',
                     borderWidth: 0, color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer',
                   }}
-                >⚔️ 1v1 — me comparer à {profil?.pseudo}</button>
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'inline', verticalAlign: 'middle', marginRight: 5 }}><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                  1v1 — me comparer à {profil?.pseudo}
+                </button>
               )}
             </div>
             <button
@@ -724,7 +727,7 @@ function MesPronos() {
                   }}>
                     <div style={{ fontSize: 10, color: 'var(--text-3)', marginBottom: 6, letterSpacing: '0.05em' }}>SÉRIE EN COURS</div>
                     <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-                      {streaks.actuel > 0 && <span style={{ fontSize: 18 }}>🔥</span>}
+                      {streaks.actuel > 0 && <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--gold)', display: 'inline-block', flexShrink: 0 }} />}
                       <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 32, color: streaks.actuel > 0 ? 'var(--gold)' : 'var(--text-3)', lineHeight: 1 }}>
                         {streaks.actuel}
                       </span>
@@ -803,7 +806,7 @@ function MesPronos() {
                           borderWidth: 1, borderStyle: 'solid', borderColor: 'rgba(34,197,94,0.2)',
                         }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <span style={{ fontSize: 15 }}>✅</span>
+                            <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--success)', display: 'inline-block', flexShrink: 0 }} />
                             <div>
                               <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-1)' }}>{equipes.meilleure.nom}</div>
                               <div style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 1 }}>{equipes.meilleure.corrects}/{equipes.meilleure.total} pronos</div>
@@ -819,7 +822,7 @@ function MesPronos() {
                           borderWidth: 1, borderStyle: 'solid', borderColor: 'rgba(239,68,68,0.2)',
                         }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <span style={{ fontSize: 15 }}>❌</span>
+                            <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--danger)', display: 'inline-block', flexShrink: 0 }} />
                             <div>
                               <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-1)' }}>{equipes.pire.nom}</div>
                               <div style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 1 }}>{equipes.pire.corrects}/{equipes.pire.total} pronos</div>
@@ -867,8 +870,8 @@ function MesPronos() {
                             {/* Header labels */}
                             <div />
                             <span style={{ fontSize: 10, color: 'var(--text-3)', fontWeight: 700, textAlign: 'center' }}>Total</span>
-                            <span style={{ fontSize: 10, color: 'var(--text-3)', fontWeight: 700, textAlign: 'center' }}>✓</span>
-                            <span style={{ fontSize: 10, color: 'var(--text-3)', fontWeight: 700, textAlign: 'center' }}>✗</span>
+                            <span style={{ fontSize: 10, color: 'var(--success)', fontWeight: 700, textAlign: 'center' }}>OK</span>
+                            <span style={{ fontSize: 10, color: 'var(--danger)', fontWeight: 700, textAlign: 'center' }}>Raté</span>
                             <span style={{ fontSize: 10, color: 'var(--text-3)', fontWeight: 700, textAlign: 'center' }}>%</span>
                             <span style={{ fontSize: 10, color: 'var(--text-3)', fontWeight: 700, textAlign: 'center' }}>Pts</span>
                             {/* Ligne PRONOS MATCH */}
@@ -942,10 +945,10 @@ function MesPronos() {
                           {ecart && (
                             <div style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 3 }}>
                               {ecart.fourchette_reelle == null
-                                ? <span style={{ color: 'var(--gold)' }}>🎯 Écart : {FL[ecart.fourchette_choisie]} (en attente)</span>
+                                ? <span style={{ color: 'var(--gold)' }}>Écart : {FL[ecart.fourchette_choisie]} (en attente)</span>
                                 : ecart.correct
-                                  ? <span style={{ color: 'var(--success)' }}>🎯 Écart : {FL[ecart.fourchette_choisie]} ✓ +2 pts</span>
-                                  : <span style={{ color: 'var(--danger)' }}>🎯 Écart : {FL[ecart.fourchette_choisie]} ✗ (réel : {FL[ecart.fourchette_reelle]})</span>
+                                  ? <span style={{ color: 'var(--success)' }}>Écart : {FL[ecart.fourchette_choisie]} · +2 pts</span>
+                                  : <span style={{ color: 'var(--danger)' }}>Écart : {FL[ecart.fourchette_choisie]} · raté (réel : {FL[ecart.fourchette_reelle]})</span>
                               }
                             </div>
                           )}

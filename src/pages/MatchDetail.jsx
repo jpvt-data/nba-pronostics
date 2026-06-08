@@ -19,7 +19,7 @@ const BOOKS_FR_LABELS = { betclic_fr: 'Betclic', unibet_fr: 'Unibet', winamax_fr
 
 // Bookmakers US/référence affichés section 3
 const BOOKS_US = ['draftkings', 'fanduel', 'betmgm', 'pinnacle']
-const BOOKS_US_LABELS = { draftkings: 'DraftKings', fanduel: 'FanDuel', betmgm: 'BetMGM', pinnacle: 'Pinnacle ★' }
+const BOOKS_US_LABELS = { draftkings: 'DraftKings', fanduel: 'FanDuel', betmgm: 'BetMGM', pinnacle: 'Pinnacle' }
 
 // Convertit une cote décimale en probabilité implicite normalisée (%)
 const coteEnPct = (coteEq1, coteEq2) => {
@@ -646,11 +646,13 @@ function MatchDetail() {
         <span style={{ fontSize: 11, color: 'var(--text-3)', textAlign: 'center', position: 'relative', lineHeight: 1.3 }}>{eq.nom}</span>
         <span style={{ fontSize: 10, color: 'var(--text-3)', position: 'relative' }}>{align === 'ext' ? 'Extérieur' : 'Domicile'}</span>
         {selec && !termine && (
-          <span style={{ fontSize: 11, color: txtSelec, fontWeight: 700, marginTop: 2, position: 'relative' }}>✓ Mon prono</span>
+          <span style={{ fontSize: 11, color: txtSelec, fontWeight: 700, marginTop: 2, position: 'relative', display: 'flex', alignItems: 'center', gap: 3 }}>
+            <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Mon prono
+          </span>
         )}
         {selec && termine && !noSpoil && (
           <span style={{ fontSize: 11, fontWeight: 700, marginTop: 2, position: 'relative', color: resultat === 'correct' ? 'var(--success)' : resultat === 'incorrect' ? 'var(--danger)' : 'var(--text-3)' }}>
-            {resultat === 'correct' ? '✓ Correct' : resultat === 'incorrect' ? '✗ Raté' : '⏳'}
+            {resultat === 'correct' ? 'Correct' : resultat === 'incorrect' ? 'Raté' : 'En attente'}
           </span>
         )}
       </button>
@@ -699,8 +701,9 @@ function MatchDetail() {
             </div>
           )}
           {enCours && !prono && (
-            <div style={{ textAlign: 'center', fontSize: 11, color: 'var(--text-3)', padding: '10px 16px 0', fontWeight: 600 }}>
-              🔒 Match en cours — pronos fermés
+            <div style={{ textAlign: 'center', fontSize: 11, color: 'var(--text-3)', padding: '10px 16px 0', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5 }}>
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              Match en cours — pronos fermés
             </div>
           )}
 
@@ -710,7 +713,7 @@ function MatchDetail() {
               {(termine || enCours) && ext.score != null ? (
                 <>
                   <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: noSpoil && termine ? 22 : 44, color: noSpoil && termine ? 'var(--text-3)' : 'var(--text-1)', lineHeight: 1, whiteSpace: 'nowrap' }}>
-                    {noSpoil && termine ? '🙈' : `${ext.score}–${dom.score}`}
+                    {noSpoil && termine ? '—' : `${ext.score}–${dom.score}`}
                   </div>
                   <div style={{ fontSize: 10, marginTop: 5, fontWeight: enCours ? 700 : 400, color: enCours ? 'var(--success)' : 'var(--text-3)' }}>
                     {enCours ? `Q${match.periode} ${match.clock}` : (noSpoil ? 'Terminé' : 'Final')}
@@ -810,10 +813,10 @@ function MatchDetail() {
                   </strong>
                   {' '}
                   {ecart.correct === true
-                    ? <span style={{ color: 'var(--success)', fontWeight: 700 }}>✓ +2 pts gagnés !</span>
+                    ? <span style={{ color: 'var(--success)', fontWeight: 700 }}>+2 pts gagnés !</span>
                     : ecart.correct === false
-                      ? <span style={{ color: 'var(--danger)', fontWeight: 700 }}>✗ Raté</span>
-                      : <span style={{ color: 'var(--text-3)', fontWeight: 600 }}>⏳ En attente</span>
+                      ? <span style={{ color: 'var(--danger)', fontWeight: 700 }}>Raté</span>
+                      : <span style={{ color: 'var(--text-3)', fontWeight: 600 }}>En attente</span>
                   }
                 </div>
               </>
@@ -919,7 +922,7 @@ function MatchDetail() {
                   <div key={eq.trigramme}>
                     <div style={{ fontSize: 11, color: 'var(--text-3)', marginBottom: 8, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{eq.trigramme}</div>
                     {!eq.blessés?.length
-                      ? <div style={{ fontSize: 12, color: 'var(--success)', fontWeight: 600 }}>✓ RAS</div>
+                      ? <div style={{ fontSize: 12, color: 'var(--success)', fontWeight: 600 }}>RAS</div>
                       : eq.blessés.map((b, i) => (
                         <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                           {b.photo && <img src={b.photo} alt={b.joueur || ''} style={{ width: 30, height: 30, borderRadius: '50%', objectFit: 'cover', background: 'var(--bg-2)', flexShrink: 0 }} />}
