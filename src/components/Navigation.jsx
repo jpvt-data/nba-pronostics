@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import { Home, Trophy, BarChart2, Menu, X, Swords, LogOut, Calendar, Sparkles, TrendingUp, Shield, MessageSquare, Layers, Info, FileText } from 'lucide-react'
+import { Home, Trophy, BarChart2, Menu, X, Swords, LogOut, Calendar, Sparkles, Search, Shield, MessageSquare, Layers, Info, FileText } from 'lucide-react'
 import { useProfil } from '../context/ProfilContext'
 import { track } from '../services/tracker'
 import { Avatar } from '../components/Avatar'
@@ -12,12 +12,11 @@ const LIENS = [
   { chemin: '/accueil',    label: 'Board',      Icone: Home },
   { chemin: '/classement', label: 'Classement', Icone: Trophy },
   { chemin: '/mes-pronos', label: 'Stats',      Icone: BarChart2 },
-  { chemin: '/stats',      label: 'Explorer',   Icone: TrendingUp },
+  { chemin: '/stats',      label: 'Explorer',   Icone: Search },
 ]
 
-// Liens principaux hamburger — actifs
+// Liens principaux hamburger — actifs (Explorer retiré : déjà en bottom nav + top bar)
 const LIENS_PRINCIPAL = [
-  { chemin: '/stats',      label: 'Explorer',   Icone: TrendingUp },
   { chemin: '/groupes',    label: 'Ligues',     Icone: Shield },
   { chemin: '/calendrier', label: 'Calendrier', Icone: Calendar },
   { chemin: '/h2h',        label: '1v1',        Icone: Swords },
@@ -132,9 +131,21 @@ function Navigation({ nbPronosAttente = 0 }) {
         {/* En-tête panneau */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
           <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Menu</span>
-          <button onClick={() => setOuvert(false)} style={{ background: 'none', borderWidth: 0, color: 'var(--text-3)', cursor: 'pointer', padding: 4 }}>
-            <X size={18} />
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            {/* Loupe — raccourci Explorer */}
+            <button onClick={() => aller('/stats')} style={{
+              background: location.pathname === '/stats' ? 'var(--accent-dim)' : 'none',
+              borderWidth: location.pathname === '/stats' ? 1 : 0, borderStyle: 'solid', borderColor: 'var(--accent-border)',
+              color: location.pathname === '/stats' ? 'var(--accent)' : 'var(--text-3)',
+              cursor: 'pointer', padding: 6, borderRadius: 'var(--radius-sm)',
+              display: 'flex', alignItems: 'center',
+            }}>
+              <Search size={16} strokeWidth={1.5} />
+            </button>
+            <button onClick={() => setOuvert(false)} style={{ background: 'none', borderWidth: 0, color: 'var(--text-3)', cursor: 'pointer', padding: 4 }}>
+              <X size={18} />
+            </button>
+          </div>
         </div>
 
         {/* Profil */}
@@ -215,7 +226,7 @@ function Navigation({ nbPronosAttente = 0 }) {
         alignItems: 'center', justifyContent: 'space-between', padding: '0 20px 0 8px',
         boxShadow: '0 1px 0 rgba(0,0,0,0.06)',
       }}>
-        <div onClick={() => navigate('/accueil')} style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
+        <div onClick={() => navigate('/accueil')} style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', minWidth: 200 }}>
           <LogoTeko size={22} />
         </div>
         <div style={{ display: 'flex', gap: 4 }}>
@@ -247,7 +258,7 @@ function Navigation({ nbPronosAttente = 0 }) {
             )
           })}
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 200, justifyContent: 'flex-end' }}>
           <button onClick={() => navigate('/profil')} style={{
             display: 'flex', alignItems: 'center', gap: 8,
             background: 'none', borderWidth: 1, borderStyle: 'solid', borderColor: '#e0e0e0',
