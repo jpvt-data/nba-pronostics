@@ -563,6 +563,16 @@ function Accueil() {
           window.scrollTo(0, 0)
         }} />
       )}
+      {roueOpen && user && (
+        <RoueQuotidienne
+          userId={user.id}
+          onClose={() => setRoueOpen(false)}
+          onGain={(xp) => {
+            setRoueDispo(false)
+            if (xp > 0) setXpData(prev => ({ ...prev, xp_total: prev.xp_total + xp }))
+          }}
+        />
+      )}
     </>
   )
 }
