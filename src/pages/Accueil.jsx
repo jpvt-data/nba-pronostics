@@ -298,7 +298,7 @@ function Accueil() {
                 onClick={() => navigate('/mes-pronos')}
                 style={{ display: 'flex', alignItems: 'baseline', gap: 8, cursor: 'pointer', flexWrap: 'wrap' }}
               >
-                <span style={{ fontFamily: 'var(--font-title)', fontWeight: 700, fontSize: 8, color: 'var(--accent)', letterSpacing: '-0.01em', lineHeight: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <span style={{ fontFamily: 'var(--font-title)', fontWeight: 700, fontSize: 38, color: 'var(--accent)', letterSpacing: '-0.01em', lineHeight: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {pseudo || ''}
                 </span>
                 <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 26, color: 'var(--gold)', letterSpacing: '0.02em', lineHeight: 1, whiteSpace: 'nowrap' }}>
