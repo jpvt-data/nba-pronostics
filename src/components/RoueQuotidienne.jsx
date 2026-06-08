@@ -70,12 +70,14 @@ function RoueQuotidienne({ userId, onClose, onGain }) {
 
       if (segment.xp > 0) {
         try {
+          console.log('ajouterXP call', userId, segment.xp, 'passif', `roue_${jourParis}`)
           const res = await ajouterXP(
             userId, segment.xp,
             'passif',              // source = catégorie
             'roue_quotidienne',    // source_id = identifiant fixe
             { gain: segment.label, date: jourParis }
           )
+          console.log('ajouterXP result', res)
           // Remonter xp_total et niveau mis à jour vers Accueil
           onGain(res?.xp_total ?? segment.xp, res?.niveau ?? null)
         } catch (e) {
