@@ -186,7 +186,7 @@ function Profil() {
                 <div style={{ fontSize: 11, color: 'var(--text-3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Équipe favorite</div>
                 <div style={{ fontSize: 13, color: 'var(--text-3)', fontStyle: 'italic' }}>Disponible bientôt</div>
               </div>
-              <span style={{ fontSize: 20 }}>🏀</span>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-3)" strokeWidth="1.5" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><path d="M4.93 4.93a16 16 0 0 1 14.14 14.14M19.07 4.93A16 16 0 0 0 4.93 19.07"/></svg>
             </div>
 
             <div style={{
@@ -199,7 +199,7 @@ function Profil() {
                 <div style={{ fontSize: 11, color: 'var(--text-3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Joueur favori</div>
                 <div style={{ fontSize: 13, color: 'var(--text-3)', fontStyle: 'italic' }}>Disponible bientôt</div>
               </div>
-              <span style={{ fontSize: 20 }}>⭐</span>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-3)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
             </div>
           </div>
         </div>

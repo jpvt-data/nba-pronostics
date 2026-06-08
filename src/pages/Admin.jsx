@@ -63,7 +63,7 @@ const TYPES_CONFIG = {
   playoffs:     { label: 'Playoffs',          couleur: '#ef4444', obligatoire: true,  priorite: 6 },
   finals:       { label: 'NBA Finals',        couleur: '#e11d48', obligatoire: true,  priorite: 7 },
   summer_league:{ label: 'Summer League',     couleur: '#06b6d4', obligatoire: false, priorite: 8 },
-  inconnu:      { label: 'Non identifié ⚠️', couleur: '#ef4444', obligatoire: false, priorite: 99 },
+  inconnu:      { label: 'Non identifié', couleur: '#ef4444', obligatoire: false, priorite: 99 },
 }
 
 // Types disponibles pour créer une ligue
@@ -137,7 +137,7 @@ function Admin() {
           <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 3, background: 'var(--danger)' }} />
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 4 }}>
             <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 36, color: 'var(--text-1)', letterSpacing: '0.02em', lineHeight: 1 }}>ADMIN</span>
-            <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 36, color: 'var(--danger)', letterSpacing: '0.02em', lineHeight: 1 }}>🛡️</span>
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginBottom: 2 }}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
           </div>
           <p style={{ fontSize: 12, color: 'var(--text-3)', margin: '0 0 16px' }}>Zone d'administration</p>
         </div>
@@ -253,7 +253,7 @@ function OngletScanner({ saison, setSaison, progression, setProgression, resulta
           </button>
         ) : (
           <button onClick={() => { annule.current = true; setScanning(false) }} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', fontSize: 13, fontWeight: 700, background: 'var(--danger)', color: '#fff', borderWidth: 0, borderRadius: 'var(--radius-sm)', cursor: 'pointer' }}>
-            ✕ Arrêter
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Arrêter
           </button>
         )}
         {resultats && <span style={{ fontSize: 11, color: 'var(--text-3)' }}>{resultats.total} matchs scannés</span>}
@@ -383,7 +383,7 @@ function TableauDetail({ tag, matchs, onClose, initOuvert = false }) {
           <span style={{ fontSize: 11, color: 'var(--text-3)' }}>{matchs.length} matchs</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          {onClose && <button onClick={e => { e.stopPropagation(); onClose() }} style={{ background: 'none', border: 'none', color: 'var(--text-3)', cursor: 'pointer', fontSize: 16, lineHeight: 1 }}>✕</button>}
+          {onClose && <button onClick={e => { e.stopPropagation(); onClose() }} style={{ background: 'none', border: 'none', color: 'var(--text-3)', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: 2 }}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>}
           {ouvert ? <ChevronUp size={14} color="var(--text-3)" /> : <ChevronDown size={14} color="var(--text-3)" />}
         </div>
       </div>
@@ -635,7 +635,7 @@ function OngletLigues({ scanResultats, scanSaison }) {
               )}
               {!scanResultats && (
                 <p style={{ fontSize: 11, color: 'var(--text-3)', margin: 0, fontStyle: 'italic' }}>
-                  💡 Lance le scanner ESPN pour pré-remplir les dates et la description automatiquement
+                  Lance le scanner ESPN pour pré-remplir les dates et la description automatiquement
                 </p>
               )}
 
@@ -810,8 +810,8 @@ function OngletUtilisateurs() {
             </div>
             <button
               onClick={() => { setUserSelec(null); setMessages({}) }}
-              style={{ background: 'none', borderWidth: 0, cursor: 'pointer', color: 'var(--text-3)', fontSize: 18, padding: 4 }}
-            >✕</button>
+              style={{ background: 'none', borderWidth: 0, cursor: 'pointer', color: 'var(--text-3)', padding: 4, display: 'flex', alignItems: 'center' }}
+            ><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
           </div>
 
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 12 }}>
