@@ -193,7 +193,8 @@ const ModalHistoriqueXP = ({ userId, onClose }) => {
         {!charg && logs.length > 0 && (
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             {logs.map((l, i) => {
-              const missionTitre = missions[l.source_id]
+              const missionId = l.source_id?.startsWith('mission_') ? l.source_id.slice(8) : null
+              const missionTitre = missionId ? missions[missionId] : null
               const info = XP_LABELS[l.source_id]
                 || (missionTitre ? { label: `Mission — ${missionTitre}`, icon: '⚡' } : { label: l.source_id, icon: '⚙️' })
               return (
