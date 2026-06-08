@@ -6,7 +6,11 @@ import { track } from '../services/tracker'
 import Navigation from '../components/Navigation'
 import { Avatar } from '../components/Avatar'
 
-const MEDAILLES = ['🥇', '🥈', '🥉']
+const MEDAILLES_STYLE = [
+  { label: '#1', color: '#f59e0b' },
+  { label: '#2', color: '#9ca3af' },
+  { label: '#3', color: '#b45309' },
+]
 
 const calcTaux = (s) => {
   if (!s) return null
@@ -82,7 +86,7 @@ const LigneUser = ({ m, i, statsUser, moi, navigate }) => {
         color: i < 3 ? 'var(--gold)' : 'var(--text-3)',
         minWidth: 24, textAlign: 'center',
       }}>
-        {i < 3 ? MEDAILLES[i] : `#${i + 1}`}
+        {i < 3 ? MEDAILLES_STYLE[i].label : `#${i + 1}`}
       </span>
       <Avatar url={m.profils?.avatar_url || m.avatar_url} pseudo={m.profils?.pseudo || m.pseudo} taille={32} fontSize={11} />
       <span style={{ flex: 1, fontSize: 14, color: 'var(--text-1)', fontWeight: 500, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -94,8 +98,8 @@ const LigneUser = ({ m, i, statsUser, moi, navigate }) => {
         </span>
         {statsUser && (statsUser.corrects + statsUser.incorrects) > 0 && (
           <span style={{ fontSize: 10, color: 'var(--text-3)', whiteSpace: 'nowrap' }}>
-            <span style={{ color: 'var(--success)' }}>{statsUser.corrects}✓</span>{' '}
-            <span style={{ color: 'var(--danger)' }}>{statsUser.incorrects}✗</span>
+            <span style={{ color: 'var(--success)' }}>{statsUser.corrects} ✓</span>{' '}
+            <span style={{ color: 'var(--danger)' }}>{statsUser.incorrects} ✗</span>
             {t !== null && <span> · {t}%</span>}
           </span>
         )}
@@ -379,7 +383,7 @@ function Classement() {
                         cursor: 'pointer',
                       }}
                     >
-                      <span style={{ fontSize: 22 }}>👑</span>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 20h20M5 20V10l7-6 7 6v10"/></svg>
                       <Avatar url={g.profils?.avatar_url} pseudo={g.profils?.pseudo} taille={32} fontSize={11} />
                       <span style={{ flex: 1, fontSize: 14, fontWeight: 600, color: 'var(--text-1)' }}>
                         {g.profils?.pseudo || 'Inconnu'}
@@ -441,7 +445,7 @@ function Classement() {
                         color: i < 3 ? 'var(--gold)' : 'var(--text-3)',
                         minWidth: 24, textAlign: 'center',
                       }}>
-                        {i < 3 ? MEDAILLES[i] : `#${i + 1}`}
+                        {i < 3 ? MEDAILLES_STYLE[i].label : `#${i + 1}`}
                       </span>
                       <Avatar url={m.avatar_url} pseudo={m.pseudo} taille={32} fontSize={11} />
                       <span style={{ flex: 1, fontSize: 14, color: 'var(--text-1)', fontWeight: 500, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -453,8 +457,8 @@ function Classement() {
                         </span>
                         {(m.corrects + m.incorrects) > 0 && (
                           <span style={{ fontSize: 10, color: 'var(--text-3)', whiteSpace: 'nowrap' }}>
-                            <span style={{ color: 'var(--success)' }}>{m.corrects}✓</span>{' '}
-                            <span style={{ color: 'var(--danger)' }}>{m.incorrects}✗</span>
+                            <span style={{ color: 'var(--success)' }}>{m.corrects} ✓</span>{' '}
+                            <span style={{ color: 'var(--danger)' }}>{m.incorrects} ✗</span>
                             {t !== null && <span> · {t}%</span>}
                           </span>
                         )}
