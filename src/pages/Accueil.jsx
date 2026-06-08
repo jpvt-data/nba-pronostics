@@ -310,7 +310,7 @@ function Accueil() {
               </div>
 
               {/* Barre XP */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 3 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 0 }}>
                 <div style={{ width: 140, height: 4, background: 'var(--bg-2)', overflow: 'hidden', borderRadius: 3, flexShrink: 0 }}>
                   <div style={{
                     height: '100%',
