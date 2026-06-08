@@ -3,7 +3,11 @@ import { supabase } from '../lib/supabase'
 import { useNavigate } from 'react-router-dom'
 import { Avatar } from '../components/Avatar'
 
-const MEDAILLES = ['🥇', '🥈', '🥉']
+const MEDAILLES_STYLE = [
+  { label: '#1', color: '#f59e0b' },
+  { label: '#2', color: '#9ca3af' },
+  { label: '#3', color: '#b45309' },
+]
 
 // Année NBA courante : 1 sept → 31 août
 function anneNBACourante() {
@@ -127,12 +131,12 @@ function ClassementRapide({ userId }) {
               }}
             >
               <span style={{
-                fontSize: i < 3 ? 16 : 13,
+                fontSize: 13,
                 fontFamily: 'var(--font-display)', fontWeight: 700,
-                color: i < 3 ? 'var(--gold)' : 'var(--text-3)',
+                color: i < 3 ? MEDAILLES_STYLE[i].color : 'var(--text-3)',
                 minWidth: 24, textAlign: 'center',
               }}>
-                {i < 3 ? MEDAILLES[i] : `#${i + 1}`}
+                {i < 3 ? MEDAILLES_STYLE[i].label : `#${i + 1}`}
               </span>
               <Avatar url={membre.profils?.avatar_url} pseudo={membre.profils?.pseudo} taille={32} fontSize={11} />
               <span style={{

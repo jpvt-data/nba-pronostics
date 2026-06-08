@@ -101,7 +101,7 @@ function FiltreEquipe({ equipeFiltre, onSelect }) {
       }}>
         {equipeActuelle
           ? <><img src={equipeActuelle.logo} style={{ width: 16, height: 16, objectFit: 'contain' }} alt="" />{equipeActuelle.tri}</>
-          : '🏀 Équipe'}
+          : 'Équipe'}
       </button>
       {ouvert && (
         <div style={{
@@ -115,7 +115,11 @@ function FiltreEquipe({ equipeFiltre, onSelect }) {
               width: '100%', textAlign: 'left', padding: '6px 8px',
               background: 'none', border: 'none', cursor: 'pointer',
               fontSize: 11, color: 'var(--danger)', fontWeight: 600, marginBottom: 4,
-            }}>✕ Toutes les équipes</button>
+              display: 'flex', alignItems: 'center', gap: 5,
+            }}>
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              Toutes les équipes
+            </button>
           )}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
             {EQUIPES_NBA.map(eq => (
@@ -225,7 +229,6 @@ function CarteMatch({ match, pronoData, onProno, userId }) {
                 </div>
                 {enCours && <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, marginTop: 2 }}><span style={{ width: 5, height: 5, borderRadius: '50%', background: '#22c55e', boxShadow: '0 0 6px #22c55e', animation: 'blink 1.2s infinite', display: 'inline-block' }} /><span style={{ fontFamily: 'var(--font-display)', fontSize: 10, color: '#22c55e', fontWeight: 700, letterSpacing: '0.12em' }}>LIVE</span></div>}
               </>
-            ) : noSpoil && termine ? <span style={{ fontSize: 20 }}>🙈</span>
             : <div style={{ fontFamily: 'var(--font-display)', fontSize: 24, fontWeight: 700, color: '#fff', lineHeight: 1 }}>{formaterHeure(match.date)}</div>}
           </div>
 
@@ -269,10 +272,10 @@ function CarteMatch({ match, pronoData, onProno, userId }) {
           {!aVenir && (
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '3px 0' }}>
-                {resultatProno === 'correct' && <><span style={{ fontSize: 11 }}>✅</span><span style={{ fontFamily: 'var(--font-display)', fontSize: 12, fontWeight: 700, color: '#22c55e', letterSpacing: '0.04em' }}>Pronostic correct !</span></>}
-                {resultatProno === 'incorrect' && <><span style={{ fontSize: 11 }}>❌</span><span style={{ fontFamily: 'var(--font-display)', fontSize: 12, fontWeight: 700, color: '#ef4444', letterSpacing: '0.04em' }}>Pronostic raté !</span></>}
+                {resultatProno === 'correct' && <><span style={{ width: 7, height: 7, borderRadius: '50%', background: '#22c55e', display: 'inline-block', flexShrink: 0 }} /><span style={{ fontFamily: 'var(--font-display)', fontSize: 12, fontWeight: 700, color: '#22c55e', letterSpacing: '0.04em' }}>Pronostic correct !</span></>}
+                {resultatProno === 'incorrect' && <><span style={{ width: 7, height: 7, borderRadius: '50%', background: '#ef4444', display: 'inline-block', flexShrink: 0 }} /><span style={{ fontFamily: 'var(--font-display)', fontSize: 12, fontWeight: 700, color: '#ef4444', letterSpacing: '0.04em' }}>Pronostic raté !</span></>}
                 {!pronoLocal && <span style={{ fontFamily: 'var(--font-display)', fontSize: 12, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.04em' }}>Non pronostiqué</span>}
-                {pronoLocal && !resultatProno && <><span style={{ fontSize: 11 }}>🎯</span><span style={{ fontFamily: 'var(--font-display)', fontSize: 12, fontWeight: 700, color: '#fff', letterSpacing: '0.04em' }}>Mon prono · {pronoLocal}</span></>}
+                {pronoLocal && !resultatProno && <><span style={{ width: 7, height: 7, borderRadius: '50%', background: 'rgba(255,255,255,0.4)', display: 'inline-block', flexShrink: 0 }} /><span style={{ fontFamily: 'var(--font-display)', fontSize: 12, fontWeight: 700, color: '#fff', letterSpacing: '0.04em' }}>Mon prono · {pronoLocal}</span></>}
               </div>
               {match.stade && <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.22)', letterSpacing: '0.05em', textAlign: 'right', maxWidth: 120, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{match.stade}</div>}
             </div>

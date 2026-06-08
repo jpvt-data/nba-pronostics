@@ -441,7 +441,10 @@ export default function Briefing({ userId, nbPronosAttente = 0, matchs = [] }) {
             display: 'inline-flex', alignItems: 'center', gap: 8,
             flexShrink: 0, marginRight: 32,
           }}>
-            <span style={{ fontSize: 14 }}>{msg.icone}</span>
+            <span style={{
+              width: 6, height: 6, borderRadius: '50%', flexShrink: 0,
+              background: msg.couleur || 'var(--accent)', display: 'inline-block',
+            }} />
             <span
               onClick={() => msg.lien ? navigate(msg.lien) : undefined}
               style={{
@@ -456,9 +459,12 @@ export default function Briefing({ userId, nbPronosAttente = 0, matchs = [] }) {
                 onClick={() => handleDismiss(msg.id, msg.dismissable)}
                 style={{
                   background: 'none', border: 'none', cursor: 'pointer',
-                  fontSize: 10, color: 'rgba(0,0,0,0.35)', padding: '2px 4px',
+                  padding: '2px 4px', display: 'flex', alignItems: 'center',
+                  color: 'rgba(0,0,0,0.35)',
                 }}
-              >✕</button>
+              >
+                <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
             )}
             <span style={{ color: 'rgba(0,0,0,0.25)', fontSize: 14, marginLeft: 8 }}>|</span>
           </div>
