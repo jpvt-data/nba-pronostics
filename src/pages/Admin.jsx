@@ -948,6 +948,7 @@ const XP_LABELS_ADMIN = {
   jalon_winrate_65:       'Jalon — 65% réussite + Badge Analyste',
   jalon_semaine:          'Jalon — Semaine gagnée + Badge Champion',
   jalon_serie_ratee_5:    'Badge En Hibernation',
+  roue_quotidienne: 'Roue du jour',
 }
 
 
