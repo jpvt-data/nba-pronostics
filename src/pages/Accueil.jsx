@@ -292,7 +292,7 @@ function Accueil() {
           <div style={{ display: 'flex', alignItems: 'stretch', justifyContent: 'space-between', gap: 12 }}>
 
             {/* Bloc gauche — pseudo + titre/niveau + barre XP */}
-            <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', flexShrink: 1, minWidth: 0 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', flexShrink: 1, minWidth: 0, gap: 4 }}>
               {/* Pseudo + titre + niveau */}
               <div
                 onClick={() => navigate('/mes-pronos')}
