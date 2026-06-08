@@ -209,9 +209,9 @@ function H2H() {
                 textAlign: 'center', fontSize: 13, fontWeight: 700,
                 color: bilan.moi > bilan.eux ? 'var(--success)' : bilan.eux > bilan.moi ? 'var(--danger)' : 'var(--text-2)',
               }}>
-                {bilan.moi > bilan.eux && `🏆 Tu mènes ${bilan.moi} - ${bilan.eux}`}
-                {bilan.eux > bilan.moi && `😤 ${adversaire.pseudo} mène ${bilan.eux} - ${bilan.moi}`}
-                {bilan.moi === bilan.eux && `🤝 Égalité parfaite`}
+                {bilan.moi > bilan.eux && `Tu mènes ${bilan.moi} - ${bilan.eux}`}
+                {bilan.eux > bilan.moi && `${adversaire.pseudo} mène ${bilan.eux} - ${bilan.moi}`}
+                {bilan.moi === bilan.eux && `Égalité parfaite`}
               </div>
 
               {/* Fourchettes bilan */}
@@ -273,7 +273,7 @@ function H2H() {
                         }}>
                           <span style={{ color: 'var(--text-3)' }}>{profilMoi?.pseudo} </span>
                           <span style={{ fontWeight: 700, color: couleur(m.resultat_moi) }}>{m.pick_moi}</span>
-                          <span style={{ marginLeft: 4 }}>{m.resultat_moi === 'correct' ? '✅' : '❌'}</span>
+                          <span style={{ marginLeft: 4, width: 6, height: 6, borderRadius: '50%', background: m.resultat_moi === 'correct' ? 'var(--success)' : 'var(--danger)', display: 'inline-block', verticalAlign: 'middle' }} />
                         </div>
                         <div style={{
                           padding: '5px 8px',
@@ -284,7 +284,7 @@ function H2H() {
                         }}>
                           <span style={{ color: 'var(--text-3)' }}>{adversaire.pseudo} </span>
                           <span style={{ fontWeight: 700, color: couleur(m.resultat_eux) }}>{m.pick_eux}</span>
-                          <span style={{ marginLeft: 4 }}>{m.resultat_eux === 'correct' ? '✅' : '❌'}</span>
+                          <span style={{ marginLeft: 4, width: 6, height: 6, borderRadius: '50%', background: m.resultat_eux === 'correct' ? 'var(--success)' : 'var(--danger)', display: 'inline-block', verticalAlign: 'middle' }} />
                         </div>
                       </div>
 
@@ -293,21 +293,19 @@ function H2H() {
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, marginTop: 6 }}>
                           <div style={{ fontSize: 10, color: 'var(--text-3)', padding: '4px 8px', background: 'var(--bg-2)' }}>
                             {ecartMoi
-                              ? <>🎯 <span style={{ fontWeight: 600, color: ecartMoi.fourchette_reelle == null ? 'var(--gold)' : ecartMoi.correct ? 'var(--success)' : 'var(--danger)' }}>
+                              ? <span style={{ fontWeight: 600, color: ecartMoi.fourchette_reelle == null ? 'var(--gold)' : ecartMoi.correct ? 'var(--success)' : 'var(--danger)' }}>
                                   {FL[ecartMoi.fourchette_choisie]}
+                                  {ecartMoi.fourchette_reelle != null && (ecartMoi.correct ? ' · ok' : ' · raté')}
                                 </span>
-                                {ecartMoi.fourchette_reelle != null && (ecartMoi.correct ? ' ✓' : ' ✗')}
-                              </>
                               : <span style={{ color: 'var(--border-2)' }}>— pas de fourchette</span>
                             }
                           </div>
                           <div style={{ fontSize: 10, color: 'var(--text-3)', padding: '4px 8px', background: 'var(--bg-2)' }}>
                             {ecartEux
-                              ? <>🎯 <span style={{ fontWeight: 600, color: ecartEux.fourchette_reelle == null ? 'var(--gold)' : ecartEux.correct ? 'var(--success)' : 'var(--danger)' }}>
+                              ? <span style={{ fontWeight: 600, color: ecartEux.fourchette_reelle == null ? 'var(--gold)' : ecartEux.correct ? 'var(--success)' : 'var(--danger)' }}>
                                   {FL[ecartEux.fourchette_choisie]}
+                                  {ecartEux.fourchette_reelle != null && (ecartEux.correct ? ' · ok' : ' · raté')}
                                 </span>
-                                {ecartEux.fourchette_reelle != null && (ecartEux.correct ? ' ✓' : ' ✗')}
-                              </>
                               : <span style={{ color: 'var(--border-2)' }}>— pas de fourchette</span>
                             }
                           </div>
