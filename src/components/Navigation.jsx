@@ -53,7 +53,7 @@ function Navigation({ nbPronosAttente = 0 }) {
         <span style={{ fontFamily: "'Teko', system-ui, sans-serif", fontWeight: 700, fontSize: size * 1.6, color: 'var(--nav-text)', letterSpacing: '-0.01em', lineHeight: 1 }}>SWISH</span>
         <span style={{ fontFamily: "'Teko', system-ui, sans-serif", fontWeight: 700, fontSize: size * 1.6, color: 'var(--accent)', letterSpacing: '-0.01em', lineHeight: 1 }}>LEAGUE</span>
       </div>
-      <span style={{ fontFamily: 'var(--font-body)', fontSize: 7.5, fontWeight: 500, color: 'var(--nav-text-dim)', letterSpacing: '0.14em', textTransform: 'uppercase', lineHeight: 1, marginTop: -1, paddingLeft: 4 }}>Pronostique · Flambe · Règne</span>
+      <span style={{ fontFamily: 'var(--font-body)', fontSize: 7.5, fontWeight: 500, color: 'var(--nav-text-dim)', letterSpacing: '0.14em', textTransform: 'uppercase', lineHeight: 1, marginTop: -4, paddingLeft: 4 }}>Pronostique · Flambe · Règne</span>
     </div>
   )
 
