@@ -569,9 +569,12 @@ function Accueil() {
         <RoueQuotidienne
           userId={user.id}
           onClose={() => setRoueOpen(false)}
-          onGain={(xp) => {
+          onGain={(xpTotal, niveau) => {
             setRoueDispo(false)
-            if (xp > 0) setXpData(prev => ({ ...prev, xp_total: prev.xp_total + xp }))
+            if (xpTotal > 0) setXpData(prev => ({
+              xp_total: niveau ? xpTotal : prev.xp_total + xpTotal,
+              niveau:   niveau ?? prev.niveau,
+            }))
           }}
         />
       )}
