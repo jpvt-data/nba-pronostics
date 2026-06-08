@@ -28,7 +28,9 @@ const BarreProgression = ({ progression, objectif, completee }) => {
         fontSize: 10, fontWeight: 700, color: completee ? 'var(--success)' : 'var(--text-3)',
         fontFamily: 'var(--font-display)', flexShrink: 0,
       }}>
-        {completee ? '✓' : `${progression}/${objectif}`}
+        {completee ? (
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--success)', flexShrink: 0 }}><polyline points="20 6 9 17 4 12"/></svg>
+        ) : `${progression}/${objectif}`}
       </span>
     </div>
   )
@@ -155,9 +157,12 @@ export default function MissionsPopup({ userId, onClose }) {
             onClick={onClose}
             style={{
               background: 'none', borderWidth: 0, cursor: 'pointer',
-              fontSize: 20, color: 'var(--text-3)', padding: 4, lineHeight: 1,
+              color: 'var(--text-3)', padding: 4, lineHeight: 1,
+              display: 'flex', alignItems: 'center',
             }}
-          >✕</button>
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
         </div>
 
         {/* Tabs */}
