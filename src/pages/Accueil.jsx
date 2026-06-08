@@ -15,6 +15,7 @@ import BracketPlayoffs from '../components/BracketPlayoffs'
 import NewsNBA from '../components/NewsNBA'
 import BanniereFeed from '../components/BanniereFeed'
 import MissionsPopup from '../components/MissionsPopup'
+import RoueQuotidienne from '../components/RoueQuotidienne'
 import { track } from '../services/tracker'
 import { useNavigate } from 'react-router-dom'
 import { Calendar, Target, RefreshCw } from 'lucide-react'
@@ -111,6 +112,7 @@ function Accueil() {
   const [kpis, setKpis]                         = useState({ total: 0, pct: 0 })
   const [filesBadges, setFilesBadges]           = useState([])
   const [missionsOpen, setMissionsOpen]         = useState(false)
+  const [roueOpen, setRoueOpen]                 = useState(false)
   const [roueDispo, setRoueDispo]               = useState(false)
   const navigate = useNavigate()
   const { noSpoil } = useNoSpoil()
@@ -372,7 +374,7 @@ function Accueil() {
 
               {/* Chip Roue */}
               <button
-                onClick={() => {/* TODO : ouvrir modal roue */}}
+                onClick={() => { if (roueDispo) setRoueOpen(true) }}
                 style={{
                   display: 'inline-flex', alignItems: 'center', gap: 6,
                   background: 'var(--bg-2)',
