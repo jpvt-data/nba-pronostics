@@ -108,6 +108,7 @@ const BarreStat = ({ vE, vD, label, couleurExt, couleurDom }) => {
 // ─── Composant BlocCotes ─────────────────────────────────────────────────────
 const BlocCotes = ({ cotes, prediction, ext, dom, couleurExt, couleurDom, termine }) => {
   const [modalVisible, setModalVisible] = useState(false)
+  const [booksOuverts, setBooksOuverts] = useState(false)
 
   const cExt = couleurExt !== 'var(--accent)' ? couleurExt : 'var(--accent)'
   const cDom = couleurDom !== 'var(--accent)' ? couleurDom : 'var(--orange)'
@@ -297,30 +298,53 @@ const BlocCotes = ({ cotes, prediction, ext, dom, couleurExt, couleurDom, termin
           )}
         </div>
 
-        {/* Section 2 — Bookmakers FR */}
-        <div style={{ padding: '12px 16px 14px', borderBottom: '1px solid var(--border)' }}>
-          <div style={{ fontSize: 10, color: 'var(--text-3)', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 10 }}>
-            Bookmakers FR
+        {/* Toggle bookmakers */}
+        <div
+          onClick={() => setBooksOuverts(v => !v)}
+          style={{
+            padding: '10px 16px',
+            borderBottom: booksOuverts ? '1px solid var(--border)' : 'none',
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            cursor: 'pointer', userSelect: 'none',
+          }}
+        >
+          <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-3)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+            Détail bookmakers
             {cotes?.books && <span style={{ marginLeft: 6, display: 'inline-block', width: 6, height: 6, borderRadius: '50%', background: 'var(--success)', verticalAlign: 'middle' }} />}
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
-            {BOOKS_FR.map(key => {
-              const p = probsParBook(key)
-              return <CarteBook key={key} label={BOOKS_FR_LABELS[key]} pctExt={p?.pct1} pctDom={p?.pct2} />
-            })}
-          </div>
+          </span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"
+            style={{ color: 'var(--text-3)', transform: booksOuverts ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s ease' }}>
+            <polyline points="6 9 12 15 18 9"/>
+          </svg>
         </div>
 
-        {/* Section 3 — Bookmakers US / référence */}
-        <div style={{ padding: '12px 16px 14px', borderBottom: '1px solid var(--border)' }}>
-          <div style={{ fontSize: 10, color: 'var(--text-3)', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 10 }}>Bookmakers US / référence</div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
-            {BOOKS_US.map(key => {
-              const p = probsParBook(key)
-              return <CarteBook key={key} label={BOOKS_US_LABELS[key]} pctExt={p?.pct1} pctDom={p?.pct2} />
-            })}
-          </div>
-        </div>
+        {booksOuverts && (
+          <>
+            {/* Section 2 — Bookmakers FR */}
+            <div style={{ padding: '12px 16px 14px', borderBottom: '1px solid var(--border)' }}>
+              <div style={{ fontSize: 10, color: 'var(--text-3)', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 10 }}>
+                Bookmakers FR
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+                {BOOKS_FR.map(key => {
+                  const p = probsParBook(key)
+                  return <CarteBook key={key} label={BOOKS_FR_LABELS[key]} pctExt={p?.pct1} pctDom={p?.pct2} />
+                })}
+              </div>
+            </div>
+
+            {/* Section 3 — Bookmakers US / référence */}
+            <div style={{ padding: '12px 16px 14px', borderBottom: '1px solid var(--border)' }}>
+              <div style={{ fontSize: 10, color: 'var(--text-3)', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 10 }}>Bookmakers US / référence</div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+                {BOOKS_US.map(key => {
+                  const p = probsParBook(key)
+                  return <CarteBook key={key} label={BOOKS_US_LABELS[key]} pctExt={p?.pct1} pctDom={p?.pct2} />
+                })}
+              </div>
+            </div>
+          </>
+        )}
 
         {/* Section 4 — Prédictions marché */}
         <div style={{ padding: '12px 16px 16px' }}>
