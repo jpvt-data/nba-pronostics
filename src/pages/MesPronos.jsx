@@ -621,6 +621,12 @@ function MesPronos() {
                 if (equipesFav.length === 0 && !estMoi) return null
                 return (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 4 }}>
+                    {profil?.description && (
+                      <div style={{ marginBottom: 6 }}>
+                        <span style={{ fontSize: 9, color: 'var(--text-3)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Bio</span>
+                        <p style={{ fontSize: 12, color: 'var(--text-2)', margin: '2px 0 0', lineHeight: 1.5, fontStyle: 'italic' }}>{profil.description}</p>
+                      </div>
+                    )}
                     <span style={{ fontSize: 9, color: 'var(--text-3)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Mes équipes</span>
                     {equipesFav.length > 0 ? (
                       <div style={{ display: 'flex', gap: 8 }}>
@@ -672,7 +678,7 @@ function MesPronos() {
 
             {/* Col 3 — KPIs */}
             {stats.total > 0 && (
-              <div style={{ display: 'flex', gap: 12, flexShrink: 0, alignItems: 'flex-start' }}>
+              <div style={{ display: 'flex', gap: 12, flexShrink: 0, alignItems: 'flex-start', marginLeft: 'auto' }}>
                 <div style={{ textAlign: 'center' }}>
                   <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 'clamp(28px, 7vw, 42px)', color: 'var(--text-1)', lineHeight: 1 }}>
                     {stats.total}
@@ -689,11 +695,14 @@ function MesPronos() {
             )}
           </div>
 
-          {/* Bio — pleine largeur sous les colonnes */}
-          {profil?.description && (
-            <p style={{ fontSize: 12, color: 'var(--text-3)', margin: '10px 0 0', lineHeight: 1.5 }}>
-              {profil.description}
-            </p>
+          {/* Bio + bouton 1v1 — desktop seulement (mobile : dans col 1) */}
+          {!isMobile && profil?.description && (
+            <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <span style={{ fontSize: 9, color: 'var(--text-3)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Bio</span>
+              <p style={{ fontSize: 12, color: 'var(--text-2)', margin: 0, lineHeight: 1.5, fontStyle: 'italic' }}>
+                {profil.description}
+              </p>
+            </div>
           )}
           {!estMoi && (
             <button
