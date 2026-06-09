@@ -138,3 +138,11 @@ img { display: block; }
   }
 }
 
+/* MesPronos — équipes responsive */
+.equipes-mobile  { display: none !important; }
+.equipes-desktop { display: flex !important; }
+
+@media (max-width: 640px) {
+  .equipes-mobile  { display: flex !important; }
+  .equipes-desktop { display: none !important; }
+}
