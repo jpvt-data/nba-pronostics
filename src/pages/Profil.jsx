@@ -193,6 +193,9 @@ function Profil() {
         {/* ── Bloc fan — bg-0 + barre orange ── */}
         <div style={{ background: 'var(--bg-0)', padding: '20px 16px 24px', borderLeft: '3px solid var(--orange)' }}>
           <TitreSection mot1="MES" mot2="ÉQUIPES" couleur2="var(--orange)" />
+          <p style={{ fontSize: 12, color: 'var(--text-3)', margin: '-6px 0 14px', lineHeight: 1.5 }}>
+            Tes 3 équipes de cœur. En saison régulière, tu ne pronostiques que leurs matchs.
+          </p>
 
           {/* Logos des équipes sélectionnées */}
           <div style={{ display: 'flex', gap: 12, marginBottom: 16, minHeight: 56, alignItems: 'center' }}>
