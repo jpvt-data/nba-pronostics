@@ -791,7 +791,7 @@ function MatchDetail() {
             {!termine && (
               <>
                 <p style={{ fontSize: 12, color: 'var(--text-3)', margin: '0 0 12px', lineHeight: 1.6 }}>
-                  Choisis une <strong style={{ color: 'var(--text-2)' }}>fourchette d'écart</strong> et gagne <strong style={{ color: 'var(--gold)' }}>+2 pts</strong> si tu vises juste.
+                  Choisis une <strong style={{ color: 'var(--text-2)' }}>fourchette d'écart</strong> et gagne <strong style={{ color: 'var(--gold)' }}>+1 pt</strong> si tu vises juste — <strong style={{ color: 'var(--gold)' }}>+3 pts</strong> si tu as aussi le bon vainqueur.Choisis une <strong style={{ color: 'var(--text-2)' }}>fourchette d'écart</strong> et gagne <strong style={{ color: 'var(--gold)' }}>+2 pts</strong> si tu vises juste.
                 </p>
                 {ecart?.fourchette_choisie && (
                   <p style={{ fontSize: 11, color: 'var(--accent)', margin: '0 0 10px', fontStyle: 'italic' }}>
@@ -837,7 +837,7 @@ function MatchDetail() {
                   </strong>
                   {' '}
                   {ecart.correct === true
-                    ? <span style={{ color: 'var(--success)', fontWeight: 700 }}>+2 pts gagnés !</span>
+                    ? <span style={{ color: 'var(--success)', fontWeight: 700 }}>{ecart.points_gagnes === 2 ? '+2 pts gagnés !' : '+1 pt gagné !'}</span>
                     : ecart.correct === false
                       ? <span style={{ color: 'var(--danger)', fontWeight: 700 }}>Raté</span>
                       : <span style={{ color: 'var(--text-3)', fontWeight: 600 }}>En attente</span>
