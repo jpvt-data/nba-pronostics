@@ -166,8 +166,14 @@ function Accueil() {
 
       // Vérif roue quotidienne — dispo si pas jouée aujourd'hui
       const jourParis = new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/Paris' })
-      const cléRoue = `swish_roue_${user.id}_${jourParis}`
-      setRoueDispo(!localStorage.getItem(cléRoue))
+      const { data: dejaJouee } = await supabase
+        .from('xp_log')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('source_id', 'roue_quotidienne')
+        .eq('date_jour', jourParis)
+        .limit(1)
+      setRoueDispo(!dejaJouee?.length)
 
       const { data: liguesUser } = await supabase
         .from('membres_groupe')
