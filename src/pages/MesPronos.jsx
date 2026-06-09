@@ -580,7 +580,7 @@ function MesPronos() {
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
 
             {/* Col 1 — Avatar + Pseudo + Titre + Niveau + Barre XP */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flexShrink: 0, minWidth: 0 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flexShrink: 0, minWidth: 0, maxWidth: isMobile ? '55%' : 'none' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <Avatar url={profil?.avatar_url} pseudo={profil?.pseudo} taille={48} fontSize={16} />
                 <div>
