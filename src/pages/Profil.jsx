@@ -5,6 +5,22 @@ import { track } from '../services/tracker'
 import { Camera, Check, X, Pencil } from 'lucide-react'
 import { couleurAvatar } from '../components/Avatar'
 
+// Charge les 30 équipes NBA depuis ESPN
+const chargerEquipesESPN = async () => {
+  const res = await fetch('https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams?limit=40')
+  const json = await res.json()
+  return (json.sports?.[0]?.leagues?.[0]?.teams || [])
+    .map(t => t.team)
+    .filter(Boolean)
+    .sort((a, b) => a.displayName.localeCompare(b.displayName))
+    .map(t => ({
+      id: t.id,
+      nom: t.displayName,
+      abr: t.abbreviation,
+      logo: t.logos?.[0]?.href || '',
+    }))
+}
+
 const TitreSection = ({ mot1, mot2 = '', couleur2 = 'var(--accent)', taille = 24 }) => (
   <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 12 }}>
     <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: taille, color: 'var(--text-1)', letterSpacing: '0.02em', lineHeight: 1 }}>{mot1}</span>
@@ -74,10 +90,12 @@ function ChampEditable({ label, valeur, onSave, multiline = false, placeholder =
 }
 
 function Profil() {
-  const [profil, setProfil]        = useState(null)
-  const [charg, setCharg]          = useState(true)
-  const [uploadEnCours, setUpload] = useState(false)
-  const inputFichier               = useRef()
+  const [profil, setProfil]              = useState(null)
+  const [charg, setCharg]                = useState(true)
+  const [uploadEnCours, setUpload]       = useState(false)
+  const [equipesESPN, setEquipesESPN]    = useState([])
+  const [selecteurOuvert, setSelecteur] = useState(false)
+  const inputFichier                     = useRef()
 
   useEffect(() => {
     const init = async () => {
@@ -85,13 +103,32 @@ function Profil() {
       track(user.id, 'page_view', '/profil')
       const { data: p } = await supabase
         .from('profils')
-        .select('id, pseudo, avatar_url, description, cree_le')
+        .select('id, pseudo, avatar_url, description, cree_le, equipes_favorites')
         .eq('id', user.id).single()
       setProfil(p)
       setCharg(false)
+      // Charger les équipes ESPN en parallèle (non bloquant)
+      chargerEquipesESPN().then(setEquipesESPN).catch(() => {})
     }
     init()
   }, [])
+
+  const toggleEquipe = async (equipe) => {
+    const { data: { user } } = await supabase.auth.getUser()
+    const actuelles = profil?.equipes_favorites || []
+    const dejaPresente = actuelles.find(e => e.id === equipe.id)
+    let nouvelles
+    if (dejaPresente) {
+      // Retirer
+      nouvelles = actuelles.filter(e => e.id !== equipe.id)
+    } else {
+      // Ajouter si < 3
+      if (actuelles.length >= 3) return
+      nouvelles = [...actuelles, equipe]
+    }
+    await supabase.from('profils').update({ equipes_favorites: nouvelles }).eq('id', user.id)
+    setProfil(prev => ({ ...prev, equipes_favorites: nouvelles }))
+  }
 
   const sauverChamp = async (champ, valeur) => {
     const { data: { user } } = await supabase.auth.getUser()
@@ -173,35 +210,92 @@ function Profil() {
 
         {/* ── Bloc fan — bg-0 + barre orange ── */}
         <div style={{ background: 'var(--bg-0)', padding: '20px 16px 24px', borderLeft: '3px solid var(--orange)' }}>
-          <TitreSection mot1="MON" mot2="ÉQUIPE" couleur2="var(--orange)" />
+          <TitreSection mot1="MES" mot2="ÉQUIPES" couleur2="var(--orange)" />
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <div style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              padding: '12px 14px',
-              background: 'var(--bg-1)',
-              borderWidth: 1, borderStyle: 'solid', borderColor: 'var(--border)',
-            }}>
-              <div>
-                <div style={{ fontSize: 11, color: 'var(--text-3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Équipe favorite</div>
-                <div style={{ fontSize: 13, color: 'var(--text-3)', fontStyle: 'italic' }}>Disponible bientôt</div>
+          {/* Logos des équipes sélectionnées */}
+          <div style={{ display: 'flex', gap: 12, marginBottom: 16, minHeight: 56, alignItems: 'center' }}>
+            {(profil?.equipes_favorites || []).length === 0 && (
+              <p style={{ fontSize: 13, color: 'var(--text-3)', fontStyle: 'italic', margin: 0 }}>
+                Aucune équipe sélectionnée
+              </p>
+            )}
+            {(profil?.equipes_favorites || []).map(eq => (
+              <div key={eq.id} style={{ position: 'relative' }}>
+                <img
+                  src={eq.logo} alt={eq.nom}
+                  style={{ width: 52, height: 52, objectFit: 'contain' }}
+                  onError={e => { e.target.style.opacity = '0.3' }}
+                />
+                {/* Bouton retirer */}
+                <button
+                  onClick={() => toggleEquipe(eq)}
+                  style={{
+                    position: 'absolute', top: -4, right: -4,
+                    width: 16, height: 16, borderRadius: '50%',
+                    background: 'var(--danger)', border: 'none',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    cursor: 'pointer', padding: 0,
+                  }}
+                >
+                  <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round">
+                    <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                  </svg>
+                </button>
               </div>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-3)" strokeWidth="1.5" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><path d="M4.93 4.93a16 16 0 0 1 14.14 14.14M19.07 4.93A16 16 0 0 0 4.93 19.07"/></svg>
-            </div>
-
-            <div style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              padding: '12px 14px',
-              background: 'var(--bg-1)',
-              borderWidth: 1, borderStyle: 'solid', borderColor: 'var(--border)',
-            }}>
-              <div>
-                <div style={{ fontSize: 11, color: 'var(--text-3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Joueur favori</div>
-                <div style={{ fontSize: 13, color: 'var(--text-3)', fontStyle: 'italic' }}>Disponible bientôt</div>
-              </div>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-3)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-            </div>
+            ))}
           </div>
+
+          {/* Bouton ouvrir sélecteur */}
+          {(profil?.equipes_favorites || []).length < 3 && (
+            <button
+              onClick={() => setSelecteur(v => !v)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 6,
+                background: 'var(--bg-1)', border: '1px solid var(--border)',
+                borderRadius: 'var(--radius-sm)', padding: '7px 12px',
+                fontSize: 12, fontWeight: 600, color: 'var(--text-2)', cursor: 'pointer',
+                marginBottom: selecteurOuvert ? 12 : 0,
+              }}
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" strokeWidth="2" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Ajouter une équipe {(profil?.equipes_favorites || []).length > 0 && `(${(profil?.equipes_favorites || []).length}/3)`}
+            </button>
+          )}
+
+          {/* Liste des 30 équipes */}
+          {selecteurOuvert && (
+            <div style={{
+              display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8,
+              maxHeight: 320, overflowY: 'auto',
+              background: 'var(--bg-1)', border: '1px solid var(--border)',
+              borderRadius: 'var(--radius-sm)', padding: 10,
+            }}>
+              {equipesESPN.length === 0 && (
+                <p style={{ gridColumn: '1/-1', fontSize: 12, color: 'var(--text-3)', textAlign: 'center', margin: 0 }}>Chargement…</p>
+              )}
+              {equipesESPN.map(eq => {
+                const selectionnee = (profil?.equipes_favorites || []).find(e => e.id === eq.id)
+                return (
+                  <button
+                    key={eq.id}
+                    onClick={() => { toggleEquipe(eq); if (!selectionnee && (profil?.equipes_favorites || []).length >= 2) setSelecteur(false) }}
+                    style={{
+                      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
+                      padding: '8px 4px',
+                      background: selectionnee ? 'var(--accent-dim)' : 'transparent',
+                      border: `1px solid ${selectionnee ? 'var(--accent-border)' : 'var(--border)'}`,
+                      borderRadius: 'var(--radius-sm)',
+                      cursor: selectionnee ? 'pointer' : (profil?.equipes_favorites || []).length >= 3 ? 'not-allowed' : 'pointer',
+                      opacity: !selectionnee && (profil?.equipes_favorites || []).length >= 3 ? 0.4 : 1,
+                    }}
+                  >
+                    <img src={eq.logo} alt={eq.nom} style={{ width: 32, height: 32, objectFit: 'contain' }} onError={e => { e.target.style.opacity = '0.2' }} />
+                    <span style={{ fontSize: 9, color: 'var(--text-3)', fontWeight: 600, textAlign: 'center', lineHeight: 1.2 }}>{eq.abr}</span>
+                  </button>
+                )
+              })}
+            </div>
+          )}
         </div>
 
       </main>
