@@ -569,7 +569,7 @@ function MesPronos() {
         {/* ── Header fusionné : Profil + XP ── */}
         <div style={{ background: 'var(--bg-1)', padding: '20px 16px 20px', borderLeft: '3px solid var(--gold)' }}>
 
-          {/* Ligne principale : 3 colonnes */}
+          {/* Ligne principale : col1 + col2(desktop) + col3 */}
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
 
             {/* Col 1 — Avatar + Pseudo + Titre + Niveau + Barre XP */}
@@ -608,6 +608,31 @@ function MesPronos() {
                 </div>
               </div>
 
+              {/* Équipes favorites — sous barre XP sur mobile uniquement */}
+              {(() => {
+                const equipesFav = profil?.equipes_favorites || []
+                if (equipesFav.length === 0 && !estMoi) return null
+                return (
+                  <div className="equipes-mobile" style={{ display: 'none', flexDirection: 'column', gap: 4, marginTop: 4 }}>
+                    <span style={{ fontSize: 9, color: 'var(--text-3)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Mes équipes</span>
+                    {equipesFav.length > 0 ? (
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        {equipesFav.map(eq => (
+                          <img key={eq.id} src={eq.logo} alt={eq.nom}
+                            style={{ width: 32, height: 32, objectFit: 'contain' }}
+                            onError={e => { e.target.style.opacity = '0.2' }}
+                          />
+                        ))}
+                      </div>
+                    ) : (
+                      <button onClick={() => navigate('/profil')} style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: '4px 8px', fontSize: 10, color: 'var(--text-3)', cursor: 'pointer', alignSelf: 'flex-start' }}>
+                        Définir →
+                      </button>
+                    )}
+                  </div>
+                )
+              })()}
+
               {/* Bio + bouton 1v1 si profil public */}
               {!estMoi && profil?.description && (
                 <p style={{ fontSize: 12, color: 'var(--text-3)', margin: 0, lineHeight: 1.5 }}>{profil.description}</p>
@@ -627,12 +652,12 @@ function MesPronos() {
               )}
             </div>
 
-            {/* Col 2 — Équipes favorites */}
+            {/* Col 2 — Équipes favorites (desktop uniquement) */}
             {(() => {
               const equipesFav = profil?.equipes_favorites || []
               if (equipesFav.length === 0 && !estMoi) return null
               return (
-                <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'center' }}>
+                <div className="equipes-desktop" style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'center' }}>
                   <span style={{ fontSize: 9, color: 'var(--text-3)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                     Mes équipes
                   </span>
@@ -646,14 +671,7 @@ function MesPronos() {
                       ))}
                     </div>
                   ) : (
-                    <button
-                      onClick={() => navigate('/profil')}
-                      style={{
-                        background: 'none', border: '1px solid var(--border)',
-                        borderRadius: 'var(--radius-sm)', padding: '4px 8px',
-                        fontSize: 10, color: 'var(--text-3)', cursor: 'pointer',
-                      }}
-                    >
+                    <button onClick={() => navigate('/profil')} style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: '4px 8px', fontSize: 10, color: 'var(--text-3)', cursor: 'pointer' }}>
                       Définir →
                     </button>
                   )}
@@ -682,9 +700,9 @@ function MesPronos() {
 
           {/* Chips boutons — estMoi seulement */}
           {estMoi && (
-            <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
+            <div style={{ display: 'flex', gap: 8, marginTop: 14, flexWrap: 'wrap' }}>
               <button
-                onClick={() => setModalInfo(true)}
+                onClick={() => setMissionsOpen(true)}
                 style={{
                   display: 'inline-flex', alignItems: 'center', gap: 6,
                   background: 'var(--bg-2)', border: '1px solid var(--border)',
@@ -692,8 +710,8 @@ function MesPronos() {
                   fontSize: 11, fontWeight: 700, color: 'var(--text-2)', cursor: 'pointer', letterSpacing: '0.03em',
                 }}
               >
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-                Infos XP
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><path d="M9 12l2 2 4-4"/></svg>
+                Missions
               </button>
               <button
                 onClick={() => setModalHistorique(true)}
@@ -707,7 +725,7 @@ function MesPronos() {
                 Historique XP
               </button>
               <button
-                onClick={() => setMissionsOpen(true)}
+                onClick={() => navigate('/profil')}
                 style={{
                   display: 'inline-flex', alignItems: 'center', gap: 6,
                   background: 'var(--bg-2)', border: '1px solid var(--border)',
@@ -715,8 +733,20 @@ function MesPronos() {
                   fontSize: 11, fontWeight: 700, color: 'var(--text-2)', cursor: 'pointer', letterSpacing: '0.03em',
                 }}
               >
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><path d="M9 12l2 2 4-4"/></svg>
-                Missions
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--text-3)" strokeWidth="2" strokeLinecap="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                Mon profil
+              </button>
+              <button
+                onClick={() => setModalInfo(true)}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 6,
+                  background: 'var(--bg-2)', border: '1px solid var(--border)',
+                  borderRadius: 'var(--radius-sm)', padding: '5px 11px',
+                  fontSize: 11, fontWeight: 700, color: 'var(--text-2)', cursor: 'pointer', letterSpacing: '0.03em',
+                }}
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                Infos XP
               </button>
             </div>
           )}
