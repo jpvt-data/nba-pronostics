@@ -4,12 +4,10 @@ import { recupererGagnant } from './espn'
 import { ajouterXP, verifierJalons, verifierMissions } from './xp'
 
 // Retourne le lundi de la semaine courante en ISO string 'YYYY-MM-DD' heure Paris
-// Utilisé pour les missions hebdomadaires
 export const lundiFin = () => {
   const maintenant = new Date()
-  // Date Paris — pas UTC
   const dateStrParis = maintenant.toLocaleDateString('en-CA', { timeZone: 'Europe/Paris' })
-  const paris = new Date(dateStrParis + 'T12:00:00') // midi pour éviter les décalages DST
+  const paris = new Date(dateStrParis + 'T12:00:00')
   const jour = paris.getDay()
   const diffLundi = (jour === 0 ? -6 : 1 - jour)
   const lundi = new Date(paris)
@@ -18,29 +16,18 @@ export const lundiFin = () => {
 }
 
 // Retourne les bornes UTC de la semaine Paris précédente
-// lundi 00h01 → dimanche 23h59 heure Paris, converti en UTC pour Supabase
 // Retourne null si on n'est pas lundi heure Paris
 const bornesSemainePrecedente = () => {
   const maintenant = new Date()
   const paris = new Date(maintenant.toLocaleString('en-US', { timeZone: 'Europe/Paris' }))
-
-  // Attribution uniquement le lundi
   if (paris.getDay() !== 1) return null
-
-  // Calcul de l'offset Paris↔UTC au moment du calcul (gère heure été/hiver)
   const offsetMs = maintenant.getTime() - paris.getTime()
-
-  // Lundi précédent 00h01 Paris
   const lundiDebut = new Date(paris)
   lundiDebut.setDate(paris.getDate() - 7)
   lundiDebut.setHours(0, 1, 0, 0)
-
-  // Dimanche précédent 23h59 Paris
   const dimancheFin = new Date(paris)
   dimancheFin.setDate(paris.getDate() - 1)
   dimancheFin.setHours(23, 59, 59, 999)
-
-  // Conversion en UTC
   return {
     debut: new Date(lundiDebut.getTime() + offsetMs).toISOString(),
     fin:   new Date(dimancheFin.getTime() + offsetMs).toISOString(),
@@ -96,7 +83,80 @@ const calculerStatsUser = async (userId) => {
   }
 }
 
+// Résout une fourchette — appelé depuis calculerPoints (pass 1 et pass 2)
+const résoudreFourchette = async (pe, fourchetteReelle, type_saison, saison, lundi) => {
+  const correctEcart = pe.fourchette_choisie === fourchetteReelle
+
+  // Vérifier si le prono du même match est correct pour cet user
+  const { data: pronoUser } = await supabase
+    .from('pronos')
+    .select('resultat')
+    .eq('user_id', pe.user_id)
+    .eq('match_id', pe.match_id)
+    .maybeSingle()
+  const pronoCorrect = pronoUser?.resultat === 'correct'
+
+  // Règle points : fourchette seule = 1pt, prono+fourchette = +2pts (total 3)
+  const pointsEcart = correctEcart ? (pronoCorrect ? 2 : 1) : 0
+
+  await supabase
+    .from('pronos_ecart')
+    .update({ fourchette_reelle: fourchetteReelle, correct: correctEcart, points_gagnes: pointsEcart })
+    .eq('id', pe.id)
+
+  if (correctEcart) {
+    await ajouterXP(pe.user_id, 30, 'passif', 'fourchette_correcte')
+    await verifierMissions(pe.user_id, 'fourchette_correcte', 1, lundi, 'increment')
+
+    // Jalon — 10 fourchettes correctes cumulatives
+    const { data: dejaJalon } = await supabase
+      .from('xp_log').select('id')
+      .eq('user_id', pe.user_id)
+      .eq('source_id', 'jalon_10_fourchettes')
+      .limit(1)
+    if (!dejaJalon || dejaJalon.length === 0) {
+      const { count: nbCorrects } = await supabase
+        .from('pronos_ecart')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', pe.user_id)
+        .eq('correct', true)
+      if (nbCorrects >= 10) {
+        await ajouterXP(pe.user_id, 200, 'jalon', 'jalon_10_fourchettes')
+        const { data: profil } = await supabase.from('profils').select('badges').eq('id', pe.user_id).single()
+        const badges = profil?.badges || []
+        if (!badges.includes('tireur_d_elite')) {
+          await supabase.from('profils').update({ badges: [...badges, 'tireur_d_elite'] }).eq('id', pe.user_id)
+        }
+      }
+    }
+
+    // +pts ligue si fourchette correcte
+    const { data: membres } = await supabase
+      .from('membres_groupe')
+      .select('id, points, groupes(type_saison, saison)')
+      .eq('user_id', pe.user_id)
+      .eq('actif', true)
+
+    for (const membre of (membres || [])) {
+      const ligue = membre.groupes
+      if (!ligue) continue
+      const matcheLigue =
+        !ligue.type_saison ||
+        (ligue.type_saison === type_saison && ligue.saison === saison)
+      if (matcheLigue) {
+        await supabase
+          .from('membres_groupe')
+          .update({ points: membre.points + pointsEcart })
+          .eq('id', membre.id)
+      }
+    }
+  }
+}
+
 export const calculerPoints = async () => {
+  const lundi = lundiFin()
+
+  // ── PASSE 1 : résoudre les pronos en attente ──────────────────────────────
   const { data: pronosEnAttente } = await supabase
     .from('pronos')
     .select('id, equipe_choisie, user_id, match_id, matchs(id, espn_id, type_saison, saison)')
@@ -105,159 +165,76 @@ export const calculerPoints = async () => {
 
   console.log('pronos en attente:', pronosEnAttente)
 
-  if (!pronosEnAttente?.length) return
-
-  const matchsUniques = [...new Map(
-    pronosEnAttente
-      .filter(p => p.matchs)
-      .map(p => [p.matchs.espn_id, p.matchs])
-  ).values()]
-
-  const resultatsESPN = await Promise.all(
-    matchsUniques.map(m => recupererGagnant(m.espn_id))
-  )
-
-  const idxESPN = {}
-  matchsUniques.forEach((m, i) => { idxESPN[m.espn_id] = resultatsESPN[i] })
-
   const usersTraites = new Set()
-  const lundi = lundiFin()
 
-  for (const matchLocal of matchsUniques) {
-    const resultatESPN = idxESPN[matchLocal.espn_id]
-    if (!resultatESPN) continue
+  if (pronosEnAttente?.length) {
+    const matchsUniques = [...new Map(
+      pronosEnAttente
+        .filter(p => p.matchs)
+        .map(p => [p.matchs.espn_id, p.matchs])
+    ).values()]
 
-    const { gagnant, type_saison, saison, ecart_final, score_domicile, score_exterieur, tag } = resultatESPN
+    const resultatsESPN = await Promise.all(
+      matchsUniques.map(m => recupererGagnant(m.espn_id))
+    )
 
-    const fourchetteReelle =
-      ecart_final == null ? null :
-      ecart_final <= 5    ? 'serre'     :
-      ecart_final <= 10   ? 'modere'    :
-      ecart_final <= 20   ? 'net'       :
-      ecart_final <= 30   ? 'large'     : 'domination'
+    const idxESPN = {}
+    matchsUniques.forEach((m, i) => { idxESPN[m.espn_id] = resultatsESPN[i] })
 
-    await supabase
-      .from('matchs')
-      .update({ statut: 'termine', gagnant, type_saison, saison, score_domicile, score_exterieur, tag })
-      .eq('id', matchLocal.id)
+    for (const matchLocal of matchsUniques) {
+      const resultatESPN = idxESPN[matchLocal.espn_id]
+      if (!resultatESPN) continue
 
-    const { data: tousLesPronos } = await supabase
-      .from('pronos')
-      .select('id, equipe_choisie, user_id')
-      .eq('match_id', matchLocal.id)
-      .eq('resultat', 'en_attente')
+      const { gagnant, type_saison, saison, ecart_final, score_domicile, score_exterieur, tag } = resultatESPN
 
-    if (!tousLesPronos?.length) continue
-
-    for (const prono of tousLesPronos) {
-      const correct = prono.equipe_choisie === gagnant
-      const points  = correct ? 1 : 0
+      const fourchetteReelle =
+        ecart_final == null ? null :
+        ecart_final <= 5    ? 'serre'     :
+        ecart_final <= 10   ? 'modere'    :
+        ecart_final <= 20   ? 'net'       :
+        ecart_final <= 30   ? 'large'     : 'domination'
 
       await supabase
+        .from('matchs')
+        .update({ statut: 'termine', gagnant, type_saison, saison, score_domicile, score_exterieur, tag })
+        .eq('id', matchLocal.id)
+
+      const { data: tousLesPronos } = await supabase
         .from('pronos')
-        .update({ resultat: correct ? 'correct' : 'incorrect', points_gagnes: points })
-        .eq('id', prono.id)
-
-      if (correct) {
-        // XP prono correct
-        await ajouterXP(prono.user_id, 25, 'passif', 'prono_correct')
-
-        // Mission série correcte — calcul local immédiat (mode set)
-        const { data: derniersP } = await supabase
-          .from('pronos')
-          .select('resultat')
-          .eq('user_id', prono.user_id)
-          .in('resultat', ['correct', 'incorrect'])
-          .order('cree_le', { ascending: false })
-          .limit(20)
-        let serieCorrecte = 0
-        for (const p of (derniersP || [])) {
-          if (p.resultat === 'correct') serieCorrecte++
-          else break
-        }
-        await verifierMissions(prono.user_id, 'serie_correcte', serieCorrecte, null, 'set')
-      }
-
-      usersTraites.add(prono.user_id)
-
-      if (!correct) continue
-
-      const { data: membres } = await supabase
-        .from('membres_groupe')
-        .select('id, points, groupes(type_saison, saison)')
-        .eq('user_id', prono.user_id)
-        .eq('actif', true)
-
-      for (const membre of (membres || [])) {
-        const ligue = membre.groupes
-        if (!ligue) continue
-        const matcheLigue =
-          !ligue.type_saison ||
-          (ligue.type_saison === type_saison && ligue.saison === saison)
-        if (matcheLigue) {
-          await supabase
-            .from('membres_groupe')
-            .update({ points: membre.points + 1 })
-            .eq('id', membre.id)
-        }
-      }
-    }
-
-    // Validation pronos_ecart
-    if (fourchetteReelle) {
-      const { data: pronosEcart } = await supabase
-        .from('pronos_ecart')
-        .select('id, user_id, fourchette_choisie')
+        .select('id, equipe_choisie, user_id')
         .eq('match_id', matchLocal.id)
-        .is('fourchette_reelle', null)
+        .eq('resultat', 'en_attente')
 
-      for (const pe of (pronosEcart || [])) {
-        const correctEcart = pe.fourchette_choisie === fourchetteReelle
-        // Vérifier si le prono du même match est correct pour cet user
-        const pronoUser = tousLesPronos.find(p => p.user_id === pe.user_id)
-        const pronoCorrect = pronoUser?.equipe_choisie === gagnant
-        // Règle : fourchette seule = 1pt, prono seul = 1pt, les deux = 3pts
-        const pointsEcart = correctEcart ? (pronoCorrect ? 2 : 1) : 0
+      for (const prono of (tousLesPronos || [])) {
+        const correct = prono.equipe_choisie === gagnant
+        const points  = correct ? 1 : 0
 
         await supabase
-          .from('pronos_ecart')
-          .update({ fourchette_reelle: fourchetteReelle, correct: correctEcart, points_gagnes: pointsEcart })
-          .eq('id', pe.id)
+          .from('pronos')
+          .update({ resultat: correct ? 'correct' : 'incorrect', points_gagnes: points })
+          .eq('id', prono.id)
 
-        if (correctEcart) {
-          // XP fourchette correcte
-          await ajouterXP(pe.user_id, 30, 'passif', 'fourchette_correcte')
+        if (correct) {
+          await ajouterXP(prono.user_id, 25, 'passif', 'prono_correct')
 
-          // Mission fourchette correcte (hebdomadaire — incrément)
-          await verifierMissions(pe.user_id, 'fourchette_correcte', 1, lundi, 'increment')
-
-          // Jalon — 10 fourchettes correctes cumulatives → badge Tireur d'Élite
-          const { data: dejaJalon } = await supabase
-            .from('xp_log').select('id')
-            .eq('user_id', pe.user_id)
-            .eq('source_id', 'jalon_10_fourchettes')
-            .limit(1)
-          if (!dejaJalon || dejaJalon.length === 0) {
-            const { count: nbCorrects } = await supabase
-              .from('pronos_ecart')
-              .select('id', { count: 'exact', head: true })
-              .eq('user_id', pe.user_id)
-              .eq('correct', true)
-            if (nbCorrects >= 10) {
-              await ajouterXP(pe.user_id, 200, 'jalon', 'jalon_10_fourchettes')
-              const { data: profil } = await supabase.from('profils').select('badges').eq('id', pe.user_id).single()
-              const badges = profil?.badges || []
-              if (!badges.includes('tireur_d_elite')) {
-                await supabase.from('profils').update({ badges: [...badges, 'tireur_d_elite'] }).eq('id', pe.user_id)
-              }
-            }
+          const { data: derniersP } = await supabase
+            .from('pronos')
+            .select('resultat')
+            .eq('user_id', prono.user_id)
+            .in('resultat', ['correct', 'incorrect'])
+            .order('cree_le', { ascending: false })
+            .limit(20)
+          let serieCorrecte = 0
+          for (const p of (derniersP || [])) {
+            if (p.resultat === 'correct') serieCorrecte++
+            else break
           }
+          await verifierMissions(prono.user_id, 'serie_correcte', serieCorrecte, null, 'set')
 
-          // +2 pts ligue si fourchette correcte
           const { data: membres } = await supabase
             .from('membres_groupe')
             .select('id, points, groupes(type_saison, saison)')
-            .eq('user_id', pe.user_id)
+            .eq('user_id', prono.user_id)
             .eq('actif', true)
 
           for (const membre of (membres || [])) {
@@ -269,25 +246,64 @@ export const calculerPoints = async () => {
             if (matcheLigue) {
               await supabase
                 .from('membres_groupe')
-                .update({ points: membre.points + pointsEcart })
+                .update({ points: membre.points + 1 })
                 .eq('id', membre.id)
             }
           }
+        }
+
+        usersTraites.add(prono.user_id)
+      }
+
+      // Résoudre les fourchettes de ce match (dans la foulée des pronos)
+      if (fourchetteReelle) {
+        const { data: pronosEcart } = await supabase
+          .from('pronos_ecart')
+          .select('id, user_id, fourchette_choisie, match_id')
+          .eq('match_id', matchLocal.id)
+          .is('fourchette_reelle', null)
+
+        for (const pe of (pronosEcart || [])) {
+          await résoudreFourchette(pe, fourchetteReelle, type_saison, saison, lundi)
+          usersTraites.add(pe.user_id)
         }
       }
     }
   }
 
-  // Post-validation : jalons + semaine 100% par user
+  // ── PASSE 2 : fourchettes orphelines sur matchs déjà terminés ────────────
+  // Couvre le cas où le prono a été résolu avant que la fourchette soit posée,
+  // ou si calculerPoints a tourné sans traiter la fourchette
+  const { data: fourchetteOrphelines } = await supabase
+    .from('pronos_ecart')
+    .select('id, user_id, fourchette_choisie, match_id, matchs(id, espn_id, statut, score_domicile, score_exterieur, type_saison, saison)')
+    .is('fourchette_reelle', null)
+    .not('matchs', 'is', null)
+
+  for (const pe of (fourchetteOrphelines || [])) {
+    const m = pe.matchs
+    if (!m || m.statut !== 'termine') continue
+    if (m.score_domicile == null || m.score_exterieur == null) continue
+
+    const ecartFinal = Math.abs(m.score_domicile - m.score_exterieur)
+    const fourchetteReelle =
+      ecartFinal <= 5  ? 'serre'     :
+      ecartFinal <= 10 ? 'modere'    :
+      ecartFinal <= 20 ? 'net'       :
+      ecartFinal <= 30 ? 'large'     : 'domination'
+
+    await résoudreFourchette(pe, fourchetteReelle, m.type_saison, m.saison, lundi)
+    usersTraites.add(pe.user_id)
+  }
+
+  // ── Post-validation : jalons + semaine 100% ───────────────────────────────
   for (const userId of usersTraites) {
     const stats = await calculerStatsUser(userId)
     await verifierJalons(userId, stats)
 
-    // Semaine 100% : attribution uniquement le lundi, sur la semaine Paris précédente
     const bornes = bornesSemainePrecedente()
-    if (!bornes) continue // pas lundi heure Paris → on skip
+    if (!bornes) continue
 
-    // Anti-doublon : déjà attribué cette semaine ?
     const { data: dejaXPSemaine } = await supabase
       .from('xp_log')
       .select('id')
@@ -299,7 +315,6 @@ export const calculerPoints = async () => {
 
     if (dejaXPSemaine?.length > 0) continue
 
-    // Matchs terminés dans la fenêtre Paris de la semaine précédente
     const { data: matchsSemaine } = await supabase
       .from('matchs')
       .select('id')
