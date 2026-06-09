@@ -4,22 +4,7 @@ import Navigation from '../components/Navigation'
 import { track } from '../services/tracker'
 import { Camera, Check, X, Pencil } from 'lucide-react'
 import { couleurAvatar } from '../components/Avatar'
-
-// Charge les 30 équipes NBA depuis ESPN
-const chargerEquipesESPN = async () => {
-  const res = await fetch('https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams?limit=40')
-  const json = await res.json()
-  return (json.sports?.[0]?.leagues?.[0]?.teams || [])
-    .map(t => t.team)
-    .filter(Boolean)
-    .sort((a, b) => a.displayName.localeCompare(b.displayName))
-    .map(t => ({
-      id: t.id,
-      nom: t.displayName,
-      abr: t.abbreviation,
-      logo: t.logos?.[0]?.href || '',
-    }))
-}
+import { EQUIPES_NBA } from '../data/equipesNBA'
 
 const TitreSection = ({ mot1, mot2 = '', couleur2 = 'var(--accent)', taille = 24 }) => (
   <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 12 }}>
@@ -93,7 +78,6 @@ function Profil() {
   const [profil, setProfil]              = useState(null)
   const [charg, setCharg]                = useState(true)
   const [uploadEnCours, setUpload]       = useState(false)
-  const [equipesESPN, setEquipesESPN]    = useState([])
   const [selecteurOuvert, setSelecteur] = useState(false)
   const inputFichier                     = useRef()
 
@@ -107,8 +91,6 @@ function Profil() {
         .eq('id', user.id).single()
       setProfil(p)
       setCharg(false)
-      // Charger les équipes ESPN en parallèle (non bloquant)
-      chargerEquipesESPN().then(setEquipesESPN).catch(() => {})
     }
     init()
   }, [])
@@ -270,10 +252,10 @@ function Profil() {
               background: 'var(--bg-1)', border: '1px solid var(--border)',
               borderRadius: 'var(--radius-sm)', padding: 10,
             }}>
-              {equipesESPN.length === 0 && (
+              {EQUIPES_NBA.length === 0 && (
                 <p style={{ gridColumn: '1/-1', fontSize: 12, color: 'var(--text-3)', textAlign: 'center', margin: 0 }}>Chargement…</p>
               )}
-              {equipesESPN.map(eq => {
+              {EQUIPES_NBA.map(eq => {
                 const selectionnee = (profil?.equipes_favorites || []).find(e => e.id === eq.id)
                 return (
                   <button
