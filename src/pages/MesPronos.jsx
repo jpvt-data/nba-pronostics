@@ -686,7 +686,7 @@ function MesPronos() {
                 const equipesFav = profil?.equipes_favorites || []
                 if (equipesFav.length === 0 && !estMoi) return null
                 return (
-                  <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-end' }}>
+                  <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-start' }}>
                     <span style={{ fontSize: 9, color: 'var(--text-3)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Mes équipes</span>
                     {equipesFav.length > 0 ? (
                       <div style={{ display: 'flex', gap: 6 }}>
