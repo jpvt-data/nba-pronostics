@@ -16,9 +16,10 @@ import NewsNBA from '../components/NewsNBA'
 import BanniereFeed from '../components/BanniereFeed'
 import MissionsPopup from '../components/MissionsPopup'
 import RoueQuotidienne from '../components/RoueQuotidienne'
+import OnboardingTuto from '../components/OnboardingTuto'
 import { track } from '../services/tracker'
 import { useNavigate } from 'react-router-dom'
-import { Calendar, Target, RefreshCw } from 'lucide-react'
+import { Calendar, Target, RefreshCw, BookOpen } from 'lucide-react'
 import { useNoSpoil } from '../context/NoSpoilContext'
 import { SAISON_ESPN } from '../config'
 
@@ -114,6 +115,7 @@ function Accueil() {
   const [missionsOpen, setMissionsOpen]         = useState(false)
   const [roueOpen, setRoueOpen]                 = useState(false)
   const [roueDispo, setRoueDispo]               = useState(false)
+  const [onboardingOpen, setOnboardingOpen]     = useState(false)
   const navigate = useNavigate()
   const { noSpoil } = useNoSpoil()
 
@@ -135,10 +137,15 @@ function Accueil() {
 
       const { data: profil } = await supabase
         .from('profils')
-        .select('pseudo, badges, xp_total, niveau')
+        .select('pseudo, badges, xp_total, niveau, onboarding_done')
         .eq('id', user.id).single()
       setPseudo(profil?.pseudo || null)
       setXpData({ xp_total: profil?.xp_total || 0, niveau: profil?.niveau || 1 })
+
+      // Onboarding auto au premier login
+      if (profil && !profil.onboarding_done) {
+        setOnboardingOpen(true)
+      }
 
       const { data: pronosKpi } = await supabase
         .from('pronos')
@@ -359,6 +366,24 @@ function Accueil() {
           {/* Ligne 2 : chips gamification */}
           {user && (
             <div style={{ marginTop: 10, display: 'flex', gap: 8 }}>
+
+              {/* Chip Tuto */}
+              <button
+                onClick={() => setOnboardingOpen(true)}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 6,
+                  background: 'var(--bg-2)',
+                  border: '1px solid var(--border)',
+                  borderRadius: 'var(--radius-sm)',
+                  padding: '5px 11px',
+                  cursor: 'pointer',
+                  fontSize: 11, fontWeight: 700, color: 'var(--text-2)',
+                  letterSpacing: '0.03em',
+                }}
+              >
+                <BookOpen size={12} strokeWidth={2} color="var(--text-3)" />
+                Tuto
+              </button>
 
               {/* Chip Missions */}
               <button
@@ -582,6 +607,14 @@ function Accueil() {
               niveau:   niveau ?? prev.niveau,
             }))
           }}
+        />
+      )}
+
+      {/* ── Onboarding tuto ── */}
+      {onboardingOpen && user && (
+        <OnboardingTuto
+          userId={user.id}
+          onClose={() => setOnboardingOpen(false)}
         />
       )}
     </>
