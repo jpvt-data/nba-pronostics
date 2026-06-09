@@ -621,7 +621,7 @@ function MesPronos() {
                 if (equipesFav.length === 0 && !estMoi) return null
                 return (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 4 }}>
-                    <span style={{ fontSize: 9, color: 'var(--text-3)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Mes équipes</span>
+                    <span style={{ fontSize: 9, color: 'var(--text-3)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Mes équipes favorites</span>
                     {equipesFav.length > 0 ? (
                       <div style={{ display: 'flex', gap: 8 }}>
                         {equipesFav.map(eq => (
@@ -666,7 +666,7 @@ function MesPronos() {
               return (
                 <div className="equipes-desktop" style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'center' }}>
                   <span style={{ fontSize: 9, color: 'var(--text-3)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                    Mes équipes
+                    Mes équipes favorites
                   </span>
                   {equipesFav.length > 0 ? (
                     <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
