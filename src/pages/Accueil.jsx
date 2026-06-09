@@ -170,7 +170,7 @@ function Accueil() {
         .from('xp_log')
         .select('id')
         .eq('user_id', user.id)
-        .eq('source_id', 'roue_quotidienne')
+        .eq('source', 'roue_quotidienne')
         .eq('date_jour', jourParis)
         .limit(1)
       setRoueDispo(!dejaJouee?.length)
