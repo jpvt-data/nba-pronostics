@@ -384,8 +384,15 @@ function MesPronos() {
   const [profilId, setProfilId]          = useState(null)
   const [charg, setCharg]                = useState(true)
   const [estMoi, setEstMoi]              = useState(true)
+  const [isMobile, setIsMobile]          = useState(window.innerWidth < 640)
   const navigate                         = useNavigate()
   const location                         = useLocation()
+
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth < 640)
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [])
 
   useEffect(() => {
     const init = async () => {
@@ -609,11 +616,11 @@ function MesPronos() {
               </div>
 
               {/* Équipes favorites — sous barre XP sur mobile uniquement */}
-              {(() => {
+              {isMobile && (() => {
                 const equipesFav = profil?.equipes_favorites || []
                 if (equipesFav.length === 0 && !estMoi) return null
                 return (
-                  <div className="equipes-mobile" style={{ display: 'none', flexDirection: 'column', gap: 4, marginTop: 4 }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 4 }}>
                     <span style={{ fontSize: 9, color: 'var(--text-3)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Mes équipes</span>
                     {equipesFav.length > 0 ? (
                       <div style={{ display: 'flex', gap: 8 }}>
@@ -653,7 +660,7 @@ function MesPronos() {
             </div>
 
             {/* Col 2 — Équipes favorites (desktop uniquement) */}
-            {(() => {
+            {!isMobile && (() => {
               const equipesFav = profil?.equipes_favorites || []
               if (equipesFav.length === 0 && !estMoi) return null
               return (
