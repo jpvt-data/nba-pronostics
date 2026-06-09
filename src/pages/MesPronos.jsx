@@ -580,7 +580,7 @@ function MesPronos() {
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
 
             {/* Col 1 — Avatar + Pseudo + Titre + Niveau + Barre XP */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, minWidth: 0, flex: 1 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flexShrink: 0, minWidth: 0, maxWidth: isMobile ? '55%' : 'none' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <Avatar url={profil?.avatar_url} pseudo={profil?.pseudo} taille={48} fontSize={16} />
                 <div>
@@ -621,7 +621,7 @@ function MesPronos() {
                 if (equipesFav.length === 0 && !estMoi) return null
                 return (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 4 }}>
-                    <span style={{ fontSize: 9, color: 'var(--text-3)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Mes équipes favorites</span>
+                    <span style={{ fontSize: 9, color: 'var(--text-3)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Mes équipes</span>
                     {equipesFav.length > 0 ? (
                       <div style={{ display: 'flex', gap: 8 }}>
                         {equipesFav.map(eq => (
@@ -640,23 +640,7 @@ function MesPronos() {
                 )
               })()}
 
-              {/* Bio + bouton 1v1 si profil public */}
-              {!estMoi && profil?.description && (
-                <p style={{ fontSize: 12, color: 'var(--text-3)', margin: 0, lineHeight: 1.5 }}>{profil.description}</p>
-              )}
-              {!estMoi && (
-                <button
-                  onClick={() => navigate(`/h2h?user2=${new URLSearchParams(location.search).get('user_id')}`)}
-                  style={{
-                    marginTop: 4, display: 'inline-flex', alignItems: 'center', gap: 6,
-                    padding: '6px 12px', background: 'var(--accent)',
-                    borderWidth: 0, color: '#fff', fontSize: 11, fontWeight: 700, cursor: 'pointer',
-                    borderRadius: 'var(--radius-sm)',
-                  }}
-                >
-                  1v1 — me comparer à {profil?.pseudo}
-                </button>
-              )}
+              {/* Bio supprimée d'ici — déplacée sous les colonnes */}
             </div>
 
             {/* Col 2 — Équipes favorites (desktop uniquement) */}
@@ -666,7 +650,7 @@ function MesPronos() {
               return (
                 <div className="equipes-desktop" style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'center' }}>
                   <span style={{ fontSize: 9, color: 'var(--text-3)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                    Mes équipes favorites
+                    Mes équipes
                   </span>
                   {equipesFav.length > 0 ? (
                     <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
@@ -688,7 +672,7 @@ function MesPronos() {
 
             {/* Col 3 — KPIs */}
             {stats.total > 0 && (
-              <div style={{ display: 'flex', gap: 12, flexShrink: 0, alignItems: 'flex-start', marginLeft: 'auto' }}>
+              <div style={{ display: 'flex', gap: 12, flexShrink: 0, alignItems: 'flex-start' }}>
                 <div style={{ textAlign: 'center' }}>
                   <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 'clamp(28px, 7vw, 42px)', color: 'var(--text-1)', lineHeight: 1 }}>
                     {stats.total}
@@ -704,6 +688,26 @@ function MesPronos() {
               </div>
             )}
           </div>
+
+          {/* Bio — pleine largeur sous les colonnes */}
+          {profil?.description && (
+            <p style={{ fontSize: 12, color: 'var(--text-3)', margin: '10px 0 0', lineHeight: 1.5 }}>
+              {profil.description}
+            </p>
+          )}
+          {!estMoi && (
+            <button
+              onClick={() => navigate(`/h2h?user2=${new URLSearchParams(location.search).get('user_id')}`)}
+              style={{
+                marginTop: 10, display: 'inline-flex', alignItems: 'center', gap: 6,
+                padding: '6px 12px', background: 'var(--accent)',
+                borderWidth: 0, color: '#fff', fontSize: 11, fontWeight: 700, cursor: 'pointer',
+                borderRadius: 'var(--radius-sm)',
+              }}
+            >
+              1v1 — me comparer à {profil?.pseudo}
+            </button>
+          )}
 
           {/* Chips boutons — estMoi seulement */}
           {estMoi && (
