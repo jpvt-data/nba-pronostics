@@ -213,7 +213,11 @@ export const calculerPoints = async () => {
 
       for (const pe of (pronosEcart || [])) {
         const correctEcart = pe.fourchette_choisie === fourchetteReelle
-        const pointsEcart  = correctEcart ? 2 : 0
+        // Vérifier si le prono du même match est correct pour cet user
+        const pronoUser = tousLesPronos.find(p => p.user_id === pe.user_id)
+        const pronoCorrect = pronoUser?.equipe_choisie === gagnant
+        // Règle : fourchette seule = 1pt, prono seul = 1pt, les deux = 3pts
+        const pointsEcart = correctEcart ? (pronoCorrect ? 2 : 1) : 0
 
         await supabase
           .from('pronos_ecart')
