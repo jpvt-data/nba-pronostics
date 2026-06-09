@@ -190,7 +190,7 @@ function Classement() {
       })
 
       await chargerGeneralFiltre(tousIds, tousGroupeIds, glob, filtre)
-      await enregistrerGagnantSemanePrecedente(tousGroupeIds)
+      await enregistrerGagnantSemanePrecedente(tousGroupeIds, tousIds)
 
       const { data: gagnantsPrev } = await supabase
         .from('semaines_gagnees')
@@ -226,6 +226,14 @@ function Classement() {
       dedup.push(p)
     }
 
+    // Fourchettes correctes sur la même période
+    const { data: ecartsFiltres } = await supabase
+      .from('pronos_ecart')
+      .select('user_id, points_gagnes')
+      .eq('correct', true)
+      .in('user_id', [...tousIds])
+      .gte('cree_le', debut.toISOString())
+
     const agg = {}
     tousIds.forEach(id => { agg[id] = { points: 0, corrects: 0, incorrects: 0 } })
     dedup.forEach(p => {
@@ -233,13 +241,17 @@ function Classement() {
       if (p.resultat === 'correct')   { agg[p.user_id].points += (p.points_gagnes || 1); agg[p.user_id].corrects++ }
       if (p.resultat === 'incorrect') agg[p.user_id].incorrects++
     })
+    // Ajouter les points fourchettes
+    ecartsFiltres?.forEach(p => {
+      if (agg[p.user_id]) agg[p.user_id].points += (p.points_gagnes || 0)
+    })
 
     setGeneralFiltre([...tousIds].map(id => ({
       user_id: id, pseudo: glob[id]?.pseudo, avatar_url: glob[id]?.avatar_url, ...agg[id],
     })).sort((a, b) => b.points - a.points))
   }
 
-  const enregistrerGagnantSemanePrecedente = async (groupeIds) => {
+  const enregistrerGagnantSemanePrecedente = async (groupeIds, tousIds) => {
     const { debut, fin } = plageSemanePrecedente()
     const iso = semaineISO(debut)
     const { data: pronosSemPrev } = await supabase
@@ -247,6 +259,15 @@ function Classement() {
       .select('user_id, match_id, groupe_id, resultat, points_gagnes')
       .in('groupe_id', groupeIds)
       .neq('resultat', 'en_attente')
+      .gte('cree_le', debut.toISOString())
+      .lte('cree_le', fin.toISOString())
+
+    // Fourchettes de la semaine précédente
+    const { data: ecartsSemPrev } = await supabase
+      .from('pronos_ecart')
+      .select('user_id, points_gagnes')
+      .eq('correct', true)
+      .in('user_id', [...tousIds])
       .gte('cree_le', debut.toISOString())
       .lte('cree_le', fin.toISOString())
 
@@ -270,6 +291,11 @@ function Classement() {
         if (!pts[p.user_id]) pts[p.user_id] = 0
         if (p.resultat === 'correct') pts[p.user_id] += (p.points_gagnes || 1)
       })
+      // Ajouter les points fourchettes semaine précédente
+      ecartsSemPrev?.forEach(p => {
+        if (pts[p.user_id] !== undefined) pts[p.user_id] += (p.points_gagnes || 0)
+      })
+
       if (!Object.keys(pts).length) continue
       const entries = Object.entries(pts).sort((a, b) => b[1] - a[1])
       const [gagnantId, maxPts] = entries[0]
