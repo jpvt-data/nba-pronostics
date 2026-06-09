@@ -57,7 +57,12 @@ export const poserFourchetteEcart = async (userId, matchId, fourchetteChoisie) =
       ecartFinal <= 30 ? 'large'     : 'domination'
 
     const correctEcart = fourchetteChoisie === fourchetteReelle
-    const pointsEcart  = correctEcart ? 2 : 0
+    // Vérifier si le prono du même match est correct
+    const { data: pronoUser } = await supabase
+      .from('pronos').select('resultat')
+      .eq('user_id', userId).eq('match_id', matchId).maybeSingle()
+    const pronoCorrect = pronoUser?.resultat === 'correct'
+    const pointsEcart  = correctEcart ? (pronoCorrect ? 2 : 1) : 0
 
     await supabase
       .from('pronos_ecart')
