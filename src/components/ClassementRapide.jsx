@@ -75,10 +75,19 @@ function ClassementRapide({ userId }) {
         .in('user_id', userIds)
         .gte('cree_le', debut.toISOString())
 
+      // Points fourchettes correctes
+      const { data: pronosEcart } = await supabase
+        .from('pronos_ecart')
+        .select('user_id, points_gagnes')
+        .eq('correct', true)
+        .in('user_id', userIds)
+        .gte('cree_le', debut.toISOString())
+
       // Agréger points
       const pointsMap = {}
       userIds.forEach(id => { pointsMap[id] = 0 })
       pronos?.forEach(p => { pointsMap[p.user_id] = (pointsMap[p.user_id] || 0) + (p.points_gagnes || 1) })
+      pronosEcart?.forEach(p => { pointsMap[p.user_id] = (pointsMap[p.user_id] || 0) + (p.points_gagnes || 0) })
 
       const liste = tousMembers
         .map(m => ({ ...m, points: pointsMap[m.user_id] || 0 }))
