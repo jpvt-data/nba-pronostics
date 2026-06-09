@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase'
 import { xpPourNiveau, niveauDepuisXP } from '../services/xp'
 import { recupererFourchetteEcart } from '../services/ecart'
 import { BADGES_CATALOGUE } from '../data/badges'
+import { EQUIPES_NBA } from '../data/equipesNBA'
 import Navigation from '../components/Navigation'
 import { track } from '../services/tracker'
 import MissionsPopup from '../components/MissionsPopup'
@@ -398,7 +399,7 @@ function MesPronos() {
 
       const { data: p } = await supabase
         .from('profils')
-        .select('pseudo, avatar_url, description, xp_total, niveau, badges')
+        .select('pseudo, avatar_url, description, xp_total, niveau, badges, equipes_favorites')
         .eq('id', cibleId).single()
       setProfil(p)
       const badgesSlugs = p?.badges || []
@@ -568,112 +569,183 @@ function MesPronos() {
         {/* ── Header fusionné : Profil + XP ── */}
         <div style={{ background: 'var(--bg-1)', padding: '20px 16px 20px', borderLeft: '3px solid var(--gold)' }}>
 
-          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16 }}>
-            <Avatar url={profil?.avatar_url} pseudo={profil?.pseudo} taille={56} fontSize={18} />
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 32, color: 'var(--text-1)', letterSpacing: '0.02em', lineHeight: 1 }}>
-                {profil?.pseudo || '—'}
-              </div>
-              {!estMoi && (
-                <div style={{ fontSize: 11, color: 'var(--accent)', marginTop: 4, fontWeight: 600 }}>
-                  Profil public · pronos en attente masqués
+          {/* Ligne principale : 3 colonnes */}
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+
+            {/* Col 1 — Avatar + Pseudo + Titre + Niveau + Barre XP */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flexShrink: 0, minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <Avatar url={profil?.avatar_url} pseudo={profil?.pseudo} taille={48} fontSize={16} />
+                <div>
+                  <div style={{ fontFamily: 'var(--font-title)', fontWeight: 700, fontSize: 'clamp(22px, 5vw, 32px)', color: 'var(--accent)', letterSpacing: '-0.01em', lineHeight: 1 }}>
+                    {profil?.pseudo || '—'}
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginTop: 2 }}>
+                    <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 'clamp(16px, 3.5vw, 20px)', color: 'var(--gold)', letterSpacing: '0.02em', lineHeight: 1 }}>
+                      {titreRPG}
+                    </span>
+                    <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 12, color: 'var(--text-3)' }}>
+                      Niv. {niveau}
+                    </span>
+                  </div>
                 </div>
-              )}
-              {profil?.description && (
-                <p style={{ fontSize: 13, color: 'var(--text-3)', marginTop: 6, lineHeight: 1.5 }}>{profil.description}</p>
+              </div>
+
+              {/* Barre XP — col 1 seulement */}
+              <div style={{ width: '100%' }}>
+                <div style={{ height: 4, background: 'var(--bg-2)', overflow: 'hidden', borderRadius: 3 }}>
+                  <div style={{ height: '100%', width: `${pctBarre}%`, background: 'var(--gold)', transition: 'width 0.6s ease' }} />
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 3 }}>
+                  <span style={{ fontSize: 10, color: 'var(--text-3)', fontFamily: 'var(--font-display)', fontWeight: 600 }}>
+                    {xpActuel.toLocaleString('fr-FR')} XP
+                  </span>
+                  {niveau < 100 && (
+                    <span style={{ fontSize: 10, color: 'var(--text-3)', fontFamily: 'var(--font-display)' }}>
+                      encore {xpRestant.toLocaleString('fr-FR')} XP
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Bio + bouton 1v1 si profil public */}
+              {!estMoi && profil?.description && (
+                <p style={{ fontSize: 12, color: 'var(--text-3)', margin: 0, lineHeight: 1.5 }}>{profil.description}</p>
               )}
               {!estMoi && (
                 <button
                   onClick={() => navigate(`/h2h?user2=${new URLSearchParams(location.search).get('user_id')}`)}
                   style={{
-                    marginTop: 10, display: 'flex', alignItems: 'center', gap: 6,
-                    padding: '7px 14px', background: 'var(--accent)',
-                    borderWidth: 0, color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer',
+                    marginTop: 4, display: 'inline-flex', alignItems: 'center', gap: 6,
+                    padding: '6px 12px', background: 'var(--accent)',
+                    borderWidth: 0, color: '#fff', fontSize: 11, fontWeight: 700, cursor: 'pointer',
+                    borderRadius: 'var(--radius-sm)',
                   }}
                 >
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'inline', verticalAlign: 'middle', marginRight: 5 }}><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                   1v1 — me comparer à {profil?.pseudo}
                 </button>
               )}
             </div>
-            <button
-              onClick={() => setModalInfo(true)}
-              style={{ background: 'none', borderWidth: 0, cursor: 'pointer', fontSize: 16, color: 'var(--text-3)', padding: 4, flexShrink: 0 }}
-            >ℹ️</button>
-          </div>
 
-          {/* Titre RPG + niveau */}
-          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginTop: 34 }}>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-              <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 22, color: 'var(--gold)', letterSpacing: '0.02em', lineHeight: 1 }}>{titreRPG}</span>
-              <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 14, color: 'var(--text-3)' }}>Niv. {niveau}</span>
-            </div>
-            {/* Bouton Missions + Historique XP sur la même ligne */}
-            {estMoi && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <button
-                  onClick={() => setMissionsOpen(true)}
-                  style={{
-                    background: 'none', borderWidth: 0, cursor: 'pointer',
-                    fontSize: 10, color: 'var(--gold)', padding: 0,
-                    fontWeight: 700, letterSpacing: '0.03em',
-                  }}
-                >
-                  Missions →
-                </button>
-                <button
-                  onClick={() => setModalHistorique(true)}
-                  style={{
-                    background: 'none', borderWidth: 0, cursor: 'pointer',
-                    fontSize: 10, color: 'var(--text-3)', padding: 0,
-                    fontWeight: 600, letterSpacing: '0.03em',
-                  }}
-                >
-                  Historique XP →
-                </button>
+            {/* Col 2 — Équipes favorites */}
+            {(() => {
+              const equipesFav = profil?.equipes_favorites || []
+              if (equipesFav.length === 0 && !estMoi) return null
+              return (
+                <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'center' }}>
+                  <span style={{ fontSize: 9, color: 'var(--text-3)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                    Mes équipes
+                  </span>
+                  {equipesFav.length > 0 ? (
+                    <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
+                      {equipesFav.map(eq => (
+                        <img key={eq.id} src={eq.logo} alt={eq.nom}
+                          style={{ width: 36, height: 36, objectFit: 'contain' }}
+                          onError={e => { e.target.style.opacity = '0.2' }}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => navigate('/profil')}
+                      style={{
+                        background: 'none', border: '1px solid var(--border)',
+                        borderRadius: 'var(--radius-sm)', padding: '4px 8px',
+                        fontSize: 10, color: 'var(--text-3)', cursor: 'pointer',
+                      }}
+                    >
+                      Définir →
+                    </button>
+                  )}
+                </div>
+              )
+            })()}
+
+            {/* Col 3 — KPIs */}
+            {stats.total > 0 && (
+              <div style={{ display: 'flex', gap: 12, flexShrink: 0, alignItems: 'flex-start' }}>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 'clamp(28px, 7vw, 42px)', color: 'var(--text-1)', lineHeight: 1 }}>
+                    {stats.total}
+                  </div>
+                  <div style={{ fontSize: 9, color: 'var(--text-3)', marginTop: 2, letterSpacing: '0.04em' }}>PRONOS</div>
+                </div>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 'clamp(28px, 7vw, 42px)', color: 'var(--accent)', lineHeight: 1 }}>
+                    {taux(stats.corrects, stats.incorrects)}%
+                  </div>
+                  <div style={{ fontSize: 9, color: 'var(--text-3)', marginTop: 2, letterSpacing: '0.04em' }}>RÉUSSITE</div>
+                </div>
               </div>
             )}
           </div>
 
-          {/* Barre XP */}
-          <div style={{ marginTop: 6 }}>
-            <div style={{ height: 5, background: 'var(--bg-2)', overflow: 'hidden', borderRadius: 3 }}>
-              <div style={{ height: '100%', width: `${pctBarre}%`, background: 'var(--gold)', transition: 'width 0.6s ease' }} />
+          {/* Chips boutons — estMoi seulement */}
+          {estMoi && (
+            <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
+              <button
+                onClick={() => setModalInfo(true)}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 6,
+                  background: 'var(--bg-2)', border: '1px solid var(--border)',
+                  borderRadius: 'var(--radius-sm)', padding: '5px 11px',
+                  fontSize: 11, fontWeight: 700, color: 'var(--text-2)', cursor: 'pointer', letterSpacing: '0.03em',
+                }}
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                Infos XP
+              </button>
+              <button
+                onClick={() => setModalHistorique(true)}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 6,
+                  background: 'var(--bg-2)', border: '1px solid var(--border)',
+                  borderRadius: 'var(--radius-sm)', padding: '5px 11px',
+                  fontSize: 11, fontWeight: 700, color: 'var(--text-2)', cursor: 'pointer', letterSpacing: '0.03em',
+                }}
+              >
+                Historique XP
+              </button>
+              <button
+                onClick={() => setMissionsOpen(true)}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 6,
+                  background: 'var(--bg-2)', border: '1px solid var(--border)',
+                  borderRadius: 'var(--radius-sm)', padding: '5px 11px',
+                  fontSize: 11, fontWeight: 700, color: 'var(--text-2)', cursor: 'pointer', letterSpacing: '0.03em',
+                }}
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><path d="M9 12l2 2 4-4"/></svg>
+                Missions
+              </button>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}>
-              <span style={{ fontSize: 10, color: 'var(--text-3)', fontFamily: 'var(--font-display)', fontWeight: 600 }}>
-                {xpActuel.toLocaleString('fr-FR')} XP
-              </span>
-              {niveau < 100 && (
-                <span style={{ fontSize: 10, color: 'var(--text-3)', fontFamily: 'var(--font-display)' }}>
-                  encore {xpRestant.toLocaleString('fr-FR')} XP
-                </span>
-              )}
-            </div>
-          </div>
+          )}
 
           {/* Badges obtenus */}
           {badgesObtenus.length > 0 && (
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginTop: 16 }}>
-              {badgesObtenus.map(b => (
-                <button
-                  key={b.slug}
-                  onClick={() => setBadgePopup(b)}
-                  title={b.nom}
-                  style={{
-                    width: 56, height: 56, padding: 0,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    background: 'none', borderWidth: 0, cursor: 'pointer',
-                  }}
-                >
-                  <img
-                    src={b.image}
-                    alt={b.nom}
-                    style={{ width: 56, height: 56, objectFit: 'contain' }}
-                    onError={e => { e.target.style.opacity = '0' }}
-                  />
-                </button>
-              ))}
+            <div style={{ marginTop: 16 }}>
+              <div style={{ fontSize: 10, color: 'var(--text-3)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>
+                Badges débloqués
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+                {badgesObtenus.map(b => (
+                  <button
+                    key={b.slug}
+                    onClick={() => setBadgePopup(b)}
+                    title={b.nom}
+                    style={{
+                      width: 48, height: 48, padding: 0,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      background: 'none', borderWidth: 0, cursor: 'pointer',
+                    }}
+                  >
+                    <img src={b.image} alt={b.nom}
+                      style={{ width: 48, height: 48, objectFit: 'contain' }}
+                      onError={e => { e.target.style.opacity = '0' }}
+                    />
+                  </button>
+                ))}
+              </div>
             </div>
           )}
         </div>
