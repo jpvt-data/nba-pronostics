@@ -580,7 +580,7 @@ function MesPronos() {
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
 
             {/* Col 1 — Avatar + Pseudo + Titre + Niveau + Barre XP */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flexShrink: 0, minWidth: 0, maxWidth: isMobile ? '55%' : 'none' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, minWidth: 0, flex: 1 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <Avatar url={profil?.avatar_url} pseudo={profil?.pseudo} taille={48} fontSize={16} />
                 <div>
@@ -688,7 +688,7 @@ function MesPronos() {
 
             {/* Col 3 — KPIs */}
             {stats.total > 0 && (
-              <div style={{ display: 'flex', gap: 12, flexShrink: 0, alignItems: 'flex-start' }}>
+              <div style={{ display: 'flex', gap: 12, flexShrink: 0, alignItems: 'flex-start', marginLeft: 'auto' }}>
                 <div style={{ textAlign: 'center' }}>
                   <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 'clamp(28px, 7vw, 42px)', color: 'var(--text-1)', lineHeight: 1 }}>
                     {stats.total}
