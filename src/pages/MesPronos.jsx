@@ -616,37 +616,7 @@ function MesPronos() {
               </div>
 
               {/* Équipes favorites — sous barre XP sur mobile uniquement */}
-              {isMobile && (() => {
-                const equipesFav = profil?.equipes_favorites || []
-                if (equipesFav.length === 0 && !estMoi) return null
-                return (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 4 }}>
-                    {profil?.description && (
-                      <div style={{ marginBottom: 6 }}>
-                        <span style={{ fontSize: 9, color: 'var(--text-3)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Bio</span>
-                        <p style={{ fontSize: 12, color: 'var(--text-2)', margin: '2px 0 0', lineHeight: 1.5, fontStyle: 'italic' }}>{profil.description}</p>
-                      </div>
-                    )}
-                    <span style={{ fontSize: 9, color: 'var(--text-3)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Mes équipes</span>
-                    {equipesFav.length > 0 ? (
-                      <div style={{ display: 'flex', gap: 8 }}>
-                        {equipesFav.map(eq => (
-                          <img key={eq.id} src={eq.logo} alt={eq.nom}
-                            style={{ width: 32, height: 32, objectFit: 'contain' }}
-                            onError={e => { e.target.style.opacity = '0.2' }}
-                          />
-                        ))}
-                      </div>
-                    ) : (
-                      <button onClick={() => navigate('/profil')} style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: '4px 8px', fontSize: 10, color: 'var(--text-3)', cursor: 'pointer', alignSelf: 'flex-start' }}>
-                        Définir →
-                      </button>
-                    )}
-                  </div>
-                )
-              })()}
-
-              {/* Bio supprimée d'ici — déplacée sous les colonnes */}
+              {/* Supprimé de col 1 — bio et équipes gérés en ligne séparée */}
             </div>
 
             {/* Col 2 — Équipes favorites (desktop uniquement) */}
@@ -654,7 +624,7 @@ function MesPronos() {
               const equipesFav = profil?.equipes_favorites || []
               if (equipesFav.length === 0 && !estMoi) return null
               return (
-                <div className="equipes-desktop" style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'center' }}>
+                <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'center' }}>
                   <span style={{ fontSize: 9, color: 'var(--text-3)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                     Mes équipes
                   </span>
@@ -695,15 +665,60 @@ function MesPronos() {
             )}
           </div>
 
-          {/* Bio + bouton 1v1 — desktop seulement (mobile : dans col 1) */}
+          {/* Ligne 2 mobile — Bio (gauche) + Équipes (droite) */}
+          {isMobile && (
+            <div style={{ display: 'flex', gap: 12, marginTop: 10, alignItems: 'flex-start' }}>
+              {/* Col gauche — Bio */}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                {profil?.description ? (
+                  <>
+                    <span style={{ fontSize: 9, color: 'var(--text-3)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Bio</span>
+                    <p style={{ fontSize: 12, color: 'var(--text-2)', margin: '2px 0 0', lineHeight: 1.5, fontStyle: 'italic' }}>{profil.description}</p>
+                  </>
+                ) : estMoi ? (
+                  <button onClick={() => navigate('/profil')} style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: '4px 8px', fontSize: 10, color: 'var(--text-3)', cursor: 'pointer' }}>
+                    Ajouter une bio →
+                  </button>
+                ) : null}
+              </div>
+              {/* Col droite — Équipes */}
+              {(() => {
+                const equipesFav = profil?.equipes_favorites || []
+                if (equipesFav.length === 0 && !estMoi) return null
+                return (
+                  <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-end' }}>
+                    <span style={{ fontSize: 9, color: 'var(--text-3)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Mes équipes</span>
+                    {equipesFav.length > 0 ? (
+                      <div style={{ display: 'flex', gap: 6 }}>
+                        {equipesFav.map(eq => (
+                          <img key={eq.id} src={eq.logo} alt={eq.nom}
+                            style={{ width: 30, height: 30, objectFit: 'contain' }}
+                            onError={e => { e.target.style.opacity = '0.2' }}
+                          />
+                        ))}
+                      </div>
+                    ) : (
+                      <button onClick={() => navigate('/profil')} style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: '4px 8px', fontSize: 10, color: 'var(--text-3)', cursor: 'pointer' }}>
+                        Définir →
+                      </button>
+                    )}
+                  </div>
+                )
+              })()}
+            </div>
+          )}
+
+          {/* Bio desktop seulement */}
           {!isMobile && profil?.description && (
-            <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <div style={{ marginTop: 10 }}>
               <span style={{ fontSize: 9, color: 'var(--text-3)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Bio</span>
-              <p style={{ fontSize: 12, color: 'var(--text-2)', margin: 0, lineHeight: 1.5, fontStyle: 'italic' }}>
+              <p style={{ fontSize: 12, color: 'var(--text-2)', margin: '2px 0 0', lineHeight: 1.5, fontStyle: 'italic' }}>
                 {profil.description}
               </p>
             </div>
           )}
+
+          {/* Bouton 1v1 — toujours visible si profil public */}
           {!estMoi && (
             <button
               onClick={() => navigate(`/h2h?user2=${new URLSearchParams(location.search).get('user_id')}`)}
