@@ -1,13 +1,10 @@
 import { useState, useEffect } from 'react'
-import { useNoSpoil } from '../context/NoSpoilContext'
-import { EyeOff } from 'lucide-react'
 import { fetchFeedBasketUSA } from './BanniereFeed'
 
 export default function NewsNBA({ onFeedCharge }) {
   const [news, setNews]             = useState([])
   const [chargement, setChargement] = useState(true)
   const [erreur, setErreur]         = useState(false)
-  const { noSpoil }                 = useNoSpoil()
 
   useEffect(() => {
     fetchFeedBasketUSA()
@@ -28,20 +25,7 @@ export default function NewsNBA({ onFeedCharge }) {
 
   return (
     <div style={{ padding: '0 0 12px 0' }}>
-      {noSpoil ? (
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: 8,
-          marginTop: 12, padding: '10px 12px',
-          background: 'rgba(99,102,241,0.06)',
-          borderWidth: 1, borderStyle: 'solid', borderColor: 'rgba(99,102,241,0.15)',
-        }}>
-          <EyeOff size={14} color="var(--text-3)" />
-          <span style={{ fontSize: 12, color: '#6b6b80' }}>
-            Actus masquées — mode No Spoil activé
-          </span>
-        </div>
-      ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 1, marginTop: 12 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 1, marginTop: 12 }}>
           {chargement ? (
             <p style={{ fontSize: 12, color: '#6b6b80', margin: 0 }}>Chargement…</p>
           ) : (
@@ -89,8 +73,7 @@ export default function NewsNBA({ onFeedCharge }) {
             ))
           )}
         </div>
-      )}
-
+      
       <p style={{ fontSize: 10, color: '#6b6b80', margin: '10px 0 0' }}>
         Source :{' '}
         <a href="https://www.basketusa.com" target="_blank" rel="noopener noreferrer"
