@@ -222,7 +222,7 @@ export default function BracketPlayoffs({ saison = 2026 }) {
         const [dataStandings, ...dataBoards] = await Promise.all([
           fetchAvecTimeout(`${BASE_V2}/standings?season=${saison}&seasontype=2`).then(r => r.json()),
           ...plages.map(p =>
-            fetchAvecTimeout(`${BASE}/scoreboard?dates=${p}&limit=500`)
+            fetchAvecTimeout(`${BASE}/scoreboard?dates=${p}`)
               .then(r => r.json())
               .catch(() => ({ events: [] }))
           ),
