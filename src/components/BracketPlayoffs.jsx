@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from 'react'
-import { useNoSpoil } from '../context/NoSpoilContext'
 
 const BASE    = 'https://site.api.espn.com/apis/site/v2/sports/basketball/nba'
 const BASE_V2 = 'https://site.api.espn.com/apis/v2/sports/basketball/nba'
@@ -77,7 +76,7 @@ function trierPremierTourParDemis(premierTour, demis) {
 }
 
 // ── Carte équipe ──────────────────────────────────────────────────────────────
-function CarteEquipe({ equipe, gagnante, noSpoil, d }) {
+function CarteEquipe({ equipe, gagnante,  d }) {
   const [imgErr, setImgErr] = useState(false)
 
   if (!equipe) return (
@@ -92,7 +91,7 @@ function CarteEquipe({ equipe, gagnante, noSpoil, d }) {
   )
 
   const couleur    = equipe.couleur ? `#${equipe.couleur}` : 'var(--accent)'
-  const estGagnant = !noSpoil && gagnante
+  const estGagnant = gagnante
 
   return (
     <div style={{
@@ -123,19 +122,19 @@ function CarteEquipe({ equipe, gagnante, noSpoil, d }) {
         fontSize: d.fsScore, fontWeight: 900, fontFamily: 'var(--font-display)',
         color: estGagnant ? couleur : 'var(--text-3)',
         position: 'relative', flexShrink: 0,
-      }}>{noSpoil ? '?' : equipe.wins}</span>
+      }}>{equipe.wins}</span>
     </div>
   )
 }
 
 // ── Matchup ───────────────────────────────────────────────────────────────────
-function Matchup({ serie, noSpoil, d }) {
-  const scoreAff = serie && !noSpoil ? formatSummary(serie.summary, serie.terminee) : ''
+function Matchup({ serie,  d }) {
+  const scoreAff = serie ? formatSummary(serie.summary, serie.terminee) : ''
 
   if (!serie) return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 2, height: hMatchup(d), flexShrink: 0 }}>
-      <CarteEquipe equipe={null} noSpoil={noSpoil} d={d} />
-      <CarteEquipe equipe={null} noSpoil={noSpoil} d={d} />
+      <CarteEquipe equipe={null} d={d} />
+      <CarteEquipe equipe={null} d={d} />
       <div style={{ height: d.sumH }} />
     </div>
   )
@@ -146,8 +145,8 @@ function Matchup({ serie, noSpoil, d }) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 2, height: hMatchup(d), flexShrink: 0 }}>
-      <CarteEquipe equipe={exterieur} gagnante={gExt} noSpoil={noSpoil} d={d} />
-      <CarteEquipe equipe={domicile}  gagnante={gDom} noSpoil={noSpoil} d={d} />
+      <CarteEquipe equipe={exterieur} gagnante={gExt} d={d} />
+      <CarteEquipe equipe={domicile}  gagnante={gDom} d={d} />
       <div style={{ height: d.sumH, display: 'flex', alignItems: 'center' }}>
         {scoreAff && (
           <span style={{
@@ -161,7 +160,7 @@ function Matchup({ serie, noSpoil, d }) {
 }
 
 // ── Colonne ───────────────────────────────────────────────────────────────────
-function Colonne({ label, series, noSpoil, d, hTotale }) {
+function Colonne({ label, series,  d, hTotale }) {
   const items = series.length > 0 ? series : [null]
   return (
     <div style={{ display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
@@ -177,7 +176,7 @@ function Colonne({ label, series, noSpoil, d, hTotale }) {
         display: 'flex', flexDirection: 'column',
         height: hTotale, justifyContent: 'space-evenly', gap: d.gap,
       }}>
-        {items.map((s, i) => <Matchup key={i} serie={s} noSpoil={noSpoil} d={d} />)}
+        {items.map((s, i) => <Matchup key={i} serie={s} d={d} />)}
       </div>
     </div>
   )
@@ -185,7 +184,6 @@ function Colonne({ label, series, noSpoil, d, hTotale }) {
 
 // ── Composant principal ───────────────────────────────────────────────────────
 export default function BracketPlayoffs({ saison = 2026 }) {
-  const { noSpoil }           = useNoSpoil()
   const [bracket, setBracket] = useState(null)
   const [charg, setCharg]     = useState(true)
   const [erreur, setErreur]   = useState(false)
@@ -319,9 +317,9 @@ export default function BracketPlayoffs({ saison = 2026 }) {
         <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'flex-start', gap: colGap, padding: '0 8px' }}>
 
           {/* OUEST */}
-          <Colonne label={`OUEST\n1er tour`}     series={bracket.ouest['1er tour']}         noSpoil={noSpoil} d={d} hTotale={hTotale} />
-          <Colonne label="Demi-finales"           series={bracket.ouest['Demi-finales']}     noSpoil={noSpoil} d={d} hTotale={hTotale} />
-          <Colonne label="Finales de conf."       series={bracket.ouest['Finales de conf.']} noSpoil={noSpoil} d={d} hTotale={hTotale} />
+          <Colonne label={`OUEST\n1er tour`}     series={bracket.ouest['1er tour']}         d={d} hTotale={hTotale} />
+          <Colonne label="Demi-finales"           series={bracket.ouest['Demi-finales']}     d={d} hTotale={hTotale} />
+          <Colonne label="Finales de conf."       series={bracket.ouest['Finales de conf.']} d={d} hTotale={hTotale} />
 
           {/* FINALE NBA */}
           <div ref={finaleRef} style={{ display: 'flex', flexDirection: 'column', flexShrink: 0, alignItems: 'center' }}>
@@ -333,14 +331,14 @@ export default function BracketPlayoffs({ saison = 2026 }) {
               <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: d.fsLabel * 1.6, color: 'var(--accent)', letterSpacing: '0.04em', lineHeight: 1, whiteSpace: 'nowrap' }}>NBA</span>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', height: hTotale, justifyContent: 'center', alignItems: 'center' }}>
-              <Matchup serie={bracket.finale} noSpoil={noSpoil} d={d} />
+              <Matchup serie={bracket.finale} d={d} />
             </div>
           </div>
 
           {/* EST */}
-          <Colonne label="Finales de conf."       series={bracket.est['Finales de conf.']}  noSpoil={noSpoil} d={d} hTotale={hTotale} />
-          <Colonne label="Demi-finales"           series={bracket.est['Demi-finales']}      noSpoil={noSpoil} d={d} hTotale={hTotale} />
-          <Colonne label={`EST\n1er tour`}        series={bracket.est['1er tour']}           noSpoil={noSpoil} d={d} hTotale={hTotale} />
+          <Colonne label="Finales de conf."       series={bracket.est['Finales de conf.']}  d={d} hTotale={hTotale} />
+          <Colonne label="Demi-finales"           series={bracket.est['Demi-finales']}      d={d} hTotale={hTotale} />
+          <Colonne label={`EST\n1er tour`}        series={bracket.est['1er tour']}           d={d} hTotale={hTotale} />
 
         </div>
       </div>
