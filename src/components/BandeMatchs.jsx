@@ -417,7 +417,7 @@ function BandeMatchs({ matchs, userId, onProno, onBadge, equipeFiltre, onFiltreC
 
   const styleFleche = (visible) => ({
     position: 'absolute', top: '50%', transform: 'translateY(-50%)',
-    zIndex: 10, width: 36, height: 36,
+    zIndex: 50, width: 36, height: 36,
     background: '#f0ede8', border: 'none',
     boxShadow: '0 2px 8px rgba(0,0,0,0.5)',
     borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
