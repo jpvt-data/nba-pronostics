@@ -1,6 +1,7 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { ajouterXP, verifierMissions } from '../services/xp'
 import { lundiFin } from '../services/points'
+import { supabase } from '../lib/supabase'
 import { X } from 'lucide-react'
 
 // Segments de la roue — ordre affiché, couleurs, probabilités
@@ -37,7 +38,7 @@ const secteurPath = (cx, cy, r, startDeg, endDeg) => {
 }
 
 function RoueQuotidienne({ userId, onClose, onGain }) {
-  const [phase, setPhase]       = useState('idle') // idle | spin | result
+  const [phase, setPhase]       = useState('chargement') // chargement | idle | dejajouee | spin | result
   const [rotation, setRotation] = useState(0)
   const [resultat, setResultat] = useState(null)
   const [erreur, setErreur]     = useState(null)
@@ -48,6 +49,21 @@ function RoueQuotidienne({ userId, onClose, onGain }) {
     return () => { document.body.style.overflow = '' }
   }, [])
 
+  // Vérifier côté Supabase si la roue a déjà été jouée aujourd'hui
+  useEffect(() => {
+    const verifierDejaJouee = async () => {
+      const jourParis = new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/Paris' })
+      const { data } = await supabase
+        .from('xp_log')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('source_id', `roue_${jourParis}`)
+        .maybeSingle()
+      setPhase(data ? 'dejajouee' : 'idle')
+    }
+    verifierDejaJouee()
+  }, [userId])
+
   const lancer = async () => {
     if (phase !== 'idle') return
     setPhase('spin')
@@ -56,9 +72,9 @@ function RoueQuotidienne({ userId, onClose, onGain }) {
     const idx     = SEGMENTS.indexOf(segment)
 
     // Amener le segment gagnant sous l'aiguille (en haut = -90°)
-    const centreSegment   = idx * ANGLE_SEG + ANGLE_SEG / 2
-    const toursComplets   = 4 * 360
-    const angleArrêt      = toursComplets + (360 - centreSegment)
+    const centreSegment    = idx * ANGLE_SEG + ANGLE_SEG / 2
+    const toursComplets    = 4 * 360
+    const angleArrêt       = toursComplets + (360 - centreSegment)
     const nouvelleRotation = rotation + angleArrêt
     setRotation(nouvelleRotation)
 
@@ -76,7 +92,6 @@ function RoueQuotidienne({ userId, onClose, onGain }) {
             'roue_quotidienne', `roue_${jourParis}`,
             { gain: segment.label }
           )
-          // Remonter xp_total et niveau mis à jour vers Accueil
           if (res?.xp_total ?? segment.xp) {
             onGain(res?.xp_total ?? segment.xp, res?.niveau ?? null)
           }
@@ -85,6 +100,17 @@ function RoueQuotidienne({ userId, onClose, onGain }) {
           onGain(segment.xp, null)
         }
       } else {
+        // Segment "Rien" — on insère quand même en xp_log pour bloquer le re-tirage
+        try {
+          await supabase.from('xp_log').insert({
+            user_id:   userId,
+            source:    'roue_quotidienne',
+            source_id: `roue_${jourParis}`,
+            xp_gagne:  0,
+            meta:      { gain: 'Rien' },
+            date_jour: jourParis,
+          })
+        } catch (e) { /* silencieux */ }
         onGain(0, null)
       }
 
@@ -94,8 +120,6 @@ function RoueQuotidienne({ userId, onClose, onGain }) {
         await verifierMissions(userId, 'roue_tiree_semaine', 1, lundiFin())
       } catch (e) { /* silencieux */ }
 
-      // Marquer jouée aujourd'hui
-      localStorage.setItem(`swish_roue_${userId}_${jourParis}`, '1')
     }, 3600)
   }
 
@@ -154,7 +178,7 @@ function RoueQuotidienne({ userId, onClose, onGain }) {
             filter: 'drop-shadow(0 0 6px var(--accent))',
           }} />
 
-          {/* Roue SVG */}
+          {/* Roue SVG — opacité réduite si déjà jouée */}
           <svg
             width={300} height={300}
             viewBox="0 0 300 300"
@@ -164,6 +188,7 @@ function RoueQuotidienne({ userId, onClose, onGain }) {
                 ? 'transform 3.5s cubic-bezier(0.17, 0.67, 0.12, 0.99)'
                 : 'none',
               display: 'block',
+              opacity: phase === 'dejajouee' ? 0.4 : 1,
             }}
           >
             <defs>
@@ -227,6 +252,12 @@ function RoueQuotidienne({ userId, onClose, onGain }) {
 
         {/* Bouton / résultat */}
         <div style={{ marginTop: 20 }}>
+          {phase === 'chargement' && (
+            <div style={{ fontSize: 13, color: 'var(--text-3)', letterSpacing: '0.05em' }}>
+              Chargement…
+            </div>
+          )}
+
           {phase === 'idle' && (
             <button onClick={lancer} style={{
               width: '100%', padding: '13px',
@@ -238,6 +269,31 @@ function RoueQuotidienne({ userId, onClose, onGain }) {
             }}>
               LANCER
             </button>
+          )}
+
+          {phase === 'dejajouee' && (
+            <div>
+              <div style={{
+                padding: '14px',
+                background: 'var(--bg-2)',
+                borderWidth: 1, borderStyle: 'solid', borderColor: 'var(--border)',
+                borderRadius: 'var(--radius-sm)',
+                marginBottom: 12,
+                fontSize: 13, color: 'var(--text-2)',
+              }}>
+                Tu as déjà joué aujourd'hui. Reviens demain.
+              </div>
+              <button onClick={onClose} style={{
+                width: '100%', padding: '11px',
+                background: 'var(--bg-2)',
+                borderWidth: 1, borderStyle: 'solid', borderColor: 'var(--border)',
+                borderRadius: 'var(--radius-sm)',
+                color: 'var(--text-3)', fontSize: 13, fontWeight: 600,
+                cursor: 'pointer',
+              }}>
+                Fermer
+              </button>
+            </div>
           )}
 
           {phase === 'spin' && (
