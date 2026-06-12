@@ -417,7 +417,7 @@ function BandeMatchs({ matchs, userId, onProno, onBadge, equipeFiltre, onFiltreC
 
   const styleFleche = (visible) => ({
     position: 'absolute', top: '50%', transform: 'translateY(-50%)',
-    zIndex: 50, width: 36, height: 36,
+    zIndex: 100, width: 36, height: 36,
     background: '#f0ede8', border: 'none',
     boxShadow: '0 2px 8px rgba(0,0,0,0.5)',
     borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -442,7 +442,7 @@ function BandeMatchs({ matchs, userId, onProno, onBadge, equipeFiltre, onFiltreC
       <div
         ref={scrollRef}
         onScroll={mettreAJourFleches}
-        style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', paddingTop: 10, paddingBottom: 16 }}
+        style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', paddingTop: 10, paddingBottom: 16, position: 'relative', zIndex: 0  }}
       >
         <div style={{ display: 'flex', flexDirection: 'row', gap: 20, paddingLeft: 16, paddingRight: 16, width: 'max-content', alignItems: 'flex-start' }}>
           {groupes.map(([jour, matchsJour]) => (
