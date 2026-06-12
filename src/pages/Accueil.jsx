@@ -455,7 +455,7 @@ function Accueil() {
         )}
 
         {!chargement && (
-          <div style={{ marginTop: 10, position: 'relative' }}>
+          <div style={{ marginTop: 10 }}>
             {matchs.length === 0 ? (
               <div style={{
                 margin: '8px 16px', padding: '14px 16px',
