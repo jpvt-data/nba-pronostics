@@ -29,3 +29,7 @@ dist-ssr
 
 # Fichier clés secrets
 docs/Clés_secrets.txt
+
+# Docs et exploration
+/docs/
+/exploration/
