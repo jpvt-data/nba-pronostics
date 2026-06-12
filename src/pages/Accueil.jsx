@@ -173,22 +173,22 @@ function Accueil() {
       }
 
       // ── Matchs terminés avec pronos non vus ────────────────────────────────
-      const { data: pronosNonVus } = await supabase
-        .from('pronos')
-        .select('id, matchs(statut)')
-        .eq('user_id', user.id)
-        .eq('vu', false)
-        .not('matchs', 'is', null)
+      // const { data: pronosNonVus } = await supabase
+      //  .from('pronos')
+      //  .select('id, matchs(statut)')
+      //  .eq('user_id', user.id)
+      //  .eq('vu', false)
+      //  .not('matchs', 'is', null)
 
-      const nbNonVus = pronosNonVus?.filter(p => p.matchs?.statut === 'termine').length || 0
-      if (nbNonVus > 0) {
-        notifs.push({
-          id:      `matchs_termines_${jourParis}`,
-          type:    'matchs',
-          titre:   `${nbNonVus} résultat${nbNonVus > 1 ? 's' : ''} à découvrir !`,
-          message: 'Va voir tes pronos pour connaître le verdict.',
-        })
-      }
+      //const nbNonVus = pronosNonVus?.filter(p => p.matchs?.statut === 'termine').length || 0
+      //if (nbNonVus > 0) {
+      //  notifs.push({
+      //    id:      `matchs_termines_${jourParis}`,
+      //    type:    'matchs',
+      //    titre:   `${nbNonVus} résultat${nbNonVus > 1 ? 's' : ''} à découvrir !`,
+      //    message: 'Va voir tes pronos pour connaître le verdict.',
+      //  })
+      // }
 
       // Priorité : niveau/titre > mission > badge > matchs > xp passif
       // L'ordre dans notifs[] est déjà correct — on push dans l'ordre voulu
