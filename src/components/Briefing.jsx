@@ -372,6 +372,23 @@ async function genererMessages(userId, nbPronosAttente, matchs = []) {
     messages.push({ id: 'prochain_match', icone: '📅', texte: texteMatch, couleur: 'var(--text-2)' })
   }
 
+  // ── Roue quotidienne dispo ──
+  const jourParisRoue = new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/Paris' })
+  const { data: dejaRoueBriefing } = await supabase
+    .from('xp_log').select('id')
+    .eq('user_id', userId)
+    .eq('source', 'roue_quotidienne')
+    .eq('date_jour', jourParisRoue)
+    .limit(1)
+  if (!dejaRoueBriefing?.length) {
+    messages.push({
+      id: 'roue_dispo',
+      icone: '🎡',
+      texte: 'Ta roue du jour t\'attend — retente ta chance !',
+      couleur: 'var(--accent)',
+    })
+  }
+
   return messages
 }
 
