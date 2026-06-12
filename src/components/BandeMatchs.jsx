@@ -351,12 +351,10 @@ function BandeMatchs({ matchs, userId, onProno, onBadge, equipeFiltre, onFiltreC
   }
 
   const scrollerGauche = () => {
-    const idx = indexGroupeCourant()
-    scrollerVersGroupe(Math.max(0, idx - 1))
+    scrollRef.current?.scrollBy({ left: -320, behavior: 'smooth' })
   }
   const scrollerDroite = () => {
-    const idx = indexGroupeCourant()
-    scrollerVersGroupe(Math.min(groupesRefsArr.current.length - 1, idx + 1))
+    scrollRef.current?.scrollBy({ left: 320, behavior: 'smooth' })
   }
 
   useEffect(() => {
