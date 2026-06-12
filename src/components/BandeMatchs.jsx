@@ -351,10 +351,12 @@ function BandeMatchs({ matchs, userId, onProno, onBadge, equipeFiltre, onFiltreC
   }
 
   const scrollerGauche = () => {
-    scrollRef.current?.scrollBy({ left: -320, behavior: 'smooth' })
+    const idx = indexGroupeCourant()
+    scrollerVersGroupe(Math.max(0, idx - 1))
   }
   const scrollerDroite = () => {
-    scrollRef.current?.scrollBy({ left: 320, behavior: 'smooth' })
+    const idx = indexGroupeCourant()
+    scrollerVersGroupe(Math.min(groupesRefsArr.current.length - 1, idx + 1))
   }
 
   useEffect(() => {
@@ -443,7 +445,7 @@ function BandeMatchs({ matchs, userId, onProno, onBadge, equipeFiltre, onFiltreC
         style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', paddingTop: 10, paddingBottom: 16, position: 'relative', zIndex: 0  }}
       >
         <div style={{ display: 'flex', flexDirection: 'row', gap: 20, paddingLeft: 16, paddingRight: 16, width: 'max-content', alignItems: 'flex-start' }}>
-          {groupes.map(([jour, matchsJour]) => (
+          {groupes.map(([jour, matchsJour], index) => (
             <GroupeJour
               key={jour}
               jour={jour}
@@ -451,7 +453,10 @@ function BandeMatchs({ matchs, userId, onProno, onBadge, equipeFiltre, onFiltreC
               pronos={pronos}
               onProno={onProno}
               userId={userId}
-              refEl={jour === jourCible ? cibleScrollRef : null}
+              refEl={(el) => {
+                groupesRefsArr.current[index] = el
+                if (jour === jourCible) cibleScrollRef.current = el
+              }}
             />
           ))}
         </div>
