@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase'
 import { recupererTimeline } from '../services/espn'
 import { recupererLiguesCibles } from '../services/ligues'
 import { calculerPoints, lundiFin } from '../services/points'
-import { ajouterXP, xpPourNiveau, verifierMissions } from '../services/xp'
+import { ajouterXP, xpPourNiveau, verifierMissions, verifierJalons, niveauDepuisXP } from '../services/xp'
 import { BADGES_CATALOGUE } from '../data/badges'
 import Navigation from '../components/Navigation'
 import BandeMatchs, { FiltreEquipe } from '../components/BandeMatchs'
@@ -21,6 +21,7 @@ import { track } from '../services/tracker'
 import { useNavigate } from 'react-router-dom'
 import { Calendar, Target, RefreshCw, BookOpen } from 'lucide-react'
 import { useNoSpoil } from '../context/NoSpoilContext'
+import { useNotif } from '../context/NotifContext'
 import { SAISON_ESPN } from '../config'
 
 const titrDepuisNiveau = (n) => {
@@ -33,73 +34,6 @@ const titrDepuisNiveau = (n) => {
   return 'GOAT'
 }
 
-const PopupObtentionBadge = ({ badge, onClose, onSuivant, restants }) => (
-  <div
-    onClick={onClose}
-    style={{
-      position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)',
-      zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center',
-      padding: '24px',
-    }}
-  >
-    <div
-      onClick={e => e.stopPropagation()}
-      style={{
-        width: '100%', maxWidth: 320,
-        background: 'var(--bg-1)', borderTop: '3px solid var(--gold)',
-        padding: '24px 20px 28px', position: 'relative',
-        textAlign: 'center',
-      }}
-    >
-      <button onClick={onClose} style={{
-        position: 'absolute', top: 10, right: 12,
-        background: 'none', borderWidth: 0, cursor: 'pointer',
-        fontSize: 18, color: 'var(--text-3)', lineHeight: 1, padding: 4,
-      }}>
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-          <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-        </svg>
-      </button>
-
-      <p style={{ fontSize: 13, color: 'var(--gold)', fontWeight: 700, marginBottom: 16 }}>
-        Bravo ! Tu as obtenu le badge
-      </p>
-
-      <img
-        src={badge.image}
-        alt={badge.nom}
-        style={{ width: 120, height: 120, objectFit: 'contain', margin: '0 auto 16px' }}
-        onError={e => { e.target.style.opacity = '0' }}
-      />
-
-      <div style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 22, color: 'var(--gold)', letterSpacing: '0.02em', marginBottom: 8 }}>
-        {badge.nom}
-      </div>
-      <p style={{ fontSize: 13, color: 'var(--text-3)', lineHeight: 1.5, marginBottom: 20 }}>
-        {badge.description}
-      </p>
-
-      {restants > 0 ? (
-        <button onClick={onSuivant} style={{
-          width: '100%', padding: '12px',
-          background: 'var(--gold)', borderWidth: 0,
-          color: '#000', fontSize: 13, fontWeight: 700, cursor: 'pointer',
-          borderRadius: 'var(--radius-sm)',
-        }}>
-          Suivant ({restants} badge{restants > 1 ? 's' : ''} restant{restants > 1 ? 's' : ''})
-        </button>
-      ) : (
-        <button onClick={onClose} style={{
-          width: '100%', padding: '12px',
-          background: 'var(--bg-2)', borderWidth: 1, borderStyle: 'solid',
-          borderColor: 'var(--border)', borderRadius: 'var(--radius-sm)',
-          color: 'var(--text-3)', fontSize: 13, fontWeight: 600, cursor: 'pointer',
-        }}>Super !</button>
-      )}
-    </div>
-  </div>
-)
-
 function Accueil() {
   const [matchs, setMatchs]                     = useState([])
   const [user, setUser]                         = useState(null)
@@ -111,13 +45,13 @@ function Accueil() {
   const [articleUne, setArticleUne]             = useState(null)
   const [xpData, setXpData]                     = useState({ xp_total: 0, niveau: 1 })
   const [kpis, setKpis]                         = useState({ total: 0, pct: 0 })
-  const [filesBadges, setFilesBadges]           = useState([])
   const [missionsOpen, setMissionsOpen]         = useState(false)
   const [roueOpen, setRoueOpen]                 = useState(false)
   const [roueDispo, setRoueDispo]               = useState(false)
   const [onboardingOpen, setOnboardingOpen]     = useState(false)
   const navigate = useNavigate()
   const { noSpoil } = useNoSpoil()
+  const { pushNotifs } = useNotif()
 
   useEffect(() => {
     window.scrollTo(0, 0)
@@ -126,7 +60,7 @@ function Accueil() {
       if (!user) return
       setUser(user)
 
-      // Tracking — session_start + page_view accueil
+      // Tracking
       const { data: profilTrack } = await supabase
         .from('profils').select('niveau, xp_total').eq('id', user.id).single()
       track(user.id, 'session_start', '/accueil', {
@@ -140,12 +74,14 @@ function Accueil() {
         .select('pseudo, badges, xp_total, niveau, onboarding_done')
         .eq('id', user.id).single()
       setPseudo(profil?.pseudo || null)
-      setXpData({ xp_total: profil?.xp_total || 0, niveau: profil?.niveau || 1 })
+
+      const niveauAvant = profil?.niveau || 1
+      const xpAvant     = profil?.xp_total || 0
+      const titreAvant  = titrDepuisNiveau(niveauAvant)
+      setXpData({ xp_total: xpAvant, niveau: niveauAvant })
 
       // Onboarding auto au premier login
-      if (profil && !profil.onboarding_done) {
-        setOnboardingOpen(true)
-      }
+      if (profil && !profil.onboarding_done) setOnboardingOpen(true)
 
       const { data: pronosKpi } = await supabase
         .from('pronos')
@@ -157,30 +93,118 @@ function Accueil() {
       const pct      = total > 0 ? Math.round(corrects / total * 100) : 0
       setKpis({ total, pct })
 
+      // ── Connexion quotidienne ──────────────────────────────────────────────
+      const jourParis = new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/Paris' })
+      const { data: dejaConnexion } = await supabase
+        .from('xp_log').select('id')
+        .eq('user_id', user.id)
+        .eq('source_id', 'connexion_quotidienne')
+        .eq('date_jour', jourParis)
+        .limit(1)
+
+      const notifs = []
+
+      if (!dejaConnexion?.length) {
+        const resConnexion = await ajouterXP(user.id, 5, 'passif', 'connexion_quotidienne')
+        const missionsConnexion = await verifierMissions(user.id, 'connexion_semaine', 1, lundiFin(), 'increment')
+        const missionsConnexionPerm = await verifierMissions(user.id, 'serie_connexion', 1, null, 'increment')
+
+        // Notif XP connexion
+        notifs.push({
+          id:      `connexion_${jourParis}`,
+          type:    'xp',
+          titre:   '+5 XP — Connexion du jour',
+          message: `${(resConnexion?.xp_total || xpAvant + 5).toLocaleString('fr-FR')} XP au total`,
+        })
+
+        // Notif niveau / titre si changement
+        if (resConnexion) {
+          const niveauAprès = resConnexion.niveau
+          if (niveauAprès > niveauAvant) {
+            notifs.push({
+              id:      `niveau_${niveauAprès}`,
+              type:    'niveau',
+              titre:   `Niveau ${niveauAprès} atteint !`,
+              message: `Tu progresses bien, continue comme ça.`,
+            })
+            const titreAprès = titrDepuisNiveau(niveauAprès)
+            if (titreAprès !== titreAvant) {
+              notifs.push({
+                id:      `titre_${titreAprès}`,
+                type:    'titre',
+                titre:   `Nouveau titre : ${titreAprès} !`,
+                message: `Tu n'es plus ${titreAvant}. Bienvenue au niveau supérieur.`,
+              })
+            }
+          }
+          setXpData({ xp_total: resConnexion.xp_total, niveau: resConnexion.niveau })
+        }
+
+        // Notifs missions déclenchées par la connexion
+        for (const m of [...(missionsConnexion || []), ...(missionsConnexionPerm || [])]) {
+          notifs.push({
+            id:      `mission_${m.id}_${jourParis}`,
+            type:    'mission',
+            titre:   `Mission accomplie : ${m.titre} !`,
+            message: `+${m.xp_recompense} XP`,
+          })
+        }
+      }
+
+      // ── Badges non vus ─────────────────────────────────────────────────────
       const badgesActuels = profil?.badges || []
       const clé = `swish_badges_vus_${user.id}`
       const badgesVus = JSON.parse(localStorage.getItem(clé) || '[]')
-      const nouveaux = badgesActuels.filter(s => !badgesVus.includes(s))
-      if (nouveaux.length > 0) {
-        const objetsNouveaux = nouveaux
-          .map(s => BADGES_CATALOGUE.find(b => b.slug === s))
-          .filter(Boolean)
-        setFilesBadges(objetsNouveaux)
+      const nouveauxBadges = badgesActuels
+        .filter(s => !badgesVus.includes(s))
+        .map(s => BADGES_CATALOGUE.find(b => b.slug === s))
+        .filter(Boolean)
+
+      if (nouveauxBadges.length > 0) {
         localStorage.setItem(clé, JSON.stringify(badgesActuels))
+        for (const badge of nouveauxBadges) {
+          notifs.push({
+            id:      `badge_${badge.slug}`,
+            type:    'badge',
+            titre:   `Badge débloqué : ${badge.nom} !`,
+            message: badge.description,
+          })
+        }
       }
 
+      // ── Matchs terminés avec pronos non vus ────────────────────────────────
+      const { data: pronosNonVus } = await supabase
+        .from('pronos')
+        .select('id, matchs(statut)')
+        .eq('user_id', user.id)
+        .eq('vu', false)
+        .not('matchs', 'is', null)
+
+      const nbNonVus = pronosNonVus?.filter(p => p.matchs?.statut === 'termine').length || 0
+      if (nbNonVus > 0) {
+        notifs.push({
+          id:      `matchs_termines_${jourParis}`,
+          type:    'matchs',
+          titre:   `${nbNonVus} résultat${nbNonVus > 1 ? 's' : ''} à découvrir !`,
+          message: 'Va voir tes pronos pour connaître le verdict.',
+        })
+      }
+
+      // Priorité : niveau/titre > mission > badge > matchs > xp passif
+      // L'ordre dans notifs[] est déjà correct — on push dans l'ordre voulu
+      if (notifs.length > 0) pushNotifs(notifs)
+
+      // ── Calcul points (résolution matchs) ──────────────────────────────────
       calculerPoints(user.id).catch(() => {})
 
-      // Vérif roue quotidienne — dispo si pas jouée aujourd'hui
-      const jourParis = new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/Paris' })
-      const { data: dejaJouee } = await supabase
-        .from('xp_log')
-        .select('id')
+      // ── Roue quotidienne dispo ? ────────────────────────────────────────────
+      const { data: dejaRoue } = await supabase
+        .from('xp_log').select('id')
         .eq('user_id', user.id)
         .eq('source', 'roue_quotidienne')
         .eq('date_jour', jourParis)
         .limit(1)
-      setRoueDispo(!dejaJouee?.length)
+      setRoueDispo(!dejaRoue?.length)
 
       const { data: liguesUser } = await supabase
         .from('membres_groupe')
@@ -199,18 +223,10 @@ function Accueil() {
 
       const m = await recupererTimeline(15, 15)
       setMatchs(m)
-      console.log('matchs timeline:', m.map(x => ({ id: x.espn_id, tag: x.tag, headline: x.headline, date: x.date?.slice(0,10) })))
       setCharg(false)
     }
     init()
   }, [])
-
-  const fermerBadge = () => {
-    setFilesBadges([])
-    if (document.activeElement) document.activeElement.blur()
-    window.scrollTo(0, 0)
-  }
-  const suivantBadge = () => setFilesBadges(prev => prev.slice(1))
 
   const faireProno = async (match, equipeChoisie) => {
     const { data: { user } } = await supabase.auth.getUser()
@@ -231,8 +247,7 @@ function Accueil() {
     if (!matchDB) return
 
     const { data: pronoExistant } = await supabase
-      .from('pronos')
-      .select('id')
+      .from('pronos').select('id')
       .eq('user_id', user.id)
       .eq('match_id', matchDB.id)
       .limit(1)
@@ -243,20 +258,14 @@ function Accueil() {
     if (liguesCibles.length > 0) {
       await Promise.all(liguesCibles.map(m =>
         supabase.from('pronos').upsert({
-          user_id:        user.id,
-          match_id:       matchDB.id,
-          equipe_choisie: equipeChoisie,
-          resultat:       'en_attente',
-          groupe_id:      m.groupe_id,
+          user_id: user.id, match_id: matchDB.id,
+          equipe_choisie: equipeChoisie, resultat: 'en_attente', groupe_id: m.groupe_id,
         }, { onConflict: 'user_id,match_id,groupe_id' })
       ))
     } else {
       await supabase.from('pronos').upsert({
-        user_id:        user.id,
-        match_id:       matchDB.id,
-        equipe_choisie: equipeChoisie,
-        resultat:       'en_attente',
-        groupe_id:      null,
+        user_id: user.id, match_id: matchDB.id,
+        equipe_choisie: equipeChoisie, resultat: 'en_attente', groupe_id: null,
       }, { onConflict: 'user_id,match_id,groupe_id' })
     }
 
@@ -268,14 +277,12 @@ function Accueil() {
 
       const jourParis = new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/Paris' })
       const { data: dejaPronoJour } = await supabase
-        .from('xp_log')
-        .select('date_jour')
+        .from('xp_log').select('date_jour')
         .eq('user_id', user.id)
         .eq('source_id', 'premier_prono_jour')
         .order('date_jour', { ascending: false })
         .limit(1)
-      const dernierPronoJour = dejaPronoJour?.[0]?.date_jour?.slice(0, 10)
-      if (dernierPronoJour !== jourParis) {
+      if (dejaPronoJour?.[0]?.date_jour?.slice(0, 10) !== jourParis) {
         await ajouterXP(user.id, 10, 'passif', 'premier_prono_jour')
       }
 
@@ -306,9 +313,8 @@ function Accueil() {
           {/* Ligne 1 : user + KPIs */}
           <div style={{ display: 'flex', alignItems: 'stretch', justifyContent: 'space-between', gap: 12 }}>
 
-            {/* Bloc gauche — pseudo + titre/niveau + barre XP */}
+            {/* Bloc gauche */}
             <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', flexShrink: 1, minWidth: 0, gap: 4 }}>
-              {/* Pseudo + titre + niveau */}
               <div
                 onClick={() => navigate('/mes-pronos')}
                 style={{ display: 'flex', alignItems: 'baseline', gap: 8, cursor: 'pointer', flexWrap: 'wrap' }}
@@ -366,18 +372,13 @@ function Accueil() {
           {/* Ligne 2 : chips gamification */}
           {user && (
             <div style={{ marginTop: 10, display: 'flex', gap: 8 }}>
-
-              {/* Chip Tuto */}
               <button
                 onClick={() => setOnboardingOpen(true)}
                 style={{
                   display: 'inline-flex', alignItems: 'center', gap: 6,
-                  background: 'var(--bg-2)',
-                  border: '1px solid var(--border)',
-                  borderRadius: 'var(--radius-sm)',
-                  padding: '5px 11px',
-                  cursor: 'pointer',
-                  fontSize: 11, fontWeight: 700, color: 'var(--text-2)',
+                  background: 'var(--bg-2)', border: '1px solid var(--border)',
+                  borderRadius: 'var(--radius-sm)', padding: '5px 11px',
+                  cursor: 'pointer', fontSize: 11, fontWeight: 700, color: 'var(--text-2)',
                   letterSpacing: '0.03em',
                 }}
               >
@@ -385,17 +386,13 @@ function Accueil() {
                 Tuto
               </button>
 
-              {/* Chip Missions */}
               <button
                 onClick={() => setMissionsOpen(true)}
                 style={{
                   display: 'inline-flex', alignItems: 'center', gap: 6,
-                  background: 'var(--bg-2)',
-                  border: '1px solid var(--border)',
-                  borderRadius: 'var(--radius-sm)',
-                  padding: '5px 11px',
-                  cursor: 'pointer',
-                  fontSize: 11, fontWeight: 700, color: 'var(--text-2)',
+                  background: 'var(--bg-2)', border: '1px solid var(--border)',
+                  borderRadius: 'var(--radius-sm)', padding: '5px 11px',
+                  cursor: 'pointer', fontSize: 11, fontWeight: 700, color: 'var(--text-2)',
                   letterSpacing: '0.03em',
                 }}
               >
@@ -403,15 +400,12 @@ function Accueil() {
                 Missions
               </button>
 
-              {/* Chip Roue */}
               <button
                 onClick={() => { if (roueDispo) setRoueOpen(true) }}
                 style={{
                   display: 'inline-flex', alignItems: 'center', gap: 6,
-                  background: 'var(--bg-2)',
-                  border: '1px solid var(--border)',
-                  borderRadius: 'var(--radius-sm)',
-                  padding: '5px 11px',
+                  background: 'var(--bg-2)', border: '1px solid var(--border)',
+                  borderRadius: 'var(--radius-sm)', padding: '5px 11px',
                   cursor: roueDispo ? 'pointer' : 'default',
                   fontSize: 11, fontWeight: 700, color: 'var(--text-2)',
                   letterSpacing: '0.03em',
@@ -421,7 +415,6 @@ function Accueil() {
                 <RefreshCw size={12} strokeWidth={2} color="var(--accent)" />
                 {roueDispo ? 'Roue' : 'Roue jouée'}
               </button>
-
             </div>
           )}
         </div>
@@ -578,16 +571,6 @@ function Accueil() {
 
       </main>
 
-      {/* ── Popup obtention badge ── */}
-      {filesBadges.length > 0 && (
-        <PopupObtentionBadge
-          badge={filesBadges[0]}
-          onClose={fermerBadge}
-          onSuivant={suivantBadge}
-          restants={filesBadges.length - 1}
-        />
-      )}
-
       {/* ── Popup missions ── */}
       {missionsOpen && user && (
         <MissionsPopup userId={user.id} onClose={() => {
@@ -596,6 +579,8 @@ function Accueil() {
           window.scrollTo(0, 0)
         }} />
       )}
+
+      {/* ── Roue quotidienne ── */}
       {roueOpen && user && (
         <RoueQuotidienne
           userId={user.id}
