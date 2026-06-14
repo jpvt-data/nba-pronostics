@@ -13,6 +13,7 @@ import Profil         from './pages/Profil'
 import Stats          from './pages/Stats'
 import QuoiDeNeuf     from './pages/QuoiDeNeuf'
 import PopupChangelog from './components/PopupChangelog'
+import PopupActu      from './components/PopupActu'
 import NotifGaming    from './components/NotifGaming'
 import { NoSpoilProvider }  from './context/NoSpoilContext'
 import { ProfilProvider }   from './context/ProfilContext'
@@ -21,8 +22,10 @@ import H2H   from './pages/H2H'
 import Admin from './pages/Admin'
 
 function App() {
-  const [session, setSession]     = useState(undefined)
-  const [popupFerme, setPopupFerme] = useState(false)
+  const [session, setSession]         = useState(undefined)
+  const [popupFerme, setPopupFerme]   = useState(false)
+  const [actu, setActu]               = useState(null)
+  const [actuFermee, setActuFermee]   = useState(false)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => setSession(session))
@@ -30,27 +33,50 @@ function App() {
     return () => subscription.unsubscribe()
   }, [])
 
-  // Bloquer le scroll tant que le popup changelog est affiché
+  // Charger l'actu active au login
   useEffect(() => {
-    if (session && !popupFerme) {
-      document.body.style.overflow = 'hidden'
-    } else {
-      document.body.style.overflow = ''
+    if (!session) return
+    const chargerActu = async () => {
+      const { data } = await supabase
+        .from('actu_app')
+        .select('*')
+        .eq('actif', true)
+        .order('cree_le', { ascending: false })
+        .limit(1)
+      if (!data?.[0]) return
+      const a = data[0]
+      const dejaVue = localStorage.getItem(`swish_actu_${a.id}`)
+      if (!dejaVue) setActu(a)
     }
-  }, [session, popupFerme])
+    chargerActu()
+  }, [session])
+
+  // Bloquer scroll : changelog ou actu visibles
+  useEffect(() => {
+    const bloquer = session && (!popupFerme || (actu && !actuFermee))
+    document.body.style.overflow = bloquer ? 'hidden' : ''
+  }, [session, popupFerme, actu, actuFermee])
 
   if (session === undefined) return null
 
   const prive   = (el) => session ? el : <Navigate to="/connexion" />
   const public_ = (el) => !session ? el : <Navigate to="/accueil" />
 
+  const montrerChangelog = session && !popupFerme
+  const montrerActu      = session && popupFerme && actu && !actuFermee
+
   return (
     <NoSpoilProvider>
       <ProfilProvider>
         <NotifProvider>
           <BrowserRouter>
-            {session && !popupFerme && <PopupChangelog onFermer={() => setPopupFerme(true)} />}
-            {/* NotifGaming monté une seule fois — accessible depuis toutes les pages */}
+            {montrerChangelog && <PopupChangelog onFermer={() => setPopupFerme(true)} />}
+            {montrerActu && (
+              <PopupActu
+                actu={actu}
+                onClose={() => setActuFermee(true)}
+              />
+            )}
             {session && <NotifGaming />}
             <Routes>
               <Route path="/connexion"      element={public_(<Connexion />)} />
