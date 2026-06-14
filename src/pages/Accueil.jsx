@@ -17,6 +17,7 @@ import BanniereFeed from '../components/BanniereFeed'
 import MissionsPopup from '../components/MissionsPopup'
 import RoueQuotidienne from '../components/RoueQuotidienne'
 import OnboardingTuto from '../components/OnboardingTuto'
+import PopupActu from '../components/PopupActu'
 import { track } from '../services/tracker'
 import { useNavigate } from 'react-router-dom'
 import { Calendar, Target, RefreshCw, BookOpen } from 'lucide-react'
@@ -49,6 +50,8 @@ function Accueil() {
   const [roueOpen, setRoueOpen]                 = useState(false)
   const [roueDispo, setRoueDispo]               = useState(false)
   const [onboardingOpen, setOnboardingOpen]     = useState(false)
+  const [actu, setActu]                         = useState(null)
+  const [actuOpen, setActuOpen]                 = useState(false)
   const navigate = useNavigate()
   const { noSpoil } = useNoSpoil()
   const { pushNotifs } = useNotif()
@@ -205,6 +208,12 @@ function Accueil() {
         .eq('date_jour', jourParis)
         .limit(1)
       setRoueDispo(!dejaRoue?.length)
+
+      // ── Actu active ────────────────────────────────────────────────────────
+      const { data: actus } = await supabase
+        .from('actu_app').select('*').eq('actif', true)
+        .order('cree_le', { ascending: false }).limit(1)
+      if (actus?.[0]) setActu(actus[0])
 
       const { data: liguesUser } = await supabase
         .from('membres_groupe')
@@ -369,21 +378,40 @@ function Accueil() {
             )}
           </div>
 
-          {/* Ligne 2 : chips gamification */}
+          {/* Ligne 2 : chips gamification — ordre : Actu / Roue / Missions / Tuto */}
           {user && (
-            <div style={{ marginTop: 10, display: 'flex', gap: 8 }}>
+            <div style={{ marginTop: 10, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              {/* Actu — visible si une actu est active */}
+              {actu && (
+                <button
+                  onClick={() => setActuOpen(true)}
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 6,
+                    background: 'var(--accent)', border: '1px solid var(--accent-border)',
+                    borderRadius: 'var(--radius-sm)', padding: '5px 11px',
+                    cursor: 'pointer', fontSize: 11, fontWeight: 700, color: '#fff',
+                    letterSpacing: '0.03em',
+                  }}
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                  Actu
+                </button>
+              )}
+
               <button
-                onClick={() => setOnboardingOpen(true)}
+                onClick={() => { if (roueDispo) setRoueOpen(true) }}
                 style={{
                   display: 'inline-flex', alignItems: 'center', gap: 6,
                   background: 'var(--bg-2)', border: '1px solid var(--border)',
                   borderRadius: 'var(--radius-sm)', padding: '5px 11px',
-                  cursor: 'pointer', fontSize: 11, fontWeight: 700, color: 'var(--text-2)',
+                  cursor: roueDispo ? 'pointer' : 'default',
+                  fontSize: 11, fontWeight: 700, color: 'var(--text-2)',
                   letterSpacing: '0.03em',
+                  opacity: roueDispo ? 1 : 0.4,
                 }}
               >
-                <BookOpen size={12} strokeWidth={2} color="var(--text-3)" />
-                Tuto
+                <RefreshCw size={12} strokeWidth={2} color="var(--accent)" />
+                {roueDispo ? 'Roue' : 'Roue jouée'}
               </button>
 
               <button
@@ -401,19 +429,17 @@ function Accueil() {
               </button>
 
               <button
-                onClick={() => { if (roueDispo) setRoueOpen(true) }}
+                onClick={() => setOnboardingOpen(true)}
                 style={{
                   display: 'inline-flex', alignItems: 'center', gap: 6,
                   background: 'var(--bg-2)', border: '1px solid var(--border)',
                   borderRadius: 'var(--radius-sm)', padding: '5px 11px',
-                  cursor: roueDispo ? 'pointer' : 'default',
-                  fontSize: 11, fontWeight: 700, color: 'var(--text-2)',
+                  cursor: 'pointer', fontSize: 11, fontWeight: 700, color: 'var(--text-2)',
                   letterSpacing: '0.03em',
-                  opacity: roueDispo ? 1 : 0.4,
                 }}
               >
-                <RefreshCw size={12} strokeWidth={2} color="var(--accent)" />
-                {roueDispo ? 'Roue' : 'Roue jouée'}
+                <BookOpen size={12} strokeWidth={2} color="var(--text-3)" />
+                Tuto
               </button>
             </div>
           )}
@@ -593,6 +619,11 @@ function Accueil() {
             }))
           }}
         />
+      )}
+
+      {/* ── Popup Actu ── */}
+      {actuOpen && actu && (
+        <PopupActu actu={actu} onClose={() => setActuOpen(false)} />
       )}
 
       {/* ── Onboarding tuto ── */}
