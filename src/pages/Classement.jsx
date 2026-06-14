@@ -365,7 +365,7 @@ function Classement() {
         {/* ── Header ── */}
         <div style={{ padding: '20px 16px 0 16px', position: 'relative', overflow: 'hidden' }}>
           <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 3, background: 'var(--gold)' }} />
-          <TitreSection mot1="CLASS" mot2="EMENT" couleur2="var(--gold)" taille={36} />
+          <TitreSection mot1="CLASSE" mot2="MENT" couleur2="var(--gold)" taille={36} />
           <p style={{ fontSize: 12, color: 'var(--text-3)', margin: '4px 0 0', lineHeight: 1.5 }}>
             Chaque prono correct rapporte <strong style={{ color: 'var(--accent)' }}>1 point</strong>.
           </p>
@@ -383,7 +383,7 @@ function Classement() {
 
               {/* Header section ligue + dropdown */}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, gap: 8, flexWrap: 'wrap' }}>
-                <TitreSection mot1="LIGUE" mot2={ligueEstActive ? 'EN COURS' : 'CLASSEMENT'} couleur2={ligueEstActive ? 'var(--accent)' : 'var(--text-3)'} taille={22} />
+                <TitreSection mot1="CLASSEMENT" mot2={ligueEstActive ? 'LIGUE' : 'LIGUE'} couleur2={ligueEstActive ? 'var(--accent)' : 'var(--text-3)'} taille={22} />
 
                 {/* Dropdown choix ligue */}
                 {toutesLigues.length > 0 && (

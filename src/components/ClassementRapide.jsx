@@ -9,32 +9,24 @@ const MEDAILLES_STYLE = [
   { label: '#3', color: '#b45309' },
 ]
 
-// Année NBA courante : 1 sept → 31 août
-function anneNBACourante() {
-  const d = new Date()
-  return d.getMonth() >= 8 ? d.getFullYear() : d.getFullYear() - 1
-}
-
-function debutAnneeNBA() {
-  const annee = anneNBACourante()
-  return new Date(`${annee}-09-01T00:00:00`)
-}
-
 function labelAnneeNBA() {
-  const a = anneNBACourante()
+  const d = new Date()
+  const a = d.getMonth() >= 8 ? d.getFullYear() : d.getFullYear() - 1
   return `${String(a).slice(2)}-${String(a + 1).slice(2)}`
 }
 
 function ClassementRapide({ userId }) {
   const [groupeActif, setGroupeActif] = useState(null)
   const [classement, setClassement]   = useState([])
+  const [modeGeneral, setModeGeneral] = useState(false)
   const [monRang, setMonRang]         = useState(null)
   const navigate                      = useNavigate()
 
   useEffect(() => {
     const init = async () => {
-      // Ligue en cours uniquement (date_debut ≤ aujourd'hui ≤ date_fin)
-      const maintenant = new Date().toISOString()
+      const now = new Date()
+
+      // Toutes les ligues de l'user
       const { data: membres } = await supabase
         .from('membres_groupe')
         .select('groupe_id, groupes(id, nom, date_debut, date_fin)')
@@ -42,64 +34,64 @@ function ClassementRapide({ userId }) {
 
       if (!membres?.length) return
 
-      // Filtrer ligues en cours
+      // Chercher une ligue en cours
       const enCours = membres.filter(m => {
         const g = m.groupes
         if (!g) return false
-        const apresDebut = !g.date_debut || new Date(g.date_debut) <= new Date()
-        const avantFin   = !g.date_fin   || new Date(g.date_fin)   >= new Date()
+        const apresDebut = !g.date_debut || new Date(g.date_debut) <= now
+        const avantFin   = !g.date_fin   || new Date(g.date_fin)   >= now
         return apresDebut && avantFin
       })
-      if (!enCours.length) return
 
-      const groupe = enCours[0].groupes
-      setGroupeActif(groupe)
+      if (enCours.length > 0) {
+        // ── Mode ligue active : points de la ligue ──
+        const groupe = enCours[0].groupes
+        setGroupeActif(groupe)
+        setModeGeneral(false)
 
-      // Membres du groupe
-      const { data: tousMembers } = await supabase
-        .from('membres_groupe')
-        .select('user_id, profils(pseudo, avatar_url)')
-        .eq('groupe_id', groupe.id).eq('actif', true)
+        const { data: tousMembers } = await supabase
+          .from('membres_groupe')
+          .select('user_id, points, profils(pseudo, avatar_url)')
+          .eq('groupe_id', groupe.id).eq('actif', true)
+          .order('points', { ascending: false })
 
-      if (!tousMembers?.length) return
+        if (!tousMembers?.length) return
+        setClassement(tousMembers)
+        setMonRang(tousMembers.findIndex(m => m.user_id === userId) + 1)
 
-      const userIds = tousMembers.map(m => m.user_id)
+      } else {
+        // ── Mode général : somme de tous les points toutes ligues ──
+        setGroupeActif(null)
+        setModeGeneral(true)
 
-      // Points année NBA uniquement
-      const debut = debutAnneeNBA()
-      const { data: pronos } = await supabase
-        .from('pronos')
-        .select('user_id, points_gagnes')
-        .eq('groupe_id', groupe.id)
-        .eq('resultat', 'correct')
-        .in('user_id', userIds)
-        .gte('cree_le', debut.toISOString())
+        const groupeIds = membres.map(m => m.groupe_id)
 
-      // Points fourchettes correctes
-      const { data: pronosEcart } = await supabase
-        .from('pronos_ecart')
-        .select('user_id, points_gagnes')
-        .eq('correct', true)
-        .in('user_id', userIds)
-        .gte('cree_le', debut.toISOString())
+        // Récupérer tous les membres de toutes les ligues
+        const { data: tousMembers } = await supabase
+          .from('membres_groupe')
+          .select('user_id, points, profils(pseudo, avatar_url)')
+          .in('groupe_id', groupeIds)
+          .eq('actif', true)
 
-      // Agréger points
-      const pointsMap = {}
-      userIds.forEach(id => { pointsMap[id] = 0 })
-      pronos?.forEach(p => { pointsMap[p.user_id] = (pointsMap[p.user_id] || 0) + (p.points_gagnes || 1) })
-      pronosEcart?.forEach(p => { pointsMap[p.user_id] = (pointsMap[p.user_id] || 0) + (p.points_gagnes || 0) })
+        if (!tousMembers?.length) return
 
-      const liste = tousMembers
-        .map(m => ({ ...m, points: pointsMap[m.user_id] || 0 }))
-        .sort((a, b) => b.points - a.points)
+        // Agréger les points par user
+        const agg = {}
+        for (const m of tousMembers) {
+          const uid = m.user_id
+          if (!agg[uid]) agg[uid] = { user_id: uid, points: 0, profils: m.profils }
+          agg[uid].points += (m.points || 0)
+        }
 
-      setClassement(liste)
-      setMonRang(liste.findIndex(m => m.user_id === userId) + 1)
+        const liste = Object.values(agg).sort((a, b) => b.points - a.points)
+        setClassement(liste)
+        setMonRang(liste.findIndex(m => m.user_id === userId) + 1)
+      }
     }
     if (userId) init()
   }, [userId])
 
-  if (!groupeActif || !classement.length) return (
+  if (!classement.length) return (
     <div style={{
       padding: '16px',
       background: 'var(--bg-2)',
@@ -119,8 +111,12 @@ function ClassementRapide({ userId }) {
     <div style={{ marginBottom: '0.5rem' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
         <div>
-          <h3 style={{ margin: 0 }}>{groupeActif.nom}</h3>
-          <span style={{ fontSize: 10, color: 'var(--text-3)' }}>Saison {labelAnneeNBA()}</span>
+          <h3 style={{ margin: 0, fontSize: 14, color: 'var(--text-1)' }}>
+            {modeGeneral ? 'Classement général' : groupeActif?.nom}
+          </h3>
+          <span style={{ fontSize: 10, color: 'var(--text-3)' }}>
+            {modeGeneral ? 'Tous temps confondus' : `Saison ${labelAnneeNBA()}`}
+          </span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           {monRang > 0 && (
@@ -147,9 +143,7 @@ function ClassementRapide({ userId }) {
                 padding: '10px 12px',
                 background: estMoi ? 'rgba(99,102,241,0.08)' : 'transparent',
                 borderLeft: estMoi ? '3px solid var(--accent)' : '3px solid transparent',
-                borderRight: 0, borderTop: 0,
                 borderBottom: '1px solid var(--border)',
-                borderRadius: 0,
                 cursor: 'pointer',
               }}
             >
