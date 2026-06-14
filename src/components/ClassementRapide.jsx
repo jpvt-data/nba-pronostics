@@ -34,8 +34,11 @@ function ClassementRapide({ userId }) {
 
       if (!membres?.length) return
 
-      // Chercher une ligue en cours
+      const GROUPE_GENERAL = 'aaaaaaaa-0000-0000-0000-000000000001'
+
+      // Chercher une ligue en cours (hors groupe Général)
       const enCours = membres.filter(m => {
+        if (m.groupe_id === GROUPE_GENERAL) return false
         const g = m.groupes
         if (!g) return false
         const apresDebut = !g.date_debut || new Date(g.date_debut) <= now
@@ -65,7 +68,6 @@ function ClassementRapide({ userId }) {
         setModeGeneral(true)
 
         // Exclure le groupe Général (chat) du calcul des points
-        const GROUPE_GENERAL = 'aaaaaaaa-0000-0000-0000-000000000001'
         const groupeIds = membres
           .map(m => m.groupe_id)
           .filter(id => id !== GROUPE_GENERAL)
