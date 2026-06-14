@@ -99,7 +99,21 @@ function ClassementRapide({ userId }) {
     if (userId) init()
   }, [userId])
 
-  if (!groupeActif || !classement.length) return null
+  if (!groupeActif || !classement.length) return (
+    <div style={{
+      padding: '16px',
+      background: 'var(--bg-2)',
+      borderLeft: '3px solid var(--border-2)',
+      borderRadius: 'var(--radius-sm)',
+    }}>
+      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-2)', marginBottom: 4 }}>
+        Pas de ligue en cours
+      </div>
+      <div style={{ fontSize: 12, color: 'var(--text-3)', lineHeight: 1.5 }}>
+        La prochaine ligue arrive bientôt — suivez l'actu et tenez-vous prêts !
+      </div>
+    </div>
+  )
 
   return (
     <div style={{ marginBottom: '0.5rem' }}>

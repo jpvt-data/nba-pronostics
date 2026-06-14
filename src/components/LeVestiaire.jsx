@@ -3,6 +3,9 @@ import { supabase } from '../lib/supabase'
 import { Send } from 'lucide-react'
 import { track } from '../services/tracker'
 
+// ID du groupe "Général" créé en base — fixe
+const GROUPE_GENERAL_ID = 'aaaaaaaa-0000-0000-0000-000000000001'
+
 // Map jalon → badge pour retrouver la date d'obtention via xp_log
 const JALON_BADGE_MAP = {
   jalon_serie_5:       { badge: 'en_feu',       nom: 'En Feu' },
@@ -14,10 +17,11 @@ const JALON_BADGE_MAP = {
   jalon_10_fourchettes:{ badge: 'tireur_d_elite',nom: "Tireur d'Élite" },
 }
 
+// Génère les événements streaks des 7 derniers jours
 async function genererEvenements(userId) {
   const evenements = []
   const maintenant = new Date()
-  const il_y_a_5j  = new Date(maintenant - 5 * 24 * 3600 * 1000).toISOString()
+  const il_y_a_7j  = new Date(maintenant - 7 * 24 * 3600 * 1000).toISOString()
 
   const { data: membres } = await supabase
     .from('membres_groupe')
@@ -41,12 +45,13 @@ async function genererEvenements(userId) {
   for (const pote of potesUniques) {
     const pseudo = pote.profils?.pseudo || 'Un pote'
 
-    // ── Pronos streak ──
+    // ── Pronos streak (7 derniers jours) ──
     const { data: pronos } = await supabase
       .from('pronos')
-      .select('resultat')
+      .select('resultat, cree_le')
       .eq('user_id', pote.user_id)
       .in('resultat', ['correct', 'incorrect'])
+      .gte('cree_le', il_y_a_7j)
       .order('cree_le', { ascending: false })
       .limit(20)
 
@@ -61,10 +66,9 @@ async function genererEvenements(userId) {
       if (streak >= 2) {
         const feu = dernier === 'correct'
         evenements.push({
-          icone: feu ? '🔥' : '❄️',
           texte: feu
             ? `${pseudo} est sur une série de ${streak} pronos réussis !`
-            : `${pseudo} est sur une série de ${streak} pronos ratés ! Aïe aïe !`,
+            : `${pseudo} est sur une série de ${streak} pronos ratés !`,
           couleur: feu ? 'var(--success)' : 'var(--danger)',
         })
       } else if (pronos.length >= 3) {
@@ -76,63 +80,53 @@ async function genererEvenements(userId) {
         }
         if (streakPrecedent >= 2 && avantDernier === 'correct' && dernier === 'incorrect') {
           evenements.push({
-            icone: '💔',
-            texte: `${pseudo} vient de briser sa série de ${streakPrecedent} pronos réussis ! Aïe !`,
+            texte: `${pseudo} vient de briser sa série de ${streakPrecedent} pronos réussis !`,
             couleur: 'var(--orange)',
           })
         }
       }
     }
 
-    // ── Fourchettes récentes ──
+    // ── Fourchettes récentes (7 jours) ──
     const { data: fourchettes } = await supabase
       .from('pronos_ecart')
       .select('correct, cree_le')
       .eq('user_id', pote.user_id)
       .eq('correct', true)
+      .gte('cree_le', il_y_a_7j)
       .order('cree_le', { ascending: false })
       .limit(5)
 
-    if (fourchettes?.length >= 1) {
-      const derniereDate = new Date(fourchettes[0].cree_le)
-      const ageDerniere  = (maintenant - derniereDate) / (1000 * 3600 * 24)
-
-      if (ageDerniere <= 5) {
-        if (fourchettes.length >= 2) {
-          evenements.push({
-            icone: '🎯',
-            texte: `${pseudo} enchaîne 2 fourchettes correctes d'affilée !`,
-            couleur: 'var(--gold)',
-          })
-        } else {
-          evenements.push({
-            icone: '🎯',
-            texte: `${pseudo} a réussi sa fourchette d'écart !`,
-            couleur: 'var(--gold)',
-          })
-        }
-      }
+    if (fourchettes?.length >= 2) {
+      evenements.push({
+        texte: `${pseudo} enchaîne ${fourchettes.length} fourchettes correctes !`,
+        couleur: 'var(--gold)',
+      })
+    } else if (fourchettes?.length === 1) {
+      evenements.push({
+        texte: `${pseudo} a réussi sa fourchette d'écart !`,
+        couleur: 'var(--gold)',
+      })
     }
 
-    // ── Missions complétées < 5 jours ──
+    // ── Missions complétées (7 jours) ──
     const { data: missionsComp } = await supabase
       .from('missions_utilisateurs')
       .select('completee_le, missions(titre)')
       .eq('user_id', pote.user_id)
       .eq('completee', true)
-      .gte('completee_le', il_y_a_5j)
+      .gte('completee_le', il_y_a_7j)
 
     for (const mu of (missionsComp || [])) {
       const titre = mu.missions?.titre
       if (!titre) continue
       evenements.push({
-        icone: '⚡',
         texte: `${pseudo} a accompli la mission "${titre}" !`,
         couleur: 'var(--accent)',
       })
     }
 
-    // ── Badges obtenus < 5 jours (via xp_log jalons) ──
+    // ── Badges obtenus (7 jours) ──
     const jalonsSlug = Object.keys(JALON_BADGE_MAP)
     const { data: jalonsRecents } = await supabase
       .from('xp_log')
@@ -140,13 +134,12 @@ async function genererEvenements(userId) {
       .eq('user_id', pote.user_id)
       .eq('source', 'jalon')
       .in('source_id', jalonsSlug)
-      .gte('cree_le', il_y_a_5j)
+      .gte('cree_le', il_y_a_7j)
 
     for (const j of (jalonsRecents || [])) {
       const info = JALON_BADGE_MAP[j.source_id]
       if (!info) continue
       evenements.push({
-        icone: '🏅',
         texte: `${pseudo} a obtenu le badge "${info.nom}" !`,
         couleur: 'var(--gold)',
       })
@@ -156,17 +149,17 @@ async function genererEvenements(userId) {
   return evenements
 }
 
-async function chargerMessages(groupeId) {
+async function chargerMessages() {
   const { data } = await supabase
     .from('messages')
     .select('id, contenu, cree_le, user_id, profils(pseudo)')
-    .eq('groupe_id', groupeId)
+    .eq('groupe_id', GROUPE_GENERAL_ID)
     .order('cree_le', { ascending: false })
     .limit(50)
   return (data || []).reverse()
 }
 
-function ChatMiniLigue({ groupe, userId }) {
+function ChatGeneral({ userId }) {
   const [messages, setMessages] = useState([])
   const [texte, setTexte] = useState('')
   const [envoi, setEnvoi] = useState(false)
@@ -176,13 +169,12 @@ function ChatMiniLigue({ groupe, userId }) {
   const scrollBas = () => {
     const el = messagesEndRef.current
     if (!el) return
-    // Scroller uniquement le container du chat, pas la page entière
     const container = el.parentElement
     if (container) container.scrollTop = container.scrollHeight
   }
 
   const charger = async () => {
-    const msgs = await chargerMessages(groupe.groupe_id)
+    const msgs = await chargerMessages()
     setMessages(msgs)
   }
 
@@ -190,7 +182,7 @@ function ChatMiniLigue({ groupe, userId }) {
     charger()
     intervalRef.current = setInterval(charger, 30000)
     return () => clearInterval(intervalRef.current)
-  }, [groupe.groupe_id])
+  }, [])
 
   useEffect(() => { scrollBas() }, [messages])
 
@@ -200,10 +192,10 @@ function ChatMiniLigue({ groupe, userId }) {
     setEnvoi(true)
     await supabase.from('messages').insert({
       user_id: userId,
-      groupe_id: groupe.groupe_id,
+      groupe_id: GROUPE_GENERAL_ID,
       contenu,
     })
-    track(userId, 'clic_vestiaire', '/accueil', { action: 'message', groupe_id: groupe.groupe_id })
+    track(userId, 'clic_vestiaire', '/accueil', { action: 'message', groupe_id: GROUPE_GENERAL_ID })
     setTexte('')
     await charger()
     setEnvoi(false)
@@ -215,20 +207,14 @@ function ChatMiniLigue({ groupe, userId }) {
 
   return (
     <div style={{ marginTop: 10 }}>
-      {/* En-tête ligue */}
-      <div style={{
-        fontSize: 11, fontWeight: 700, color: '#555',
-        textTransform: 'uppercase', letterSpacing: '0.08em',
-        marginBottom: 6, display: 'flex', alignItems: 'center', gap: 6,
-      }}>
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#555', flexShrink: 0 }}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> {groupe.nom}
-      </div>
-
       {/* Messages */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 8, maxHeight: 280, overflowY: 'auto', paddingRight: 2 }}>
+      <div style={{
+        display: 'flex', flexDirection: 'column', gap: 4,
+        marginBottom: 8, maxHeight: 280, overflowY: 'auto', paddingRight: 2,
+      }}>
         {messages.length === 0 ? (
           <p style={{ fontSize: 12, color: '#888', margin: 0, paddingLeft: 4 }}>
-            Aucun message — soyez les premiers à chambrer.
+            Aucun message — soyez les premiers à en laisser un.
           </p>
         ) : (
           messages.map(msg => (
@@ -269,7 +255,7 @@ function ChatMiniLigue({ groupe, userId }) {
           value={texte}
           onChange={e => setTexte(e.target.value)}
           onKeyDown={onKeyDown}
-          placeholder="Un message..."
+          placeholder="Un message…"
           maxLength={500}
           style={{
             flex: 1, fontSize: 12,
@@ -301,92 +287,64 @@ function ChatMiniLigue({ groupe, userId }) {
 
 function LeVestiaire({ userId }) {
   const [evenements, setEvenements] = useState([])
-  const [groupes, setGroupes] = useState([])
   const [chargement, setChargement] = useState(true)
 
   useEffect(() => {
     if (!userId) return
-
     const init = async () => {
-      // Streaks
       const evts = await genererEvenements(userId)
       setEvenements(evts)
-
-      // Ligues en cours de l'user
-      const maintenant = new Date().toISOString()
-      const { data } = await supabase
-        .from('membres_groupe')
-        .select('groupe_id, groupes(nom, date_debut, date_fin)')
-        .eq('user_id', userId)
-        .eq('actif', true)
-
-      const liguesEnCours = (data || []).filter(m => {
-        const g = m.groupes
-        if (!g) return false
-        const debut = g.date_debut ? new Date(g.date_debut) : null
-        const fin   = g.date_fin   ? new Date(g.date_fin)   : null
-        if (debut && new Date() < debut) return false
-        if (fin   && new Date() > fin)   return false
-        return true
-      }).map(m => ({ groupe_id: m.groupe_id, nom: m.groupes.nom }))
-
-      setGroupes(liguesEnCours)
       setChargement(false)
     }
-
     init()
   }, [userId])
 
-  const rien = !chargement && !evenements.length && !groupes.length
-  if (rien) return null
-
   return (
     <div style={{ background: '#f0ede8', padding: '12px 16px 14px 16px', marginBottom: 4 }}>
+      {/* Titre */}
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 10 }}>
         <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 28, color: '#0d0d12', letterSpacing: '0.02em', lineHeight: 1 }}>LE</span>
         <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 28, color: '#6366f1', letterSpacing: '0.02em', lineHeight: 1 }}>VESTIAIRE</span>
       </div>
 
-      {/* Streaks */}
-      {evenements.length > 0 && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-          {chargement ? (
-            <p style={{ fontSize: 13, color: '#888', margin: 0 }}>…</p>
-          ) : (
-            evenements.map((evt, i) => (
-              <div key={i} style={{
-                display: 'flex', alignItems: 'center', gap: 10,
-                padding: '9px 12px',
-                background: 'rgba(0,0,0,0.04)',
-                borderLeft: `3px solid ${evt.couleur}`,
-              }}>
-                <span style={{
-                  width: 7, height: 7, borderRadius: '50%', flexShrink: 0,
-                  background: evt.couleur, display: 'inline-block',
-                }} />
-                <span style={{ fontSize: 13, color: '#1a1a2e', fontWeight: 500, lineHeight: 1.4 }}>
-                  {evt.texte}
-                </span>
-              </div>
-            ))
-          )}
-        </div>
-      )}
-
-      {/* Chats par ligue — encart foncé contrasté */}
-      {!chargement && groupes.length > 0 && (
-        <div style={{
-          background: '#e8e4dc',
-          borderRadius: 4,
-          padding: '12px 14px',
-          marginTop: evenements.length ? 14 : 0,
-          display: 'flex', flexDirection: 'column', gap: 16,
-        }}>
-          {groupes.map(groupe => (
-            <ChatMiniLigue key={groupe.groupe_id} groupe={groupe} userId={userId} />
+      {/* Streaks 7 jours */}
+      {!chargement && evenements.length > 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 14 }}>
+          {evenements.map((evt, i) => (
+            <div key={i} style={{
+              display: 'flex', alignItems: 'center', gap: 10,
+              padding: '9px 12px',
+              background: 'rgba(0,0,0,0.04)',
+              borderLeft: `3px solid ${evt.couleur}`,
+            }}>
+              <span style={{
+                width: 7, height: 7, borderRadius: '50%', flexShrink: 0,
+                background: evt.couleur, display: 'inline-block',
+              }} />
+              <span style={{ fontSize: 13, color: '#1a1a2e', fontWeight: 500, lineHeight: 1.4 }}>
+                {evt.texte}
+              </span>
+            </div>
           ))}
         </div>
       )}
+
+      {/* Chat général */}
+      <div style={{
+        background: '#e8e4dc',
+        borderRadius: 4,
+        padding: '12px 14px',
+      }}>
+        <div style={{
+          fontSize: 11, fontWeight: 700, color: '#555',
+          textTransform: 'uppercase', letterSpacing: '0.08em',
+          marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6,
+        }}>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#555', flexShrink: 0 }}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          Chat général
+        </div>
+        {userId && <ChatGeneral userId={userId} />}
+      </div>
     </div>
   )
 }

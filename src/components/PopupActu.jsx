@@ -63,21 +63,24 @@ async function calculerStatsLigue(groupeId) {
     stats[f.user_id].fourchettes++
   }
 
-  // Série correcte consécutive
+  // Meilleure série correcte consécutive sur toute la durée de la ligue
   for (const uid of userIds) {
-    const { data: serie } = await supabase
+    const { data: tousPronosUser } = await supabase
       .from('pronos')
-      .select('resultat')
+      .select('resultat, cree_le')
       .eq('user_id', uid)
       .in('resultat', ['correct', 'incorrect'])
-      .order('cree_le', { ascending: false })
-      .limit(50)
-    let s = 0
-    for (const p of (serie || [])) {
-      if (p.resultat === 'correct') s++
-      else break
+      .order('cree_le', { ascending: true })
+    let meilleureS = 0, sEnCours = 0
+    for (const p of (tousPronosUser || [])) {
+      if (p.resultat === 'correct') {
+        sEnCours++
+        if (sEnCours > meilleureS) meilleureS = sEnCours
+      } else {
+        sEnCours = 0
+      }
     }
-    if (stats[uid]) stats[uid].serie = s
+    if (stats[uid]) stats[uid].serie = meilleureS
   }
 
   const liste = Object.values(stats)
@@ -235,10 +238,10 @@ export default function PopupActu({ actu, onClose }) {
 
                     {/* KPIs */}
                     {[
-                      { label: 'Meilleur taux', user: stats.meilleurTaux, valeur: stats.meilleurTaux ? `${Math.round(stats.meilleurTaux.corrects / stats.meilleurTaux.pronos * 100)}%` : '—' },
-                      { label: 'Sniper', user: stats.sniper, valeur: `${stats.sniper?.fourchettes || 0} fourchettes` },
+                      { label: 'Meilleur taux de réussite', user: stats.meilleurTaux, valeur: stats.meilleurTaux ? `${Math.round(stats.meilleurTaux.corrects / stats.meilleurTaux.pronos * 100)}%` : '—' },
+                      { label: 'Sniper', user: stats.sniper, valeur: `${stats.sniper?.fourchettes || 0} fourchettes réussies` },
                       { label: 'Le plus assidu', user: stats.assidu, valeur: `${stats.assidu?.pronos || 0} pronos` },
-                      { label: 'En feu', user: stats.enFeu, valeur: `série de ${stats.enFeu?.serie || 0}` },
+                      { label: 'En feu', user: stats.enFeu, valeur: stats.enFeu?.serie ? `meilleure série : ${stats.enFeu.serie}` : '—' },
                     ].map(kpi => (
                       <div key={kpi.label} style={{
                         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
