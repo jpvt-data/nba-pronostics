@@ -60,7 +60,7 @@ function plageSemanePrecedente() {
 }
 
 const TitreSection = ({ mot1, mot2, couleur2 = 'var(--accent)', taille = 24 }) => (
-  <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 10 }}>
+  <div style={{ display: 'flex', alignItems: 'baseline', gap: 0, marginBottom: 10 }}>
     <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: taille, color: 'var(--text-1)', letterSpacing: '0.02em', lineHeight: 1 }}>{mot1}</span>
     <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: taille, color: couleur2, letterSpacing: '0.02em', lineHeight: 1 }}>{mot2}</span>
   </div>

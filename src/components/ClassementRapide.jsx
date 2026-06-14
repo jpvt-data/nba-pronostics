@@ -64,9 +64,15 @@ function ClassementRapide({ userId }) {
         setGroupeActif(null)
         setModeGeneral(true)
 
-        const groupeIds = membres.map(m => m.groupe_id)
+        // Exclure le groupe Général (chat) du calcul des points
+        const GROUPE_GENERAL = 'aaaaaaaa-0000-0000-0000-000000000001'
+        const groupeIds = membres
+          .map(m => m.groupe_id)
+          .filter(id => id !== GROUPE_GENERAL)
 
-        // Récupérer tous les membres de toutes les ligues
+        if (!groupeIds.length) return
+
+        // Récupérer tous les membres de toutes les ligues (hors Général)
         const { data: tousMembers } = await supabase
           .from('membres_groupe')
           .select('user_id, points, profils(pseudo, avatar_url)')
