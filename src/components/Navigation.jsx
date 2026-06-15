@@ -91,13 +91,13 @@ function Navigation({ nbPronosAttente = 0, onOpenOnboarding }) {
     <div style={{ display: 'flex', alignItems: 'center', lineHeight: 1 }}>
       <span style={{
         fontFamily: "'Teko', system-ui, sans-serif", fontWeight: 700,
-        fontSize: 34, color: 'var(--text-1)',
+        fontSize: 46, color: 'var(--text-1)',
         letterSpacing: '-0.01em', lineHeight: 1,
         fontStyle: 'italic', display: 'inline-block',
       }}>SWISH</span>
       <span style={{
         fontFamily: "'Teko', system-ui, sans-serif", fontWeight: 700,
-        fontSize: 34, color: 'var(--accent)',
+        fontSize: 46, color: 'var(--accent)',
         letterSpacing: '-0.01em', lineHeight: 1,
         fontStyle: 'italic', display: 'inline-block',
       }}>LEAGUE</span>
