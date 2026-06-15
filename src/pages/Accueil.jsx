@@ -26,44 +26,27 @@ import { useNoSpoil } from '../context/NoSpoilContext'
 import { useNotif } from '../context/NotifContext'
 import { SAISON_ESPN } from '../config'
 
-// Titre section — bandeau pleine largeur style ESPN/NFL
+// Titre section — dégradé couleur→transparent + barres obliques
 const TitreSection = ({ label, couleur = 'var(--accent)' }) => (
   <div style={{
     width: '100%',
     position: 'relative',
     overflow: 'hidden',
-    backgroundColor: couleur,
-    padding: '8px 16px 6px',
+    background: `linear-gradient(90deg, ${couleur} 0%, ${couleur} 50%, transparent 90%)`,
+    padding: '10px 16px 8px',
     display: 'flex', alignItems: 'center',
   }}>
-    {/* Barres obliques SVG — partent de la droite, se répètent jusqu'au milieu */}
     <svg
-      style={{ position: 'absolute', top: 0, right: 0, height: '100%', width: '60%', pointerEvents: 'none' }}
+      style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none' }}
       preserveAspectRatio="none"
-      viewBox="0 0 300 50"
+      viewBox="0 0 500 50"
     >
-      {/* Dégradé qui masque les barres vers la gauche */}
-      <defs>
-        <linearGradient id={`fade-${label}`} x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%" stopColor="black" stopOpacity="1" />
-          <stop offset="40%" stopColor="black" stopOpacity="0" />
-        </linearGradient>
-        <mask id={`mask-${label}`}>
-          <rect width="300" height="50" fill="white" />
-          <rect width="300" height="50" fill={`url(#fade-${label})`} />
-        </mask>
-      </defs>
-      <g mask={`url(#mask-${label})`}>
-        <line x1="20"  y1="0" x2="-10" y2="50" stroke="white" strokeWidth="14" opacity="0.22" />
-        <line x1="50"  y1="0" x2="20"  y2="50" stroke="white" strokeWidth="11" opacity="0.18" />
-        <line x1="80"  y1="0" x2="50"  y2="50" stroke="white" strokeWidth="9"  opacity="0.14" />
-        <line x1="112" y1="0" x2="82"  y2="50" stroke="white" strokeWidth="7"  opacity="0.11" />
-        <line x1="146" y1="0" x2="116" y2="50" stroke="white" strokeWidth="6"  opacity="0.08" />
-        <line x1="182" y1="0" x2="152" y2="50" stroke="white" strokeWidth="5"  opacity="0.06" />
-        <line x1="220" y1="0" x2="190" y2="50" stroke="white" strokeWidth="4"  opacity="0.05" />
-        <line x1="260" y1="0" x2="230" y2="50" stroke="white" strokeWidth="3"  opacity="0.04" />
-        <line x1="295" y1="0" x2="265" y2="50" stroke="white" strokeWidth="2"  opacity="0.03" />
-      </g>
+      <line x1="300" y1="-5" x2="268" y2="55" stroke="white" strokeWidth="20" opacity="0.10" />
+      <line x1="338" y1="-5" x2="306" y2="55" stroke="white" strokeWidth="15" opacity="0.08" />
+      <line x1="372" y1="-5" x2="340" y2="55" stroke="white" strokeWidth="11" opacity="0.06" />
+      <line x1="404" y1="-5" x2="372" y2="55" stroke="white" strokeWidth="8"  opacity="0.05" />
+      <line x1="434" y1="-5" x2="402" y2="55" stroke="white" strokeWidth="6"  opacity="0.04" />
+      <line x1="462" y1="-5" x2="430" y2="55" stroke="white" strokeWidth="4"  opacity="0.03" />
     </svg>
     <span style={{
       fontFamily: "'Teko', system-ui, sans-serif", fontWeight: 700,
@@ -585,9 +568,11 @@ function Accueil() {
 
         {/* ── LIGUE EN COURS ── */}
         {!chargement && user && (
-          <div className="anim-fade-up anim-delay-2" style={{ borderLeft: '3px solid var(--accent)', padding: '12px 16px 16px 16px', marginTop: 32, marginBottom: 8 }}>
-          <TitreSection label="CLASSEMENT LIGUE" couleur="var(--accent)" />
-            <ClassementRapide userId={user.id} />
+          <div className="anim-fade-up anim-delay-2" style={{ marginTop: 32, marginBottom: 8 }}>
+            <TitreSection label="CLASSEMENT LIGUE" couleur="var(--accent)" />
+            <div style={{ padding: '12px 16px 16px' }}>
+              <ClassementRapide userId={user.id} />
+            </div>
           </div>
         )}
 
