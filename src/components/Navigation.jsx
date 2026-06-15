@@ -221,75 +221,82 @@ function Navigation({ nbPronosAttente = 0, onOpenOnboarding }) {
         ...navBase, top: 0, height: 52,
         background: 'var(--nav-bg)',
         borderBottomWidth: 1, borderBottomStyle: 'solid', borderBottomColor: 'var(--nav-border)',
-        alignItems: 'center', justifyContent: 'space-between', padding: '0 16px',
+        alignItems: 'stretch',
         backdropFilter: 'blur(12px)',
         WebkitBackdropFilter: 'blur(12px)',
       }}>
-        {/* Logo — gauche */}
-        <div onClick={() => navigate('/accueil')} style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-          <LogoTeko />
-        </div>
+        {/* Contenu centré sur 680px — aligné sur #root */}
+        <div style={{
+          width: '100%', maxWidth: 680, margin: '0 auto',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '0 16px',
+        }}>
+          {/* Logo — gauche */}
+          <div onClick={() => navigate('/accueil')} style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+            <LogoTeko />
+          </div>
 
-        {/* Icônes nav + Info + Menu — droite */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          {LIENS.map(({ chemin, Icone }) => {
-            const actif = location.pathname === chemin
-            return (
-              <button key={chemin} onClick={() => aller(chemin)} style={{
-                position: 'relative',
-                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                width: 44, height: 44,
-                background: 'none', borderWidth: 0,
-                color: actif ? 'var(--accent)' : 'var(--text-3)',
-                cursor: 'pointer',
-                transition: 'color var(--transition)',
-              }}>
-                {actif && (
-                  <span style={{
-                    position: 'absolute', top: 6, left: '50%', transform: 'translateX(-50%)',
-                    width: 4, height: 4, borderRadius: '50%',
-                    background: 'var(--accent)', boxShadow: '0 0 6px var(--accent)',
-                  }} />
-                )}
-                <div style={{ position: 'relative', display: 'inline-flex' }}>
-                  <Icone size={20} strokeWidth={actif ? 2 : 1.5} />
-                  {chemin === '/accueil' && nbPronosAttente > 0 && (
+          {/* Icônes nav + Info + Menu — droite */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            {LIENS.map(({ chemin, Icone }) => {
+              const actif = location.pathname === chemin
+              return (
+                <button key={chemin} onClick={() => aller(chemin)} style={{
+                  position: 'relative',
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                  width: 44, height: 44,
+                  background: 'none', borderWidth: 0,
+                  color: actif ? 'var(--accent)' : 'var(--text-3)',
+                  cursor: 'pointer',
+                  transition: 'color var(--transition)',
+                }}>
+                  {actif && (
                     <span style={{
-                      position: 'absolute', top: -2, right: -4,
-                      width: 7, height: 7, borderRadius: '50%',
-                      background: 'var(--danger)',
-                      border: '1.5px solid var(--nav-bg)',
+                      position: 'absolute', top: 6, left: '50%', transform: 'translateX(-50%)',
+                      width: 4, height: 4, borderRadius: '50%',
+                      background: 'var(--accent)', boxShadow: '0 0 6px var(--accent)',
                     }} />
                   )}
-                </div>
-              </button>
-            )
-          })}
+                  <div style={{ position: 'relative', display: 'inline-flex' }}>
+                    <Icone size={20} strokeWidth={actif ? 2 : 1.5} />
+                    {chemin === '/accueil' && nbPronosAttente > 0 && (
+                      <span style={{
+                        position: 'absolute', top: -2, right: -4,
+                        width: 7, height: 7, borderRadius: '50%',
+                        background: 'var(--danger)',
+                        border: '1.5px solid var(--nav-bg)',
+                      }} />
+                    )}
+                  </div>
+                </button>
+              )
+            })}
 
-          {/* Séparateur */}
-          <div style={{ width: 1, height: 20, background: 'var(--border)', margin: '0 6px' }} />
+            {/* Séparateur */}
+            <div style={{ width: 1, height: 20, background: 'var(--border)', margin: '0 6px' }} />
 
-          {/* Info */}
-          <button onClick={() => onOpenOnboarding?.()} style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            width: 36, height: 36,
-            background: 'none', borderWidth: 0,
-            color: 'var(--text-3)', cursor: 'pointer',
-            transition: 'color var(--transition)',
-          }}>
-            <Info size={18} strokeWidth={1.5} />
-          </button>
+            {/* Info */}
+            <button onClick={() => onOpenOnboarding?.()} style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              width: 36, height: 36,
+              background: 'none', borderWidth: 0,
+              color: 'var(--text-3)', cursor: 'pointer',
+              transition: 'color var(--transition)',
+            }}>
+              <Info size={18} strokeWidth={1.5} />
+            </button>
 
-          {/* Menu hamburger */}
-          <button onClick={() => setOuvert(!ouvert)} style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            width: 36, height: 36,
-            background: 'none', borderWidth: 0,
-            color: 'var(--text-3)', cursor: 'pointer',
-            transition: 'color var(--transition)',
-          }}>
-            <Menu size={18} strokeWidth={1.5} />
-          </button>
+            {/* Menu hamburger */}
+            <button onClick={() => setOuvert(!ouvert)} style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              width: 36, height: 36,
+              background: 'none', borderWidth: 0,
+              color: 'var(--text-3)', cursor: 'pointer',
+              transition: 'color var(--transition)',
+            }}>
+              <Menu size={18} strokeWidth={1.5} />
+            </button>
+          </div>
         </div>
       </nav>
 
