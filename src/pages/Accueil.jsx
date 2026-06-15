@@ -457,24 +457,25 @@ function Accueil() {
         </div>
 
         {/* ── À LA UNE ── */}
-        <div style={{ paddingLeft: 16, paddingTop: 28, paddingBottom: 10, display: 'flex', alignItems: 'baseline', gap: 6 }}>
-          <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 28, color: 'var(--text-1)', letterSpacing: '0.02em', lineHeight: 1 }}>À LA</span>
-          <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 28, color: 'var(--orange)', letterSpacing: '0.02em', lineHeight: 1 }}>UNE</span>
+        <div className="anim-fade-up" style={{ paddingLeft: 16, paddingTop: 28, paddingBottom: 10, display: 'flex', alignItems: 'baseline', gap: 6 }}>
+          <span className="teko-title" style={{ fontSize: 28, color: 'var(--text-1)' }}>À LA</span>
+          <span className="teko-title" style={{ fontSize: 28, color: 'var(--orange)' }}>UNE</span>
         </div>
         <BanniereFeed article={articleUne} />
 
-        <div style={{ height: 25 }} />
+        <div style={{ height: 32 }} />
 
         {/* ── TIMELINE ── */}
-        <div style={{ marginTop: 32, padding: '0 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 0 }}>
-            <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 28, color: 'var(--text-1)', letterSpacing: '0.02em', lineHeight: 1 }}>TIME</span>
-            <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 28, color: 'var(--accent)', letterSpacing: '0.02em', lineHeight: 1 }}>LINE</span>
+        <div className="anim-fade-up anim-delay-1" style={{ marginTop: 8, padding: '0 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'baseline' }}>
+            <span className="teko-title" style={{ fontSize: 28, color: 'var(--text-1)' }}>TIME</span>
+            <span className="teko-title" style={{ fontSize: 28, color: 'var(--accent)' }}>LINE</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <FiltreEquipe equipeFiltre={equipeFiltre} onSelect={setEquipeFiltre} />
             <button
               onClick={() => navigate('/calendrier')}
+              className="btn-tap"
               style={{
                 display: 'flex', alignItems: 'center', gap: 5,
                 background: 'none', border: '1px solid var(--border)',
@@ -494,11 +495,8 @@ function Accueil() {
         {!chargement && (
           <div style={{ marginTop: 10 }}>
             {matchs.length === 0 ? (
-              <div style={{
+              <div className="card" style={{
                 margin: '8px 16px', padding: '14px 16px',
-                background: 'var(--bg-1)',
-                borderWidth: 1, borderStyle: 'solid', borderColor: 'var(--border)',
-                borderRadius: 'var(--radius-md)',
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
               }}>
                 <span style={{ fontSize: 13, color: 'var(--text-3)', lineHeight: 1.5 }}>
@@ -506,13 +504,13 @@ function Accueil() {
                 </span>
                 <button
                   onClick={() => navigate('/calendrier')}
+                  className="btn-tap"
                   style={{
                     flexShrink: 0, fontSize: 12, fontWeight: 600,
                     color: 'var(--accent)', background: 'var(--accent-dim)',
-                    borderWidth: 1, borderStyle: 'solid', borderColor: 'var(--accent-border)',
+                    border: '1px solid var(--accent-border)',
                     borderRadius: 'var(--radius-sm)',
-                    paddingTop: 6, paddingBottom: 6, paddingLeft: 10, paddingRight: 10,
-                    cursor: 'pointer',
+                    padding: '6px 10px', cursor: 'pointer',
                   }}
                 >
                   Calendrier
@@ -531,50 +529,51 @@ function Accueil() {
           </div>
         )}
 
-        <div style={{ height: 25 }} />
+        <div style={{ height: 32 }} />
 
         {/* ── Ticker Briefing ── */}
         {!chargement && user && (
-          <div style={{ marginTop: 16 }}>
+          <div className="anim-fade-up anim-delay-2" style={{ marginTop: 8 }}>
             <Briefing userId={user.id} nbPronosAttente={nbPronosAttente} matchs={matchs} />
           </div>
         )}
 
         {/* ── LIGUE EN COURS ── */}
         {!chargement && user && (
-          <div style={{ borderLeft: '3px solid var(--accent)', padding: '12px 16px 16px 16px', marginTop: 32, marginBottom: 8 }}>
+          <div className="anim-fade-up anim-delay-2" style={{ borderLeft: '3px solid var(--accent)', padding: '12px 16px 16px 16px', marginTop: 32, marginBottom: 8 }}>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 0, marginBottom: 10 }}>
-              <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 28, color: 'var(--text-1)', letterSpacing: '0.02em', lineHeight: 1 }}>CLASSE</span>
-              <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 28, color: 'var(--accent)', letterSpacing: '0.02em', lineHeight: 1 }}>MENT LIGUE</span>
+              <span className="teko-title" style={{ fontSize: 28, color: 'var(--text-1)' }}>CLASSE</span>
+              <span className="teko-title" style={{ fontSize: 28, color: 'var(--accent)' }}>MENT LIGUE</span>
             </div>
             <ClassementRapide userId={user.id} />
           </div>
         )}
 
-        <div style={{ height: 25 }} />
+        <div style={{ height: 32 }} />
 
         {/* ── LE VESTIAIRE ── */}
         {!chargement && user && (
-          <div style={{ marginTop: 32 }}>
+          <div className="anim-fade-up anim-delay-3" style={{ marginTop: 8 }}>
             <LeVestiaire userId={user.id} />
           </div>
         )}
 
-        <div style={{ height: 25 }} />
+        <div style={{ height: 32 }} />
 
         {/* ── CLASSEMENT NBA ── */}
         {!chargement && (
-          <div style={{ marginTop: 32 }}>
+          <div className="anim-fade-up anim-delay-3" style={{ marginTop: 8 }}>
             <div style={{
               paddingLeft: 16, paddingRight: 16, marginBottom: 12,
               display: 'flex', alignItems: 'baseline', justifyContent: 'space-between',
             }}>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-                <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 28, color: 'var(--gold)', letterSpacing: '0.02em', lineHeight: 1 }}>CLASSEMENT</span>
-                <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 28, color: 'var(--text-1)', letterSpacing: '0.02em', lineHeight: 1 }}>NBA</span>
+                <span className="teko-title" style={{ fontSize: 28, color: 'var(--gold)' }}>CLASSEMENT</span>
+                <span className="teko-title" style={{ fontSize: 28, color: 'var(--text-1)' }}>NBA</span>
               </div>
               <button
                 onClick={() => navigate('/stats')}
+                className="btn-tap"
                 style={{
                   background: 'none', border: 'none', cursor: 'pointer',
                   fontSize: 11, fontWeight: 600, color: 'var(--text-3)',
@@ -589,14 +588,14 @@ function Accueil() {
           </div>
         )}
 
-        <div style={{ height: 25 }} />
+        <div style={{ height: 32 }} />
 
         {/* ── ACTU NBA ── */}
         {!chargement && user && (
-          <div style={{ background: '#f0ede8', marginTop: 32, borderLeft: '3px solid var(--accent)' }}>
+          <div className="anim-fade-up anim-delay-4" style={{ marginTop: 8, borderLeft: '3px solid var(--orange)', background: 'rgba(249,115,22,0.04)' }}>
             <div style={{ padding: '14px 16px 0 16px', display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 10 }}>
-              <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 28, color: '#1a1a2e', letterSpacing: '0.02em', lineHeight: 1 }}>ACTU</span>
-              <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 28, color: 'var(--accent)', letterSpacing: '0.02em', lineHeight: 1 }}>NBA</span>
+              <span className="teko-title" style={{ fontSize: 28, color: 'var(--text-1)' }}>ACTU</span>
+              <span className="teko-title" style={{ fontSize: 28, color: 'var(--accent)' }}>NBA</span>
             </div>
             <div style={{ paddingLeft: 16, paddingRight: 16, paddingBottom: 16 }}>
               <NewsNBA onFeedCharge={setArticleUne} />
