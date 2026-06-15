@@ -14,7 +14,11 @@ function PopupChangelog({ forceOuvert = false, onFermer }) {
   const [mdp, setMdp]           = useState('')
   const [erreur, setErreur]     = useState(null)
   const [charg, setCharg]       = useState(false)
-  const navigate                = useNavigate()
+  const [fontPret, setFontPret] = useState(false)
+
+  useEffect(() => {
+    document.fonts.ready.then(() => setFontPret(true))
+  }, [])
 
   useEffect(() => {
     setVisible(true)
@@ -91,11 +95,11 @@ function PopupChangelog({ forceOuvert = false, onFermer }) {
         padding: '40px 24px 32px',
       }}>
 
-        {/* Logo Teko — identique navbar */}
+        {/* Logo Teko — attend le chargement font + phase */}
         <div style={{
           display: 'flex', alignItems: 'center',
-          opacity: phase >= 1 ? 1 : 0,
-          transform: phase >= 1 ? 'translateY(0)' : 'translateY(10px)',
+          opacity: phase >= 1 && fontPret ? 1 : 0,
+          transform: phase >= 1 && fontPret ? 'translateY(0)' : 'translateY(10px)',
           transition: 'opacity 0.5s ease, transform 0.5s ease',
           marginBottom: 12,
         }}>

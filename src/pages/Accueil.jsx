@@ -26,6 +26,56 @@ import { useNoSpoil } from '../context/NoSpoilContext'
 import { useNotif } from '../context/NotifContext'
 import { SAISON_ESPN } from '../config'
 
+// Titre section — barres obliques sport US
+const TitreSection = ({ label, Icone, couleur = 'var(--accent)' }) => (
+  <div style={{
+    display: 'inline-flex', alignItems: 'center', gap: 8,
+    position: 'relative', overflow: 'hidden',
+    background: couleur,
+    padding: '4px 20px 4px 10px',
+    backgroundImage: `${couleur.replace(')', ', 1)').replace('var(', 'var(')}, repeating-linear-gradient(
+      60deg,
+      transparent,
+      transparent 8px,
+      rgba(255,255,255,0.07) 8px,
+      rgba(255,255,255,0.07) 10px,
+      transparent 10px,
+      transparent 18px,
+      rgba(255,255,255,0.05) 18px,
+      rgba(255,255,255,0.05) 20px,
+      transparent 20px,
+      transparent 32px,
+      rgba(255,255,255,0.03) 32px,
+      rgba(255,255,255,0.03) 34px
+    )`,
+    background: `${couleur}`,
+    backgroundImage: `repeating-linear-gradient(
+      60deg,
+      transparent,
+      transparent 8px,
+      rgba(255,255,255,0.08) 8px,
+      rgba(255,255,255,0.08) 10px,
+      transparent 10px,
+      transparent 22px,
+      rgba(255,255,255,0.05) 22px,
+      rgba(255,255,255,0.05) 24px,
+      transparent 24px,
+      transparent 40px,
+      rgba(255,255,255,0.03) 40px,
+      rgba(255,255,255,0.03) 42px
+    )`,
+    backgroundColor: couleur,
+  }}>
+    {Icone && <Icone size={15} strokeWidth={2} color="rgba(255,255,255,0.9)" />}
+    <span style={{
+      fontFamily: "'Teko', system-ui, sans-serif", fontWeight: 700,
+      fontSize: 'clamp(22px, 4vw, 30px)', color: '#fff',
+      letterSpacing: '0.04em', lineHeight: 1,
+      position: 'relative', zIndex: 1,
+    }}>{label}</span>
+  </div>
+)
+
 const titrDepuisNiveau = (n) => {
   if (n <= 10) return 'Rookie'
   if (n <= 20) return 'Sixième Homme'
@@ -457,11 +507,8 @@ function Accueil() {
         </div>
 
         {/* ── À LA UNE ── */}
-        <div className="anim-fade-up" style={{ paddingLeft: 16, paddingTop: 28, paddingBottom: 10, display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: 'var(--orange)', padding: '3px 10px 3px 8px' }}>
-            <Newspaper size={14} strokeWidth={2} color="#fff" />
-            <span className="teko-title" style={{ fontSize: 'clamp(18px, 3vw, 24px)', color: '#fff', letterSpacing: '0.06em' }}>À LA UNE</span>
-          </div>
+        <div className="anim-fade-up" style={{ paddingLeft: 16, paddingTop: 28, paddingBottom: 10 }}>
+          <TitreSection label="À LA UNE" Icone={Newspaper} couleur="var(--orange)" />
         </div>
         <BanniereFeed article={articleUne} />
 
@@ -469,10 +516,7 @@ function Accueil() {
 
         {/* ── TIMELINE ── */}
         <div className="anim-fade-up anim-delay-1" style={{ marginTop: 8, padding: '0 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: 'var(--accent)', padding: '3px 10px 3px 8px' }}>
-            <Clock size={14} strokeWidth={2} color="#fff" />
-            <span className="teko-title" style={{ fontSize: 'clamp(18px, 3vw, 24px)', color: '#fff', letterSpacing: '0.06em' }}>TIMELINE</span>
-          </div>
+          <TitreSection label="TIMELINE" Icone={Clock} couleur="var(--accent)" />
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <FiltreEquipe equipeFiltre={equipeFiltre} onSelect={setEquipeFiltre} />
             <button
@@ -543,10 +587,7 @@ function Accueil() {
         {/* ── LIGUE EN COURS ── */}
         {!chargement && user && (
           <div className="anim-fade-up anim-delay-2" style={{ borderLeft: '3px solid var(--accent)', padding: '12px 16px 16px 16px', marginTop: 32, marginBottom: 8 }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: 'var(--accent)', padding: '3px 10px 3px 8px', marginBottom: 10 }}>
-            <Trophy size={14} strokeWidth={2} color="#fff" />
-            <span className="teko-title" style={{ fontSize: 'clamp(18px, 3vw, 24px)', color: '#fff', letterSpacing: '0.06em' }}>CLASSEMENT LIGUE</span>
-          </div>
+          <TitreSection label="CLASSEMENT LIGUE" Icone={Trophy} couleur="var(--accent)" />
             <ClassementRapide userId={user.id} />
           </div>
         )}
@@ -569,10 +610,7 @@ function Accueil() {
               paddingLeft: 16, paddingRight: 16, marginBottom: 12,
               display: 'flex', alignItems: 'baseline', justifyContent: 'space-between',
             }}>
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: 'var(--gold)', padding: '3px 10px 3px 8px' }}>
-                <BarChart2 size={14} strokeWidth={2} color="#fff" />
-                <span className="teko-title" style={{ fontSize: 'clamp(18px, 3vw, 24px)', color: '#fff', letterSpacing: '0.06em' }}>CLASSEMENT NBA</span>
-              </div>
+              <TitreSection label="CLASSEMENT NBA" Icone={BarChart2} couleur="var(--gold)" />
               <button
                 onClick={() => navigate('/stats')}
                 className="btn-tap"
@@ -596,10 +634,7 @@ function Accueil() {
         {!chargement && user && (
           <div className="anim-fade-up anim-delay-4" style={{ marginTop: 8, borderLeft: '3px solid var(--orange)' }}>
             <div style={{ padding: '14px 16px 0 16px', marginBottom: 10 }}>
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: 'var(--accent)', padding: '3px 10px 3px 8px' }}>
-                <Rss size={14} strokeWidth={2} color="#fff" />
-                <span className="teko-title" style={{ fontSize: 'clamp(18px, 3vw, 24px)', color: '#fff', letterSpacing: '0.06em' }}>ACTU NBA</span>
-              </div>
+              <TitreSection label="ACTU NBA" Icone={Rss} couleur="var(--accent)" />
             </div>
             <div style={{ paddingLeft: 16, paddingRight: 16, paddingBottom: 16 }}>
               <NewsNBA onFeedCharge={setArticleUne} />
