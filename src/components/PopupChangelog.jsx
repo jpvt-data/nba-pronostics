@@ -97,8 +97,8 @@ function PopupChangelog({ forceOuvert = false, onFermer }) {
           display: 'flex', alignItems: 'center',
           opacity: phase >= 1 ? 1 : 0,
           transform: phase >= 1 ? 'translateY(0)' : 'translateY(10px)',
-          transition: 'opacity 0.4s, transform 0.4s',
-          marginBottom: 32,
+          transition: 'opacity 0.5s ease, transform 0.5s ease',
+          marginBottom: 12,
         }}>
           <span style={{
             fontFamily: "'Teko', system-ui, sans-serif", fontWeight: 700,
@@ -114,8 +114,25 @@ function PopupChangelog({ forceOuvert = false, onFermer }) {
           }}>LEAGUE</span>
         </div>
 
+        {/* Tagline B — apparition après le logo */}
+        <p style={{
+          fontSize: 11, fontWeight: 500, color: 'var(--text-3)',
+          letterSpacing: '0.14em', textTransform: 'uppercase',
+          margin: '0 0 28px', textAlign: 'center',
+          opacity: phase >= 2 ? 1 : 0,
+          transform: phase >= 2 ? 'translateY(0)' : 'translateY(6px)',
+          transition: 'opacity 0.5s ease, transform 0.5s ease',
+        }}>
+          Vis la saison autrement
+        </p>
+
         {/* Séparateur */}
-        <div style={{ width: '100%', borderTopWidth: 1, borderTopStyle: 'solid', borderTopColor: 'var(--border)', marginBottom: 24 }} />
+        <div style={{
+          width: '100%', borderTopWidth: 1, borderTopStyle: 'solid', borderTopColor: 'var(--border)',
+          marginBottom: 24,
+          opacity: phase >= 3 ? 1 : 0,
+          transition: 'opacity 0.5s ease',
+        }} />
 
         {/* Connecté */}
         {connecte && (
