@@ -26,52 +26,35 @@ import { useNoSpoil } from '../context/NoSpoilContext'
 import { useNotif } from '../context/NotifContext'
 import { SAISON_ESPN } from '../config'
 
-// Titre section — barres obliques sport US
+// Titre section — bandeau pleine largeur style ESPN/NFL
 const TitreSection = ({ label, Icone, couleur = 'var(--accent)' }) => (
   <div style={{
-    display: 'inline-flex', alignItems: 'center', gap: 8,
-    position: 'relative', overflow: 'hidden',
-    background: couleur,
-    padding: '4px 20px 4px 10px',
-    backgroundImage: `${couleur.replace(')', ', 1)').replace('var(', 'var(')}, repeating-linear-gradient(
-      60deg,
-      transparent,
-      transparent 8px,
-      rgba(255,255,255,0.07) 8px,
-      rgba(255,255,255,0.07) 10px,
-      transparent 10px,
-      transparent 18px,
-      rgba(255,255,255,0.05) 18px,
-      rgba(255,255,255,0.05) 20px,
-      transparent 20px,
-      transparent 32px,
-      rgba(255,255,255,0.03) 32px,
-      rgba(255,255,255,0.03) 34px
-    )`,
-    background: `${couleur}`,
-    backgroundImage: `repeating-linear-gradient(
-      60deg,
-      transparent,
-      transparent 8px,
-      rgba(255,255,255,0.08) 8px,
-      rgba(255,255,255,0.08) 10px,
-      transparent 10px,
-      transparent 22px,
-      rgba(255,255,255,0.05) 22px,
-      rgba(255,255,255,0.05) 24px,
-      transparent 24px,
-      transparent 40px,
-      rgba(255,255,255,0.03) 40px,
-      rgba(255,255,255,0.03) 42px
-    )`,
+    width: '100%',
+    position: 'relative',
+    overflow: 'hidden',
     backgroundColor: couleur,
+    padding: '6px 16px',
+    display: 'flex', alignItems: 'center', gap: 8,
   }}>
-    {Icone && <Icone size={15} strokeWidth={2} color="rgba(255,255,255,0.9)" />}
+    {/* Barres obliques SVG pleine hauteur */}
+    <svg
+      style={{ position: 'absolute', top: 0, right: 0, height: '100%', width: 200, opacity: 0.18 }}
+      preserveAspectRatio="none"
+      viewBox="0 0 200 40"
+    >
+      <line x1="160" y1="0" x2="140" y2="40" stroke="white" strokeWidth="6" />
+      <line x1="175" y1="0" x2="155" y2="40" stroke="white" strokeWidth="5" />
+      <line x1="188" y1="0" x2="168" y2="40" stroke="white" strokeWidth="4" />
+      <line x1="198" y1="0" x2="178" y2="40" stroke="white" strokeWidth="3" />
+      <line x1="206" y1="0" x2="186" y2="40" stroke="white" strokeWidth="2" />
+    </svg>
+    {Icone && <Icone size={16} strokeWidth={2.5} color="rgba(255,255,255,0.9)" style={{ flexShrink: 0 }} />}
     <span style={{
       fontFamily: "'Teko', system-ui, sans-serif", fontWeight: 700,
       fontSize: 'clamp(22px, 4vw, 30px)', color: '#fff',
-      letterSpacing: '0.04em', lineHeight: 1,
+      letterSpacing: '0.06em', lineHeight: 1,
       position: 'relative', zIndex: 1,
+      transform: 'translateY(2px)', display: 'inline-block',
     }}>{label}</span>
   </div>
 )
@@ -507,7 +490,7 @@ function Accueil() {
         </div>
 
         {/* ── À LA UNE ── */}
-        <div className="anim-fade-up" style={{ paddingLeft: 16, paddingTop: 28, paddingBottom: 10 }}>
+        <div className="anim-fade-up" style={{ paddingTop: 28, paddingBottom: 10 }}>
           <TitreSection label="À LA UNE" Icone={Newspaper} couleur="var(--orange)" />
         </div>
         <BanniereFeed article={articleUne} />
@@ -515,7 +498,7 @@ function Accueil() {
         <div style={{ height: 32 }} />
 
         {/* ── TIMELINE ── */}
-        <div className="anim-fade-up anim-delay-1" style={{ marginTop: 8, padding: '0 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+        <div className="anim-fade-up anim-delay-1" style={{ marginTop: 8, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
           <TitreSection label="TIMELINE" Icone={Clock} couleur="var(--accent)" />
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <FiltreEquipe equipeFiltre={equipeFiltre} onSelect={setEquipeFiltre} />
