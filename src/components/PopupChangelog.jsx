@@ -102,13 +102,13 @@ function PopupChangelog({ forceOuvert = false, onFermer }) {
         }}>
           <span style={{
             fontFamily: "'Teko', system-ui, sans-serif", fontWeight: 700,
-            fontSize: 'clamp(36px, 12vw, 52px)', color: 'var(--text-1)',
+            fontSize: 'min(52px, 11vw)', color: 'var(--text-1)',
             letterSpacing: '-0.01em', lineHeight: 1,
             fontStyle: 'italic', transform: 'translateY(3px)', display: 'inline-block',
           }}>SWISH</span>
           <span style={{
             fontFamily: "'Teko', system-ui, sans-serif", fontWeight: 700,
-            fontSize: 'clamp(36px, 12vw, 52px)', color: 'var(--accent)',
+            fontSize: 'min(52px, 11vw)', color: 'var(--accent)',
             letterSpacing: '-0.01em', lineHeight: 1,
             fontStyle: 'italic', transform: 'translateY(3px)', display: 'inline-block',
           }}>LEAGUE</span>
