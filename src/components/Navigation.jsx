@@ -87,17 +87,18 @@ function Navigation({ nbPronosAttente = 0, onOpenOnboarding }) {
   }
 
   // Logo texte — SWISH blanc + LEAGUE violet, italique, hauteur étirée
-  const LogoTeko = () => (
-    <div style={{ display: 'flex', alignItems: 'center', lineHeight: 1 }}>
+  // Logo desktop — grand, remplit la navbar 52px
+  const LogoTeko = ({ taille = 46 }) => (
+    <div style={{ display: 'flex', alignItems: 'center', height: '100%' }}>
       <span style={{
         fontFamily: "'Teko', system-ui, sans-serif", fontWeight: 700,
-        fontSize: 46, color: 'var(--text-1)',
+        fontSize: taille, color: 'var(--text-1)',
         letterSpacing: '-0.01em', lineHeight: 1,
         fontStyle: 'italic', display: 'inline-block',
       }}>SWISH</span>
       <span style={{
         fontFamily: "'Teko', system-ui, sans-serif", fontWeight: 700,
-        fontSize: 46, color: 'var(--accent)',
+        fontSize: taille, color: 'var(--accent)',
         letterSpacing: '-0.01em', lineHeight: 1,
         fontStyle: 'italic', display: 'inline-block',
       }}>LEAGUE</span>
@@ -229,11 +230,11 @@ function Navigation({ nbPronosAttente = 0, onOpenOnboarding }) {
         <div style={{
           width: '100%', maxWidth: 680, margin: '0 auto',
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '0 16px',
+          padding: '0 16px', height: 52,
         }}>
           {/* Logo — gauche */}
-          <div onClick={() => navigate('/accueil')} style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-            <LogoTeko />
+          <div onClick={() => navigate('/accueil')} style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', height: '100%' }}>
+            <LogoTeko taille={46} />
           </div>
 
           {/* Icônes nav + Info + Menu — droite */}
@@ -310,7 +311,7 @@ function Navigation({ nbPronosAttente = 0, onOpenOnboarding }) {
         WebkitBackdropFilter: 'blur(12px)',
       }}>
         <div onClick={() => navigate('/accueil')} style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-          <LogoTeko />
+          <LogoTeko taille={30} />
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <button onClick={() => onOpenOnboarding?.()} style={{
