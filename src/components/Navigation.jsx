@@ -5,7 +5,7 @@ import { Home, Trophy, BarChart2, Menu, X, Swords, LogOut, Calendar, Sparkles, S
 import { useProfil } from '../context/ProfilContext'
 import { track } from '../services/tracker'
 import { Avatar } from '../components/Avatar'
-import swishLogo from '../assets/swish_league_logo.png'
+import swishLogo from '../assets/logo swishleague fond blanc.png'
 
 // Bottom nav mobile — 4 items fixes (icônes seules)
 const LIENS = [
