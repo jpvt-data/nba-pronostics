@@ -5,7 +5,6 @@ import { Home, Trophy, BarChart2, Menu, X, Swords, LogOut, Calendar, Sparkles, S
 import { useProfil } from '../context/ProfilContext'
 import { track } from '../services/tracker'
 import { Avatar } from '../components/Avatar'
-import swishLogo from '../assets/swish_league_logo.png'
 
 // Bottom nav mobile — 4 items fixes (icônes seules)
 const LIENS = [
@@ -60,7 +59,7 @@ const styleLienInactif = {
   borderRadius: 'var(--radius-sm)', width: '100%', textAlign: 'left',
 }
 
-function Navigation({ nbPronosAttente = 0 }) {
+function Navigation({ nbPronosAttente = 0, onOpenOnboarding }) {
   const navigate = useNavigate()
   const location = useLocation()
   const [ouvert, setOuvert] = useState(false)
@@ -260,14 +259,13 @@ function Navigation({ nbPronosAttente = 0 }) {
           })}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 200, justifyContent: 'flex-end' }}>
-          <button onClick={() => navigate('/profil')} style={{
-            display: 'flex', alignItems: 'center', gap: 8,
+          <button onClick={() => onOpenOnboarding?.()} style={{
             background: 'none', borderWidth: 1, borderStyle: 'solid', borderColor: 'var(--border)',
-            borderRadius: 'var(--radius-sm)', padding: '4px 10px 4px 6px', cursor: 'pointer',
+            color: 'var(--text-2)', padding: '6px 10px',
+            borderRadius: 'var(--radius-sm)', cursor: 'pointer', display: 'flex', alignItems: 'center',
             transition: 'border-color var(--transition)',
           }}>
-            <Avatar url={profil?.avatar_url} pseudo={profil?.pseudo} taille={24} fontSize={9} />
-            <span style={{ fontSize: 12, color: 'var(--text-2)', fontWeight: 500 }}>{profil?.pseudo || '—'}</span>
+            <Info size={16} strokeWidth={1.5} />
           </button>
           <button onClick={() => setOuvert(!ouvert)} style={{
             background: 'none', borderWidth: 1, borderStyle: 'solid', borderColor: 'var(--border)',
@@ -293,8 +291,11 @@ function Navigation({ nbPronosAttente = 0 }) {
           <LogoTeko />
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <button onClick={() => navigate('/profil')} style={{ background: 'none', borderWidth: 0, cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center' }}>
-            <Avatar url={profil?.avatar_url} pseudo={profil?.pseudo} taille={28} fontSize={9} />
+          <button onClick={() => onOpenOnboarding?.()} style={{
+            background: 'none', borderWidth: 0, color: 'var(--text-2)',
+            cursor: 'pointer', display: 'flex', alignItems: 'center', padding: 4,
+          }}>
+            <Info size={20} strokeWidth={1.5} />
           </button>
           <button onClick={() => setOuvert(!ouvert)} style={{
             background: 'none', borderWidth: 0, color: 'var(--text-2)',

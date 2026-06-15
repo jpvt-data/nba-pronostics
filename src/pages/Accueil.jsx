@@ -20,7 +20,8 @@ import OnboardingTuto from '../components/OnboardingTuto'
 import PopupActu from '../components/PopupActu'
 import { track } from '../services/tracker'
 import { useNavigate } from 'react-router-dom'
-import { Calendar, Target, RefreshCw, BookOpen } from 'lucide-react'
+import { Calendar, Target, RefreshCw, Info } from 'lucide-react'
+import { Avatar } from '../components/Avatar'
 import { useNoSpoil } from '../context/NoSpoilContext'
 import { useNotif } from '../context/NotifContext'
 import { SAISON_ESPN } from '../config'
@@ -312,48 +313,55 @@ function Accueil() {
 
   return (
     <>
-      <Navigation nbPronosAttente={nbPronosAttente} />
+      <Navigation nbPronosAttente={nbPronosAttente} onOpenOnboarding={() => setOnboardingOpen(true)} />
       <main style={{ flex: 1 }}>
 
         {/* ── Header ── */}
         <div style={{ padding: '16px 16px 0 16px', position: 'relative' }}>
           <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 3, background: 'var(--accent)' }} />
 
-          {/* Ligne 1 : user + KPIs */}
+          {/* Ligne 1 : avatar + user + KPIs */}
           <div style={{ display: 'flex', alignItems: 'stretch', justifyContent: 'space-between', gap: 12 }}>
 
-            {/* Bloc gauche */}
-            <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', flexShrink: 1, minWidth: 0, gap: 4 }}>
-              <div
-                onClick={() => navigate('/mes-pronos')}
-                style={{ display: 'flex', alignItems: 'baseline', gap: 8, cursor: 'pointer', flexWrap: 'wrap' }}
-              >
-                <span style={{ fontFamily: 'var(--font-title)', fontWeight: 700, fontSize: 'clamp(26px, 6vw, 38px)', color: 'var(--accent)', letterSpacing: '-0.01em', lineHeight: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {pseudo || ''}
-                </span>
-                <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 'clamp(20px, 4vw, 26px)', color: 'var(--gold)', letterSpacing: '0.02em', lineHeight: 1, whiteSpace: 'nowrap' }}>
-                  {titrDepuisNiveau(xpData.niveau)}
-                </span>
-                <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 'clamp(13px, 2.5vw, 16px)', color: 'var(--text-3)', whiteSpace: 'nowrap' }}>
-                  Niv. {xpData.niveau}
-                </span>
+            {/* Bloc gauche — avatar + pseudo + titre + XP */}
+            <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start', flexShrink: 1, minWidth: 0 }}>
+              {/* Avatar cliquable → profil */}
+              <div onClick={() => navigate('/profil')} style={{ cursor: 'pointer', flexShrink: 0, marginTop: 2 }}>
+                <Avatar url={null} pseudo={pseudo} taille={44} fontSize={16} />
               </div>
 
-              {/* Barre XP */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 0 }}>
-                <div style={{ width: 140, height: 4, background: 'var(--bg-2)', overflow: 'hidden', borderRadius: 3, flexShrink: 0 }}>
-                  <div style={{
-                    height: '100%',
-                    width: `${xpData.niveau >= 100 ? 100 : Math.min(100, Math.round(
-                      (xpData.xp_total - xpPourNiveau(xpData.niveau)) /
-                      (xpPourNiveau(xpData.niveau + 1) - xpPourNiveau(xpData.niveau)) * 100
-                    ))}%`,
-                    background: 'var(--gold)', transition: 'width 0.6s ease',
-                  }} />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0 }}>
+                <div
+                  onClick={() => navigate('/mes-pronos')}
+                  style={{ display: 'flex', alignItems: 'baseline', gap: 8, cursor: 'pointer', flexWrap: 'wrap' }}
+                >
+                  <span style={{ fontFamily: 'var(--font-title)', fontWeight: 700, fontSize: 'clamp(26px, 6vw, 38px)', color: 'var(--accent)', letterSpacing: '-0.01em', lineHeight: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {pseudo || ''}
+                  </span>
+                  <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 'clamp(20px, 4vw, 26px)', color: 'var(--gold)', letterSpacing: '0.02em', lineHeight: 1, whiteSpace: 'nowrap' }}>
+                    {titrDepuisNiveau(xpData.niveau)}
+                  </span>
+                  <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 'clamp(13px, 2.5vw, 16px)', color: 'var(--text-3)', whiteSpace: 'nowrap' }}>
+                    Niv. {xpData.niveau}
+                  </span>
                 </div>
-                <span style={{ fontSize: 10, color: 'var(--text-3)', fontFamily: 'var(--font-display)', fontWeight: 600, flexShrink: 0 }}>
-                  {xpData.xp_total.toLocaleString('fr-FR')} XP
-                </span>
+
+                {/* Barre XP */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div style={{ width: 120, height: 4, background: 'var(--bg-2)', overflow: 'hidden', borderRadius: 3, flexShrink: 0 }}>
+                    <div style={{
+                      height: '100%',
+                      width: `${xpData.niveau >= 100 ? 100 : Math.min(100, Math.round(
+                        (xpData.xp_total - xpPourNiveau(xpData.niveau)) /
+                        (xpPourNiveau(xpData.niveau + 1) - xpPourNiveau(xpData.niveau)) * 100
+                      ))}%`,
+                      background: 'var(--gold)', transition: 'width 0.6s ease',
+                    }} />
+                  </div>
+                  <span style={{ fontSize: 10, color: 'var(--text-3)', fontFamily: 'var(--font-display)', fontWeight: 600, flexShrink: 0 }}>
+                    {xpData.xp_total.toLocaleString('fr-FR')} XP
+                  </span>
+                </div>
               </div>
             </div>
 
@@ -378,10 +386,9 @@ function Accueil() {
             )}
           </div>
 
-          {/* Ligne 2 : chips gamification — ordre : Actu / Roue / Missions / Tuto */}
+          {/* Ligne 2 : chips gamification — Actu / Roue / Missions (Tuto supprimé → bouton Info nav) */}
           {user && (
             <div style={{ marginTop: 10, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              {/* Actu — visible si une actu est active */}
               {actu && (
                 <button
                   onClick={() => setActuOpen(true)}
@@ -406,8 +413,7 @@ function Accueil() {
                   borderRadius: 'var(--radius-sm)', padding: '5px 11px',
                   cursor: roueDispo ? 'pointer' : 'default',
                   fontSize: 11, fontWeight: 700, color: 'var(--text-2)',
-                  letterSpacing: '0.03em',
-                  opacity: roueDispo ? 1 : 0.4,
+                  letterSpacing: '0.03em', opacity: roueDispo ? 1 : 0.4,
                 }}
               >
                 <RefreshCw size={12} strokeWidth={2} color="var(--accent)" />
@@ -426,20 +432,6 @@ function Accueil() {
               >
                 <Target size={12} strokeWidth={2} color="var(--accent)" />
                 Missions
-              </button>
-
-              <button
-                onClick={() => setOnboardingOpen(true)}
-                style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 6,
-                  background: 'var(--bg-2)', border: '1px solid var(--border)',
-                  borderRadius: 'var(--radius-sm)', padding: '5px 11px',
-                  cursor: 'pointer', fontSize: 11, fontWeight: 700, color: 'var(--text-2)',
-                  letterSpacing: '0.03em',
-                }}
-              >
-                <BookOpen size={12} strokeWidth={2} color="var(--text-3)" />
-                Tuto
               </button>
             </div>
           )}
