@@ -5,7 +5,7 @@ import { Home, Trophy, BarChart2, Menu, X, Swords, LogOut, Calendar, Sparkles, S
 import { useProfil } from '../context/ProfilContext'
 import { track } from '../services/tracker'
 import { Avatar } from '../components/Avatar'
-import swishLogo from '../assets/logo swishleague fond blanc.png'
+import swishLogo from '../assets/swish_league_logo.png'
 
 // Bottom nav mobile — 4 items fixes (icônes seules)
 const LIENS = [
@@ -87,14 +87,21 @@ function Navigation({ nbPronosAttente = 0 }) {
     setOuvert(false)
   }
 
-  // Logo image — détouré sur fond dark
-  const LogoImg = ({ hauteur = 28 }) => (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-      <img
-        src={swishLogo}
-        alt="Swish League"
-        style={{ height: hauteur, width: 'auto', objectFit: 'contain' }}
-      />
+  // Logo texte — SWISH blanc + LEAGUE violet, italique, hauteur étirée
+  const LogoTeko = () => (
+    <div style={{ display: 'flex', alignItems: 'baseline', lineHeight: 1 }}>
+      <span style={{
+        fontFamily: "'Teko', system-ui, sans-serif", fontWeight: 700,
+        fontSize: 38, color: 'var(--text-1)',
+        letterSpacing: '-0.01em', lineHeight: 1,
+        fontStyle: 'italic', transform: 'scaleY(1.15)', display: 'inline-block',
+      }}>SWISH</span>
+      <span style={{
+        fontFamily: "'Teko', system-ui, sans-serif", fontWeight: 700,
+        fontSize: 38, color: 'var(--accent)',
+        letterSpacing: '-0.01em', lineHeight: 1,
+        fontStyle: 'italic', transform: 'scaleY(1.15)', display: 'inline-block',
+      }}>LEAGUE</span>
     </div>
   )
 
@@ -220,7 +227,7 @@ function Navigation({ nbPronosAttente = 0 }) {
         WebkitBackdropFilter: 'blur(12px)',
       }}>
         <div onClick={() => navigate('/accueil')} style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', minWidth: 200 }}>
-          <LogoImg hauteur={30} />
+          <LogoTeko />
         </div>
         <div style={{ display: 'flex', gap: 4 }}>
           {LIENS.map(({ chemin, label, Icone }) => {
@@ -283,7 +290,7 @@ function Navigation({ nbPronosAttente = 0 }) {
         WebkitBackdropFilter: 'blur(12px)',
       }}>
         <div onClick={() => navigate('/accueil')} style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-          <LogoImg hauteur={26} />
+          <LogoTeko />
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <button onClick={() => navigate('/profil')} style={{ background: 'none', borderWidth: 0, cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center' }}>
