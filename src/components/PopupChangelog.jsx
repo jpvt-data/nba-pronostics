@@ -123,7 +123,7 @@ function PopupChangelog({ forceOuvert = false, onFermer }) {
           transform: phase >= 2 ? 'translateY(0)' : 'translateY(6px)',
           transition: 'opacity 0.5s ease, transform 0.5s ease',
         }}>
-          Vis la saison autrement
+          Vis la Saison NBA autrement.
         </p>
 
         {/* Séparateur */}
