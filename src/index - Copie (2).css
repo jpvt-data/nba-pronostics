@@ -9,7 +9,7 @@
   --border-2: #2a2a3e;
   --accent: #6366f1;
   --accent-dim: rgba(99, 102, 241, 0.12);
-  --accent-border: rgba(99, 102, 241, 0.35);
+  --accent-border: rgba(99, 102, 241, 0.5);
   --orange: #f97316;
   --success: #22c55e;
   --success-dim: rgba(34, 197, 94, 0.1);
@@ -23,31 +23,17 @@
   --radius-sm: 6px;
   --radius-md: 10px;
   --radius-lg: 14px;
-
-  /* Ombres enrichies */
   --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
-  --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.6), 0 1px 0 rgba(255,255,255,0.03) inset;
-  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.7), 0 1px 0 rgba(255,255,255,0.04) inset;
-  --shadow-accent: 0 4px 24px rgba(99, 102, 241, 0.2);
-
-  /* Glassmorphism */
-  --glass-bg: rgba(18, 18, 28, 0.75);
-  --glass-border: rgba(255, 255, 255, 0.06);
-  --glass-blur: blur(12px);
-
-  /* Transitions */
-  --transition: 0.18s ease;
-  --transition-slow: 0.3s ease;
-
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.5);
   --font-body: 'Outfit', system-ui, sans-serif;
   --font-display: 'Barlow Condensed', system-ui, sans-serif;
   --font-title: 'Teko', system-ui, sans-serif;
 
-  /* Navbar — dark */
-  --nav-bg: #0f0f1a;
-  --nav-border: rgba(255, 255, 255, 0.06);
-  --nav-text: #e8e8f0;
-  --nav-text-dim: #9090b0;
+  /* Navbar top — light mode */
+  --nav-bg: #ffffff;
+  --nav-border: #e8e8e8;
+  --nav-text: #0d0d12;
+  --nav-text-dim: #888;
 }
 
 /* ── RESET ───────────────────────────────────────────── */
@@ -69,20 +55,12 @@ html, body {
 @media (min-width: 768px) {
   body {
     background:
-      radial-gradient(ellipse 60% 50% at 0% 0%,    rgba(99, 102, 241, 0.22) 0%, transparent 65%),
-      radial-gradient(ellipse 60% 50% at 100% 0%,  rgba(99, 102, 241, 0.22) 0%, transparent 65%),
-      radial-gradient(ellipse 60% 50% at 0% 100%,  rgba(99, 102, 241, 0.14) 0%, transparent 65%),
-      radial-gradient(ellipse 60% 50% at 100% 100%,rgba(99, 102, 241, 0.14) 0%, transparent 65%),
+      radial-gradient(ellipse 70% 55% at 0% 0%,    rgba(99, 102, 241, 0.18) 0%, transparent 70%),
+      radial-gradient(ellipse 70% 55% at 100% 0%,  rgba(99, 102, 241, 0.18) 0%, transparent 70%),
+      radial-gradient(ellipse 70% 55% at 0% 100%,  rgba(99, 102, 241, 0.18) 0%, transparent 70%),
+      radial-gradient(ellipse 70% 55% at 100% 100%,rgba(99, 102, 241, 0.18) 0%, transparent 70%),
       var(--bg-0);
-  }
-}
-
-/* ── FOND MOBILE — halo central subtil ── */
-@media (max-width: 767px) {
-  body {
-    background:
-      radial-gradient(ellipse 100% 40% at 50% 0%, rgba(99, 102, 241, 0.15) 0%, transparent 70%),
-      var(--bg-0);
+    /* background-attachment: fixed; */
   }
 }
 
@@ -93,7 +71,9 @@ html, body {
   min-height: 100svh;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 0 120px rgba(99, 102, 241, 0.12);
+  /*border-left: 1px solid rgba(99, 102, 241, 0.4);*/
+  /*border-right: 1px solid rgba(99, 102, 241, 0.4);*/
+  box-shadow: 0 0 100px rgba(99, 102, 241, 0.18);
 }
 
 h1 { font-family: var(--font-display); font-size: 26px; font-weight: 700; color: var(--text-1); letter-spacing: 0.02em; }
@@ -113,7 +93,7 @@ img { display: block; }
   #root { padding-top: 52px; padding-bottom: 60px; }
 }
 
-/* classes display gérées 100% par CSS */
+/* classes display gérées 100% par CSS — jamais écrasées en inline */
 .nav-desktop-full { display: none; }
 .nav-mobile-logo  { display: none; }
 .nav-mobile-bot   { display: none; }
@@ -123,7 +103,7 @@ img { display: block; }
 }
 @media (max-width: 767px) {
   .nav-mobile-logo { display: flex; }
-  .nav-mobile-bot  { display: flex; }
+  .nav-mobile-bot  { display: flex;  }
 }
 
 /* scroll horizontal utilitaire */
@@ -141,75 +121,8 @@ img { display: block; }
   letter-spacing: 0.04em;
   line-height: 1;
 }
-.teko-title span.dim    { color: var(--text-2); }
+.teko-title span.dim  { color: var(--text-2); }
 .teko-title span.accent { color: var(--accent); }
-
-/* ── MICRO-ANIMATIONS GLOBALES ────────────────────────── */
-
-/* Apparition fade + remontée légère */
-@keyframes fadeUp {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-/* Pulse doux — XP, badges, streaks */
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50%       { opacity: 0.6; }
-}
-
-/* Brillance qui traverse — cartes, boutons CTA */
-@keyframes shimmer {
-  from { transform: translateX(-100%); }
-  to   { transform: translateX(100%); }
-}
-
-/* Scale in — apparition d'éléments importants */
-@keyframes scaleIn {
-  from { opacity: 0; transform: scale(0.94); }
-  to   { opacity: 1; transform: scale(1); }
-}
-
-/* Classes utilitaires animation */
-.anim-fade-up  { animation: fadeUp  0.3s ease both; }
-.anim-scale-in { animation: scaleIn 0.25s ease both; }
-.anim-pulse    { animation: pulse   2s ease infinite; }
-
-/* Délais enchaînés pour listes */
-.anim-delay-1 { animation-delay: 0.05s; }
-.anim-delay-2 { animation-delay: 0.10s; }
-.anim-delay-3 { animation-delay: 0.15s; }
-.anim-delay-4 { animation-delay: 0.20s; }
-
-/* ── CLASSES UTILITAIRES GLASSMORPHISM ───────────────── */
-.glass {
-  background: var(--glass-bg);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  border: 1px solid var(--glass-border);
-}
-
-/* Carte/bloc standard avec profondeur */
-.card {
-  background: linear-gradient(135deg, var(--bg-1) 0%, rgba(26, 26, 46, 0.8) 100%);
-  border: 1px solid var(--border);
-  border-top-color: rgba(255,255,255,0.06);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-md);
-  transition: box-shadow var(--transition), transform var(--transition);
-}
-.card:hover {
-  box-shadow: var(--shadow-lg);
-}
-
-/* Bouton interactif — feedback tap */
-.btn-tap {
-  transition: transform var(--transition), opacity var(--transition);
-}
-.btn-tap:active {
-  transform: scale(0.96);
-  opacity: 0.85;
-}
 
 /* ── PWA iOS — mode standalone ── */
 @media (display-mode: standalone) {
