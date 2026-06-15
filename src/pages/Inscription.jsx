@@ -40,14 +40,28 @@ function Inscription() {
         display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0,
       }}>
 
-        {/* Logo */}
-        <p style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 16, textAlign: 'center' }}>
-          L'app de pronos NBA entre potes
-        </p>
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 0, marginBottom: 28 }}>
-          <span style={{ fontFamily: 'var(--font-title)', fontWeight: 700, fontSize: 42, color: 'var(--text-1)', letterSpacing: '0.02em', lineHeight: 1 }}>SWISH</span>
-          <span style={{ fontFamily: 'var(--font-title)', fontWeight: 700, fontSize: 42, color: 'var(--accent)', letterSpacing: '0.02em', lineHeight: 1 }}>LEAGUE</span>
+        {/* Logo Teko — identique navbar */}
+        <div style={{ display: 'flex', alignItems: 'center', marginBottom: 8 }}>
+          <span style={{
+            fontFamily: "'Teko', system-ui, sans-serif", fontWeight: 700,
+            fontSize: 52, color: 'var(--text-1)',
+            letterSpacing: '-0.01em', lineHeight: 1,
+            fontStyle: 'italic', transform: 'translateY(3px)', display: 'inline-block',
+          }}>SWISH</span>
+          <span style={{
+            fontFamily: "'Teko', system-ui, sans-serif", fontWeight: 700,
+            fontSize: 52, color: 'var(--accent)',
+            letterSpacing: '-0.01em', lineHeight: 1,
+            fontStyle: 'italic', transform: 'translateY(3px)', display: 'inline-block',
+          }}>LEAGUE</span>
         </div>
+        <p style={{
+          fontSize: 11, fontWeight: 500, color: 'var(--text-3)',
+          letterSpacing: '0.14em', textTransform: 'uppercase',
+          margin: '0 0 28px', textAlign: 'center',
+        }}>
+          Vis la saison NBA autrement.
+        </p>
 
         <div style={{ width: '100%', borderTopWidth: 1, borderTopStyle: 'solid', borderTopColor: 'var(--border)', marginBottom: 24 }} />
 
