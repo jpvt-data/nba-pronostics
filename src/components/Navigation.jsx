@@ -88,18 +88,18 @@ function Navigation({ nbPronosAttente = 0, onOpenOnboarding }) {
 
   // Logo texte — SWISH blanc + LEAGUE violet, italique, hauteur étirée
   const LogoTeko = () => (
-    <div style={{ display: 'flex', alignItems: 'baseline', lineHeight: 1 }}>
+    <div style={{ display: 'flex', alignItems: 'center', lineHeight: 1 }}>
       <span style={{
         fontFamily: "'Teko', system-ui, sans-serif", fontWeight: 700,
-        fontSize: 38, color: 'var(--text-1)',
+        fontSize: 34, color: 'var(--text-1)',
         letterSpacing: '-0.01em', lineHeight: 1,
-        fontStyle: 'italic', transform: 'scaleY(1.15)', display: 'inline-block',
+        fontStyle: 'italic', display: 'inline-block',
       }}>SWISH</span>
       <span style={{
         fontFamily: "'Teko', system-ui, sans-serif", fontWeight: 700,
-        fontSize: 38, color: 'var(--accent)',
+        fontSize: 34, color: 'var(--accent)',
         letterSpacing: '-0.01em', lineHeight: 1,
-        fontStyle: 'italic', transform: 'scaleY(1.15)', display: 'inline-block',
+        fontStyle: 'italic', display: 'inline-block',
       }}>LEAGUE</span>
     </div>
   )

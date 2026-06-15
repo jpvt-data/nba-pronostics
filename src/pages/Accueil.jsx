@@ -40,6 +40,7 @@ function Accueil() {
   const [matchs, setMatchs]                     = useState([])
   const [user, setUser]                         = useState(null)
   const [pseudo, setPseudo]                     = useState(null)
+  const [avatarUrl, setAvatarUrl]               = useState(null)
   const [chargement, setCharg]                  = useState(true)
   const [nbPronosAttente, setNbPronosAttente]   = useState(0)
   const [equipeFiltre, setEquipeFiltre]         = useState(null)
@@ -76,9 +77,10 @@ function Accueil() {
 
       const { data: profil } = await supabase
         .from('profils')
-        .select('pseudo, badges, xp_total, niveau, onboarding_done, equipes_favorites')
+        .select('pseudo, avatar_url, badges, xp_total, niveau, onboarding_done, equipes_favorites')
         .eq('id', user.id).single()
       setPseudo(profil?.pseudo || null)
+      setAvatarUrl(profil?.avatar_url || null)
       setEquipesFav(profil?.equipes_favorites || [])
 
       const niveauAvant = profil?.niveau || 1
@@ -329,7 +331,7 @@ function Accueil() {
             <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start', flexShrink: 1, minWidth: 0 }}>
               {/* Avatar cliquable → profil */}
               <div onClick={() => navigate('/profil')} style={{ cursor: 'pointer', flexShrink: 0, marginTop: 2 }}>
-                <Avatar url={null} pseudo={pseudo} taille={44} fontSize={16} />
+                <Avatar url={avatarUrl} pseudo={pseudo} taille={44} fontSize={16} />
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0 }}>
