@@ -47,6 +47,7 @@ function Accueil() {
   const [articleUne, setArticleUne]             = useState(null)
   const [xpData, setXpData]                     = useState({ xp_total: 0, niveau: 1 })
   const [kpis, setKpis]                         = useState({ total: 0, pct: 0 })
+  const [equipesFav, setEquipesFav]             = useState([])
   const [missionsOpen, setMissionsOpen]         = useState(false)
   const [roueOpen, setRoueOpen]                 = useState(false)
   const [roueDispo, setRoueDispo]               = useState(false)
@@ -75,9 +76,10 @@ function Accueil() {
 
       const { data: profil } = await supabase
         .from('profils')
-        .select('pseudo, badges, xp_total, niveau, onboarding_done')
+        .select('pseudo, badges, xp_total, niveau, onboarding_done, equipes_favorites')
         .eq('id', user.id).single()
       setPseudo(profil?.pseudo || null)
+      setEquipesFav(profil?.equipes_favorites || [])
 
       const niveauAvant = profil?.niveau || 1
       const xpAvant     = profil?.xp_total || 0
@@ -364,6 +366,21 @@ function Accueil() {
                 </div>
               </div>
             </div>
+
+            {/* Bloc centre — équipes favorites (desktop uniquement) */}
+            {equipesFav.length > 0 && (
+              <div className="equipes-desktop" style={{ flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
+                <span style={{ fontSize: 9, color: 'var(--text-3)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Mes équipes</span>
+                <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                  {equipesFav.map(eq => (
+                    <img key={eq.id} src={eq.logo} alt={eq.nom}
+                      style={{ width: 40, height: 40, objectFit: 'contain', opacity: 0.9 }}
+                      onError={e => { e.target.style.opacity = '0.15' }}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Bloc droit — KPIs */}
             {kpis.total > 0 && (
