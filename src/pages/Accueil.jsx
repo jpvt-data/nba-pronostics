@@ -26,35 +26,35 @@ import { useNoSpoil } from '../context/NoSpoilContext'
 import { useNotif } from '../context/NotifContext'
 import { SAISON_ESPN } from '../config'
 
-// Titre section — dégradé couleur→transparent + barres obliques
+// Titre section — barres obliques pleines espacées progressivement
 const TitreSection = ({ label, couleur = 'var(--accent)' }) => (
   <div style={{
-    width: '100%',
-    position: 'relative',
-    overflow: 'hidden',
-    background: `linear-gradient(90deg, ${couleur} 0%, ${couleur} 50%, transparent 90%)`,
-    padding: '10px 16px 8px',
-    display: 'flex', alignItems: 'center',
+    width: '100%', position: 'relative', height: 46, overflow: 'hidden',
   }}>
     <svg
-      style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none' }}
+      style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
       preserveAspectRatio="none"
-      viewBox="0 0 500 50"
+      viewBox="0 0 500 46"
     >
-      <line x1="300" y1="-5" x2="268" y2="55" stroke="white" strokeWidth="20" opacity="0.10" />
-      <line x1="338" y1="-5" x2="306" y2="55" stroke="white" strokeWidth="15" opacity="0.08" />
-      <line x1="372" y1="-5" x2="340" y2="55" stroke="white" strokeWidth="11" opacity="0.06" />
-      <line x1="404" y1="-5" x2="372" y2="55" stroke="white" strokeWidth="8"  opacity="0.05" />
-      <line x1="434" y1="-5" x2="402" y2="55" stroke="white" strokeWidth="6"  opacity="0.04" />
-      <line x1="462" y1="-5" x2="430" y2="55" stroke="white" strokeWidth="4"  opacity="0.03" />
+      {/* Fond plein à gauche */}
+      <polygon points="0,0 320,0 300,46 0,46" fill={couleur} />
+      {/* Barres espacées progressivement vers la droite */}
+      <polygon points="308,0 328,0 308,46 288,46" fill={couleur} />
+      <polygon points="336,0 352,0 332,46 316,46" fill={couleur} />
+      <polygon points="360,0 372,0 352,46 340,46" fill={couleur} />
+      <polygon points="380,0 389,0 369,46 360,46" fill={couleur} />
+      <polygon points="397,0 404,0 384,46 377,46" fill={couleur} />
+      <polygon points="412,0 418,0 398,46 392,46" fill={couleur} />
+      <polygon points="426,0 430,0 410,46 406,46" fill={couleur} />
+      <polygon points="438,0 441,0 421,46 418,46" fill={couleur} />
     </svg>
     <span style={{
+      position: 'absolute', top: '50%', left: 16,
+      transform: 'translateY(-46%)',
       fontFamily: "'Teko', system-ui, sans-serif", fontWeight: 700,
       fontSize: 'clamp(26px, 5vw, 36px)', color: '#fff',
       letterSpacing: '0.02em', lineHeight: 1,
-      fontStyle: 'italic',
-      transform: 'translateY(2px)', display: 'inline-block',
-      position: 'relative', zIndex: 1,
+      fontStyle: 'italic', zIndex: 1,
     }}>{label}</span>
   </div>
 )
