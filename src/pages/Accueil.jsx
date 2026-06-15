@@ -29,16 +29,16 @@ import { SAISON_ESPN } from '../config'
 // Titre section — barres obliques pleines espacées progressivement
 const TitreSection = ({ label, couleur = 'var(--accent)' }) => (
   <div style={{
-    width: '100%', position: 'relative', height: 46, overflow: 'hidden',
+    width: '100%', position: 'relative',
+    height: 'clamp(38px, 6vw, 46px)',
+    overflow: 'hidden',
   }}>
     <svg
       style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
       preserveAspectRatio="none"
       viewBox="0 0 500 46"
     >
-      {/* Fond plein à gauche */}
       <polygon points="0,0 260,0 240,46 0,46" fill={couleur} />
-      {/* Barres espacées progressivement vers la droite */}
       <polygon points="248,0 274,0 254,46 228,46" fill={couleur} />
       <polygon points="282,0 304,0 284,46 262,46" fill={couleur} />
       <polygon points="312,0 330,0 310,46 292,46" fill={couleur} />
@@ -52,7 +52,7 @@ const TitreSection = ({ label, couleur = 'var(--accent)' }) => (
       position: 'absolute', top: '50%', left: 16,
       transform: 'translateY(-46%)',
       fontFamily: "'Teko', system-ui, sans-serif", fontWeight: 700,
-      fontSize: 'clamp(26px, 5vw, 36px)', color: '#fff',
+      fontSize: 'clamp(22px, 5vw, 36px)', color: '#fff',
       letterSpacing: '0.02em', lineHeight: 1,
       fontStyle: 'italic', zIndex: 1,
     }}>{label}</span>
@@ -489,7 +489,7 @@ function Accueil() {
           )}
         </div>
 
-        <div className="anim-fade-up" style={{ paddingTop: 28, paddingBottom: 10 }}>
+        <div className="anim-fade-up" style={{ paddingTop: 28 }}>
           <TitreSection label="À LA UNE" couleur="var(--orange)" />
         </div>
         <BanniereFeed article={articleUne} />
@@ -499,7 +499,7 @@ function Accueil() {
         {/* ── TIMELINE ── */}
         <div className="anim-fade-up anim-delay-1" style={{ marginTop: 8 }}>
           <TitreSection label="TIMELINE" couleur="var(--accent)" />
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px 0' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '14px 16px 0' }}>
             <FiltreEquipe equipeFiltre={equipeFiltre} onSelect={setEquipeFiltre} />
             <button
               onClick={() => navigate('/calendrier')}
@@ -609,9 +609,9 @@ function Accueil() {
 
         {/* ── ACTU NBA ── */}
         {!chargement && user && (
-          <div className="anim-fade-up anim-delay-4" style={{ marginTop: 8, borderLeft: '3px solid var(--orange)' }}>
+          <div className="anim-fade-up anim-delay-4" style={{ marginTop: 8, background: '#f0ede8', borderLeft: '3px solid var(--orange)' }}>
             <div style={{ marginBottom: 10 }}>
-              <TitreSection label="ACTU NBA" couleur="var(--accent)" />
+              <TitreSection label="ACTU NBA" couleur="#c05a10" />
             </div>
             <div style={{ paddingLeft: 16, paddingRight: 16, paddingBottom: 16 }}>
               <NewsNBA onFeedCharge={setArticleUne} />
