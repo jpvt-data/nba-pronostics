@@ -222,7 +222,7 @@ function Navigation({ nbPronosAttente = 0, onOpenOnboarding }) {
         ...navBase, top: 0, height: 52,
         background: 'var(--nav-bg)',
         borderBottomWidth: 1, borderBottomStyle: 'solid', borderBottomColor: 'var(--nav-border)',
-        alignItems: 'stretch',
+        alignItems: 'stretch', overflow: 'hidden',
         backdropFilter: 'blur(12px)',
         WebkitBackdropFilter: 'blur(12px)',
       }}>
@@ -234,7 +234,7 @@ function Navigation({ nbPronosAttente = 0, onOpenOnboarding }) {
         }}>
           {/* Logo — gauche */}
           <div onClick={() => navigate('/accueil')} style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', height: '100%' }}>
-            <LogoTeko taille={46} />
+            <LogoTeko taille={42} />
           </div>
 
           {/* Icônes nav + Info + Menu — droite */}
@@ -311,7 +311,7 @@ function Navigation({ nbPronosAttente = 0, onOpenOnboarding }) {
         WebkitBackdropFilter: 'blur(12px)',
       }}>
         <div onClick={() => navigate('/accueil')} style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-          <LogoTeko taille={30} />
+          <LogoTeko taille={36} />
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <button onClick={() => onOpenOnboarding?.()} style={{
