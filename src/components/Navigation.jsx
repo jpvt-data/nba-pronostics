@@ -95,11 +95,6 @@ function Navigation({ nbPronosAttente = 0 }) {
         alt="Swish League"
         style={{ height: hauteur, width: 'auto', objectFit: 'contain' }}
       />
-      <span style={{
-        fontFamily: 'var(--font-body)', fontSize: 7, fontWeight: 500,
-        color: 'var(--nav-text-dim)', letterSpacing: '0.16em',
-        textTransform: 'uppercase', lineHeight: 1, paddingLeft: 2,
-      }}>Vis la saison autrement</span>
     </div>
   )
 
