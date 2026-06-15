@@ -20,7 +20,7 @@ import OnboardingTuto from '../components/OnboardingTuto'
 import PopupActu from '../components/PopupActu'
 import { track } from '../services/tracker'
 import { useNavigate } from 'react-router-dom'
-import { Calendar, Target, RefreshCw, Info } from 'lucide-react'
+import { Calendar, Target, RefreshCw, Info, Newspaper, Clock, Trophy, MessageSquare, BarChart2, Rss } from 'lucide-react'
 import { Avatar } from '../components/Avatar'
 import { useNoSpoil } from '../context/NoSpoilContext'
 import { useNotif } from '../context/NotifContext'
@@ -457,9 +457,11 @@ function Accueil() {
         </div>
 
         {/* ── À LA UNE ── */}
-        <div className="anim-fade-up" style={{ paddingLeft: 16, paddingTop: 28, paddingBottom: 10, display: 'flex', alignItems: 'baseline', gap: 6 }}>
-          <span className="teko-title" style={{ fontSize: 28, color: 'var(--text-1)' }}>À LA</span>
-          <span className="teko-title" style={{ fontSize: 28, color: 'var(--orange)' }}>UNE</span>
+        <div className="anim-fade-up" style={{ paddingLeft: 16, paddingTop: 28, paddingBottom: 10, display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'var(--orange)', borderRadius: 4, padding: '2px 8px 2px 6px' }}>
+            <Newspaper size={12} strokeWidth={2} color="#fff" />
+            <span className="teko-title" style={{ fontSize: 15, color: '#fff', letterSpacing: '0.06em' }}>À LA UNE</span>
+          </div>
         </div>
         <BanniereFeed article={articleUne} />
 
@@ -467,9 +469,9 @@ function Accueil() {
 
         {/* ── TIMELINE ── */}
         <div className="anim-fade-up anim-delay-1" style={{ marginTop: 8, padding: '0 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-          <div style={{ display: 'flex', alignItems: 'baseline' }}>
-            <span className="teko-title" style={{ fontSize: 28, color: 'var(--text-1)' }}>TIME</span>
-            <span className="teko-title" style={{ fontSize: 28, color: 'var(--accent)' }}>LINE</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'var(--accent)', borderRadius: 4, padding: '2px 8px 2px 6px' }}>
+            <Clock size={12} strokeWidth={2} color="#fff" />
+            <span className="teko-title" style={{ fontSize: 15, color: '#fff', letterSpacing: '0.06em' }}>TIMELINE</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <FiltreEquipe equipeFiltre={equipeFiltre} onSelect={setEquipeFiltre} />
@@ -541,10 +543,10 @@ function Accueil() {
         {/* ── LIGUE EN COURS ── */}
         {!chargement && user && (
           <div className="anim-fade-up anim-delay-2" style={{ borderLeft: '3px solid var(--accent)', padding: '12px 16px 16px 16px', marginTop: 32, marginBottom: 8 }}>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 0, marginBottom: 10 }}>
-              <span className="teko-title" style={{ fontSize: 28, color: 'var(--text-1)' }}>CLASSE</span>
-              <span className="teko-title" style={{ fontSize: 28, color: 'var(--accent)' }}>MENT LIGUE</span>
-            </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'var(--accent)', borderRadius: 4, padding: '2px 8px 2px 6px', marginBottom: 10 }}>
+            <Trophy size={12} strokeWidth={2} color="#fff" />
+            <span className="teko-title" style={{ fontSize: 15, color: '#fff', letterSpacing: '0.06em' }}>CLASSEMENT LIGUE</span>
+          </div>
             <ClassementRapide userId={user.id} />
           </div>
         )}
@@ -567,9 +569,9 @@ function Accueil() {
               paddingLeft: 16, paddingRight: 16, marginBottom: 12,
               display: 'flex', alignItems: 'baseline', justifyContent: 'space-between',
             }}>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-                <span className="teko-title" style={{ fontSize: 28, color: 'var(--gold)' }}>CLASSEMENT</span>
-                <span className="teko-title" style={{ fontSize: 28, color: 'var(--text-1)' }}>NBA</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'var(--gold)', borderRadius: 4, padding: '2px 8px 2px 6px' }}>
+                <BarChart2 size={12} strokeWidth={2} color="#fff" />
+                <span className="teko-title" style={{ fontSize: 15, color: '#fff', letterSpacing: '0.06em' }}>CLASSEMENT NBA</span>
               </div>
               <button
                 onClick={() => navigate('/stats')}
@@ -592,10 +594,12 @@ function Accueil() {
 
         {/* ── ACTU NBA ── */}
         {!chargement && user && (
-          <div className="anim-fade-up anim-delay-4" style={{ marginTop: 8, borderLeft: '3px solid var(--orange)', background: 'rgba(249,115,22,0.04)' }}>
-            <div style={{ padding: '14px 16px 0 16px', display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 10 }}>
-              <span className="teko-title" style={{ fontSize: 28, color: 'var(--text-1)' }}>ACTU</span>
-              <span className="teko-title" style={{ fontSize: 28, color: 'var(--accent)' }}>NBA</span>
+          <div className="anim-fade-up anim-delay-4" style={{ marginTop: 8, borderLeft: '3px solid var(--orange)' }}>
+            <div style={{ padding: '14px 16px 0 16px', marginBottom: 10 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'var(--accent)', borderRadius: 4, padding: '2px 8px 2px 6px', display: 'inline-flex' }}>
+                <Rss size={12} strokeWidth={2} color="#fff" />
+                <span className="teko-title" style={{ fontSize: 15, color: '#fff', letterSpacing: '0.06em' }}>ACTU NBA</span>
+              </div>
             </div>
             <div style={{ paddingLeft: 16, paddingRight: 16, paddingBottom: 16 }}>
               <NewsNBA onFeedCharge={setArticleUne} />
