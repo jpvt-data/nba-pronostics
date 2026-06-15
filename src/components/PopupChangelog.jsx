@@ -74,7 +74,6 @@ function PopupChangelog({ forceOuvert = false, onFermer }) {
 
   return (
     <>
-      {/* Conditionnel : */}
       <div
         onClick={connecte ? fermer : undefined}
         style={{ position: 'fixed', inset: 0, background: connecte ? 'rgba(0,0,0,0.85)' : 'var(--bg-0)', zIndex: 300 }}
@@ -90,41 +89,29 @@ function PopupChangelog({ forceOuvert = false, onFermer }) {
         zIndex: 301,
         overflow: 'hidden',
         display: 'flex', flexDirection: 'column', alignItems: 'center',
-        padding: '36px 24px 28px',
+        padding: '40px 24px 32px',
       }}>
 
-        {/* Accroche */}
-        <p style={{
-          fontSize: 10, fontWeight: 600, color: 'var(--text-3)',
-          textTransform: 'uppercase', letterSpacing: '0.12em',
-          marginBottom: 20, textAlign: 'center',
-          opacity: phase >= 1 ? 1 : 0, transition: 'opacity 0.4s',
-        }}>
-          L'app de pronos NBA entre potes
-        </p>
-
-        {/* Logo */}
+        {/* Logo Teko — identique navbar */}
         <div style={{
-          display: 'flex', alignItems: 'baseline', gap: 0,
+          display: 'flex', alignItems: 'center',
           opacity: phase >= 1 ? 1 : 0,
-          transform: phase >= 1 ? 'translateY(0)' : 'translateY(8px)',
+          transform: phase >= 1 ? 'translateY(0)' : 'translateY(10px)',
           transition: 'opacity 0.4s, transform 0.4s',
-          marginBottom: 16,
+          marginBottom: 32,
         }}>
-          <span style={{ fontFamily: 'var(--font-title)', fontWeight: 700, fontSize: 42, color: 'var(--text-1)', letterSpacing: '0.02em', lineHeight: 1 }}>SWISH</span>
-          <span style={{ fontFamily: 'var(--font-title)', fontWeight: 700, fontSize: 42, color: 'var(--accent)', letterSpacing: '0.02em', lineHeight: 1 }}>LEAGUE</span>
-        </div>
-
-        {/* Tagline */}
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 28, minHeight: 20 }}>
-          {MOTS.map((mot, i) => (
-            <span key={i} style={{
-              fontSize: 12, fontWeight: 600, color: COULEURS[i], letterSpacing: '0.04em',
-              opacity: phase >= i + 2 ? 1 : 0,
-              transform: phase >= i + 2 ? 'translateY(0)' : 'translateY(6px)',
-              transition: 'opacity 0.35s, transform 0.35s',
-            }}>{mot}</span>
-          ))}
+          <span style={{
+            fontFamily: "'Teko', system-ui, sans-serif", fontWeight: 700,
+            fontSize: 52, color: 'var(--text-1)',
+            letterSpacing: '-0.01em', lineHeight: 1,
+            fontStyle: 'italic', transform: 'translateY(3px)', display: 'inline-block',
+          }}>SWISH</span>
+          <span style={{
+            fontFamily: "'Teko', system-ui, sans-serif", fontWeight: 700,
+            fontSize: 52, color: 'var(--accent)',
+            letterSpacing: '-0.01em', lineHeight: 1,
+            fontStyle: 'italic', transform: 'translateY(3px)', display: 'inline-block',
+          }}>LEAGUE</span>
         </div>
 
         {/* Séparateur */}
