@@ -3,6 +3,29 @@ import { supabase } from '../lib/supabase'
 import { Send } from 'lucide-react'
 import { track } from '../services/tracker'
 
+// Titre section — bandeau oblique identique Accueil
+const TitreSection = ({ label, couleur = '#6366f1' }) => (
+  <div style={{ width: '100%', position: 'relative', height: 'clamp(38px, 6vw, 46px)', overflow: 'hidden' }}>
+    <svg style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }} preserveAspectRatio="none" viewBox="0 0 500 46">
+      <polygon points="0,0 260,0 240,46 0,46" fill={couleur} />
+      <polygon points="248,0 274,0 254,46 228,46" fill={couleur} />
+      <polygon points="282,0 304,0 284,46 262,46" fill={couleur} />
+      <polygon points="312,0 330,0 310,46 292,46" fill={couleur} />
+      <polygon points="338,0 353,0 333,46 318,46" fill={couleur} />
+      <polygon points="361,0 374,0 354,46 341,46" fill={couleur} />
+      <polygon points="382,0 393,0 373,46 362,46" fill={couleur} />
+      <polygon points="401,0 410,0 390,46 381,46" fill={couleur} />
+      <polygon points="418,0 426,0 406,46 398,46" fill={couleur} />
+    </svg>
+    <span style={{
+      position: 'absolute', top: '50%', left: 16, transform: 'translateY(-46%)',
+      fontFamily: "'Teko', system-ui, sans-serif", fontWeight: 700,
+      fontSize: 'clamp(22px, 5vw, 36px)', color: '#fff',
+      letterSpacing: '0.02em', lineHeight: 1, fontStyle: 'italic', zIndex: 1,
+    }}>{label}</span>
+  </div>
+)
+
 // ID du groupe "Général" créé en base — fixe
 const GROUPE_GENERAL_ID = 'aaaaaaaa-0000-0000-0000-000000000001'
 
@@ -300,12 +323,11 @@ function LeVestiaire({ userId }) {
   }, [userId])
 
   return (
-    <div style={{ background: '#f0ede8', padding: '12px 16px 14px 16px', marginBottom: 4 }}>
-      {/* Titre */}
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 10 }}>
-        <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 28, color: '#0d0d12', letterSpacing: '0.02em', lineHeight: 1 }}>LE</span>
-        <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 28, color: '#6366f1', letterSpacing: '0.02em', lineHeight: 1 }}>VESTIAIRE</span>
-      </div>
+    <div style={{ background: '#f0ede8', marginBottom: 4 }}>
+      {/* Titre bandeau */}
+      <TitreSection label="LE VESTIAIRE" couleur="#6366f1" />
+
+      <div style={{ padding: '12px 16px 14px 16px' }}>
 
       {/* Streaks 7 jours */}
       {!chargement && evenements.length > 0 && (
@@ -330,20 +352,13 @@ function LeVestiaire({ userId }) {
       )}
 
       {/* Chat général */}
-      <div style={{
-        background: '#e8e4dc',
-        borderRadius: 4,
-        padding: '12px 14px',
-      }}>
-        <div style={{
-          fontSize: 11, fontWeight: 700, color: '#555',
-          textTransform: 'uppercase', letterSpacing: '0.08em',
-          marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6,
-        }}>
+      <div style={{ background: '#e8e4dc', borderRadius: 4, padding: '12px 14px' }}>
+        <div style={{ fontSize: 11, fontWeight: 700, color: '#555', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#555', flexShrink: 0 }}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
           Chat général
         </div>
         {userId && <ChatGeneral userId={userId} />}
+      </div>
       </div>
     </div>
   )
