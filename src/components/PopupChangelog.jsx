@@ -87,7 +87,6 @@ function PopupChangelog({ forceOuvert = false, onFermer }) {
         background: 'var(--bg-1)',
         borderWidth: 1, borderStyle: 'solid', borderColor: 'var(--border-2)',
         zIndex: 301,
-        overflow: 'hidden',
         display: 'flex', flexDirection: 'column', alignItems: 'center',
         padding: '40px 24px 32px',
       }}>
