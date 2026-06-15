@@ -37,16 +37,16 @@ const TitreSection = ({ label, couleur = 'var(--accent)' }) => (
       viewBox="0 0 500 46"
     >
       {/* Fond plein à gauche */}
-      <polygon points="0,0 320,0 300,46 0,46" fill={couleur} />
+      <polygon points="0,0 260,0 240,46 0,46" fill={couleur} />
       {/* Barres espacées progressivement vers la droite */}
-      <polygon points="308,0 328,0 308,46 288,46" fill={couleur} />
-      <polygon points="336,0 352,0 332,46 316,46" fill={couleur} />
-      <polygon points="360,0 372,0 352,46 340,46" fill={couleur} />
-      <polygon points="380,0 389,0 369,46 360,46" fill={couleur} />
-      <polygon points="397,0 404,0 384,46 377,46" fill={couleur} />
-      <polygon points="412,0 418,0 398,46 392,46" fill={couleur} />
-      <polygon points="426,0 430,0 410,46 406,46" fill={couleur} />
-      <polygon points="438,0 441,0 421,46 418,46" fill={couleur} />
+      <polygon points="248,0 274,0 254,46 228,46" fill={couleur} />
+      <polygon points="282,0 304,0 284,46 262,46" fill={couleur} />
+      <polygon points="312,0 330,0 310,46 292,46" fill={couleur} />
+      <polygon points="338,0 353,0 333,46 318,46" fill={couleur} />
+      <polygon points="361,0 374,0 354,46 341,46" fill={couleur} />
+      <polygon points="382,0 393,0 373,46 362,46" fill={couleur} />
+      <polygon points="401,0 410,0 390,46 381,46" fill={couleur} />
+      <polygon points="418,0 426,0 406,46 398,46" fill={couleur} />
     </svg>
     <span style={{
       position: 'absolute', top: '50%', left: 16,
@@ -506,12 +506,14 @@ function Accueil() {
               className="btn-tap"
               style={{
                 display: 'flex', alignItems: 'center', gap: 5,
-                background: 'none', border: '1px solid var(--border)',
-                borderRadius: 'var(--radius-sm)', padding: '4px 8px',
-                cursor: 'pointer', fontSize: 11, color: 'var(--text-3)', fontWeight: 600,
+                background: 'var(--bg-2)', border: '1px solid var(--border-2)',
+                borderRadius: 20, padding: '5px 12px',
+                cursor: 'pointer', fontSize: 11, color: 'var(--text-2)',
+                fontWeight: 600, letterSpacing: '0.04em',
+                fontFamily: 'var(--font-body)',
               }}
             >
-              <Calendar size={12} strokeWidth={1.5} /> Calendrier
+              <Calendar size={11} strokeWidth={2} /> Calendrier
             </button>
           </div>
         </div>
