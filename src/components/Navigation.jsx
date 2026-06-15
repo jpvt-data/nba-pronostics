@@ -95,12 +95,14 @@ function Navigation({ nbPronosAttente = 0, onOpenOnboarding }) {
         fontSize: taille, color: 'var(--text-1)',
         letterSpacing: '-0.01em', lineHeight: 1,
         fontStyle: 'italic', display: 'inline-block',
+        transform: 'translateY(3px)',
       }}>SWISH</span>
       <span style={{
         fontFamily: "'Teko', system-ui, sans-serif", fontWeight: 700,
         fontSize: taille, color: 'var(--accent)',
         letterSpacing: '-0.01em', lineHeight: 1,
         fontStyle: 'italic', display: 'inline-block',
+        transform: 'translateY(3px)',
       }}>LEAGUE</span>
     </div>
   )
