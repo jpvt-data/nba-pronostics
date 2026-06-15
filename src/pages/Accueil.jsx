@@ -27,34 +27,51 @@ import { useNotif } from '../context/NotifContext'
 import { SAISON_ESPN } from '../config'
 
 // Titre section — bandeau pleine largeur style ESPN/NFL
-const TitreSection = ({ label, Icone, couleur = 'var(--accent)' }) => (
+const TitreSection = ({ label, couleur = 'var(--accent)' }) => (
   <div style={{
     width: '100%',
     position: 'relative',
     overflow: 'hidden',
     backgroundColor: couleur,
-    padding: '6px 16px',
-    display: 'flex', alignItems: 'center', gap: 8,
+    padding: '8px 16px 6px',
+    display: 'flex', alignItems: 'center',
   }}>
-    {/* Barres obliques SVG pleine hauteur */}
+    {/* Barres obliques SVG — partent de la droite, se répètent jusqu'au milieu */}
     <svg
-      style={{ position: 'absolute', top: 0, right: 0, height: '100%', width: 200, opacity: 0.18 }}
+      style={{ position: 'absolute', top: 0, right: 0, height: '100%', width: '60%', pointerEvents: 'none' }}
       preserveAspectRatio="none"
-      viewBox="0 0 200 40"
+      viewBox="0 0 300 50"
     >
-      <line x1="160" y1="0" x2="140" y2="40" stroke="white" strokeWidth="6" />
-      <line x1="175" y1="0" x2="155" y2="40" stroke="white" strokeWidth="5" />
-      <line x1="188" y1="0" x2="168" y2="40" stroke="white" strokeWidth="4" />
-      <line x1="198" y1="0" x2="178" y2="40" stroke="white" strokeWidth="3" />
-      <line x1="206" y1="0" x2="186" y2="40" stroke="white" strokeWidth="2" />
+      {/* Dégradé qui masque les barres vers la gauche */}
+      <defs>
+        <linearGradient id={`fade-${label}`} x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stopColor="black" stopOpacity="1" />
+          <stop offset="40%" stopColor="black" stopOpacity="0" />
+        </linearGradient>
+        <mask id={`mask-${label}`}>
+          <rect width="300" height="50" fill="white" />
+          <rect width="300" height="50" fill={`url(#fade-${label})`} />
+        </mask>
+      </defs>
+      <g mask={`url(#mask-${label})`}>
+        <line x1="20"  y1="0" x2="-10" y2="50" stroke="white" strokeWidth="14" opacity="0.22" />
+        <line x1="50"  y1="0" x2="20"  y2="50" stroke="white" strokeWidth="11" opacity="0.18" />
+        <line x1="80"  y1="0" x2="50"  y2="50" stroke="white" strokeWidth="9"  opacity="0.14" />
+        <line x1="112" y1="0" x2="82"  y2="50" stroke="white" strokeWidth="7"  opacity="0.11" />
+        <line x1="146" y1="0" x2="116" y2="50" stroke="white" strokeWidth="6"  opacity="0.08" />
+        <line x1="182" y1="0" x2="152" y2="50" stroke="white" strokeWidth="5"  opacity="0.06" />
+        <line x1="220" y1="0" x2="190" y2="50" stroke="white" strokeWidth="4"  opacity="0.05" />
+        <line x1="260" y1="0" x2="230" y2="50" stroke="white" strokeWidth="3"  opacity="0.04" />
+        <line x1="295" y1="0" x2="265" y2="50" stroke="white" strokeWidth="2"  opacity="0.03" />
+      </g>
     </svg>
-    {Icone && <Icone size={16} strokeWidth={2.5} color="rgba(255,255,255,0.9)" style={{ flexShrink: 0 }} />}
     <span style={{
       fontFamily: "'Teko', system-ui, sans-serif", fontWeight: 700,
-      fontSize: 'clamp(22px, 4vw, 30px)', color: '#fff',
-      letterSpacing: '0.06em', lineHeight: 1,
-      position: 'relative', zIndex: 1,
+      fontSize: 'clamp(26px, 5vw, 36px)', color: '#fff',
+      letterSpacing: '0.02em', lineHeight: 1,
+      fontStyle: 'italic',
       transform: 'translateY(2px)', display: 'inline-block',
+      position: 'relative', zIndex: 1,
     }}>{label}</span>
   </div>
 )
@@ -489,18 +506,17 @@ function Accueil() {
           )}
         </div>
 
-        {/* ── À LA UNE ── */}
         <div className="anim-fade-up" style={{ paddingTop: 28, paddingBottom: 10 }}>
-          <TitreSection label="À LA UNE" Icone={Newspaper} couleur="var(--orange)" />
+          <TitreSection label="À LA UNE" couleur="var(--orange)" />
         </div>
         <BanniereFeed article={articleUne} />
 
         <div style={{ height: 32 }} />
 
         {/* ── TIMELINE ── */}
-        <div className="anim-fade-up anim-delay-1" style={{ marginTop: 8, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-          <TitreSection label="TIMELINE" Icone={Clock} couleur="var(--accent)" />
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div className="anim-fade-up anim-delay-1" style={{ marginTop: 8 }}>
+          <TitreSection label="TIMELINE" couleur="var(--accent)" />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px 0' }}>
             <FiltreEquipe equipeFiltre={equipeFiltre} onSelect={setEquipeFiltre} />
             <button
               onClick={() => navigate('/calendrier')}
@@ -570,7 +586,7 @@ function Accueil() {
         {/* ── LIGUE EN COURS ── */}
         {!chargement && user && (
           <div className="anim-fade-up anim-delay-2" style={{ borderLeft: '3px solid var(--accent)', padding: '12px 16px 16px 16px', marginTop: 32, marginBottom: 8 }}>
-          <TitreSection label="CLASSEMENT LIGUE" Icone={Trophy} couleur="var(--accent)" />
+          <TitreSection label="CLASSEMENT LIGUE" couleur="var(--accent)" />
             <ClassementRapide userId={user.id} />
           </div>
         )}
@@ -589,22 +605,13 @@ function Accueil() {
         {/* ── CLASSEMENT NBA ── */}
         {!chargement && (
           <div className="anim-fade-up anim-delay-3" style={{ marginTop: 8 }}>
-            <div style={{
-              paddingLeft: 16, paddingRight: 16, marginBottom: 12,
-              display: 'flex', alignItems: 'baseline', justifyContent: 'space-between',
-            }}>
-              <TitreSection label="CLASSEMENT NBA" Icone={BarChart2} couleur="var(--gold)" />
-              <button
-                onClick={() => navigate('/stats')}
-                className="btn-tap"
-                style={{
-                  background: 'none', border: 'none', cursor: 'pointer',
-                  fontSize: 11, fontWeight: 600, color: 'var(--text-3)',
-                  padding: 0, letterSpacing: '0.03em',
-                }}
-              >
-                complet →
-              </button>
+            <TitreSection label="CLASSEMENT NBA" couleur="var(--gold)" />
+            <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '6px 16px 6px' }}>
+              <button onClick={() => navigate('/stats')} className="btn-tap" style={{
+                background: 'none', border: 'none', cursor: 'pointer',
+                fontSize: 11, fontWeight: 600, color: 'var(--text-3)',
+                padding: 0, letterSpacing: '0.03em',
+              }}>complet →</button>
             </div>
             <StandingsNBA typeSaison={typeSaisonEffectif} />
             {typeSaisonEffectif === 3 && <BracketPlayoffs saison={saisonActuelle} />}
@@ -616,8 +623,8 @@ function Accueil() {
         {/* ── ACTU NBA ── */}
         {!chargement && user && (
           <div className="anim-fade-up anim-delay-4" style={{ marginTop: 8, borderLeft: '3px solid var(--orange)' }}>
-            <div style={{ padding: '14px 16px 0 16px', marginBottom: 10 }}>
-              <TitreSection label="ACTU NBA" Icone={Rss} couleur="var(--accent)" />
+            <div style={{ marginBottom: 10 }}>
+              <TitreSection label="ACTU NBA" couleur="var(--accent)" />
             </div>
             <div style={{ paddingLeft: 16, paddingRight: 16, paddingBottom: 16 }}>
               <NewsNBA onFeedCharge={setArticleUne} />
