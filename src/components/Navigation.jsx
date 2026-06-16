@@ -39,6 +39,35 @@ const navBase = {
   zIndex: 100,
 }
 
+// Logo défini HORS du composant Navigation
+const LogoTeko = ({ taille = 46 }) => (
+  <div style={{ display: 'flex', alignItems: 'center', height: '100%' }}>
+    <span style={{
+      fontFamily: "'Teko', system-ui, sans-serif", fontWeight: 700,
+      fontSize: taille, color: 'var(--text-1)',
+      letterSpacing: '-0.01em', lineHeight: 1,
+      fontStyle: 'italic', display: 'inline-block',
+      transform: 'translateY(3px)',
+    }}>SWISH</span>
+    <span style={{
+      fontFamily: "'Teko', system-ui, sans-serif", fontWeight: 700,
+      fontSize: taille, color: 'var(--accent)',
+      letterSpacing: '-0.01em', lineHeight: 1,
+      fontStyle: 'italic', display: 'inline-block',
+      transform: 'translateY(3px)',
+    }}>LEAGUE</span>
+  </div>
+)
+
+const BadgeBientot = () => (
+  <span style={{
+    marginLeft: 'auto', fontSize: 9, fontWeight: 600,
+    color: 'var(--text-3)', background: 'var(--bg-2)',
+    borderWidth: 1, borderStyle: 'solid', borderColor: 'var(--border)',
+    borderRadius: 4, padding: '1px 5px', textTransform: 'uppercase', letterSpacing: '0.05em',
+  }}>bientôt</span>
+)
+
 const styleLienHamburger = (actif) => ({
   display: 'flex', alignItems: 'center', gap: 10,
   background: actif ? 'var(--accent-dim)' : 'none',
@@ -85,36 +114,6 @@ function Navigation({ nbPronosAttente = 0, onOpenOnboarding }) {
     navigate(chemin)
     setOuvert(false)
   }
-
-  // Logo texte — SWISH blanc + LEAGUE violet, italique, hauteur étirée
-  // Logo desktop — grand, remplit la navbar 52px
-  const LogoTeko = ({ taille = 46 }) => (
-    <div style={{ display: 'flex', alignItems: 'center', height: '100%' }}>
-      <span style={{
-        fontFamily: "'Teko', system-ui, sans-serif", fontWeight: 700,
-        fontSize: taille, color: 'var(--text-1)',
-        letterSpacing: '-0.01em', lineHeight: 1,
-        fontStyle: 'italic', display: 'inline-block',
-        transform: 'translateY(3px)',
-      }}>SWISH</span>
-      <span style={{
-        fontFamily: "'Teko', system-ui, sans-serif", fontWeight: 700,
-        fontSize: taille, color: 'var(--accent)',
-        letterSpacing: '-0.01em', lineHeight: 1,
-        fontStyle: 'italic', display: 'inline-block',
-        transform: 'translateY(3px)',
-      }}>LEAGUE</span>
-    </div>
-  )
-
-  const BadgeBientot = () => (
-    <span style={{
-      marginLeft: 'auto', fontSize: 9, fontWeight: 600,
-      color: 'var(--text-3)', background: 'var(--bg-2)',
-      borderWidth: 1, borderStyle: 'solid', borderColor: 'var(--border)',
-      borderRadius: 4, padding: '1px 5px', textTransform: 'uppercase', letterSpacing: '0.05em',
-    }}>bientôt</span>
-  )
 
   return (
     <>
