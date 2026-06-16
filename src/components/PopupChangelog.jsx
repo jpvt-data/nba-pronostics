@@ -15,6 +15,7 @@ function PopupChangelog({ forceOuvert = false, onFermer }) {
   const [erreur, setErreur]     = useState(null)
   const [charg, setCharg]       = useState(false)
   const [fontPret, setFontPret] = useState(false)
+  const navigate                = useNavigate()
 
   useEffect(() => {
     document.fonts.ready.then(() => setFontPret(true))
