@@ -409,6 +409,7 @@ function MatchDetail() {
       setUser(user)
       track(user.id, 'page_view', '/match', { espn_id })
       const detail = await recupererDetailMatch(espn_id)
+      console.log('ESPN detail:', detail, 'statut:', detail?.statut, 'scores:', detail?.domicile?.score, detail?.exterieur?.score)
 
       // Fallback Supabase si ESPN ne retourne plus le match (ex: Finals archivées)
       if (!detail) {
