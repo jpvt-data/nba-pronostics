@@ -685,60 +685,58 @@ function MatchDetail() {
   const couleurExt = getCouleur(ext)
   const couleurDom = getCouleur(dom)
 
-  const CarteEquipe = ({ eq, align }) => {
-    const selec       = prono === eq.trigramme
-    const perdant     = !noSpoil && termine && !eq.winner && (dom.score != null || ext.score != null)
-    const couleur     = getCouleur(eq)
-    const estAccent   = couleur === 'var(--accent)'
-    const bgSelec     = estAccent ? 'var(--accent-dim)' : `${couleur}18`
-    const txtSelec    = couleur
-
-    return (
-      <button
-        onClick={() => !verrou && faireProno(eq.trigramme)}
-        disabled={verrou}
-        style={{
-          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
-          padding: '20px 10px 16px',
-          background: selec ? bgSelec : 'transparent',
-          borderLeft: align === 'ext' ? `3px solid ${selec ? couleur : 'transparent'}` : 'none',
-          borderRight: align === 'dom' ? `3px solid ${selec ? couleur : 'transparent'}` : 'none',
-          borderTop: 0, borderBottom: 0,
-          cursor: verrou ? 'default' : 'pointer',
-          flex: 1, opacity: perdant ? 0.35 : 1, transition: 'all 0.15s',
-          position: 'relative', overflow: 'hidden',
-        }}
-      >
-        {eq.logo && (
-          <img src={eq.logo} alt="" aria-hidden style={{
-            position: 'absolute', opacity: selec ? 0.08 : 0.04,
-            width: 120, height: 120, objectFit: 'contain',
-            top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
-            pointerEvents: 'none', filter: 'blur(1px)',
-          }} />
-        )}
-        {eq.logo
-          ? <img src={eq.logo} alt={eq.trigramme} style={{ width: 72, height: 72, objectFit: 'contain', position: 'relative' }} />
-          : <div style={{ width: 72, height: 72, borderRadius: '50%', background: 'var(--bg-2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 20, color: 'var(--text-3)' }}>{eq.trigramme}</div>
-        }
-        <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 26, color: selec ? txtSelec : 'var(--text-1)', letterSpacing: '0.04em', position: 'relative' }}>{eq.trigramme}</span>
-        <span style={{ fontSize: 11, color: 'var(--text-3)', textAlign: 'center', position: 'relative', lineHeight: 1.3 }}>{eq.nom}</span>
-        <span style={{ fontSize: 10, color: 'var(--text-3)', position: 'relative' }}>{align === 'ext' ? 'Extérieur' : 'Domicile'}</span>
-        {selec && !termine && (
-          <span style={{ fontSize: 11, color: txtSelec, fontWeight: 700, marginTop: 2, position: 'relative', display: 'flex', alignItems: 'center', gap: 3 }}>
-            <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Mon prono
-          </span>
-        )}
-        {selec && termine && !noSpoil && (
-          <span style={{ fontSize: 11, fontWeight: 700, marginTop: 2, position: 'relative', color: resultat === 'correct' ? 'var(--success)' : resultat === 'incorrect' ? 'var(--danger)' : 'var(--text-3)' }}>
-            {resultat === 'correct' ? 'Correct' : resultat === 'incorrect' ? 'Raté' : 'En attente'}
-          </span>
-        )}
-      </button>
-    )
-  }
+function CarteEquipe({ eq, align, prono, termine, noSpoil, verrou, dom, ext, faireProno, getCouleur, resultat }) {
+  const selec    = prono === eq.trigramme
+  const perdant  = !noSpoil && termine && !eq.winner && (dom.score != null || ext.score != null)
+  const couleur  = getCouleur(eq)
+  const estAccent = couleur === 'var(--accent)'
+  const bgSelec  = estAccent ? 'var(--accent-dim)' : `${couleur}18`
+  const txtSelec = couleur
 
   return (
+    <button
+      onClick={() => !verrou && faireProno(eq.trigramme)}
+      disabled={verrou}
+      style={{
+        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
+        padding: '20px 10px 16px',
+        background: selec ? bgSelec : 'transparent',
+        borderLeft: align === 'ext' ? `3px solid ${selec ? couleur : 'transparent'}` : 'none',
+        borderRight: align === 'dom' ? `3px solid ${selec ? couleur : 'transparent'}` : 'none',
+        borderTop: 0, borderBottom: 0,
+        cursor: verrou ? 'default' : 'pointer',
+        flex: 1, opacity: perdant ? 0.35 : 1, transition: 'all 0.15s',
+        position: 'relative', overflow: 'hidden',
+      }}
+    >
+      {eq.logo && (
+        <img src={eq.logo} alt="" aria-hidden style={{
+          position: 'absolute', opacity: selec ? 0.08 : 0.04,
+          width: 120, height: 120, objectFit: 'contain',
+          top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+          pointerEvents: 'none', filter: 'blur(1px)',
+        }} />
+      )}
+      {eq.logo
+        ? <img src={eq.logo} alt={eq.trigramme} style={{ width: 72, height: 72, objectFit: 'contain', position: 'relative' }} />
+        : <div style={{ width: 72, height: 72, borderRadius: '50%', background: 'var(--bg-2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 20, color: 'var(--text-3)' }}>{eq.trigramme}</div>
+      }
+      <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 26, color: selec ? txtSelec : 'var(--text-1)', letterSpacing: '0.04em', position: 'relative' }}>{eq.trigramme}</span>
+      <span style={{ fontSize: 11, color: 'var(--text-3)', textAlign: 'center', position: 'relative', lineHeight: 1.3 }}>{eq.nom}</span>
+      <span style={{ fontSize: 10, color: 'var(--text-3)', position: 'relative' }}>{align === 'ext' ? 'Extérieur' : 'Domicile'}</span>
+      {selec && !termine && (
+        <span style={{ fontSize: 11, color: txtSelec, fontWeight: 700, marginTop: 2, position: 'relative', display: 'flex', alignItems: 'center', gap: 3 }}>
+          <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Mon prono
+        </span>
+      )}
+      {selec && termine && !noSpoil && (
+        <span style={{ fontSize: 11, fontWeight: 700, marginTop: 2, position: 'relative', color: resultat === 'correct' ? 'var(--success)' : resultat === 'incorrect' ? 'var(--danger)' : 'var(--text-3)' }}>
+          {resultat === 'correct' ? 'Correct' : resultat === 'incorrect' ? 'Raté' : 'En attente'}
+        </span>
+      )}
+    </button>
+  )
+}
     <>
       <Navigation />
       <main style={{ flex: 1, paddingBottom: 40 }}>
@@ -787,7 +785,7 @@ function MatchDetail() {
           )}
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center' }}>
-            {CarteEquipe({ eq: ext, align: 'ext' })}
+            <CarteEquipe eq={ext} align="ext" prono={prono} termine={termine} noSpoil={noSpoil} verrou={verrou} dom={dom} ext={ext} faireProno={faireProno} getCouleur={getCouleur} resultat={resultat} />
             <div style={{ textAlign: 'center', minWidth: 80, padding: '0 8px' }}>
               {(termine || enCours) && ext.score != null ? (
                 <>
@@ -805,7 +803,7 @@ function MatchDetail() {
                 </>
               )}
             </div>
-            {CarteEquipe({ eq: dom, align: 'dom' })}
+            <CarteEquipe eq={dom} align="dom" prono={prono} termine={termine} noSpoil={noSpoil} verrou={verrou} dom={dom} ext={ext} faireProno={faireProno} getCouleur={getCouleur} resultat={resultat} />
           </div>
 
           {nbPeriodes > 0 && !noSpoil && (
