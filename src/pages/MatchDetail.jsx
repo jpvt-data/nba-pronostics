@@ -37,7 +37,7 @@ const mlEnDecimal = (ml) => {
 }
 
 const estVerrouille = (dateStr, statut) => {
-  if (statut?.startsWith('STATUS_FINAL') || statut === 'STATUS_IN_PROGRESS') return true
+  if (statut === 'STATUS_FINAL' || statut === 'STATUS_IN_PROGRESS') return true
   return new Date() >= new Date(dateStr)
 }
 
@@ -409,7 +409,61 @@ function MatchDetail() {
       setUser(user)
       track(user.id, 'page_view', '/match', { espn_id })
       const detail = await recupererDetailMatch(espn_id)
-      if (!detail) { setErr(true); setCharg(false); return }
+
+      // Fallback Supabase si ESPN ne retourne plus le match (ex: Finals archivées)
+      if (!detail) {
+        const { data: matchDB } = await supabase
+          .from('matchs')
+          .select('*')
+          .eq('espn_id', espn_id)
+          .maybeSingle()
+
+        if (!matchDB) { setErr(true); setCharg(false); return }
+
+        // Construire un objet match minimal depuis Supabase
+        const matchFallback = {
+          espn_id,
+          date: matchDB.date_match,
+          statut: matchDB.statut || 'STATUS_FINAL',
+          statutLabel: 'Final',
+          periode: null, clock: null,
+          saison: matchDB.saison ? `${matchDB.saison - 1}-${String(matchDB.saison).slice(2)}` : null,
+          typeSaison: null, saisonNum: matchDB.saison, typeSaisonNum: matchDB.type_saison,
+          tag: matchDB.tag || 'regular',
+          headline: '', isSummerLeague: false,
+          stade: null, ville: null, serie: null,
+          domicile: {
+            nom: matchDB.equipe_domicile || '', trigramme: matchDB.equipe_domicile || '',
+            logo: `https://a.espncdn.com/i/teamlogos/nba/500/${matchDB.equipe_domicile?.toLowerCase()}.png`,
+            color: null, alternateColor: null,
+            score: matchDB.score_domicile ?? null,
+            winner: matchDB.gagnant === matchDB.equipe_domicile,
+            periodes: [], stats: {}, leaders: [], l5: [], blessés: [],
+          },
+          exterieur: {
+            nom: matchDB.equipe_exterieur || '', trigramme: matchDB.equipe_exterieur || '',
+            logo: `https://a.espncdn.com/i/teamlogos/nba/500/${matchDB.equipe_exterieur?.toLowerCase()}.png`,
+            color: null, alternateColor: null,
+            score: matchDB.score_exterieur ?? null,
+            winner: matchDB.gagnant === matchDB.equipe_exterieur,
+            periodes: [], stats: {}, leaders: [], l5: [], blessés: [],
+          },
+        }
+        setMatch(matchFallback)
+        const { data: tousLesPronos } = await supabase
+          .from('pronos').select('equipe_choisie, resultat, matchs(espn_id, id)').eq('user_id', user.id)
+        const found = tousLesPronos?.find(p => p.matchs?.espn_id === espn_id)
+        if (found) { setProno(found.equipe_choisie); setRes(found.resultat) }
+        const { data: matchDBRow2 } = await supabase.from('matchs').select('id').eq('espn_id', espn_id).maybeSingle()
+        if (matchDBRow2) {
+          setMatchDBId(matchDBRow2.id)
+          const fourchetteExistante = await recupererFourchetteEcart(user.id, matchDBRow2.id)
+          if (fourchetteExistante) setEcart(fourchetteExistante)
+        }
+        setCharg(false)
+        return
+      }
+
       setMatch(detail)
 
       const { data: tousLesPronos } = await supabase
@@ -425,7 +479,7 @@ function MatchDetail() {
       }
       setCharg(false)
 
-      if (!detail.statut?.startsWith('STATUS_FINAL')) {
+      if (detail.statut !== 'STATUS_FINAL') {
         // Prédiction ESPN (endpoint core API)
         try {
           const resPred = await fetch(
@@ -622,7 +676,7 @@ function MatchDetail() {
 
   const { domicile: dom, exterieur: ext } = match
   const verrou     = estVerrouille(match.date, match.statut)
-  const termine    = match.statut?.startsWith('STATUS_FINAL')
+  const termine    = match.statut === 'STATUS_FINAL'
   const enCours    = match.statut === 'STATUS_IN_PROGRESS'
   const dateStr    = new Date(match.date).toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long', year:'numeric' })
   const heureStr   = new Date(match.date).toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' })
