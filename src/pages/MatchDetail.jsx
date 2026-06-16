@@ -37,7 +37,7 @@ const mlEnDecimal = (ml) => {
 }
 
 const estVerrouille = (dateStr, statut) => {
-  if (statut === 'STATUS_FINAL' || statut === 'STATUS_IN_PROGRESS') return true
+  if (statut?.startsWith('STATUS_FINAL') || statut === 'STATUS_IN_PROGRESS') return true
   return new Date() >= new Date(dateStr)
 }
 
@@ -286,13 +286,13 @@ const BlocCotes = ({ cotes, prediction, ext, dom, couleurExt, couleurDom, termin
           <div style={{ fontSize: 10, color: 'var(--text-3)', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 10 }}>Probabilités de victoire</div>
 
           {prediction ? (
-            <BarreProb pctExt={prediction.extPct} pctDom={prediction.domPct} opacite={1} label="Algorithme ESPN" />
+            {BarreProb({ pctExt: prediction.extPct, pctDom: prediction.domPct, opacite: 1, label: "Algorithme ESPN" })}
           ) : (
             <div style={{ fontSize: 11, color: 'var(--text-3)', fontStyle: 'italic', marginBottom: 8 }}>Prédiction ESPN non disponible</div>
           )}
 
           {consensusPct ? (
-            <BarreProb pctExt={consensusPct.pctExt} pctDom={consensusPct.pctDom} opacite={0.6} label={`Consensus marché (${cotes.books.length} bookmakers)`} />
+            {BarreProb({ pctExt: consensusPct.pctExt, pctDom: consensusPct.pctDom, opacite: 0.6, label: `Consensus marché (${cotes.books.length} bookmakers)` })}
           ) : (
             <div style={{ fontSize: 11, color: 'var(--text-3)', fontStyle: 'italic' }}>Consensus marché non disponible</div>
           )}
@@ -328,7 +328,7 @@ const BlocCotes = ({ cotes, prediction, ext, dom, couleurExt, couleurDom, termin
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
                 {BOOKS_FR.map(key => {
                   const p = probsParBook(key)
-                  return <CarteBook key={key} label={BOOKS_FR_LABELS[key]} pctExt={p?.pct1} pctDom={p?.pct2} />
+                  return CarteBook({ key, label: BOOKS_FR_LABELS[key], pctExt: p?.pct1, pctDom: p?.pct2 })
                 })}
               </div>
             </div>
@@ -339,7 +339,7 @@ const BlocCotes = ({ cotes, prediction, ext, dom, couleurExt, couleurDom, termin
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
                 {BOOKS_US.map(key => {
                   const p = probsParBook(key)
-                  return <CarteBook key={key} label={BOOKS_US_LABELS[key]} pctExt={p?.pct1} pctDom={p?.pct2} />
+                  return CarteBook({ key, label: BOOKS_US_LABELS[key], pctExt: p?.pct1, pctDom: p?.pct2 })
                 })}
               </div>
             </div>
@@ -480,7 +480,7 @@ function MatchDetail() {
       }
       setCharg(false)
 
-      if (detail.statut !== 'STATUS_FINAL') {
+      if (!detail.statut?.startsWith('STATUS_FINAL')) {
         // Prédiction ESPN (endpoint core API)
         try {
           const resPred = await fetch(
@@ -677,7 +677,7 @@ function MatchDetail() {
 
   const { domicile: dom, exterieur: ext } = match
   const verrou     = estVerrouille(match.date, match.statut)
-  const termine    = match.statut === 'STATUS_FINAL'
+  const termine    = match.statut?.startsWith('STATUS_FINAL')
   const enCours    = match.statut === 'STATUS_IN_PROGRESS'
   const dateStr    = new Date(match.date).toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long', year:'numeric' })
   const heureStr   = new Date(match.date).toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' })
@@ -787,7 +787,7 @@ function MatchDetail() {
           )}
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center' }}>
-            <CarteEquipe eq={ext} align="ext" />
+            {CarteEquipe({ eq: ext, align: 'ext' })}
             <div style={{ textAlign: 'center', minWidth: 80, padding: '0 8px' }}>
               {(termine || enCours) && ext.score != null ? (
                 <>
@@ -805,7 +805,7 @@ function MatchDetail() {
                 </>
               )}
             </div>
-            <CarteEquipe eq={dom} align="dom" />
+            {CarteEquipe({ eq: dom, align: 'dom' })}
           </div>
 
           {nbPeriodes > 0 && !noSpoil && (
