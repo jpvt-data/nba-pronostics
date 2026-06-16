@@ -563,11 +563,11 @@ function Accueil() {
 
         {/* Carousel actus app */}
         {actusApp.length > 0 && (
-          <div className="scroll-x" style={{ display: 'flex', gap: 10, padding: '10px 16px' }}>
+          <div style={{ display: 'flex', gap: 10, padding: '10px 16px' }}>
             {actusApp.map(a => (
               <div key={a.id} onClick={() => { setActu([a]); setActuOpen(true) }}
                 style={{
-                  flexShrink: 0, width: 220,
+                  flex: 1,
                   background: 'var(--bg-2)', border: '1px solid var(--border)',
                   borderLeft: '3px solid var(--accent)',
                   borderRadius: 'var(--radius-sm)', padding: '10px 12px',
