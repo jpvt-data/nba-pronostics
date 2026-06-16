@@ -494,12 +494,12 @@ function Accueil() {
           {/* Ligne 1 : avatar + pseudo/titre/niv | KPIs droite */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
 
-            {/* Gauche : avatar + pseudo + titre + niv */}
+            {/* Gauche : avatar + pseudo + titre + niv + barre XP */}
             <div style={{ display: 'flex', gap: 14, alignItems: 'center', minWidth: 0, flex: 1 }}>
               <div onClick={() => navigate('/profil')} style={{ cursor: 'pointer', flexShrink: 0 }}>
                 <Avatar url={avatarUrl} pseudo={pseudo} taille={60} fontSize={20} />
               </div>
-              <div onClick={() => navigate('/mes-pronos')} style={{ cursor: 'pointer', minWidth: 0 }}>
+              <div onClick={() => navigate('/mes-pronos')} style={{ cursor: 'pointer', minWidth: 0, flex: 1 }}>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
                   <span style={{ fontFamily: 'var(--font-title)', fontWeight: 700, fontSize: 'clamp(28px, 7vw, 46px)', color: 'var(--accent)', letterSpacing: '-0.01em', lineHeight: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {pseudo || ''}
@@ -509,6 +509,19 @@ function Accueil() {
                   </span>
                   <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 'clamp(12px, 2.5vw, 15px)', color: 'var(--text-3)', whiteSpace: 'nowrap' }}>
                     Niv. {xpData.niveau}
+                  </span>
+                </div>
+                {/* Barre XP — collée sous le pseudo */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
+                  <div style={{ width: 160, height: 5, background: 'var(--bg-2)', overflow: 'hidden', borderRadius: 3, flexShrink: 0 }}>
+                    <div style={{
+                      height: '100%',
+                      width: `${xpData.niveau >= 100 ? 100 : Math.min(100, Math.round((xpData.xp_total - xpPourNiveau(xpData.niveau)) / (xpPourNiveau(xpData.niveau + 1) - xpPourNiveau(xpData.niveau)) * 100))}%`,
+                      background: 'var(--gold)', transition: 'width 0.6s ease',
+                    }} />
+                  </div>
+                  <span style={{ fontSize: 10, color: 'var(--text-3)', fontFamily: 'var(--font-display)', fontWeight: 600, flexShrink: 0 }}>
+                    {xpData.xp_total.toLocaleString('fr-FR')} XP
                   </span>
                 </div>
               </div>
@@ -529,35 +542,17 @@ function Accueil() {
             )}
           </div>
 
-          {/* Ligne 2 : barre XP courte | logos équipes alignés droite sous KPIs */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginTop: 8 }}>
-
-            {/* Barre XP — courte, alignée sous le pseudo */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, paddingLeft: 74 }}>
-              <div style={{ width: 120, height: 5, background: 'var(--bg-2)', overflow: 'hidden', borderRadius: 3, flexShrink: 0 }}>
-                <div style={{
-                  height: '100%',
-                  width: `${xpData.niveau >= 100 ? 100 : Math.min(100, Math.round((xpData.xp_total - xpPourNiveau(xpData.niveau)) / (xpPourNiveau(xpData.niveau + 1) - xpPourNiveau(xpData.niveau)) * 100))}%`,
-                  background: 'var(--gold)', transition: 'width 0.6s ease',
-                }} />
-              </div>
-              <span style={{ fontSize: 10, color: 'var(--text-3)', fontFamily: 'var(--font-display)', fontWeight: 600, flexShrink: 0 }}>
-                {xpData.xp_total.toLocaleString('fr-FR')} XP
-              </span>
+          {/* Ligne 2 : logos équipes à droite */}
+          {equipesFav.length > 0 && (
+            <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 8, marginTop: 8 }}>
+              {equipesFav.map(eq => (
+                <img key={eq.id} src={eq.logo} alt={eq.nom}
+                  style={{ width: 44, height: 44, objectFit: 'contain', opacity: 0.9 }}
+                  onError={e => { e.target.style.opacity = '0.15' }}
+                />
+              ))}
             </div>
-
-            {/* Logos équipes — alignés à droite sous les KPIs */}
-            {equipesFav.length > 0 && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-                {equipesFav.map(eq => (
-                  <img key={eq.id} src={eq.logo} alt={eq.nom}
-                    style={{ width: 44, height: 44, objectFit: 'contain', opacity: 0.9 }}
-                    onError={e => { e.target.style.opacity = '0.15' }}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
+          )}
 
           {/* Ligne 3 : chips */}
           {user && (
