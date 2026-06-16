@@ -612,7 +612,7 @@ function Accueil() {
         {/* Une Basket USA */}
         <BanniereFeed article={articleUne} />
 
-        {/* Autres actus NBA — dépliables */}
+        {/* Autres actus NBA — dépliables, NewsNBA toujours monté pour articleUne */}
         {!chargement && user && (
           <div style={{ background: '#f0ede8' }}>
             <button
@@ -628,11 +628,14 @@ function Accueil() {
               </span>
               {actusOuvertes ? <ChevronUp size={16} color="#555" /> : <ChevronDown size={16} color="#555" />}
             </button>
-            {actusOuvertes && (
-              <div style={{ padding: '0 16px 16px' }}>
-                <NewsNBA onFeedCharge={setArticleUne} />
-              </div>
-            )}
+            <div style={{
+              maxHeight: actusOuvertes ? 2000 : 0,
+              overflow: 'hidden',
+              transition: 'max-height 0.3s ease',
+              padding: actusOuvertes ? '0 16px 16px' : '0 16px',
+            }}>
+              <NewsNBA onFeedCharge={setArticleUne} />
+            </div>
           </div>
         )}
 
