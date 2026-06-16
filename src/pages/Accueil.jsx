@@ -174,6 +174,8 @@ function ChatGeneral({ userId }) {
 
 function Accueil() {
   const [matchs, setMatchs]                     = useState([])
+  const [matchsAffichables, setMatchsAffichables] = useState([])
+  const [prochainMatch, setProchainMatch]       = useState(null)
   const [user, setUser]                         = useState(null)
   const [pseudo, setPseudo]                     = useState(null)
   const [avatarUrl, setAvatarUrl]               = useState(null)
@@ -386,6 +388,22 @@ function Accueil() {
 
       const m = await recupererTimeline(15, 15)
       setMatchs(m)
+
+      // Filtrage : matchs < 3 jours passés + futurs
+      const maintenant = new Date()
+      const il_y_a_3j = new Date(maintenant - 3 * 24 * 3600 * 1000)
+      const affichables = m.filter(match => {
+        const d = new Date(match.date)
+        return d >= il_y_a_3j
+      })
+      setMatchsAffichables(affichables)
+
+      // Si aucun affichable, chercher le prochain match au-delà
+      if (affichables.length === 0) {
+        const futur = m.filter(match => new Date(match.date) > maintenant)
+          .sort((a, b) => new Date(a.date) - new Date(b.date))[0]
+        setProchainMatch(futur || null)
+      }
       setCharg(false)
     }
     init()
@@ -460,9 +478,9 @@ function Accueil() {
     }
   }
 
-  const typeSaisonActuel   = matchs[0]?.typeSaisonNum ?? null
+  const typeSaisonActuel   = matchsAffichables[0]?.typeSaisonNum ?? null
   const typeSaisonEffectif = typeSaisonActuel ?? typeSaisonLigues
-  const saisonActuelle     = matchs[0]?.saisonNum ?? SAISON_ESPN
+  const saisonActuelle     = matchsAffichables[0]?.saisonNum ?? SAISON_ESPN
 
   return (
     <>
@@ -621,31 +639,20 @@ function Accueil() {
 
           {/* Barre contexte + boutons */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 16px 0', gap: 8 }}>
-            {/* Contexte saison */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              {matchs.length > 0 && (
+              {matchsAffichables.length > 0 && (
                 <span style={{
-                  fontSize: 9, fontWeight: 700, letterSpacing: '0.1em',
-                  color: '#fff', textTransform: 'uppercase',
+                  fontSize: 9, fontWeight: 700, letterSpacing: '0.1em', color: '#fff',
+                  textTransform: 'uppercase', padding: '2px 7px', borderRadius: 2,
                   background: typeSaisonEffectif === 3 ? 'var(--danger)' : typeSaisonEffectif === 5 ? 'var(--success)' : 'var(--text-3)',
-                  padding: '2px 7px', borderRadius: 2,
                 }}>
                   {typeSaisonEffectif === 3 ? 'Playoffs' : typeSaisonEffectif === 5 ? 'Play-In' : typeSaisonEffectif === 4 ? 'Pré-saison' : 'Saison rég.'}
                 </span>
               )}
-              {matchs.length === 0 && !chargement && (
-                <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.1em', color: '#fff', textTransform: 'uppercase', background: 'var(--text-3)', padding: '2px 7px', borderRadius: 2 }}>
-                  OFF-SEASON
-                </span>
-              )}
-              {matchs.length > 0 && (
-                <span style={{ fontSize: 11, color: 'var(--text-3)' }}>
-                  {matchs.length} match{matchs.length > 1 ? 's' : ''}
-                </span>
+              {matchsAffichables.length > 0 && (
+                <span style={{ fontSize: 11, color: 'var(--text-3)' }}>{matchsAffichables.length} match{matchsAffichables.length > 1 ? 's' : ''}</span>
               )}
             </div>
-
-            {/* Boutons */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <FiltreEquipe equipeFiltre={equipeFiltre} onSelect={setEquipeFiltre} />
               <button onClick={() => navigate('/calendrier')} className="btn-tap" style={{
@@ -667,46 +674,41 @@ function Accueil() {
 
         {!chargement && (
           <div style={{ marginTop: 10 }}>
-            {matchs.length === 0 ? (
-              /* ── Inter-saison ── */
-              <div style={{ margin: '0 16px', padding: '28px 20px', background: 'var(--bg-1)', border: '1px solid var(--border)', borderTop: '3px solid var(--accent)' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, textAlign: 'center' }}>
-                  {/* Icône basket */}
-                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.5" strokeLinecap="round">
-                    <circle cx="12" cy="12" r="10"/>
-                    <path d="M4.93 4.93C6.5 8 8 10 12 12s5.5 4 7.07 7.07"/>
-                    <path d="M19.07 4.93C17.5 8 16 10 12 12S6.5 16 4.93 19.07"/>
-                    <line x1="2" y1="12" x2="22" y2="12"/>
-                  </svg>
+            {matchsAffichables.length === 0 ? (
+              <div style={{ margin: '0 16px', padding: '24px 20px', background: 'var(--bg-1)', border: '1px solid var(--border)', borderTop: '3px solid var(--accent)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, textAlign: 'center' }}>
+                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.5" strokeLinecap="round">
+                  <circle cx="12" cy="12" r="10"/>
+                  <path d="M4.93 4.93C6.5 8 8 10 12 12s5.5 4 7.07 7.07"/>
+                  <path d="M19.07 4.93C17.5 8 16 10 12 12S6.5 16 4.93 19.07"/>
+                  <line x1="2" y1="12" x2="22" y2="12"/>
+                </svg>
+                {prochainMatch ? (
                   <div>
-                    <div style={{ fontFamily: 'var(--font-title)', fontWeight: 700, fontSize: 22, color: 'var(--text-1)', letterSpacing: '0.02em', lineHeight: 1, marginBottom: 6 }}>
-                      OFF-SEASON NBA
+                    <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-1)', marginBottom: 4 }}>
+                      Prochain match
                     </div>
-                    <div style={{ fontSize: 13, color: 'var(--text-3)', lineHeight: 1.6, maxWidth: 280 }}>
-                      Pas de match en ce moment. La présaison reprend en octobre — d'ici là, continue à accumuler l'XP !
+                    <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--accent)', marginBottom: 4 }}>
+                      {prochainMatch.domicile?.nom || prochainMatch.domicile?.trigramme} vs {prochainMatch.exterieur?.nom || prochainMatch.exterieur?.trigramme}
+                    </div>
+                    <div style={{ fontSize: 12, color: 'var(--text-3)' }}>
+                      {new Date(prochainMatch.date).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
                     </div>
                   </div>
-                  <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center' }}>
-                    <button onClick={() => navigate('/calendrier')} style={{
-                      display: 'flex', alignItems: 'center', gap: 6,
-                      background: 'var(--accent)', borderWidth: 0, borderRadius: 'var(--radius-sm)',
-                      padding: '8px 16px', cursor: 'pointer', fontSize: 12, fontWeight: 700, color: '#fff',
-                    }}>
-                      <Calendar size={13} strokeWidth={2} /> Voir le calendrier
-                    </button>
-                    <button onClick={() => setMissionsOpen(true)} style={{
-                      display: 'flex', alignItems: 'center', gap: 6,
-                      background: 'var(--bg-2)', border: '1px solid var(--border)',
-                      borderRadius: 'var(--radius-sm)', padding: '8px 16px',
-                      cursor: 'pointer', fontSize: 12, fontWeight: 700, color: 'var(--text-2)',
-                    }}>
-                      <Target size={13} strokeWidth={2} color="var(--accent)" /> Mes missions
-                    </button>
+                ) : (
+                  <div style={{ fontSize: 13, color: 'var(--text-2)', lineHeight: 1.6 }}>
+                    Pas de match NBA prévu pour l'instant —<br />surveillez l'actu !
                   </div>
-                </div>
+                )}
+                <button onClick={() => navigate('/calendrier')} style={{
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  background: 'var(--accent)', borderWidth: 0, borderRadius: 'var(--radius-sm)',
+                  padding: '7px 14px', cursor: 'pointer', fontSize: 12, fontWeight: 700, color: '#fff',
+                }}>
+                  <Calendar size={13} strokeWidth={2} /> Voir le calendrier
+                </button>
               </div>
             ) : (
-              <BandeMatchs matchs={matchs} userId={user?.id} onProno={faireProno} onBadge={setNbPronosAttente} equipeFiltre={equipeFiltre} onFiltreChange={setEquipeFiltre} />
+              <BandeMatchs matchs={matchsAffichables} userId={user?.id} onProno={faireProno} onBadge={setNbPronosAttente} equipeFiltre={equipeFiltre} onFiltreChange={setEquipeFiltre} />
             )}
           </div>
         )}

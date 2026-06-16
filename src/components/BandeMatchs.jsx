@@ -106,7 +106,7 @@ function FiltreEquipe({ equipeFiltre, onSelect }) {
       {ouvert && (
         <div style={{
           position: 'absolute', top: '100%', left: 0, zIndex: 200, marginTop: 4,
-          background: 'var(--bg-1)', border: '1px solid var(--border)',
+          background: 'var(--bg-0)', border: '1px solid var(--border-2)',
           borderRadius: 'var(--radius-md)', padding: 8,
           width: 220, maxHeight: 320, overflowY: 'auto', boxShadow: 'var(--shadow-md)',
         }}>
