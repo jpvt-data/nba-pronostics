@@ -488,69 +488,78 @@ function Accueil() {
       <main style={{ flex: 1 }}>
 
         {/* ── Header ── */}
-        <div style={{ padding: '24px 16px 16px 16px', position: 'relative' }}>
+        <div style={{ padding: '20px 16px 16px 16px', position: 'relative' }}>
           <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 3, background: 'var(--accent)' }} />
 
-          {/* Ligne 1 : avatar + pseudo/titre/XP | KPIs à droite */}
-          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
+          {/* Ligne 1 : avatar + pseudo/titre/niv | KPIs droite */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
 
-            {/* Bloc gauche */}
-            <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start', minWidth: 0, flex: 1 }}>
-              <div onClick={() => navigate('/profil')} style={{ cursor: 'pointer', flexShrink: 0, marginTop: 2 }}>
-                <Avatar url={avatarUrl} pseudo={pseudo} taille={52} fontSize={18} />
+            {/* Gauche : avatar + pseudo + titre + niv */}
+            <div style={{ display: 'flex', gap: 14, alignItems: 'center', minWidth: 0, flex: 1 }}>
+              <div onClick={() => navigate('/profil')} style={{ cursor: 'pointer', flexShrink: 0 }}>
+                <Avatar url={avatarUrl} pseudo={pseudo} taille={60} fontSize={20} />
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, minWidth: 0 }}>
-                <div onClick={() => navigate('/mes-pronos')} style={{ display: 'flex', alignItems: 'baseline', gap: 8, cursor: 'pointer', flexWrap: 'wrap' }}>
-                  <span style={{ fontFamily: 'var(--font-title)', fontWeight: 700, fontSize: 'clamp(28px, 7vw, 44px)', color: 'var(--accent)', letterSpacing: '-0.01em', lineHeight: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <div onClick={() => navigate('/mes-pronos')} style={{ cursor: 'pointer', minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
+                  <span style={{ fontFamily: 'var(--font-title)', fontWeight: 700, fontSize: 'clamp(28px, 7vw, 46px)', color: 'var(--accent)', letterSpacing: '-0.01em', lineHeight: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {pseudo || ''}
                   </span>
                   <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 'clamp(20px, 4.5vw, 28px)', color: 'var(--gold)', letterSpacing: '0.02em', lineHeight: 1, whiteSpace: 'nowrap' }}>
                     {titrDepuisNiveau(xpData.niveau)}
                   </span>
-                  <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 'clamp(13px, 2.5vw, 16px)', color: 'var(--text-3)', whiteSpace: 'nowrap' }}>
+                  <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 'clamp(12px, 2.5vw, 15px)', color: 'var(--text-3)', whiteSpace: 'nowrap' }}>
                     Niv. {xpData.niveau}
-                  </span>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <div style={{ width: 120, height: 4, background: 'var(--bg-2)', overflow: 'hidden', borderRadius: 3, flexShrink: 0 }}>
-                    <div style={{ height: '100%', width: `${xpData.niveau >= 100 ? 100 : Math.min(100, Math.round((xpData.xp_total - xpPourNiveau(xpData.niveau)) / (xpPourNiveau(xpData.niveau + 1) - xpPourNiveau(xpData.niveau)) * 100))}%`, background: 'var(--gold)', transition: 'width 0.6s ease' }} />
-                  </div>
-                  <span style={{ fontSize: 10, color: 'var(--text-3)', fontFamily: 'var(--font-display)', fontWeight: 600, flexShrink: 0 }}>
-                    {xpData.xp_total.toLocaleString('fr-FR')} XP
                   </span>
                 </div>
               </div>
             </div>
 
-            {/* KPIs — droite, alignés haut */}
+            {/* KPIs — droite */}
             {kpis.total > 0 && (
               <div style={{ display: 'flex', gap: 16, flexShrink: 0 }}>
                 <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 'clamp(32px, 8vw, 48px)', color: 'var(--text-1)', lineHeight: 1 }}>{kpis.total}</div>
-                  <div style={{ fontSize: 9, color: 'var(--text-3)', marginTop: 2, letterSpacing: '0.04em' }}>PRONOS</div>
+                  <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 'clamp(32px, 8vw, 52px)', color: 'var(--text-1)', lineHeight: 1 }}>{kpis.total}</div>
+                  <div style={{ fontSize: 9, color: 'var(--text-3)', marginTop: 3, letterSpacing: '0.06em' }}>PRONOS</div>
                 </div>
                 <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 'clamp(32px, 8vw, 48px)', color: 'var(--accent)', lineHeight: 1 }}>{kpis.pct}%</div>
-                  <div style={{ fontSize: 9, color: 'var(--text-3)', marginTop: 2, letterSpacing: '0.04em' }}>RÉUSSITE</div>
+                  <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 'clamp(32px, 8vw, 52px)', color: 'var(--accent)', lineHeight: 1 }}>{kpis.pct}%</div>
+                  <div style={{ fontSize: 9, color: 'var(--text-3)', marginTop: 3, letterSpacing: '0.06em' }}>RÉUSSITE</div>
                 </div>
               </div>
             )}
           </div>
 
-          {/* Ligne 2 : équipes — label au-dessus, logos dessous, aligné à droite */}
-          {equipesFav.length > 0 && (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, marginTop: 10 }}>
-              <span style={{ fontSize: 9, color: 'var(--text-3)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Mes équipes</span>
-              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          {/* Ligne 2 : barre XP (flex) | logos équipes à droite */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginTop: 14 }}>
+
+            {/* Barre XP — prend toute la largeur disponible */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0 }}>
+              <div style={{ flex: 1, height: 5, background: 'var(--bg-2)', overflow: 'hidden', borderRadius: 3, minWidth: 60 }}>
+                <div style={{
+                  height: '100%',
+                  width: `${xpData.niveau >= 100 ? 100 : Math.min(100, Math.round((xpData.xp_total - xpPourNiveau(xpData.niveau)) / (xpPourNiveau(xpData.niveau + 1) - xpPourNiveau(xpData.niveau)) * 100))}%`,
+                  background: 'var(--gold)', transition: 'width 0.6s ease',
+                }} />
+              </div>
+              <span style={{ fontSize: 11, color: 'var(--text-3)', fontFamily: 'var(--font-display)', fontWeight: 600, flexShrink: 0 }}>
+                {xpData.xp_total.toLocaleString('fr-FR')} XP
+              </span>
+            </div>
+
+            {/* Logos équipes — droite, même ligne que XP */}
+            {equipesFav.length > 0 && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                <div style={{ width: 1, height: 28, background: 'var(--border-2)', marginRight: 4 }} />
+                <span style={{ fontSize: 9, color: 'var(--text-3)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginRight: 4 }}>Équipes</span>
                 {equipesFav.map(eq => (
                   <img key={eq.id} src={eq.logo} alt={eq.nom}
-                    style={{ width: 46, height: 46, objectFit: 'contain', opacity: 0.9 }}
+                    style={{ width: 36, height: 36, objectFit: 'contain', opacity: 0.9 }}
                     onError={e => { e.target.style.opacity = '0.15' }}
                   />
                 ))}
               </div>
-            </div>
-          )}
+            )}
+          </div>
 
           {/* Ligne 3 : chips */}
           {user && (
