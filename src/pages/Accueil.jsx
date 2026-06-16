@@ -778,7 +778,7 @@ function Accueil() {
               <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Discussion</span>
             </div>
             <div style={{ padding: '0 16px 24px' }}>
-              {/* <ChatGeneral userId={user.id} /> */}
+              <ChatGeneral userId={user.id} />
             </div>
           </div>
         )}
