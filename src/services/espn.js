@@ -129,7 +129,7 @@ export const recupererDetailMatch = async (espnId) => {
     const boxExt        = boxTeams.find(t => t.homeAway === 'away')
     const saisonNum     = saison?.year ?? null
     const typeSaisonNum = saison?.type ?? null
-    const termine       = comp.status?.type?.name === 'STATUS_FINAL'
+    const termine       = comp.status?.type?.name?.startsWith('STATUS_FINAL')
 
     // Étape 3 : scoreboard sur la date du match pour récupérer headline/notes
     // (le summary n'expose pas comp.notes)
@@ -326,7 +326,7 @@ export const recupererGagnant = async (espnId) => {
     const res  = await fetchAvecTimeout(`${BASE_WEB}/summary?event=${espnId}`)
     const data = await res.json()
     const comp = data.header?.competitions?.[0]
-    if (!comp || comp.status?.type?.name !== 'STATUS_FINAL') return null
+    if (!comp || !comp.status?.type?.name?.startsWith('STATUS_FINAL')) return null
     const gagnant = comp.competitors.find(c => c.winner === true)
     if (!gagnant) return null
     const dom = comp.competitors.find(c => c.homeAway === 'home')

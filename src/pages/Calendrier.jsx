@@ -382,7 +382,7 @@ function Calendrier() {
 // ── Carte match — affichage inchangé ──
 function CarteMatch({ match, compact, onClick }) {
   const { noSpoil } = useNoSpoil()
-  const termine = match.statut === 'STATUS_FINAL'
+  const termine = match.statut?.startsWith('STATUS_FINAL')
   const enCours = match.statut === 'STATUS_IN_PROGRESS'
   return (
     <div onClick={onClick} style={{

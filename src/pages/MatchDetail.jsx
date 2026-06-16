@@ -37,7 +37,7 @@ const mlEnDecimal = (ml) => {
 }
 
 const estVerrouille = (dateStr, statut) => {
-  if (statut === 'STATUS_FINAL' || statut === 'STATUS_IN_PROGRESS') return true
+  if (statut?.startsWith('STATUS_FINAL') || statut === 'STATUS_IN_PROGRESS') return true
   return new Date() >= new Date(dateStr)
 }
 
@@ -425,7 +425,7 @@ function MatchDetail() {
       }
       setCharg(false)
 
-      if (detail.statut !== 'STATUS_FINAL') {
+      if (!detail.statut?.startsWith('STATUS_FINAL')) {
         // Prédiction ESPN (endpoint core API)
         try {
           const resPred = await fetch(
@@ -622,7 +622,7 @@ function MatchDetail() {
 
   const { domicile: dom, exterieur: ext } = match
   const verrou     = estVerrouille(match.date, match.statut)
-  const termine    = match.statut === 'STATUS_FINAL'
+  const termine    = match.statut?.startsWith('STATUS_FINAL')
   const enCours    = match.statut === 'STATUS_IN_PROGRESS'
   const dateStr    = new Date(match.date).toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long', year:'numeric' })
   const heureStr   = new Date(match.date).toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' })
