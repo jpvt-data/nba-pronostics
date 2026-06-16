@@ -286,13 +286,13 @@ const BlocCotes = ({ cotes, prediction, ext, dom, couleurExt, couleurDom, termin
           <div style={{ fontSize: 10, color: 'var(--text-3)', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 10 }}>Probabilités de victoire</div>
 
           {prediction ? (
-            {BarreProb({ pctExt: prediction.extPct, pctDom: prediction.domPct, opacite: 1, label: "Algorithme ESPN" })}
+            <BarreProb pctExt={prediction.extPct} pctDom={prediction.domPct} opacite={1} label="Algorithme ESPN" />
           ) : (
             <div style={{ fontSize: 11, color: 'var(--text-3)', fontStyle: 'italic', marginBottom: 8 }}>Prédiction ESPN non disponible</div>
           )}
 
           {consensusPct ? (
-            {BarreProb({ pctExt: consensusPct.pctExt, pctDom: consensusPct.pctDom, opacite: 0.6, label: `Consensus marché (${cotes.books.length} bookmakers)` })}
+            <BarreProb pctExt={consensusPct.pctExt} pctDom={consensusPct.pctDom} opacite={0.6} label={`Consensus marché (${cotes.books.length} bookmakers)`} />
           ) : (
             <div style={{ fontSize: 11, color: 'var(--text-3)', fontStyle: 'italic' }}>Consensus marché non disponible</div>
           )}
@@ -328,7 +328,7 @@ const BlocCotes = ({ cotes, prediction, ext, dom, couleurExt, couleurDom, termin
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
                 {BOOKS_FR.map(key => {
                   const p = probsParBook(key)
-                  return CarteBook({ key, label: BOOKS_FR_LABELS[key], pctExt: p?.pct1, pctDom: p?.pct2 })
+                  return <CarteBook key={key} label={BOOKS_FR_LABELS[key]} pctExt={p?.pct1} pctDom={p?.pct2} />
                 })}
               </div>
             </div>
@@ -339,7 +339,7 @@ const BlocCotes = ({ cotes, prediction, ext, dom, couleurExt, couleurDom, termin
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
                 {BOOKS_US.map(key => {
                   const p = probsParBook(key)
-                  return CarteBook({ key, label: BOOKS_US_LABELS[key], pctExt: p?.pct1, pctDom: p?.pct2 })
+                  return <CarteBook key={key} label={BOOKS_US_LABELS[key]} pctExt={p?.pct1} pctDom={p?.pct2} />
                 })}
               </div>
             </div>
