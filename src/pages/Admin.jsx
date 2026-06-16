@@ -1827,55 +1827,60 @@ function OngletMissions() {
 // ONGLET ACTU
 // ══════════════════════════════════════════
 function OngletActu() {
-  const [actu, setActu]       = useState(null)
+  const [actus, setActus]     = useState([])
   const [groupes, setGroupes] = useState([])
   const [charg, setCharg]     = useState(true)
   const [saving, setSaving]   = useState(false)
   const [msg, setMsg]         = useState(null)
+  const [editId, setEditId]   = useState(null) // null = liste, 'new' = nouveau, uuid = édition
 
-  const [form, setForm] = useState({
-    type: 'message_libre', actif: false, titre: '', message: '',
-    slide2_titre: '', slide2_message: '', groupe_id: '',
-  })
+  const formVide = { type: 'message_libre', actif: true, titre: '', message: '', slide2_titre: '', slide2_message: '', groupe_id: '' }
+  const [form, setForm] = useState(formVide)
 
-  useEffect(() => {
-    const charger = async () => {
-      const [{ data: actus }, { data: gps }] = await Promise.all([
-        supabase.from('actu_app').select('*').order('cree_le', { ascending: false }).limit(1),
-        supabase.from('groupes').select('id, nom, tag, date_fin').order('cree_le', { ascending: false }),
-      ])
-      setGroupes(gps || [])
-      if (actus?.[0]) {
-        const a = actus[0]
-        setActu(a)
-        setForm({ type: a.type || 'message_libre', actif: a.actif || false, titre: a.titre || '', message: a.message || '', slide2_titre: a.slide2_titre || '', slide2_message: a.slide2_message || '', groupe_id: a.groupe_id || '' })
-      }
-      setCharg(false)
-    }
-    charger()
-  }, [])
+  const charger = async () => {
+    const [{ data: aa }, { data: gps }] = await Promise.all([
+      supabase.from('actu_app').select('*').order('cree_le', { ascending: false }),
+      supabase.from('groupes').select('id, nom, tag, date_fin').order('cree_le', { ascending: false }),
+    ])
+    setActus(aa || [])
+    setGroupes(gps || [])
+    setCharg(false)
+  }
+
+  useEffect(() => { charger() }, [])
+
+  const ouvrirNouveau = () => { setForm(formVide); setEditId('new'); setMsg(null) }
+  const ouvrirEdit = (a) => {
+    setForm({ type: a.type || 'message_libre', actif: a.actif || false, titre: a.titre || '', message: a.message || '', slide2_titre: a.slide2_titre || '', slide2_message: a.slide2_message || '', groupe_id: a.groupe_id || '' })
+    setEditId(a.id)
+    setMsg(null)
+  }
 
   const sauvegarder = async () => {
     setSaving(true); setMsg(null)
     const payload = { type: form.type, actif: form.actif, titre: form.titre, message: form.message, slide2_titre: form.slide2_titre, slide2_message: form.slide2_message, groupe_id: form.groupe_id || null }
     let error
-    if (actu?.id) {
-      ;({ error } = await supabase.from('actu_app').update(payload).eq('id', actu.id))
+    if (editId === 'new') {
+      ;({ error } = await supabase.from('actu_app').insert(payload))
     } else {
-      const { data: created, error: err } = await supabase.from('actu_app').insert(payload).select().single()
-      error = err
-      if (created) setActu(created)
+      ;({ error } = await supabase.from('actu_app').update(payload).eq('id', editId))
     }
     setSaving(false)
-    setMsg(error ? { type: 'error', text: 'Erreur : ' + error.message } : { type: 'ok', text: 'Actu enregistrée.' })
+    if (error) { setMsg({ type: 'error', text: 'Erreur : ' + error.message }); return }
+    setMsg({ type: 'ok', text: 'Enregistré.' })
+    await charger()
+    setTimeout(() => { setEditId(null); setMsg(null) }, 800)
   }
 
-  const toggleActif = async () => {
-    if (!actu?.id) return
-    const nouvelEtat = !form.actif
-    setForm(f => ({ ...f, actif: nouvelEtat }))
-    await supabase.from('actu_app').update({ actif: nouvelEtat }).eq('id', actu.id)
-    setMsg({ type: 'ok', text: nouvelEtat ? 'Popup activé — visible par tous.' : 'Popup désactivé.' })
+  const toggleActif = async (a) => {
+    await supabase.from('actu_app').update({ actif: !a.actif }).eq('id', a.id)
+    charger()
+  }
+
+  const supprimer = async (id) => {
+    if (!window.confirm('Supprimer cette actu ?')) return
+    await supabase.from('actu_app').delete().eq('id', id)
+    charger()
   }
 
   if (charg) return <p style={{ fontSize: 12, color: 'var(--text-3)', padding: '20px 16px' }}>Chargement…</p>
@@ -1886,27 +1891,59 @@ function OngletActu() {
     { value: 'message_libre', label: 'Message libre' },
   ]
 
-  return (
+  // ── Vue liste ──
+  if (editId === null) return (
     <div style={{ padding: '0 16px 40px' }}>
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 4 }}>
-        <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 20, color: 'var(--text-1)', letterSpacing: '0.02em' }}>ACTU</span>
-        <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 20, color: 'var(--accent)', letterSpacing: '0.02em' }}>APP</span>
-      </div>
-      <p style={{ fontSize: 11, color: 'var(--text-3)', margin: '0 0 20px' }}>Popup affiché après le changelog. Visible par tous tant qu'il est actif.</p>
-
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: form.actif ? 'rgba(34,197,94,0.08)' : 'var(--bg-2)', borderLeft: `3px solid ${form.actif ? 'var(--success)' : 'var(--border-2)'}`, padding: '12px 16px', marginBottom: 20 }}>
-        <div>
-          <div style={{ fontSize: 13, fontWeight: 700, color: form.actif ? 'var(--success)' : 'var(--text-3)' }}>{form.actif ? 'Popup ACTIF — visible par tous' : 'Popup inactif'}</div>
-          <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 2 }}>{actu?.id ? `ID : ${actu.id.slice(0, 8)}…` : 'Pas encore créé'}</div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+          <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 20, color: 'var(--text-1)', letterSpacing: '0.02em' }}>ACTUS</span>
+          <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 20, color: 'var(--accent)', letterSpacing: '0.02em' }}>APP</span>
         </div>
-        <button onClick={toggleActif} disabled={!actu?.id} style={{ padding: '8px 20px', fontSize: 13, fontWeight: 700, cursor: actu?.id ? 'pointer' : 'not-allowed', borderRadius: 'var(--radius-sm)', borderWidth: 0, background: form.actif ? 'var(--danger)' : 'var(--success)', color: '#fff', opacity: actu?.id ? 1 : 0.4 }}>
-          {form.actif ? 'Désactiver' : 'Activer'}
+        <button onClick={ouvrirNouveau} style={{ background: 'var(--accent)', borderWidth: 0, borderRadius: 'var(--radius-sm)', padding: '7px 14px', cursor: 'pointer', fontSize: 12, fontWeight: 700, color: '#fff' }}>
+          + Nouvelle actu
         </button>
       </div>
 
+      {actus.length === 0 && <p style={{ fontSize: 12, color: 'var(--text-3)' }}>Aucune actu créée.</p>}
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {actus.map(a => (
+          <div key={a.id} style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', borderLeft: `3px solid ${a.actif ? 'var(--success)' : 'var(--border-2)'}`, borderRadius: 'var(--radius-sm)', padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-1)', marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.titre || '(sans titre)'}</div>
+              <div style={{ fontSize: 10, color: 'var(--text-3)' }}>{a.type} · {a.actif ? <span style={{ color: 'var(--success)' }}>Actif</span> : 'Inactif'}</div>
+            </div>
+            <button onClick={() => toggleActif(a)} style={{ background: a.actif ? 'var(--danger-dim)' : 'var(--success-dim)', border: `1px solid ${a.actif ? 'var(--danger)' : 'var(--success)'}`, borderRadius: 'var(--radius-sm)', padding: '4px 10px', cursor: 'pointer', fontSize: 11, fontWeight: 700, color: a.actif ? 'var(--danger)' : 'var(--success)' }}>
+              {a.actif ? 'Désactiver' : 'Activer'}
+            </button>
+            <button onClick={() => ouvrirEdit(a)} style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: '4px 10px', cursor: 'pointer', fontSize: 11, fontWeight: 600, color: 'var(--text-2)' }}>
+              Éditer
+            </button>
+            <button onClick={() => supprimer(a.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-3)', fontSize: 18, lineHeight: 1, padding: '0 4px' }}>×</button>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+
+  // ── Vue formulaire ──
+  return (
+    <div style={{ padding: '0 16px 40px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+        <button onClick={() => { setEditId(null); setMsg(null) }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-3)', fontSize: 20, lineHeight: 1 }}>←</button>
+        <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 20, color: 'var(--text-1)', letterSpacing: '0.02em' }}>{editId === 'new' ? 'NOUVELLE ACTU' : 'MODIFIER ACTU'}</span>
+      </div>
+
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-2)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Actif</label>
+          <button onClick={() => setForm(f => ({ ...f, actif: !f.actif }))} style={{ background: form.actif ? 'var(--success-dim)' : 'var(--bg-2)', border: `1px solid ${form.actif ? 'var(--success)' : 'var(--border)'}`, borderRadius: 'var(--radius-sm)', padding: '4px 12px', cursor: 'pointer', fontSize: 11, fontWeight: 700, color: form.actif ? 'var(--success)' : 'var(--text-3)' }}>
+            {form.actif ? 'Oui' : 'Non'}
+          </button>
+        </div>
+
         <div>
-          <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--text-2)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Type de message</label>
+          <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--text-2)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Type</label>
           <select value={form.type} onChange={e => setForm(f => ({ ...f, type: e.target.value, groupe_id: '' }))} style={{ ...S.select, width: '100%' }}>
             {TYPES_ACTU.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
           </select>
@@ -1916,49 +1953,40 @@ function OngletActu() {
           <div>
             <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--text-2)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Ligue concernée</label>
             <select value={form.groupe_id} onChange={e => setForm(f => ({ ...f, groupe_id: e.target.value }))} style={{ ...S.select, width: '100%' }}>
-              <option value="">— Sélectionner une ligue —</option>
+              <option value="">— Sélectionner —</option>
               {groupes.map(g => <option key={g.id} value={g.id}>{g.nom} {g.tag ? `[${g.tag}]` : ''} {g.date_fin ? `· fin ${g.date_fin.slice(0, 10)}` : ''}</option>)}
             </select>
-            {form.type === 'cloture_ligue' && form.groupe_id && (
-              <p style={{ fontSize: 10, color: 'var(--accent)', margin: '4px 0 0' }}>Les stats de cette ligue seront calculées automatiquement dans le popup.</p>
-            )}
           </div>
         )}
 
         <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-3)', letterSpacing: '0.1em', borderBottom: '1px solid var(--border)', paddingBottom: 6 }}>SLIDE 1</div>
-
         <div>
           <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--text-2)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Titre</label>
-          <input value={form.titre} onChange={e => setForm(f => ({ ...f, titre: e.target.value }))} placeholder="ex: Les Playoffs 2026, c'est fini !" style={S.input} />
+          <input value={form.titre} onChange={e => setForm(f => ({ ...f, titre: e.target.value }))} placeholder="Titre de l'actu" style={S.input} />
         </div>
-
         <div>
           <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--text-2)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Message</label>
-          <textarea value={form.message} onChange={e => setForm(f => ({ ...f, message: e.target.value }))} placeholder="Texte libre affiché sous le titre..." rows={3} style={{ ...S.input, resize: 'vertical', lineHeight: 1.5 }} />
+          <textarea value={form.message} onChange={e => setForm(f => ({ ...f, message: e.target.value }))} placeholder="Texte libre…" rows={3} style={{ ...S.input, resize: 'vertical', lineHeight: 1.5 }} />
         </div>
 
         <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-3)', letterSpacing: '0.1em', borderBottom: '1px solid var(--border)', paddingBottom: 6 }}>
-          SLIDE 2 <span style={{ color: 'var(--border-2)', fontWeight: 400 }}>(optionnel — laisser vide pour désactiver)</span>
+          SLIDE 2 <span style={{ color: 'var(--border-2)', fontWeight: 400 }}>(optionnel)</span>
         </div>
-
         <div>
           <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--text-2)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Titre slide 2</label>
-          <input value={form.slide2_titre} onChange={e => setForm(f => ({ ...f, slide2_titre: e.target.value }))} placeholder="ex: Summer League — Coming Soon" style={S.input} />
+          <input value={form.slide2_titre} onChange={e => setForm(f => ({ ...f, slide2_titre: e.target.value }))} placeholder="Titre slide 2" style={S.input} />
         </div>
-
         <div>
           <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--text-2)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Message slide 2</label>
-          <textarea value={form.slide2_message} onChange={e => setForm(f => ({ ...f, slide2_message: e.target.value }))} placeholder="Texte libre pour la 2ème slide..." rows={3} style={{ ...S.input, resize: 'vertical', lineHeight: 1.5 }} />
+          <textarea value={form.slide2_message} onChange={e => setForm(f => ({ ...f, slide2_message: e.target.value }))} placeholder="Texte slide 2…" rows={3} style={{ ...S.input, resize: 'vertical', lineHeight: 1.5 }} />
         </div>
 
         {msg && (
-          <div style={{ fontSize: 12, fontWeight: 600, padding: '8px 12px', background: msg.type === 'ok' ? 'var(--success-dim)' : 'var(--danger-dim)', color: msg.type === 'ok' ? 'var(--success)' : 'var(--danger)', borderRadius: 'var(--radius-sm)' }}>
-            {msg.text}
-          </div>
+          <div style={{ fontSize: 12, fontWeight: 600, padding: '8px 12px', background: msg.type === 'ok' ? 'var(--success-dim)' : 'var(--danger-dim)', color: msg.type === 'ok' ? 'var(--success)' : 'var(--danger)', borderRadius: 'var(--radius-sm)' }}>{msg.text}</div>
         )}
 
         <button onClick={sauvegarder} disabled={saving} style={{ padding: '11px', fontSize: 13, fontWeight: 700, cursor: saving ? 'wait' : 'pointer', background: 'var(--accent)', borderWidth: 0, borderRadius: 'var(--radius-sm)', color: '#fff', opacity: saving ? 0.7 : 1 }}>
-          {saving ? 'Enregistrement…' : actu?.id ? 'Enregistrer les modifications' : "Créer l'actu"}
+          {saving ? 'Enregistrement…' : editId === 'new' ? "Créer l'actu" : 'Enregistrer'}
         </button>
       </div>
     </div>

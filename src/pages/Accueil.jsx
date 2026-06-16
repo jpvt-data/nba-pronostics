@@ -193,6 +193,7 @@ function Accueil() {
   const [onboardingOpen, setOnboardingOpen]     = useState(false)
   const [actu, setActu]                         = useState(null)
   const [actuOpen, setActuOpen]                 = useState(false)
+  const [actusApp, setActusApp]                 = useState([])
   const navigate = useNavigate()
   const { noSpoil } = useNoSpoil()
   const { pushNotifs } = useNotif()
@@ -355,11 +356,18 @@ function Accueil() {
         .limit(1)
       setRoueDispo(!dejaRoue?.length)
 
-      // ── Actu active ────────────────────────────────────────────────────────
+      // ── Actus actives ──────────────────────────────────────────────────────
       const { data: actus } = await supabase
         .from('actu_app').select('*').eq('actif', true)
-        .order('cree_le', { ascending: false }).limit(1)
-      if (actus?.[0]) setActu(actus[0])
+        .order('cree_le', { ascending: false })
+      const toutesActus = actus || []
+      setActusApp(toutesActus)
+      // Popup auto : actus non encore vues par cet user
+      const nonVues = toutesActus.filter(a => !localStorage.getItem(`swish_actu_${a.id}`))
+      if (nonVues.length > 0) {
+        setActu(nonVues)
+        setActuOpen(true)
+      }
 
       const { data: liguesUser } = await supabase
         .from('membres_groupe')
@@ -529,12 +537,6 @@ function Accueil() {
           {/* Ligne 3 : chips */}
           {user && (
             <div style={{ marginTop: 14, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              {actu && (
-                <button onClick={() => setActuOpen(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'var(--accent)', border: '1px solid var(--accent-border)', borderRadius: 'var(--radius-sm)', padding: '5px 11px', cursor: 'pointer', fontSize: 11, fontWeight: 700, color: '#fff', letterSpacing: '0.03em' }}>
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                  Actu
-                </button>
-              )}
               <button onClick={() => { if (roueDispo) setRoueOpen(true) }} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: '5px 11px', cursor: roueDispo ? 'pointer' : 'default', fontSize: 11, fontWeight: 700, color: 'var(--text-2)', letterSpacing: '0.03em', opacity: roueDispo ? 1 : 0.4 }}>
                 <RefreshCw size={12} strokeWidth={2} color="var(--accent)" />
                 {roueDispo ? 'Roue' : 'Roue jouée'}
@@ -556,6 +558,28 @@ function Accueil() {
         {!chargement && user && (
           <div style={{ marginTop: 10, marginBottom: 0 }}>
             <Briefing userId={user.id} nbPronosAttente={nbPronosAttente} matchs={matchs} />
+          </div>
+        )}
+
+        {/* Carousel actus app */}
+        {actusApp.length > 0 && (
+          <div className="scroll-x" style={{ display: 'flex', gap: 10, padding: '10px 16px' }}>
+            {actusApp.map(a => (
+              <div key={a.id} onClick={() => { setActu([a]); setActuOpen(true) }}
+                style={{
+                  flexShrink: 0, width: 220,
+                  background: 'var(--bg-2)', border: '1px solid var(--border)',
+                  borderLeft: '3px solid var(--accent)',
+                  borderRadius: 'var(--radius-sm)', padding: '10px 12px',
+                  cursor: 'pointer',
+                }}>
+                <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4 }}>
+                  {a.type === 'cloture_ligue' ? 'Fin de ligue' : a.type === 'ouverture_ligue' ? 'Nouvelle ligue' : 'Actu'}
+                </div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-1)', lineHeight: 1.3, marginBottom: 4 }}>{a.titre}</div>
+                {a.message && <div style={{ fontSize: 11, color: 'var(--text-3)', lineHeight: 1.4, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{a.message}</div>}
+              </div>
+            ))}
           </div>
         )}
 
@@ -707,7 +731,7 @@ function Accueil() {
 
       {/* ── Popup Actu ── */}
       {actuOpen && actu && (
-        <PopupActu actu={actu} onClose={() => setActuOpen(false)} />
+        <PopupActu actus={Array.isArray(actu) ? actu : [actu]} onClose={() => setActuOpen(false)} />
       )}
 
       {/* ── Onboarding tuto ── */}

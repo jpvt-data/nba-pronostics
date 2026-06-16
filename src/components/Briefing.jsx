@@ -332,13 +332,14 @@ async function genererMessages(userId, nbPronosAttente, matchs = []) {
   }
 
   // ── Ligues ──
+  const GROUPE_GENERAL = 'aaaaaaaa-0000-0000-0000-000000000001'
   const auj_str = maintenant.toISOString().slice(0, 10)
   const { data: liguesUser } = await supabase
     .from('membres_groupe')
-    .select('groupes(nom, type_saison, date_debut, date_fin, saison)')
+    .select('groupe_id, groupes(nom, type_saison, date_debut, date_fin, saison)')
     .eq('user_id', userId).eq('actif', true)
 
-  const ligues      = liguesUser?.map(m => m.groupes).filter(Boolean) || []
+  const ligues      = liguesUser?.filter(m => m.groupe_id !== GROUPE_GENERAL).map(m => m.groupes).filter(Boolean) || []
   const ligueActive = ligues.find(g => (!g.date_debut || g.date_debut <= auj_str) && (!g.date_fin || g.date_fin >= auj_str))
   const ligueAVenir = ligues.filter(g => g.date_debut && g.date_debut > auj_str).sort((a, b) => a.date_debut.localeCompare(b.date_debut))[0]
   const il_y_a_7j_str = new Date(maintenant - 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
