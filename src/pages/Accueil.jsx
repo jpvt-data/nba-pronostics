@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { recupererTimeline } from '../services/espn'
 import { recupererLiguesCibles } from '../services/ligues'
@@ -9,7 +9,6 @@ import Navigation from '../components/Navigation'
 import BandeMatchs, { FiltreEquipe } from '../components/BandeMatchs'
 import ClassementRapide from '../components/ClassementRapide'
 import Briefing from '../components/Briefing'
-import LeVestiaire from '../components/LeVestiaire'
 import StandingsNBA from '../components/StandingsNBA'
 import BracketPlayoffs from '../components/BracketPlayoffs'
 import NewsNBA from '../components/NewsNBA'
@@ -20,7 +19,7 @@ import OnboardingTuto from '../components/OnboardingTuto'
 import PopupActu from '../components/PopupActu'
 import { track } from '../services/tracker'
 import { useNavigate } from 'react-router-dom'
-import { Calendar, Target, RefreshCw, Info, Newspaper, Clock, Trophy, MessageSquare, BarChart2, Rss } from 'lucide-react'
+import { Calendar, Target, RefreshCw, Info, Newspaper, Clock, Trophy, MessageSquare, BarChart2, Rss, Send, ChevronDown, ChevronUp } from 'lucide-react'
 import { Avatar } from '../components/Avatar'
 import { useNoSpoil } from '../context/NoSpoilContext'
 import { useNotif } from '../context/NotifContext'
@@ -69,6 +68,110 @@ const titrDepuisNiveau = (n) => {
   return 'GOAT'
 }
 
+const GROUPE_GENERAL_ID = 'aaaaaaaa-0000-0000-0000-000000000001'
+
+const JALON_BADGE_MAP = {
+  jalon_serie_5:        { nom: 'En Feu' },
+  jalon_serie_10:       { nom: 'Prophète' },
+  jalon_50_pronos:      { nom: 'All-In' },
+  jalon_100_pronos:     { nom: 'Marathonien' },
+  jalon_winrate_65:     { nom: 'Analyste' },
+  jalon_semaine:        { nom: 'Champion' },
+  jalon_10_fourchettes: { nom: "Tireur d'Élite" },
+}
+
+async function genererEvenements(userId) {
+  const evenements = []
+  const il_y_a_7j = new Date(Date.now() - 7 * 24 * 3600 * 1000).toISOString()
+  const { data: membres } = await supabase.from('membres_groupe').select('groupe_id').eq('user_id', userId).eq('actif', true)
+  if (!membres?.length) return []
+  const groupeIds = membres.map(m => m.groupe_id)
+  const { data: potes } = await supabase.from('membres_groupe').select('user_id, profils(pseudo)').in('groupe_id', groupeIds).eq('actif', true).neq('user_id', userId)
+  if (!potes?.length) return []
+  const potesUniques = [...new Map(potes.map(p => [p.user_id, p])).values()]
+  for (const pote of potesUniques) {
+    const pseudo = pote.profils?.pseudo || 'Un pote'
+    const { data: pronos } = await supabase.from('pronos').select('resultat, cree_le').eq('user_id', pote.user_id).in('resultat', ['correct', 'incorrect']).gte('cree_le', il_y_a_7j).order('cree_le', { ascending: false }).limit(20)
+    if (pronos?.length) {
+      const dernier = pronos[0].resultat
+      let streak = 0
+      for (const p of pronos) { if (p.resultat === dernier) streak++; else break }
+      if (streak >= 2) evenements.push({ texte: dernier === 'correct' ? `${pseudo} enchaîne ${streak} pronos réussis !` : `${pseudo} enchaîne ${streak} pronos ratés !`, couleur: dernier === 'correct' ? 'var(--success)' : 'var(--danger)' })
+    }
+    const { data: fourchettes } = await supabase.from('pronos_ecart').select('correct').eq('user_id', pote.user_id).eq('correct', true).gte('cree_le', il_y_a_7j).limit(5)
+    if (fourchettes?.length >= 2) evenements.push({ texte: `${pseudo} enchaîne ${fourchettes.length} fourchettes correctes !`, couleur: 'var(--gold)' })
+    const { data: missions } = await supabase.from('missions_utilisateurs').select('missions(titre)').eq('user_id', pote.user_id).eq('completee', true).gte('completee_le', il_y_a_7j)
+    for (const mu of (missions || [])) { if (mu.missions?.titre) evenements.push({ texte: `${pseudo} a accompli la mission "${mu.missions.titre}" !`, couleur: 'var(--accent)' }) }
+    const { data: jalons } = await supabase.from('xp_log').select('source_id').eq('user_id', pote.user_id).eq('source', 'jalon').in('source_id', Object.keys(JALON_BADGE_MAP)).gte('cree_le', il_y_a_7j)
+    for (const j of (jalons || [])) { const info = JALON_BADGE_MAP[j.source_id]; if (info) evenements.push({ texte: `${pseudo} a obtenu le badge "${info.nom}" !`, couleur: 'var(--gold)' }) }
+  }
+  return evenements
+}
+
+function ChatGeneral({ userId }) {
+  const [messages, setMessages] = useState([])
+  const [texte, setTexte] = useState('')
+  const [envoi, setEnvoi] = useState(false)
+  const messagesEndRef = useRef(null)
+
+  const charger = async () => {
+    const { data } = await supabase.from('messages').select('id, contenu, cree_le, user_id, profils(pseudo)').eq('groupe_id', GROUPE_GENERAL_ID).order('cree_le', { ascending: false }).limit(50)
+    setMessages((data || []).reverse())
+  }
+
+  useEffect(() => { charger(); const t = setInterval(charger, 30000); return () => clearInterval(t) }, [])
+  useEffect(() => { if (messagesEndRef.current) { const c = messagesEndRef.current.parentElement; if (c) c.scrollTop = c.scrollHeight } }, [messages])
+
+  const envoyer = async () => {
+    const contenu = texte.trim()
+    if (!contenu || envoi) return
+    setEnvoi(true)
+    await supabase.from('messages').insert({ user_id: userId, groupe_id: GROUPE_GENERAL_ID, contenu })
+    setTexte('')
+    await charger()
+    setEnvoi(false)
+  }
+
+  return (
+    <div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 4, maxHeight: 300, overflowY: 'auto', marginBottom: 8 }}>
+        {messages.length === 0 ? (
+          <p style={{ fontSize: 12, color: 'var(--text-3)', margin: 0 }}>Aucun message — soyez les premiers !</p>
+        ) : messages.map(msg => (
+          <div key={msg.id} style={{
+            padding: '7px 10px',
+            background: msg.user_id === userId ? 'var(--accent-dim)' : 'var(--bg-2)',
+            borderWidth: 1, borderStyle: 'solid',
+            borderColor: msg.user_id === userId ? 'var(--accent-border)' : 'var(--border)',
+            borderRadius: 'var(--radius-sm)',
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}>
+              <div style={{ minWidth: 0 }}>
+                <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', marginRight: 6 }}>{msg.profils?.pseudo || '—'}</span>
+                <span style={{ fontSize: 12, color: 'var(--text-2)', lineHeight: 1.4 }}>{msg.contenu}</span>
+              </div>
+              <span style={{ fontSize: 10, color: 'var(--text-3)', flexShrink: 0, whiteSpace: 'nowrap' }}>
+                {new Date(msg.cree_le + 'Z').toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })}
+              </span>
+            </div>
+          </div>
+        ))}
+        <div ref={messagesEndRef} />
+      </div>
+      <div style={{ display: 'flex', gap: 6 }}>
+        <input type="text" value={texte} onChange={e => setTexte(e.target.value)} onKeyDown={e => e.key === 'Enter' && envoyer()} placeholder="Un message…" maxLength={500}
+          style={{ flex: 1, fontSize: 12, background: 'var(--bg-2)', borderWidth: 1, borderStyle: 'solid', borderColor: 'var(--border)', borderRadius: 'var(--radius-sm)', padding: '7px 10px', color: 'var(--text-1)', outline: 'none', fontFamily: 'var(--font-body)' }}
+          onFocus={e => e.target.style.borderColor = 'var(--accent-border)'}
+          onBlur={e => e.target.style.borderColor = 'var(--border)'}
+        />
+        <button onClick={envoyer} disabled={!texte.trim() || envoi} style={{ background: 'var(--accent)', borderWidth: 0, borderRadius: 'var(--radius-sm)', padding: '7px 10px', cursor: 'pointer', display: 'flex', alignItems: 'center', opacity: !texte.trim() || envoi ? 0.4 : 1 }}>
+          <Send size={14} color="#fff" />
+        </button>
+      </div>
+    </div>
+  )
+}
+
 function Accueil() {
   const [matchs, setMatchs]                     = useState([])
   const [user, setUser]                         = useState(null)
@@ -82,6 +185,8 @@ function Accueil() {
   const [xpData, setXpData]                     = useState({ xp_total: 0, niveau: 1 })
   const [kpis, setKpis]                         = useState({ total: 0, pct: 0 })
   const [equipesFav, setEquipesFav]             = useState([])
+  const [evenements, setEvenements]             = useState([])
+  const [actusOuvertes, setActusOuvertes]       = useState(false)
   const [missionsOpen, setMissionsOpen]         = useState(false)
   const [roueOpen, setRoueOpen]                 = useState(false)
   const [roueDispo, setRoueDispo]               = useState(false)
@@ -115,6 +220,9 @@ function Accueil() {
       setPseudo(profil?.pseudo || null)
       setAvatarUrl(profil?.avatar_url || null)
       setEquipesFav(profil?.equipes_favorites || [])
+      // Événements ligue (streaks potes)
+      const evts = await genererEvenements(user.id)
+      setEvenements(evts)
 
       const niveauAvant = profil?.niveau || 1
       const xpAvant     = profil?.xp_total || 0
@@ -489,10 +597,44 @@ function Accueil() {
           )}
         </div>
 
+        {/* ── À LA UNE ── */}
         <div className="anim-fade-up" style={{ paddingTop: 28 }}>
           <TitreSection label="À LA UNE" couleur="var(--orange)" />
         </div>
+
+        {/* Briefing ticker — juste sous le bandeau */}
+        {!chargement && user && (
+          <div style={{ marginTop: 10, marginBottom: 0 }}>
+            <Briefing userId={user.id} nbPronosAttente={nbPronosAttente} matchs={matchs} />
+          </div>
+        )}
+
+        {/* Une Basket USA */}
         <BanniereFeed article={articleUne} />
+
+        {/* Autres actus NBA — dépliables */}
+        {!chargement && user && (
+          <div style={{ background: '#f0ede8' }}>
+            <button
+              onClick={() => setActusOuvertes(o => !o)}
+              style={{
+                width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                padding: '10px 16px', background: 'none', borderWidth: 0,
+                cursor: 'pointer', borderTop: '1px solid rgba(0,0,0,0.08)',
+              }}
+            >
+              <span style={{ fontSize: 12, fontWeight: 700, color: '#555', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+                Autres actus NBA
+              </span>
+              {actusOuvertes ? <ChevronUp size={16} color="#555" /> : <ChevronDown size={16} color="#555" />}
+            </button>
+            {actusOuvertes && (
+              <div style={{ padding: '0 16px 16px' }}>
+                <NewsNBA onFeedCharge={setArticleUne} />
+              </div>
+            )}
+          </div>
+        )}
 
         <div style={{ height: 32 }} />
 
@@ -501,18 +643,13 @@ function Accueil() {
           <TitreSection label="TIMELINE" couleur="var(--accent)" />
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '14px 16px 0' }}>
             <FiltreEquipe equipeFiltre={equipeFiltre} onSelect={setEquipeFiltre} />
-            <button
-              onClick={() => navigate('/calendrier')}
-              className="btn-tap"
-              style={{
-                display: 'flex', alignItems: 'center', gap: 5,
-                background: 'var(--bg-2)', border: '1px solid var(--border-2)',
-                borderRadius: 20, padding: '5px 12px',
-                cursor: 'pointer', fontSize: 11, color: 'var(--text-2)',
-                fontWeight: 600, letterSpacing: '0.04em',
-                fontFamily: 'var(--font-body)',
-              }}
-            >
+            <button onClick={() => navigate('/calendrier')} className="btn-tap" style={{
+              display: 'flex', alignItems: 'center', gap: 5,
+              background: 'var(--bg-2)', border: '1px solid var(--border-2)',
+              borderRadius: 20, padding: '5px 12px',
+              cursor: 'pointer', fontSize: 11, color: 'var(--text-2)',
+              fontWeight: 600, letterSpacing: '0.04em', fontFamily: 'var(--font-body)',
+            }}>
               <Calendar size={11} strokeWidth={2} /> Calendrier
             </button>
           </div>
@@ -525,65 +662,38 @@ function Accueil() {
         {!chargement && (
           <div style={{ marginTop: 10 }}>
             {matchs.length === 0 ? (
-              <div className="card" style={{
-                margin: '8px 16px', padding: '14px 16px',
-                display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
-              }}>
-                <span style={{ fontSize: 13, color: 'var(--text-3)', lineHeight: 1.5 }}>
-                  Pas de match NBA sur cette période. Consulte le calendrier complet.
-                </span>
-                <button
-                  onClick={() => navigate('/calendrier')}
-                  className="btn-tap"
-                  style={{
-                    flexShrink: 0, fontSize: 12, fontWeight: 600,
-                    color: 'var(--accent)', background: 'var(--accent-dim)',
-                    border: '1px solid var(--accent-border)',
-                    borderRadius: 'var(--radius-sm)',
-                    padding: '6px 10px', cursor: 'pointer',
-                  }}
-                >
-                  Calendrier
-                </button>
+              <div className="card" style={{ margin: '8px 16px', padding: '14px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+                <span style={{ fontSize: 13, color: 'var(--text-3)', lineHeight: 1.5 }}>Pas de match NBA sur cette période.</span>
+                <button onClick={() => navigate('/calendrier')} className="btn-tap" style={{ flexShrink: 0, fontSize: 12, fontWeight: 600, color: 'var(--accent)', background: 'var(--accent-dim)', border: '1px solid var(--accent-border)', borderRadius: 'var(--radius-sm)', padding: '6px 10px', cursor: 'pointer' }}>Calendrier</button>
               </div>
             ) : (
-              <BandeMatchs
-                matchs={matchs}
-                userId={user?.id}
-                onProno={faireProno}
-                onBadge={setNbPronosAttente}
-                equipeFiltre={equipeFiltre}
-                onFiltreChange={setEquipeFiltre}
-              />
+              <BandeMatchs matchs={matchs} userId={user?.id} onProno={faireProno} onBadge={setNbPronosAttente} equipeFiltre={equipeFiltre} onFiltreChange={setEquipeFiltre} />
             )}
           </div>
         )}
 
         <div style={{ height: 32 }} />
 
-        {/* ── Ticker Briefing ── */}
+        {/* ── CLASSEMENT LIGUE ── */}
         {!chargement && user && (
           <div className="anim-fade-up anim-delay-2" style={{ marginTop: 8 }}>
-            <Briefing userId={user.id} nbPronosAttente={nbPronosAttente} matchs={matchs} />
-          </div>
-        )}
-
-        {/* ── LIGUE EN COURS ── */}
-        {!chargement && user && (
-          <div className="anim-fade-up anim-delay-2" style={{ marginTop: 32, marginBottom: 8 }}>
             <TitreSection label="CLASSEMENT LIGUE" couleur="var(--accent)" />
+
+            {/* Événements ligue — streaks potes */}
+            {evenements.length > 0 && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 3, padding: '10px 16px 4px' }}>
+                {evenements.map((evt, i) => (
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 10px', background: 'var(--bg-2)', borderLeft: `3px solid ${evt.couleur}` }}>
+                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: evt.couleur, flexShrink: 0, display: 'inline-block' }} />
+                    <span style={{ fontSize: 12, color: 'var(--text-2)', lineHeight: 1.4 }}>{evt.texte}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
             <div style={{ padding: '12px 16px 16px' }}>
               <ClassementRapide userId={user.id} />
             </div>
-          </div>
-        )}
-
-        <div style={{ height: 32 }} />
-
-        {/* ── LE VESTIAIRE ── */}
-        {!chargement && user && (
-          <div className="anim-fade-up anim-delay-3" style={{ marginTop: 8 }}>
-            <LeVestiaire userId={user.id} />
           </div>
         )}
 
@@ -593,12 +703,8 @@ function Accueil() {
         {!chargement && (
           <div className="anim-fade-up anim-delay-3" style={{ marginTop: 8 }}>
             <TitreSection label="CLASSEMENT NBA" couleur="var(--gold)" />
-            <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '6px 16px 6px' }}>
-              <button onClick={() => navigate('/stats')} className="btn-tap" style={{
-                background: 'none', border: 'none', cursor: 'pointer',
-                fontSize: 11, fontWeight: 600, color: 'var(--text-3)',
-                padding: 0, letterSpacing: '0.03em',
-              }}>complet →</button>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '6px 16px' }}>
+              <button onClick={() => navigate('/stats')} className="btn-tap" style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, fontWeight: 600, color: 'var(--text-3)', padding: 0, letterSpacing: '0.03em' }}>complet →</button>
             </div>
             <StandingsNBA typeSaison={typeSaisonEffectif} />
             {typeSaisonEffectif === 3 && <BracketPlayoffs saison={saisonActuelle} />}
@@ -607,19 +713,18 @@ function Accueil() {
 
         <div style={{ height: 32 }} />
 
-        {/* ── ACTU NBA ── */}
-        {!chargement && user && (
-          <div className="anim-fade-up anim-delay-4" style={{ marginTop: 8, background: '#f0ede8', borderLeft: '3px solid var(--orange)' }}>
-            <div style={{ marginBottom: 10 }}>
-              <TitreSection label="ACTU NBA" couleur="#c05a10" />
+        {/* ── DISCUSSION ── */}
+        {user && (
+          <div className="anim-fade-up anim-delay-4">
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '0 16px 12px', borderTop: '1px solid var(--border)', paddingTop: 16 }}>
+              <MessageSquare size={14} strokeWidth={1.5} color="var(--text-3)" />
+              <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Discussion</span>
             </div>
-            <div style={{ paddingLeft: 16, paddingRight: 16, paddingBottom: 16 }}>
-              <NewsNBA onFeedCharge={setArticleUne} />
+            <div style={{ padding: '0 16px 24px' }}>
+              <ChatGeneral userId={user.id} />
             </div>
           </div>
         )}
-
-        <div style={{ height: 32 }} />
 
       </main>
 
