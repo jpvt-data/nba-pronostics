@@ -737,6 +737,8 @@ function CarteEquipe({ eq, align, prono, termine, noSpoil, verrou, dom, ext, fai
     </button>
   )
 }
+
+  return (
     <>
       <Navigation />
       <main style={{ flex: 1, paddingBottom: 40 }}>
