@@ -529,31 +529,29 @@ function Accueil() {
             )}
           </div>
 
-          {/* Ligne 2 : barre XP (flex) | logos équipes à droite */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginTop: 14 }}>
+          {/* Ligne 2 : barre XP courte | logos équipes alignés droite sous KPIs */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginTop: 8 }}>
 
-            {/* Barre XP — prend toute la largeur disponible */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0 }}>
-              <div style={{ flex: 1, height: 5, background: 'var(--bg-2)', overflow: 'hidden', borderRadius: 3, minWidth: 60 }}>
+            {/* Barre XP — courte, alignée sous le pseudo */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, paddingLeft: 74 }}>
+              <div style={{ width: 120, height: 5, background: 'var(--bg-2)', overflow: 'hidden', borderRadius: 3, flexShrink: 0 }}>
                 <div style={{
                   height: '100%',
                   width: `${xpData.niveau >= 100 ? 100 : Math.min(100, Math.round((xpData.xp_total - xpPourNiveau(xpData.niveau)) / (xpPourNiveau(xpData.niveau + 1) - xpPourNiveau(xpData.niveau)) * 100))}%`,
                   background: 'var(--gold)', transition: 'width 0.6s ease',
                 }} />
               </div>
-              <span style={{ fontSize: 11, color: 'var(--text-3)', fontFamily: 'var(--font-display)', fontWeight: 600, flexShrink: 0 }}>
+              <span style={{ fontSize: 10, color: 'var(--text-3)', fontFamily: 'var(--font-display)', fontWeight: 600, flexShrink: 0 }}>
                 {xpData.xp_total.toLocaleString('fr-FR')} XP
               </span>
             </div>
 
-            {/* Logos équipes — droite, même ligne que XP */}
+            {/* Logos équipes — alignés à droite sous les KPIs */}
             {equipesFav.length > 0 && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-                <div style={{ width: 1, height: 28, background: 'var(--border-2)', marginRight: 4 }} />
-                <span style={{ fontSize: 9, color: 'var(--text-3)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginRight: 4 }}>Équipes</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
                 {equipesFav.map(eq => (
                   <img key={eq.id} src={eq.logo} alt={eq.nom}
-                    style={{ width: 36, height: 36, objectFit: 'contain', opacity: 0.9 }}
+                    style={{ width: 44, height: 44, objectFit: 'contain', opacity: 0.9 }}
                     onError={e => { e.target.style.opacity = '0.15' }}
                   />
                 ))}
