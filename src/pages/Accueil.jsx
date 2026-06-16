@@ -618,17 +618,46 @@ function Accueil() {
         {/* ── TIMELINE ── */}
         <div className="anim-fade-up anim-delay-1" style={{ marginTop: 8 }}>
           <TitreSection label="TIMELINE" couleur="var(--accent)" />
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '14px 16px 0' }}>
-            <FiltreEquipe equipeFiltre={equipeFiltre} onSelect={setEquipeFiltre} />
-            <button onClick={() => navigate('/calendrier')} className="btn-tap" style={{
-              display: 'flex', alignItems: 'center', gap: 5,
-              background: 'var(--bg-2)', border: '1px solid var(--border-2)',
-              borderRadius: 20, padding: '5px 12px',
-              cursor: 'pointer', fontSize: 11, color: 'var(--text-2)',
-              fontWeight: 600, letterSpacing: '0.04em', fontFamily: 'var(--font-body)',
-            }}>
-              <Calendar size={11} strokeWidth={2} /> Calendrier
-            </button>
+
+          {/* Barre contexte + boutons */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 16px 0', gap: 8 }}>
+            {/* Contexte saison */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              {matchs.length > 0 && (
+                <span style={{
+                  fontSize: 9, fontWeight: 700, letterSpacing: '0.1em',
+                  color: '#fff', textTransform: 'uppercase',
+                  background: typeSaisonEffectif === 3 ? 'var(--danger)' : typeSaisonEffectif === 5 ? 'var(--success)' : 'var(--text-3)',
+                  padding: '2px 7px', borderRadius: 2,
+                }}>
+                  {typeSaisonEffectif === 3 ? 'Playoffs' : typeSaisonEffectif === 5 ? 'Play-In' : typeSaisonEffectif === 4 ? 'Pré-saison' : 'Saison rég.'}
+                </span>
+              )}
+              {matchs.length === 0 && !chargement && (
+                <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.1em', color: '#fff', textTransform: 'uppercase', background: 'var(--text-3)', padding: '2px 7px', borderRadius: 2 }}>
+                  OFF-SEASON
+                </span>
+              )}
+              {matchs.length > 0 && (
+                <span style={{ fontSize: 11, color: 'var(--text-3)' }}>
+                  {matchs.length} match{matchs.length > 1 ? 's' : ''}
+                </span>
+              )}
+            </div>
+
+            {/* Boutons */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <FiltreEquipe equipeFiltre={equipeFiltre} onSelect={setEquipeFiltre} />
+              <button onClick={() => navigate('/calendrier')} className="btn-tap" style={{
+                display: 'flex', alignItems: 'center', gap: 5,
+                background: 'var(--accent-dim)', border: '1px solid var(--accent-border)',
+                borderRadius: 'var(--radius-sm)', padding: '5px 12px',
+                cursor: 'pointer', fontSize: 11, color: 'var(--accent)',
+                fontWeight: 700, letterSpacing: '0.04em', fontFamily: 'var(--font-body)',
+              }}>
+                <Calendar size={11} strokeWidth={2} /> Calendrier
+              </button>
+            </div>
           </div>
         </div>
 
@@ -639,9 +668,42 @@ function Accueil() {
         {!chargement && (
           <div style={{ marginTop: 10 }}>
             {matchs.length === 0 ? (
-              <div className="card" style={{ margin: '8px 16px', padding: '14px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-                <span style={{ fontSize: 13, color: 'var(--text-3)', lineHeight: 1.5 }}>Pas de match NBA sur cette période.</span>
-                <button onClick={() => navigate('/calendrier')} className="btn-tap" style={{ flexShrink: 0, fontSize: 12, fontWeight: 600, color: 'var(--accent)', background: 'var(--accent-dim)', border: '1px solid var(--accent-border)', borderRadius: 'var(--radius-sm)', padding: '6px 10px', cursor: 'pointer' }}>Calendrier</button>
+              /* ── Inter-saison ── */
+              <div style={{ margin: '0 16px', padding: '28px 20px', background: 'var(--bg-1)', border: '1px solid var(--border)', borderTop: '3px solid var(--accent)' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, textAlign: 'center' }}>
+                  {/* Icône basket */}
+                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.5" strokeLinecap="round">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M4.93 4.93C6.5 8 8 10 12 12s5.5 4 7.07 7.07"/>
+                    <path d="M19.07 4.93C17.5 8 16 10 12 12S6.5 16 4.93 19.07"/>
+                    <line x1="2" y1="12" x2="22" y2="12"/>
+                  </svg>
+                  <div>
+                    <div style={{ fontFamily: 'var(--font-title)', fontWeight: 700, fontSize: 22, color: 'var(--text-1)', letterSpacing: '0.02em', lineHeight: 1, marginBottom: 6 }}>
+                      OFF-SEASON NBA
+                    </div>
+                    <div style={{ fontSize: 13, color: 'var(--text-3)', lineHeight: 1.6, maxWidth: 280 }}>
+                      Pas de match en ce moment. La présaison reprend en octobre — d'ici là, continue à accumuler l'XP !
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center' }}>
+                    <button onClick={() => navigate('/calendrier')} style={{
+                      display: 'flex', alignItems: 'center', gap: 6,
+                      background: 'var(--accent)', borderWidth: 0, borderRadius: 'var(--radius-sm)',
+                      padding: '8px 16px', cursor: 'pointer', fontSize: 12, fontWeight: 700, color: '#fff',
+                    }}>
+                      <Calendar size={13} strokeWidth={2} /> Voir le calendrier
+                    </button>
+                    <button onClick={() => setMissionsOpen(true)} style={{
+                      display: 'flex', alignItems: 'center', gap: 6,
+                      background: 'var(--bg-2)', border: '1px solid var(--border)',
+                      borderRadius: 'var(--radius-sm)', padding: '8px 16px',
+                      cursor: 'pointer', fontSize: 12, fontWeight: 700, color: 'var(--text-2)',
+                    }}>
+                      <Target size={13} strokeWidth={2} color="var(--accent)" /> Mes missions
+                    </button>
+                  </div>
+                </div>
               </div>
             ) : (
               <BandeMatchs matchs={matchs} userId={user?.id} onProno={faireProno} onBadge={setNbPronosAttente} equipeFiltre={equipeFiltre} onFiltreChange={setEquipeFiltre} />
