@@ -82,6 +82,13 @@ const TitreSection = ({ label, couleur = 'var(--accent)' }) => (
   </div>
 )
 
+// Sous-titre de section — sobre, petit, discret
+const SousTitre = ({ label, couleur = 'var(--text-3)' }) => (
+  <div style={{ fontSize: 10, fontWeight: 700, color: couleur, textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 10, padding: '0 16px' }}>
+    {label}
+  </div>
+)
+
 const LigneUser = ({ m, i, statsUser, moi, navigate }) => {
   const estMoi = m.user_id === moi
   const t = calcTaux(statsUser)
@@ -380,14 +387,11 @@ function Classement() {
       <main style={{ flex: 1 }}>
 
         {/* ── Header ── */}
-        <div style={{ position: 'relative' }}>
+        <div style={{ position: 'relative', marginBottom: 8 }}>
           <TitreSection label="CLASSEMENT" couleur="var(--gold)" />
-          <div style={{ padding: '8px 16px 0', position: 'relative' }}>
-            <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 3, background: 'var(--gold)' }} />
-            <p style={{ fontSize: 12, color: 'var(--text-3)', margin: '4px 0 0', lineHeight: 1.5, paddingLeft: 8 }}>
-              Chaque prono correct rapporte <strong style={{ color: 'var(--accent)' }}>1 point</strong>.
-            </p>
-          </div>
+          <p style={{ fontSize: 12, color: 'var(--text-3)', margin: '10px 16px 0', lineHeight: 1.6 }}>
+            Suis ta progression et celle de tes potes. Chaque prono correct vaut <strong style={{ color: 'var(--accent)' }}>1 point</strong> — la fourchette d'écart en rapporte un de plus.
+          </p>
         </div>
 
         {chargement && (
@@ -399,10 +403,8 @@ function Classement() {
 
             {/* ── SECTION 1 : Classement ligue ── */}
             <div style={{ marginTop: 24 }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-                <div style={{ flex: 1 }}>
-                  <TitreSection label="CLASSEMENT LIGUE" couleur={ligueEstActive ? 'var(--accent)' : 'var(--text-3)'} />
-                </div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 16px', marginBottom: 10 }}>
+                <SousTitre label={ligueEstActive ? 'Ligue en cours' : 'Ligue terminée'} couleur={ligueEstActive ? 'var(--accent)' : 'var(--text-3)'} />
                 {toutesLigues.length > 0 && (
                   <select value={ligueSelectId || ''} onChange={e => changerLigue(e.target.value)} style={{
                     background: 'var(--bg-2)', borderWidth: 1, borderStyle: 'solid',
@@ -451,9 +453,9 @@ function Classement() {
 
             {/* ── SECTION 2 : MVP Semaine précédente ── */}
             {gagnantsSemPrev.length > 0 && (
-              <div style={{ margin: '24px 0 0' }}>
-                <TitreSection label="MVP SEMAINE" couleur="var(--gold)" />
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, padding: '10px 16px 0' }}>
+              <div style={{ margin: '28px 0 0' }}>
+                <SousTitre label="MVP de la semaine" couleur="var(--gold)" />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, padding: '0 16px' }}>
                   {gagnantsSemPrev.map((g) => (
                     <div
                       key={g.user_id}
@@ -481,14 +483,9 @@ function Classement() {
             )}
 
             {/* ── SECTION 3 : Stats globales ── */}
-            <div style={{ marginTop: 24 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <div style={{ flex: 1 }}>
-                  <TitreSection
-                    label={`STATS ${filtre === 'annee' ? labelAnneeNBA() : filtre === 'mois' ? 'MOIS' : 'SEMAINE'}`}
-                    couleur="var(--accent)"
-                  />
-                </div>
+            <div style={{ marginTop: 28 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 16px', marginBottom: 10 }}>
+                <SousTitre label={labelFiltre[filtre]} couleur="var(--text-2)" />
                 <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
                   {['semaine', 'mois', 'annee'].map(f => (
                     <button key={f} onClick={() => changerFiltre(f)} style={{
@@ -505,8 +502,8 @@ function Classement() {
                   ))}
                 </div>
               </div>
-              <p style={{ fontSize: 11, color: 'var(--text-3)', margin: '8px 16px 10px' }}>
-                {labelFiltre[filtre]} — toutes ligues confondues
+              <p style={{ fontSize: 11, color: 'var(--text-3)', margin: '0 16px 10px' }}>
+                Toutes ligues confondues
               </p>
 
               <div style={{ display: 'flex', flexDirection: 'column' }}>

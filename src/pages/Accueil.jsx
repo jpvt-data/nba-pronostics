@@ -174,6 +174,7 @@ function ChatGeneral({ userId }) {
 
 function Accueil() {
   const [matchs, setMatchs]                     = useState([])
+  const [isMobile, setIsMobile]                 = useState(window.innerWidth < 640)
   const [matchsAffichables, setMatchsAffichables] = useState([])
   const [prochainMatch, setProchainMatch]       = useState(null)
   const [user, setUser]                         = useState(null)
@@ -199,6 +200,12 @@ function Accueil() {
   const navigate = useNavigate()
   const { noSpoil } = useNoSpoil()
   const { pushNotifs } = useNotif()
+
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth < 640)
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [])
 
   useEffect(() => {
     window.scrollTo(0, 0)
@@ -488,39 +495,46 @@ function Accueil() {
       <main style={{ flex: 1 }}>
 
         {/* ── Header ── */}
-        <div style={{ padding: '20px 16px 16px 16px', position: 'relative' }}>
+        <div style={{ padding: '16px 16px 14px 16px', position: 'relative' }}>
           <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 3, background: 'var(--accent)' }} />
 
           {/* Ligne 1 : avatar + pseudo/titre/niv | KPIs droite */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: isMobile ? 8 : 12 }}>
 
             {/* Gauche : avatar + pseudo + titre + niv + barre XP */}
-            <div style={{ display: 'flex', gap: 14, alignItems: 'center', minWidth: 0, flex: 1 }}>
+            <div style={{ display: 'flex', gap: isMobile ? 10 : 14, alignItems: 'center', minWidth: 0, flex: 1 }}>
               <div onClick={() => navigate('/profil')} style={{ cursor: 'pointer', flexShrink: 0 }}>
-                <Avatar url={avatarUrl} pseudo={pseudo} taille={60} fontSize={20} />
+                <Avatar url={avatarUrl} pseudo={pseudo} taille={isMobile ? 44 : 60} fontSize={isMobile ? 15 : 20} />
               </div>
               <div onClick={() => navigate('/mes-pronos')} style={{ cursor: 'pointer', minWidth: 0, flex: 1 }}>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
-                  <span style={{ fontFamily: 'var(--font-title)', fontWeight: 700, fontSize: 'clamp(28px, 7vw, 46px)', color: 'var(--accent)', letterSpacing: '-0.01em', lineHeight: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: isMobile ? 5 : 8, flexWrap: 'wrap' }}>
+                  <span style={{ fontFamily: 'var(--font-title)', fontWeight: 700, fontSize: isMobile ? 26 : 'clamp(28px, 5vw, 46px)', color: 'var(--accent)', letterSpacing: '-0.01em', lineHeight: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {pseudo || ''}
                   </span>
-                  <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 'clamp(20px, 4.5vw, 28px)', color: 'var(--gold)', letterSpacing: '0.02em', lineHeight: 1, whiteSpace: 'nowrap' }}>
+                  <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: isMobile ? 18 : 'clamp(20px, 3.5vw, 28px)', color: 'var(--gold)', letterSpacing: '0.02em', lineHeight: 1, whiteSpace: 'nowrap' }}>
                     {titrDepuisNiveau(xpData.niveau)}
                   </span>
-                  <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 'clamp(12px, 2.5vw, 15px)', color: 'var(--text-3)', whiteSpace: 'nowrap' }}>
-                    Niv. {xpData.niveau}
-                  </span>
+                  {!isMobile && (
+                    <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 14, color: 'var(--text-3)', whiteSpace: 'nowrap' }}>
+                      Niv. {xpData.niveau}
+                    </span>
+                  )}
                 </div>
-                {/* Barre XP — collée sous le pseudo */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
-                  <div style={{ width: 160, height: 5, background: 'var(--bg-2)', overflow: 'hidden', borderRadius: 3, flexShrink: 0 }}>
+                {/* Niv + Barre XP */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 5 }}>
+                  {isMobile && (
+                    <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 11, color: 'var(--text-3)', flexShrink: 0 }}>
+                      Niv. {xpData.niveau}
+                    </span>
+                  )}
+                  <div style={{ width: isMobile ? 100 : 160, height: 4, background: 'var(--bg-2)', overflow: 'hidden', borderRadius: 3, flexShrink: 0 }}>
                     <div style={{
                       height: '100%',
                       width: `${xpData.niveau >= 100 ? 100 : Math.min(100, Math.round((xpData.xp_total - xpPourNiveau(xpData.niveau)) / (xpPourNiveau(xpData.niveau + 1) - xpPourNiveau(xpData.niveau)) * 100))}%`,
                       background: 'var(--gold)', transition: 'width 0.6s ease',
                     }} />
                   </div>
-                  <span style={{ fontSize: 10, color: 'var(--text-3)', fontFamily: 'var(--font-display)', fontWeight: 600, flexShrink: 0 }}>
+                  <span style={{ fontSize: 9, color: 'var(--text-3)', fontFamily: 'var(--font-display)', fontWeight: 600, flexShrink: 0 }}>
                     {xpData.xp_total.toLocaleString('fr-FR')} XP
                   </span>
                 </div>
@@ -529,14 +543,14 @@ function Accueil() {
 
             {/* KPIs — droite */}
             {kpis.total > 0 && (
-              <div style={{ display: 'flex', gap: 16, flexShrink: 0 }}>
+              <div style={{ display: 'flex', gap: isMobile ? 10 : 16, flexShrink: 0 }}>
                 <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 'clamp(32px, 8vw, 52px)', color: 'var(--text-1)', lineHeight: 1 }}>{kpis.total}</div>
-                  <div style={{ fontSize: 9, color: 'var(--text-3)', marginTop: 3, letterSpacing: '0.06em' }}>PRONOS</div>
+                  <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: isMobile ? 28 : 'clamp(32px, 6vw, 52px)', color: 'var(--text-1)', lineHeight: 1 }}>{kpis.total}</div>
+                  <div style={{ fontSize: 8, color: 'var(--text-3)', marginTop: 2, letterSpacing: '0.06em' }}>PRONOS</div>
                 </div>
                 <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 'clamp(32px, 8vw, 52px)', color: 'var(--accent)', lineHeight: 1 }}>{kpis.pct}%</div>
-                  <div style={{ fontSize: 9, color: 'var(--text-3)', marginTop: 3, letterSpacing: '0.06em' }}>RÉUSSITE</div>
+                  <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: isMobile ? 28 : 'clamp(32px, 6vw, 52px)', color: 'var(--accent)', lineHeight: 1 }}>{kpis.pct}%</div>
+                  <div style={{ fontSize: 8, color: 'var(--text-3)', marginTop: 2, letterSpacing: '0.06em' }}>RÉUSSITE</div>
                 </div>
               </div>
             )}
@@ -544,10 +558,10 @@ function Accueil() {
 
           {/* Ligne 2 : logos équipes à droite */}
           {equipesFav.length > 0 && (
-            <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 8, marginTop: 8 }}>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: isMobile ? 4 : 8, marginTop: isMobile ? 6 : 8 }}>
               {equipesFav.map(eq => (
                 <img key={eq.id} src={eq.logo} alt={eq.nom}
-                  style={{ width: 44, height: 44, objectFit: 'contain', opacity: 0.9 }}
+                  style={{ width: isMobile ? 34 : 44, height: isMobile ? 34 : 44, objectFit: 'contain', opacity: 0.9 }}
                   onError={e => { e.target.style.opacity = '0.15' }}
                 />
               ))}
@@ -556,7 +570,7 @@ function Accueil() {
 
           {/* Ligne 3 : chips */}
           {user && (
-            <div style={{ marginTop: 14, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <div style={{ marginTop: 12, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               <button onClick={() => { if (roueDispo) setRoueOpen(true) }} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: '5px 11px', cursor: roueDispo ? 'pointer' : 'default', fontSize: 11, fontWeight: 700, color: 'var(--text-2)', letterSpacing: '0.03em', opacity: roueDispo ? 1 : 0.4 }}>
                 <RefreshCw size={12} strokeWidth={2} color="var(--accent)" />
                 {roueDispo ? 'Roue' : 'Roue jouée'}
