@@ -59,10 +59,26 @@ function plageSemanePrecedente() {
   return { debut, fin }
 }
 
-const TitreSection = ({ mot1, mot2, couleur2 = 'var(--accent)', taille = 24 }) => (
-  <div style={{ display: 'flex', alignItems: 'baseline', gap: 0, marginBottom: 10 }}>
-    <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: taille, color: 'var(--text-1)', letterSpacing: '0.02em', lineHeight: 1 }}>{mot1}</span>
-    <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: taille, color: couleur2, letterSpacing: '0.02em', lineHeight: 1 }}>{mot2}</span>
+// Titre section — bandeau oblique identique Accueil
+const TitreSection = ({ label, couleur = 'var(--accent)' }) => (
+  <div style={{ width: '100%', position: 'relative', height: 'clamp(38px, 6vw, 46px)', overflow: 'hidden' }}>
+    <svg style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }} preserveAspectRatio="none" viewBox="0 0 500 46">
+      <polygon points="0,0 260,0 240,46 0,46" fill={couleur} />
+      <polygon points="248,0 274,0 254,46 228,46" fill={couleur} />
+      <polygon points="282,0 304,0 284,46 262,46" fill={couleur} />
+      <polygon points="312,0 330,0 310,46 292,46" fill={couleur} />
+      <polygon points="338,0 353,0 333,46 318,46" fill={couleur} />
+      <polygon points="361,0 374,0 354,46 341,46" fill={couleur} />
+      <polygon points="382,0 393,0 373,46 362,46" fill={couleur} />
+      <polygon points="401,0 410,0 390,46 381,46" fill={couleur} />
+      <polygon points="418,0 426,0 406,46 398,46" fill={couleur} />
+    </svg>
+    <span style={{
+      position: 'absolute', top: '50%', left: 16, transform: 'translateY(-46%)',
+      fontFamily: "'Teko', system-ui, sans-serif", fontWeight: 700,
+      fontSize: 'clamp(22px, 5vw, 36px)', color: '#fff',
+      letterSpacing: '0.02em', lineHeight: 1, fontStyle: 'italic', zIndex: 1,
+    }}>{label}</span>
   </div>
 )
 
@@ -364,12 +380,14 @@ function Classement() {
       <main style={{ flex: 1 }}>
 
         {/* ── Header ── */}
-        <div style={{ padding: '20px 16px 0 16px', position: 'relative', overflow: 'hidden' }}>
-          <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 3, background: 'var(--gold)' }} />
-          <TitreSection mot1="CLASSE" mot2="MENT" couleur2="var(--gold)" taille={36} />
-          <p style={{ fontSize: 12, color: 'var(--text-3)', margin: '4px 0 0', lineHeight: 1.5 }}>
-            Chaque prono correct rapporte <strong style={{ color: 'var(--accent)' }}>1 point</strong>.
-          </p>
+        <div style={{ position: 'relative' }}>
+          <TitreSection label="CLASSEMENT" couleur="var(--gold)" />
+          <div style={{ padding: '8px 16px 0', position: 'relative' }}>
+            <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 3, background: 'var(--gold)' }} />
+            <p style={{ fontSize: 12, color: 'var(--text-3)', margin: '4px 0 0', lineHeight: 1.5, paddingLeft: 8 }}>
+              Chaque prono correct rapporte <strong style={{ color: 'var(--accent)' }}>1 point</strong>.
+            </p>
+          </div>
         </div>
 
         {chargement && (
@@ -380,32 +398,22 @@ function Classement() {
           <div style={{ display: 'flex', flexDirection: 'column', paddingBottom: 32 }}>
 
             {/* ── SECTION 1 : Classement ligue ── */}
-            <div style={{ borderLeft: '3px solid var(--accent)', padding: '12px 16px 16px 16px', marginTop: 24 }}>
-
-              {/* Header section ligue + dropdown */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, gap: 8, flexWrap: 'wrap' }}>
-                <TitreSection mot1="CLASSEMENT" mot2={ligueEstActive ? 'LIGUE' : 'LIGUE'} couleur2={ligueEstActive ? 'var(--accent)' : 'var(--text-3)'} taille={22} />
-
-                {/* Dropdown choix ligue */}
+            <div style={{ marginTop: 24 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                <div style={{ flex: 1 }}>
+                  <TitreSection label="CLASSEMENT LIGUE" couleur={ligueEstActive ? 'var(--accent)' : 'var(--text-3)'} />
+                </div>
                 {toutesLigues.length > 0 && (
-                  <select
-                    value={ligueSelectId || ''}
-                    onChange={e => changerLigue(e.target.value)}
-                    style={{
-                      background: 'var(--bg-2)', borderWidth: 1, borderStyle: 'solid',
-                      borderColor: 'var(--border)', borderRadius: 'var(--radius-sm)',
-                      color: 'var(--text-2)', fontSize: 12, fontWeight: 600,
-                      padding: '5px 10px', cursor: 'pointer', fontFamily: 'var(--font-body)',
-                      maxWidth: 180,
-                    }}
-                  >
+                  <select value={ligueSelectId || ''} onChange={e => changerLigue(e.target.value)} style={{
+                    background: 'var(--bg-2)', borderWidth: 1, borderStyle: 'solid',
+                    borderColor: 'var(--border)', borderRadius: 'var(--radius-sm)',
+                    color: 'var(--text-2)', fontSize: 12, fontWeight: 600,
+                    padding: '5px 10px', cursor: 'pointer', fontFamily: 'var(--font-body)',
+                    maxWidth: 160, flexShrink: 0,
+                  }}>
                     {toutesLigues.map(g => {
                       const actv = !g.date_fin || new Date(g.date_fin) >= now
-                      return (
-                        <option key={g.id} value={g.id}>
-                          {g.nom} {actv ? '●' : '✓'}
-                        </option>
-                      )
+                      return <option key={g.id} value={g.id}>{g.nom} {actv ? '●' : '✓'}</option>
                     })}
                   </select>
                 )}
@@ -413,10 +421,8 @@ function Classement() {
 
               {/* Nom ligue + dates */}
               {ligueCourante && (
-                <div style={{ fontSize: 11, color: 'var(--text-3)', marginBottom: 10 }}>
-                  {ligueCourante.tag && (
-                    <span style={{ marginRight: 8, fontWeight: 700, color: 'var(--accent)' }}>[{ligueCourante.tag}]</span>
-                  )}
+                <div style={{ fontSize: 11, color: 'var(--text-3)', margin: '10px 16px 6px' }}>
+                  {ligueCourante.tag && <span style={{ marginRight: 8, fontWeight: 700, color: 'var(--accent)' }}>[{ligueCourante.tag}]</span>}
                   {ligueCourante.date_debut && new Date(ligueCourante.date_debut).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: '2-digit' })}
                   {ligueCourante.date_fin && ` → ${new Date(ligueCourante.date_fin).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: '2-digit' })}`}
                   {!ligueEstActive && <span style={{ marginLeft: 8, color: 'var(--text-3)', fontStyle: 'italic' }}>· Ligue terminée</span>}
@@ -445,9 +451,9 @@ function Classement() {
 
             {/* ── SECTION 2 : MVP Semaine précédente ── */}
             {gagnantsSemPrev.length > 0 && (
-              <div style={{ borderLeft: '3px solid var(--gold)', padding: '12px 16px 16px 16px', margin: '8px 0' }}>
-                <TitreSection mot1="MVP" mot2="SEMAINE" couleur2="var(--gold)" taille={20} />
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <div style={{ margin: '24px 0 0' }}>
+                <TitreSection label="MVP SEMAINE" couleur="var(--gold)" />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, padding: '10px 16px 0' }}>
                   {gagnantsSemPrev.map((g) => (
                     <div
                       key={g.user_id}
@@ -475,13 +481,14 @@ function Classement() {
             )}
 
             {/* ── SECTION 3 : Stats globales ── */}
-            <div style={{ borderLeft: '3px solid var(--accent)', padding: '12px 16px 16px 16px', marginTop: 8 }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                <TitreSection
-                  mot1="STATS"
-                  mot2={filtre === 'annee' ? labelAnneeNBA() : filtre === 'mois' ? 'MOIS' : 'SEMAINE'}
-                  taille={20}
-                />
+            <div style={{ marginTop: 24 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div style={{ flex: 1 }}>
+                  <TitreSection
+                    label={`STATS ${filtre === 'annee' ? labelAnneeNBA() : filtre === 'mois' ? 'MOIS' : 'SEMAINE'}`}
+                    couleur="var(--accent)"
+                  />
+                </div>
                 <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
                   {['semaine', 'mois', 'annee'].map(f => (
                     <button key={f} onClick={() => changerFiltre(f)} style={{
@@ -498,8 +505,7 @@ function Classement() {
                   ))}
                 </div>
               </div>
-
-              <p style={{ fontSize: 11, color: 'var(--text-3)', margin: '0 0 10px' }}>
+              <p style={{ fontSize: 11, color: 'var(--text-3)', margin: '8px 16px 10px' }}>
                 {labelFiltre[filtre]} — toutes ligues confondues
               </p>
 
