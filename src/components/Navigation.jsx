@@ -5,6 +5,7 @@ import { Home, Trophy, BarChart2, Menu, X, Swords, LogOut, Calendar, Sparkles, S
 import { useProfil } from '../context/ProfilContext'
 import { track } from '../services/tracker'
 import { Avatar } from '../components/Avatar'
+import OnboardingTuto from '../components/OnboardingTuto'
 
 // Bottom nav mobile — 4 items fixes (icônes seules)
 const LIENS = [
@@ -94,12 +95,20 @@ function Navigation({ nbPronosAttente = 0, onOpenOnboarding }) {
   const [ouvert, setOuvert] = useState(false)
   const { profil } = useProfil()
   const [estAdmin, setEstAdmin] = useState(false)
+  const [userId, setUserId] = useState(null)
+  const [onboardingOpen, setOnboardingOpen] = useState(false)
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
       setEstAdmin(user?.id === 'fa55d016-896c-4eb4-b48a-241d6be71ad0')
+      setUserId(user?.id || null)
     })
   }, [])
+
+  const ouvrirOnboarding = () => {
+    if (onOpenOnboarding) onOpenOnboarding()
+    else setOnboardingOpen(true)
+  }
 
   const deconnecter = async () => {
     await supabase.auth.signOut()
@@ -278,7 +287,7 @@ function Navigation({ nbPronosAttente = 0, onOpenOnboarding }) {
             <div style={{ width: 1, height: 20, background: 'var(--border)', margin: '0 6px' }} />
 
             {/* Info */}
-            <button onClick={() => onOpenOnboarding?.()} style={{
+            <button onClick={ouvrirOnboarding} style={{
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               width: 36, height: 36,
               background: 'none', borderWidth: 0,
@@ -315,7 +324,7 @@ function Navigation({ nbPronosAttente = 0, onOpenOnboarding }) {
           <LogoTeko taille={36} />
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <button onClick={() => onOpenOnboarding?.()} style={{
+          <button onClick={ouvrirOnboarding} style={{
             background: 'none', borderWidth: 0, color: 'var(--text-2)',
             cursor: 'pointer', display: 'flex', alignItems: 'center', padding: 4,
           }}>
@@ -375,6 +384,11 @@ function Navigation({ nbPronosAttente = 0, onOpenOnboarding }) {
           )
         })}
       </nav>
+
+      {/* Onboarding fallback — utilisé quand la page n'a pas son propre gestionnaire */}
+      {onboardingOpen && !onOpenOnboarding && userId && (
+        <OnboardingTuto userId={userId} onClose={() => setOnboardingOpen(false)} />
+      )}
     </>
   )
 }
