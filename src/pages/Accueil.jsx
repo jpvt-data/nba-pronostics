@@ -624,11 +624,13 @@ function Accueil() {
         )}
 
         {/* Une Basket USA */}
-        <BanniereFeed article={articleUne} />
+        <div style={{ padding: '0 16px' }}>
+          <BanniereFeed article={articleUne} />
+        </div>
 
         {/* Autres actus NBA — dépliables, NewsNBA toujours monté pour articleUne */}
         {!chargement && user && (
-          <div style={{ background: '#f0ede8' }}>
+          <div style={{ background: '#f0ede8', margin: '0 16px' }}>
             <button
               onClick={() => setActusOuvertes(o => !o)}
               style={{
