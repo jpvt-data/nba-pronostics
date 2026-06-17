@@ -562,12 +562,12 @@ function Accueil() {
 
               {/* Chips — gauche */}
               {user ? (
-                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                  <button onClick={() => { if (roueDispo) setRoueOpen(true) }} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: '5px 11px', cursor: roueDispo ? 'pointer' : 'default', fontSize: 11, fontWeight: 700, color: 'var(--text-2)', letterSpacing: '0.03em', opacity: roueDispo ? 1 : 0.4 }}>
+                <div style={{ display: 'flex', gap: isMobile ? 6 : 8, flexWrap: 'nowrap', flexShrink: 0 }}>
+                  <button onClick={() => { if (roueDispo) setRoueOpen(true) }} style={{ display: 'inline-flex', alignItems: 'center', gap: isMobile ? 4 : 6, background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: isMobile ? '5px 8px' : '5px 11px', cursor: roueDispo ? 'pointer' : 'default', fontSize: isMobile ? 10 : 11, fontWeight: 700, color: 'var(--text-2)', letterSpacing: '0.03em', opacity: roueDispo ? 1 : 0.4, whiteSpace: 'nowrap' }}>
                     <RefreshCw size={12} strokeWidth={2} color="var(--accent)" />
                     {roueDispo ? 'Roue' : 'Roue jouée'}
                   </button>
-                  <button onClick={() => setMissionsOpen(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: '5px 11px', cursor: 'pointer', fontSize: 11, fontWeight: 700, color: 'var(--text-2)', letterSpacing: '0.03em' }}>
+                  <button onClick={() => setMissionsOpen(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: isMobile ? 4 : 6, background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: isMobile ? '5px 8px' : '5px 11px', cursor: 'pointer', fontSize: isMobile ? 10 : 11, fontWeight: 700, color: 'var(--text-2)', letterSpacing: '0.03em', whiteSpace: 'nowrap' }}>
                     <Target size={12} strokeWidth={2} color="var(--accent)" />
                     Missions
                   </button>
