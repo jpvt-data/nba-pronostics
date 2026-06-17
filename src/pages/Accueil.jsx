@@ -15,6 +15,8 @@ import NewsNBA from '../components/NewsNBA'
 import BanniereFeed from '../components/BanniereFeed'
 import MissionsPopup from '../components/MissionsPopup'
 import RoueQuotidienne from '../components/RoueQuotidienne'
+import PopupOuvertureBooster from '../components/PopupOuvertureBooster'
+import { donnerCartes } from '../services/cartes'
 import OnboardingTuto from '../components/OnboardingTuto'
 import PopupActu from '../components/PopupActu'
 import { track } from '../services/tracker'
@@ -205,6 +207,7 @@ function Accueil() {
   const [missionsOpen, setMissionsOpen]         = useState(false)
   const [roueOpen, setRoueOpen]                 = useState(false)
   const [roueDispo, setRoueDispo]               = useState(false)
+  const [boosterOuverture, setBoosterOuverture]  = useState(null)
   const [onboardingOpen, setOnboardingOpen]     = useState(false)
   const [actu, setActu]                         = useState(null)
   const [actuOpen, setActuOpen]                 = useState(false)
@@ -278,11 +281,14 @@ function Accueil() {
       const notifs = []
 
       if (!dejaConnexion?.length) {
-        const [resConnexion, missionsConnexion, missionsConnexionPerm] = await Promise.all([
+        const [resConnexion, missionsConnexion, missionsConnexionPerm, cartesBooster] = await Promise.all([
           ajouterXP(user.id, 5, 'passif', 'connexion_quotidienne'),
           verifierMissions(user.id, 'connexion_semaine', 1, lundiFin(), 'increment'),
           verifierMissions(user.id, 'serie_connexion', 1, null, 'increment'),
+          donnerCartes(user.id, 3, 'connexion'),
         ])
+
+        if (cartesBooster?.length) setBoosterOuverture(cartesBooster)
 
         // Notif XP connexion
         notifs.push({
@@ -819,7 +825,13 @@ function Accueil() {
               xp_total: niveau ? xpTotal : prev.xp_total + xpTotal,
               niveau:   niveau ?? prev.niveau,
             }))
-          }}
+      )}
+
+      {/* ── Popup ouverture booster (connexion / level up) ── */}
+      {boosterOuverture && (
+        <PopupOuvertureBooster
+          cartes={boosterOuverture}
+          onFermer={() => setBoosterOuverture(null)}
         />
       )}
 
