@@ -177,7 +177,7 @@ const MaCollection = () => {
 
       {/* Chips de selection par serie - retour a la ligne, pas de scroll */}
       <div style={{
-        display: 'flex', flexWrap: 'wrap', gap: 8, padding: '0 16px 12px',
+        display: 'flex', flexWrap: 'wrap', gap: 8, padding: '0 16px 12px', justifyContent: 'center',
       }}>
         {series.map((s) => {
           const stat = statsParSerie[s] || { total: 0, obtenu: 0 }
