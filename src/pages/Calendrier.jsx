@@ -70,7 +70,12 @@ const MOIS_SUMMER_LEAGUE = [6, 7]
 
 // Extrait et normalise les matchs d'une réponse ESPN
 const extraireMatchs = (data, isSummerLeague = false) =>
-  (data.events || []).map(evt => {
+  (data.events || [])
+  .filter(evt => {
+    const statut = evt.competitions?.[0]?.status?.type?.name || ''
+    return statut !== 'STATUS_POSTPONED' && statut !== 'STATUS_CANCELED' && statut !== 'STATUS_UNNECESSARY'
+  })
+  .map(evt => {
     const comp = evt.competitions[0]
     const dom  = comp.competitors.find(c => c.homeAway === 'home')
     const ext  = comp.competitors.find(c => c.homeAway === 'away')

@@ -93,79 +93,23 @@ export const recupererMatchs3Jours = async () => {
 }
 
 export const recupererDetailMatch = async (espnId) => {
+  // Appels parallèles : summary (données riches) + scoreboard date du match (pour headline/notes)
   let data          = null
   let isSummerLeague = false
 
   // Étape 1 : summary NBA standard
   try {
     const res  = await fetchAvecTimeout(`${BASE_WEB}/summary?event=${espnId}`)
-    if (res.ok) {
-      const json = await res.json()
-      if (json?.header?.competitions?.[0]) data = json
-    }
+    const json = await res.json()
+    if (json?.header?.competitions?.[0]) data = json
   } catch { /* silencieux */ }
 
   // Étape 2 : fallback Summer League si NBA échoue
   if (!data) {
     try {
       const res  = await fetchAvecTimeout(`${BASE_WEB_SL}/summary?event=${espnId}`)
-      if (res.ok) {
-        const json = await res.json()
-        if (json?.header?.competitions?.[0]) { data = json; isSummerLeague = true }
-      }
-    } catch { /* silencieux */ }
-  }
-
-  // Étape 3 : fallback scoreboard plage si summary 404
-  // ESPN retire parfois les summary des matchs passés mais garde le scoreboard plage
-  if (!data) {
-    try {
-      // Chercher dans les 90 derniers jours par tranches de 30j
-      const today = new Date()
-      for (let offset = 0; offset <= 90; offset += 30) {
-        const fin   = new Date(today); fin.setDate(fin.getDate() - offset)
-        const debut = new Date(fin);   debut.setDate(debut.getDate() - 30)
-        const plage = `${formaterDate(debut)}-${formaterDate(fin)}`
-        try {
-          const res  = await fetchAvecTimeout(`${BASE_URL}/scoreboard?dates=${plage}&limit=500`)
-          const json = await res.json()
-          const evt  = (json.events || []).find(e => e.id === espnId)
-          if (evt) {
-            // Construire un objet data minimal compatible avec le parsing ci-dessous
-            const comp = evt.competitions?.[0]
-            const dom  = comp?.competitors?.find(c => c.homeAway === 'home')
-            const ext  = comp?.competitors?.find(c => c.homeAway === 'away')
-            return {
-              espn_id:        espnId,
-              date:           comp?.date || evt.date,
-              statut:         comp?.status?.type?.name || 'STATUS_FINAL',
-              statutLabel:    comp?.status?.type?.description || 'Final',
-              periode:        null,
-              clock:          null,
-              saison:         evt.season?.year ? `${evt.season.year - 1}-${String(evt.season.year).slice(2)}` : null,
-              typeSaison:     TYPE_SAISON[evt.season?.type] || null,
-              saisonNum:      evt.season?.year ?? null,
-              typeSaisonNum:  evt.season?.type ?? null,
-              tag:            detecterType(evt.season?.type, comp?.notes?.[0]?.headline || '', comp?.type?.abbreviation, false),
-              headline:       comp?.notes?.[0]?.headline || '',
-              isSummerLeague: false,
-              stade:          null, ville: null, serie: null,
-              domicile: {
-                nom: dom?.team?.displayName || '', trigramme: dom?.team?.abbreviation || '',
-                logo: dom?.team?.logo || null, color: dom?.team?.color || null, alternateColor: dom?.team?.alternateColor || null,
-                score: dom?.score ?? null, winner: dom?.winner ?? false,
-                periodes: [], stats: {}, leaders: [], l5: [], blessés: [],
-              },
-              exterieur: {
-                nom: ext?.team?.displayName || '', trigramme: ext?.team?.abbreviation || '',
-                logo: ext?.team?.logo || null, color: ext?.team?.color || null, alternateColor: ext?.team?.alternateColor || null,
-                score: ext?.score ?? null, winner: ext?.winner ?? false,
-                periodes: [], stats: {}, leaders: [], l5: [], blessés: [],
-              },
-            }
-          }
-        } catch { /* continuer */ }
-      }
+      const json = await res.json()
+      if (json?.header?.competitions?.[0]) { data = json; isSummerLeague = true }
     } catch { /* silencieux */ }
   }
 
@@ -185,7 +129,7 @@ export const recupererDetailMatch = async (espnId) => {
     const boxExt        = boxTeams.find(t => t.homeAway === 'away')
     const saisonNum     = saison?.year ?? null
     const typeSaisonNum = saison?.type ?? null
-    const termine       = comp.status?.type?.name?.startsWith('STATUS_FINAL')
+    const termine       = comp.status?.type?.name === 'STATUS_FINAL'
 
     // Étape 3 : scoreboard sur la date du match pour récupérer headline/notes
     // (le summary n'expose pas comp.notes)
@@ -357,10 +301,13 @@ export const recupererTimeline = async (joursAvant = 15, joursApres = 15) => {
       const ext       = comp.competitors.find(c => c.homeAway === 'away')
       const venue     = comp.venue
       const dateMatch = new Date(evt.date)
+      const statut = comp.status.type.name
+      // Ignorer les matchs annulés ou reportés (Game 6/7 potentiels non joués)
+      if (statut === 'STATUS_POSTPONED' || statut === 'STATUS_CANCELED' || statut === 'STATUS_UNNECESSARY') return
       if (dateMatch < debut || dateMatch > fin) return
       const headline = comp.notes?.[0]?.headline || ''
       matchs.push({
-        espn_id: evt.id, date: evt.date, statut: comp.status.type.name,
+        espn_id: evt.id, date: evt.date, statut,
         saison: evt.season?.year ? `${evt.season.year - 1}-${String(evt.season.year).slice(2)}` : null,
         typeSaison: TYPE_SAISON[evt.season?.type] || null,
         saisonNum: evt.season?.year ?? null, typeSaisonNum: evt.season?.type ?? null,
@@ -382,7 +329,7 @@ export const recupererGagnant = async (espnId) => {
     const res  = await fetchAvecTimeout(`${BASE_WEB}/summary?event=${espnId}`)
     const data = await res.json()
     const comp = data.header?.competitions?.[0]
-    if (!comp || !comp.status?.type?.name?.startsWith('STATUS_FINAL')) return null
+    if (!comp || comp.status?.type?.name !== 'STATUS_FINAL') return null
     const gagnant = comp.competitors.find(c => c.winner === true)
     if (!gagnant) return null
     const dom = comp.competitors.find(c => c.homeAway === 'home')
