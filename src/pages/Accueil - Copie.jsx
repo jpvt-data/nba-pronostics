@@ -81,6 +81,7 @@ const JALON_BADGE_MAP = {
 }
 
 async function genererEvenements(userId) {
+  const evenements = []
   const il_y_a_7j = new Date(Date.now() - 7 * 24 * 3600 * 1000).toISOString()
   const { data: membres } = await supabase.from('membres_groupe').select('groupe_id').eq('user_id', userId).eq('actif', true)
   if (!membres?.length) return []
@@ -88,36 +89,23 @@ async function genererEvenements(userId) {
   const { data: potes } = await supabase.from('membres_groupe').select('user_id, profils(pseudo)').in('groupe_id', groupeIds).eq('actif', true).neq('user_id', userId)
   if (!potes?.length) return []
   const potesUniques = [...new Map(potes.map(p => [p.user_id, p])).values()]
-
-  // Un pote = un bloc de 4 requêtes indépendantes, lancées en parallèle.
-  // Tous les potes sont eux-mêmes traités en parallèle.
-  const parPote = await Promise.all(potesUniques.map(async (pote) => {
+  for (const pote of potesUniques) {
     const pseudo = pote.profils?.pseudo || 'Un pote'
-    const evts = []
-
-    const [{ data: pronos }, { data: fourchettes }, { data: missions }, { data: jalons }] = await Promise.all([
-      supabase.from('pronos').select('resultat, cree_le').eq('user_id', pote.user_id).in('resultat', ['correct', 'incorrect']).gte('cree_le', il_y_a_7j).order('cree_le', { ascending: false }).limit(20),
-      supabase.from('pronos_ecart').select('correct').eq('user_id', pote.user_id).eq('correct', true).gte('cree_le', il_y_a_7j).limit(5),
-      supabase.from('missions_utilisateurs').select('missions(titre)').eq('user_id', pote.user_id).eq('completee', true).gte('completee_le', il_y_a_7j),
-      supabase.from('xp_log').select('source_id').eq('user_id', pote.user_id).eq('source', 'jalon').in('source_id', Object.keys(JALON_BADGE_MAP)).gte('cree_le', il_y_a_7j),
-    ])
-
+    const { data: pronos } = await supabase.from('pronos').select('resultat, cree_le').eq('user_id', pote.user_id).in('resultat', ['correct', 'incorrect']).gte('cree_le', il_y_a_7j).order('cree_le', { ascending: false }).limit(20)
     if (pronos?.length) {
       const dernier = pronos[0].resultat
       let streak = 0
       for (const p of pronos) { if (p.resultat === dernier) streak++; else break }
-      if (streak >= 2) evts.push({ texte: dernier === 'correct' ? `${pseudo} enchaîne ${streak} pronos réussis !` : `${pseudo} enchaîne ${streak} pronos ratés !`, couleur: dernier === 'correct' ? 'var(--success)' : 'var(--danger)' })
+      if (streak >= 2) evenements.push({ texte: dernier === 'correct' ? `${pseudo} enchaîne ${streak} pronos réussis !` : `${pseudo} enchaîne ${streak} pronos ratés !`, couleur: dernier === 'correct' ? 'var(--success)' : 'var(--danger)' })
     }
-    if (fourchettes?.length >= 2) evts.push({ texte: `${pseudo} enchaîne ${fourchettes.length} fourchettes correctes !`, couleur: 'var(--gold)' })
-    for (const mu of (missions || [])) { if (mu.missions?.titre) evts.push({ texte: `${pseudo} a accompli la mission "${mu.missions.titre}" !`, couleur: 'var(--accent)' }) }
-    for (const j of (jalons || [])) { const info = JALON_BADGE_MAP[j.source_id]; if (info) evts.push({ texte: `${pseudo} a obtenu le badge "${info.nom}" !`, couleur: 'var(--gold)' }) }
-
-    return { pseudo, evts }
-  }))
-
-  // Ordre stable : par pseudo, peu importe l'ordre de réponse réseau
-  parPote.sort((a, b) => a.pseudo.localeCompare(b.pseudo))
-  return parPote.flatMap(p => p.evts)
+    const { data: fourchettes } = await supabase.from('pronos_ecart').select('correct').eq('user_id', pote.user_id).eq('correct', true).gte('cree_le', il_y_a_7j).limit(5)
+    if (fourchettes?.length >= 2) evenements.push({ texte: `${pseudo} enchaîne ${fourchettes.length} fourchettes correctes !`, couleur: 'var(--gold)' })
+    const { data: missions } = await supabase.from('missions_utilisateurs').select('missions(titre)').eq('user_id', pote.user_id).eq('completee', true).gte('completee_le', il_y_a_7j)
+    for (const mu of (missions || [])) { if (mu.missions?.titre) evenements.push({ texte: `${pseudo} a accompli la mission "${mu.missions.titre}" !`, couleur: 'var(--accent)' }) }
+    const { data: jalons } = await supabase.from('xp_log').select('source_id').eq('user_id', pote.user_id).eq('source', 'jalon').in('source_id', Object.keys(JALON_BADGE_MAP)).gte('cree_le', il_y_a_7j)
+    for (const j of (jalons || [])) { const info = JALON_BADGE_MAP[j.source_id]; if (info) evenements.push({ texte: `${pseudo} a obtenu le badge "${info.nom}" !`, couleur: 'var(--gold)' }) }
+  }
+  return evenements
 }
 
 function ChatGeneral({ userId }) {
@@ -226,39 +214,24 @@ function Accueil() {
       if (!user) return
       setUser(user)
 
-      const jourParis = new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/Paris' })
-
-      // Tout ce qui ne dépend ni du profil ni l'un de l'autre part en même temps.
-      const [
-        { data: profil },
-        evts,
-        { data: pronosKpi },
-        { data: dejaConnexion },
-        { data: dejaRoue },
-        { data: actus },
-        { data: liguesUser },
-        m,
-      ] = await Promise.all([
-        supabase.from('profils').select('pseudo, avatar_url, badges, xp_total, niveau, onboarding_done, equipes_favorites').eq('id', user.id).single(),
-        genererEvenements(user.id),
-        supabase.from('pronos').select('resultat').eq('user_id', user.id).in('resultat', ['correct', 'incorrect']),
-        supabase.from('xp_log').select('id').eq('user_id', user.id).eq('source_id', 'connexion_quotidienne').eq('date_jour', jourParis).limit(1),
-        supabase.from('xp_log').select('id').eq('user_id', user.id).eq('source', 'roue_quotidienne').eq('date_jour', jourParis).limit(1),
-        supabase.from('actu_app').select('*').eq('actif', true).order('cree_le', { ascending: false }),
-        supabase.from('membres_groupe').select('groupes(type_saison, date_fin)').eq('user_id', user.id).eq('actif', true),
-        recupererTimeline(15, 15),
-      ])
-
-      // Tracking — utilise le profil déjà chargé, pas besoin d'un 2e appel
+      // Tracking
+      const { data: profilTrack } = await supabase
+        .from('profils').select('niveau, xp_total').eq('id', user.id).single()
       track(user.id, 'session_start', '/accueil', {
-        niveau:   profil?.niveau   || 1,
-        xp_total: profil?.xp_total || 0,
+        niveau:   profilTrack?.niveau   || 1,
+        xp_total: profilTrack?.xp_total || 0,
       })
       track(user.id, 'page_view', '/accueil')
 
+      const { data: profil } = await supabase
+        .from('profils')
+        .select('pseudo, avatar_url, badges, xp_total, niveau, onboarding_done, equipes_favorites')
+        .eq('id', user.id).single()
       setPseudo(profil?.pseudo || null)
       setAvatarUrl(profil?.avatar_url || null)
       setEquipesFav(profil?.equipes_favorites || [])
+      // Événements ligue (streaks potes)
+      const evts = await genererEvenements(user.id)
       setEvenements(evts)
 
       const niveauAvant = profil?.niveau || 1
@@ -269,20 +242,31 @@ function Accueil() {
       // Onboarding auto au premier login
       if (profil && !profil.onboarding_done) setOnboardingOpen(true)
 
+      const { data: pronosKpi } = await supabase
+        .from('pronos')
+        .select('resultat')
+        .eq('user_id', user.id)
+        .in('resultat', ['correct', 'incorrect'])
       const total    = pronosKpi?.length || 0
       const corrects = pronosKpi?.filter(p => p.resultat === 'correct').length || 0
       const pct      = total > 0 ? Math.round(corrects / total * 100) : 0
       setKpis({ total, pct })
 
-      // ── Connexion quotidienne (dépend de dejaConnexion ci-dessus) ───────────
+      // ── Connexion quotidienne ──────────────────────────────────────────────
+      const jourParis = new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/Paris' })
+      const { data: dejaConnexion } = await supabase
+        .from('xp_log').select('id')
+        .eq('user_id', user.id)
+        .eq('source_id', 'connexion_quotidienne')
+        .eq('date_jour', jourParis)
+        .limit(1)
+
       const notifs = []
 
       if (!dejaConnexion?.length) {
-        const [resConnexion, missionsConnexion, missionsConnexionPerm] = await Promise.all([
-          ajouterXP(user.id, 5, 'passif', 'connexion_quotidienne'),
-          verifierMissions(user.id, 'connexion_semaine', 1, lundiFin(), 'increment'),
-          verifierMissions(user.id, 'serie_connexion', 1, null, 'increment'),
-        ])
+        const resConnexion = await ajouterXP(user.id, 5, 'passif', 'connexion_quotidienne')
+        const missionsConnexion = await verifierMissions(user.id, 'connexion_semaine', 1, lundiFin(), 'increment')
+        const missionsConnexionPerm = await verifierMissions(user.id, 'serie_connexion', 1, null, 'increment')
 
         // Notif XP connexion
         notifs.push({
@@ -372,10 +356,19 @@ function Accueil() {
       // ── Calcul points (résolution matchs) ──────────────────────────────────
       calculerPoints(user.id).catch(() => {})
 
-      // ── Roue quotidienne dispo ? (déjà chargé en parallèle ci-dessus) ───────
+      // ── Roue quotidienne dispo ? ────────────────────────────────────────────
+      const { data: dejaRoue } = await supabase
+        .from('xp_log').select('id')
+        .eq('user_id', user.id)
+        .eq('source', 'roue_quotidienne')
+        .eq('date_jour', jourParis)
+        .limit(1)
       setRoueDispo(!dejaRoue?.length)
 
-      // ── Actus actives (déjà chargées en parallèle ci-dessus) ────────────────
+      // ── Actus actives ──────────────────────────────────────────────────────
+      const { data: actus } = await supabase
+        .from('actu_app').select('*').eq('actif', true)
+        .order('cree_le', { ascending: false })
       const toutesActus = actus || []
       setActusApp(toutesActus)
       // Popup auto : actus non encore vues par cet user
@@ -385,17 +378,22 @@ function Accueil() {
         setActuOpen(true)
       }
 
-      // ── Type de saison ligues (déjà chargé en parallèle ci-dessus) ──────────
+      const { data: liguesUser } = await supabase
+        .from('membres_groupe')
+        .select('groupes(type_saison, date_fin)')
+        .eq('user_id', user.id)
+        .eq('actif', true)
+
       const aujourd_hui = new Date().toISOString().split('T')[0]
       const maxTypeSaison = liguesUser
-        ?.map(lg => lg.groupes)
+        ?.map(m => m.groupes)
         .filter(g => g && (!g.date_fin || g.date_fin >= aujourd_hui))
         .map(g => g.type_saison)
         .filter(Boolean)
         .reduce((max, v) => Math.max(max, v), 0) || null
       setTypeSaisonLigues(maxTypeSaison)
 
-      // ── Timeline matchs (déjà chargée en parallèle ci-dessus) ────────────────
+      const m = await recupererTimeline(15, 15)
       setMatchs(m)
 
       // Filtrage : matchs < 3 jours passés + futurs
