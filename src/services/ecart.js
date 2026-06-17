@@ -2,6 +2,7 @@
 import { supabase } from '../lib/supabase'
 import { ajouterXP, verifierMissions } from './xp'
 import { lundiFin } from './points'
+import { donnerCartes } from './cartes'
 
 // Récupère la fourchette posée par l'user sur un match (null si aucune)
 export const recupererFourchetteEcart = async (userId, matchId) => {
@@ -73,6 +74,7 @@ export const poserFourchetteEcart = async (userId, matchId, fourchetteChoisie) =
     if (correctEcart) {
       await ajouterXP(userId, 30, 'passif', 'fourchette_correcte')
       await verifierMissions(userId, 'fourchette_correcte', 1, lundiFin(), 'increment')
+      await donnerCartes(userId, 1, 'fourchette')
     }
 
     return { ...data, fourchette_reelle: fourchetteReelle, correct: correctEcart, points_gagnes: pointsEcart }

@@ -2,6 +2,7 @@
 import { supabase } from '../lib/supabase'
 import { recupererGagnant } from './espn'
 import { ajouterXP, verifierJalons, verifierMissions } from './xp'
+import { donnerCartes } from './cartes'
 
 // Retourne le lundi de la semaine courante en ISO string 'YYYY-MM-DD' heure Paris
 export const lundiFin = () => {
@@ -107,6 +108,7 @@ const résoudreFourchette = async (pe, fourchetteReelle, type_saison, saison, lu
   if (correctEcart) {
     await ajouterXP(pe.user_id, 30, 'passif', 'fourchette_correcte')
     await verifierMissions(pe.user_id, 'fourchette_correcte', 1, lundi, 'increment')
+    await donnerCartes(pe.user_id, 1, 'fourchette')
 
     // Jalon — 10 fourchettes correctes cumulatives
     const { data: dejaJalon } = await supabase
@@ -216,6 +218,7 @@ export const calculerPoints = async () => {
 
         if (correct) {
           await ajouterXP(prono.user_id, 25, 'passif', 'prono_correct')
+          await donnerCartes(prono.user_id, 1, 'prono')
 
           const { data: derniersP } = await supabase
             .from('pronos')

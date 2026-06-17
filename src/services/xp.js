@@ -2,6 +2,7 @@
 import { supabase } from '../lib/supabase'
 import { XP_BASE, XP_COEFFICIENT } from '../config'
 import { BADGES_CATALOGUE } from '../data/badges'
+import { donnerCartes } from './cartes'
 
 export function niveauDepuisXP(xpTotal) {
   let xpCumule = 0
@@ -41,6 +42,7 @@ export async function ajouterXP(userId, xp, source, sourceId = null, meta = {}) 
     .single()
   if (errProfil) return null
 
+  const ancienNiveau  = niveauDepuisXP(profil.xp_total)
   const nouvelXP      = profil.xp_total + xp
   const nouveauNiveau = niveauDepuisXP(nouvelXP)
 
@@ -49,6 +51,12 @@ export async function ajouterXP(userId, xp, source, sourceId = null, meta = {}) 
     .update({ xp_total: nouvelXP, niveau: nouveauNiveau })
     .eq('id', userId)
   if (errUpdate) return null
+
+  // Level up (peu importe la source d'XP) -> booster 3 cartes, attribue silencieusement
+  // (revelation gere ailleurs via recupererCartesNonRevelees, pas de popup direct ici)
+  if (nouveauNiveau > ancienNiveau) {
+    await donnerCartes(userId, 3, 'level_up')
+  }
 
   return { xp_total: nouvelXP, niveau: nouveauNiveau }
 }

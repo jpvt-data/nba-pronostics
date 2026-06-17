@@ -16,7 +16,7 @@ import BanniereFeed from '../components/BanniereFeed'
 import MissionsPopup from '../components/MissionsPopup'
 import RoueQuotidienne from '../components/RoueQuotidienne'
 import PopupOuvertureBooster from '../components/PopupOuvertureBooster'
-import { donnerCartes } from '../services/cartes'
+import { donnerCartes, recupererCartesNonRevelees, marquerCartesRevelees } from '../services/cartes'
 import OnboardingTuto from '../components/OnboardingTuto'
 import PopupActu from '../components/PopupActu'
 import { track } from '../services/tracker'
@@ -281,14 +281,12 @@ function Accueil() {
       const notifs = []
 
       if (!dejaConnexion?.length) {
-        const [resConnexion, missionsConnexion, missionsConnexionPerm, cartesBooster] = await Promise.all([
+        const [resConnexion, missionsConnexion, missionsConnexionPerm] = await Promise.all([
           ajouterXP(user.id, 5, 'passif', 'connexion_quotidienne'),
           verifierMissions(user.id, 'connexion_semaine', 1, lundiFin(), 'increment'),
           verifierMissions(user.id, 'serie_connexion', 1, null, 'increment'),
           donnerCartes(user.id, 3, 'connexion'),
         ])
-
-        if (cartesBooster?.length) setBoosterOuverture(cartesBooster)
 
         // Notif XP connexion
         notifs.push({
@@ -377,6 +375,13 @@ function Accueil() {
 
       // ── Calcul points (résolution matchs) ──────────────────────────────────
       calculerPoints(user.id).catch(() => {})
+
+      // ── Cartes en attente de revelation (tous triggers confondus) ───────────
+      // Tourne a chaque chargement, pas seulement le jour de connexion : une carte
+      // peut avoir ete attribuee en arriere-plan (prono/fourchette resolus par le
+      // scan calculerPoints d'un autre user) depuis la derniere visite.
+      const cartesEnAttente = await recupererCartesNonRevelees(user.id)
+      if (cartesEnAttente.length > 0) setBoosterOuverture(cartesEnAttente)
 
       // ── Roue quotidienne dispo ? (déjà chargé en parallèle ci-dessus) ───────
       setRoueDispo(!dejaRoue?.length)
@@ -833,7 +838,10 @@ function Accueil() {
       {boosterOuverture && (
         <PopupOuvertureBooster
           cartes={boosterOuverture}
-          onFermer={() => setBoosterOuverture(null)}
+          onFermer={() => {
+            setBoosterOuverture(null)
+            marquerCartesRevelees(user.id).catch(() => {})
+          }}
         />
       )}
 

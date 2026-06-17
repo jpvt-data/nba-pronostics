@@ -78,3 +78,36 @@ export const donnerCarteRareGarantie = async (userId, source = 'roue_quotidienne
   const quantites = await recupererQuantites(userId, [carte.id])
   return { carte, quantite: quantites[carte.id] || 1 }
 }
+
+// Recupere les cartes obtenues mais jamais montrees a l'utilisateur (popup tap-to-reveal)
+// Couvre tous les triggers, y compris ceux attribues en arriere-plan (prono/fourchette
+// resolus par calculerPoints, qui peut tourner alors que ce n'est pas ce user qui est actif)
+export const recupererCartesNonRevelees = async (userId) => {
+  const { data } = await supabase
+    .from('cartes_collection')
+    .select('carte_id, cartes_catalogue(id, serie, annee, numero, nom_propre, rarete, url_front, url_back)')
+    .eq('user_id', userId)
+    .eq('revelee', false)
+  if (!data || !data.length) return []
+
+  const idsUniques = [...new Set(data.map((r) => r.carte_id))]
+  const quantites = await recupererQuantites(userId, idsUniques)
+
+  const vus = new Set()
+  const resultat = []
+  data.forEach((row) => {
+    if (vus.has(row.carte_id) || !row.cartes_catalogue) return
+    vus.add(row.carte_id)
+    resultat.push({ carte: row.cartes_catalogue, quantite: quantites[row.carte_id] || 1 })
+  })
+  return resultat
+}
+
+// Marque toutes les cartes en attente de revelation comme vues (appele a la fermeture de la popup)
+export const marquerCartesRevelees = async (userId) => {
+  await supabase
+    .from('cartes_collection')
+    .update({ revelee: true })
+    .eq('user_id', userId)
+    .eq('revelee', false)
+}
