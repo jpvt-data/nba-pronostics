@@ -110,7 +110,10 @@ img { display: block; }
 
 /* ── NAVBAR MOBILE (<768px) ──────────────────────────── */
 @media (max-width: 767px) {
-  #root { padding-top: 52px; padding-bottom: 60px; }
+  #root {
+    padding-top: calc(52px + env(safe-area-inset-top, 0px));
+    padding-bottom: max(60px, env(safe-area-inset-bottom));
+  }
 }
 
 /* classes display gérées 100% par CSS */
@@ -220,8 +223,6 @@ img { display: block; }
   #root {
     height: 100dvh;
     overflow-y: auto;
-    padding-top: calc(52px + env(safe-area-inset-top, 0px));
-    padding-bottom: max(60px, env(safe-area-inset-bottom));
   }
 }
 
