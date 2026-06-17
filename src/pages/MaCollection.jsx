@@ -68,7 +68,7 @@ const MaCollection = () => {
 
       // Requetes independantes en parallele - cf regle socle section 14
       const [catalogueRes, collectionRes] = await Promise.all([
-        supabase.from('cartes_catalogue').select('id, serie, annee, numero, nom_propre, rarete, url_front, url_back').eq('actif', true),
+        supabase.from('cartes_catalogue').select('id, serie, annee, numero, nom_propre, rarete, url_front, url_back').eq('actif', true).limit(2000),
         supabase.from('cartes_collection').select('carte_id').eq('user_id', user.id),
       ])
 
