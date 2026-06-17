@@ -558,7 +558,7 @@ function Accueil() {
 
           {/* Ligne 2 : chips à gauche | logos équipes à droite, même ligne */}
           {(user || equipesFav.length > 0) && (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginTop: isMobile ? 10 : 12 }}>
+            <div style={{ display: 'flex', flexWrap: 'nowrap', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginTop: isMobile ? 10 : 12, width: '100%', minWidth: 0 }}>
 
               {/* Chips — gauche */}
               {user ? (
