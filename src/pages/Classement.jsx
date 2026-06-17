@@ -99,7 +99,7 @@ const LigneUser = ({ m, i, statsUser, moi, navigate }) => {
         display: 'flex', alignItems: 'center', gap: 10,
         background: estMoi ? 'rgba(99,102,241,0.08)' : 'transparent',
         borderLeft: estMoi ? '3px solid var(--accent)' : '3px solid transparent',
-        padding: '10px 12px', cursor: 'pointer',
+        padding: '10px 16px', cursor: 'pointer',
         borderBottom: '1px solid var(--border)',
       }}
     >
@@ -518,9 +518,8 @@ function Classement() {
                         display: 'flex', alignItems: 'center', gap: 10,
                         background: estMoi ? 'rgba(99,102,241,0.08)' : 'transparent',
                         borderLeft: estMoi ? '3px solid var(--accent)' : '3px solid transparent',
-                        padding: '10px 12px', cursor: 'pointer',
+                        padding: '10px 16px', cursor: 'pointer',
                         borderBottom: '1px solid var(--border)',
-                        marginLeft: -16,
                       }}
                     >
                       <span style={{
