@@ -825,6 +825,8 @@ function Accueil() {
               xp_total: niveau ? xpTotal : prev.xp_total + xpTotal,
               niveau:   niveau ?? prev.niveau,
             }))
+          }}
+        />
       )}
 
       {/* ── Popup ouverture booster (connexion / level up) ── */}

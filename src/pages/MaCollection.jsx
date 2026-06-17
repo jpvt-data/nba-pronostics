@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { supabase } from '../lib/supabase'
+import Navigation from '../components/Navigation'
 import CarteCollection from '../components/CarteCollection'
 
 // Bandeau oblique titre de page - cf socle section 3
@@ -101,11 +102,17 @@ const MaCollection = () => {
   const totalCatalogue = catalogue.length
 
   if (chargement) {
-    return <div style={{ padding: 16, color: 'var(--text-2)' }}>Chargement de la collection...</div>
+    return (
+      <div>
+        <Navigation />
+        <div style={{ padding: 16, color: 'var(--text-2)' }}>Chargement de la collection...</div>
+      </div>
+    )
   }
 
   return (
     <div>
+      <Navigation />
       <div style={{ marginTop: 20 }}>
         <TitreSection label="MA COLLECTION" />
       </div>
