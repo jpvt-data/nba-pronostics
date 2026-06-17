@@ -215,7 +215,7 @@ const MaCollection = () => {
       {/* Grid des cartes de la serie active */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: isMobile ? 'repeat(4, 1fr)' : 'repeat(auto-fill, minmax(95px, 1fr))',
+        gridTemplateColumns: isMobile ? 'repeat(4, minmax(0, 1fr))' : 'repeat(auto-fill, minmax(95px, 1fr))',
         columnGap: 10,
         rowGap: 26,
         padding: '0 16px 24px',
@@ -227,6 +227,7 @@ const MaCollection = () => {
             <div
               key={carte.id}
               onClick={() => possedee && setCarteAgrandie(carte)}
+              style={{ minWidth: 0 }}
             >
               <CarteCollection
                 carte={carte}

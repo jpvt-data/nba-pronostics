@@ -7,6 +7,38 @@ const STYLE_RARETE = {
   legendary: { bordure: 'var(--gold)', glow: '0 0 16px rgba(245,158,11,0.45)' },
 }
 
+// Legende partagee - meme empreinte verticale revelee ou non, pour ne jamais
+// deformer la grille au moment du reveal (cf bug grille mobile)
+const Legende = ({ ligne1, ligne2, visible }) => (
+  <div style={{ marginTop: 4, textAlign: 'center', visibility: visible ? 'visible' : 'hidden', minWidth: 0 }}>
+    <div
+      style={{
+        fontFamily: "'Outfit', system-ui, sans-serif",
+        fontSize: 11,
+        fontWeight: 600,
+        color: 'var(--text-1)',
+        whiteSpace: 'nowrap',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        minWidth: 0,
+      }}
+    >
+      {ligne1 || '\u00A0'}
+    </div>
+    <div
+      style={{
+        fontFamily: "'Outfit', system-ui, sans-serif",
+        fontSize: 9,
+        color: 'var(--text-3)',
+        textTransform: 'uppercase',
+        letterSpacing: '0.04em',
+      }}
+    >
+      {ligne2 || '\u00A0'}
+    </div>
+  </div>
+)
+
 const CarteCollection = ({ carte, possedee = false, quantite = 0, onClick }) => {
   const [retournee, setRetournee] = useState(false)
 
@@ -17,16 +49,20 @@ const CarteCollection = ({ carte, possedee = false, quantite = 0, onClick }) => 
   }
 
   // Carte non possedee : silhouette pure, aucune info, aucune image chargee
+  // mais meme empreinte verticale que la carte revelee (image + legende invisible)
   if (!possedee) {
     return (
-      <div
-        style={{
-          width: '100%',
-          aspectRatio: '2.5 / 3.5',
-          background: 'var(--bg-1)',
-          border: '1px solid var(--border)',
-        }}
-      />
+      <div style={{ width: '100%', minWidth: 0 }}>
+        <div
+          style={{
+            width: '100%',
+            aspectRatio: '2.5 / 3.5',
+            background: 'var(--bg-1)',
+            border: '1px solid var(--border)',
+          }}
+        />
+        <Legende visible={false} />
+      </div>
     )
   }
 
@@ -34,7 +70,7 @@ const CarteCollection = ({ carte, possedee = false, quantite = 0, onClick }) => 
   const nomAffiche = carte.nom_propre || 'Carte speciale'
 
   return (
-    <div style={{ width: '100%' }}>
+    <div style={{ width: '100%', minWidth: 0 }}>
       <div
         onClick={gererClic}
         style={{
@@ -105,33 +141,11 @@ const CarteCollection = ({ carte, possedee = false, quantite = 0, onClick }) => 
         )}
       </div>
 
-      {/* Legende : numero, nom joueur, serie, annee */}
-      <div style={{ marginTop: 4, textAlign: 'center' }}>
-        <div
-          style={{
-            fontFamily: "'Outfit', system-ui, sans-serif",
-            fontSize: 11,
-            fontWeight: 600,
-            color: 'var(--text-1)',
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-          }}
-        >
-          {carte.numero ? `#${carte.numero} · ` : ''}{nomAffiche}
-        </div>
-        <div
-          style={{
-            fontFamily: "'Outfit', system-ui, sans-serif",
-            fontSize: 9,
-            color: 'var(--text-3)',
-            textTransform: 'uppercase',
-            letterSpacing: '0.04em',
-          }}
-        >
-          {carte.serie} {carte.annee}
-        </div>
-      </div>
+      <Legende
+        visible
+        ligne1={`${carte.numero ? `#${carte.numero} · ` : ''}${nomAffiche}`}
+        ligne2={`${carte.serie} ${carte.annee}`}
+      />
     </div>
   )
 }
