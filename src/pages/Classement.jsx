@@ -99,7 +99,7 @@ const LigneUser = ({ m, i, statsUser, moi, navigate }) => {
         display: 'flex', alignItems: 'center', gap: 10,
         background: estMoi ? 'rgba(99,102,241,0.08)' : 'transparent',
         borderLeft: estMoi ? '3px solid var(--accent)' : '3px solid transparent',
-        padding: '10px 16px', cursor: 'pointer',
+        margin: '0 16px', padding: '10px 12px', cursor: 'pointer',
         borderBottom: '1px solid var(--border)',
       }}
     >
@@ -107,7 +107,7 @@ const LigneUser = ({ m, i, statsUser, moi, navigate }) => {
         fontSize: i < 3 ? 16 : 12,
         fontFamily: 'var(--font-display)', fontWeight: 700,
         color: i < 3 ? 'var(--gold)' : 'var(--text-3)',
-        minWidth: 24, textAlign: 'center',
+        minWidth: 20, textAlign: 'left',
       }}>
         {i < 3 ? MEDAILLES_STYLE[i].label : `#${i + 1}`}
       </span>
@@ -518,7 +518,7 @@ function Classement() {
                         display: 'flex', alignItems: 'center', gap: 10,
                         background: estMoi ? 'rgba(99,102,241,0.08)' : 'transparent',
                         borderLeft: estMoi ? '3px solid var(--accent)' : '3px solid transparent',
-                        padding: '10px 16px', cursor: 'pointer',
+                        margin: '0 16px', padding: '10px 12px', cursor: 'pointer',
                         borderBottom: '1px solid var(--border)',
                       }}
                     >
@@ -526,7 +526,7 @@ function Classement() {
                         fontSize: i < 3 ? 16 : 12,
                         fontFamily: 'var(--font-display)', fontWeight: 700,
                         color: i < 3 ? 'var(--gold)' : 'var(--text-3)',
-                        minWidth: 24, textAlign: 'center',
+                        minWidth: 20, textAlign: 'left',
                       }}>
                         {i < 3 ? MEDAILLES_STYLE[i].label : `#${i + 1}`}
                       </span>
