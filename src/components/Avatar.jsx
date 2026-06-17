@@ -1,4 +1,4 @@
-/* Composant Avatar — utilisé dans Navigation, MesPronos, Classement, Profil */
+/* Composant Avatar —  utilisé dans Navigation, MesPronos, Classement, Profil */
 
 export const couleurAvatar = (pseudo) => {
   const couleurs = ['#6366f1','#f97316','#22c55e','#ef4444','#a855f7','#06b6d4','#f59e0b','#ec4899']
