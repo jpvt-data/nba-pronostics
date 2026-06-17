@@ -4,7 +4,7 @@ const NoSpoilContext = createContext()
 
 export function NoSpoilProvider({ children }) {
   const [noSpoil, setNoSpoil] = useState(
-    () => localStorage.getItem('mode_no_spoil') !== 'false'
+    () => localStorage.getItem('mode_no_spoil') === 'true'
   )
 
   const toggleNoSpoil = () => {
