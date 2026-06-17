@@ -61,7 +61,7 @@ function plageSemanePrecedente() {
 
 // Titre section — bandeau oblique identique Accueil
 const TitreSection = ({ label, couleur = 'var(--accent)' }) => (
-  <div style={{ width: '100%', position: 'relative', height: 'clamp(38px, 6vw, 46px)', overflow: 'hidden' }}>
+  <div style={{ width: 'calc(100% - 32px)', margin: '0 16px', position: 'relative', height: 'clamp(38px, 6vw, 46px)', overflow: 'hidden' }}>
     <svg style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }} preserveAspectRatio="none" viewBox="0 0 500 46">
       <polygon points="0,0 260,0 240,46 0,46" fill={couleur} />
       <polygon points="248,0 274,0 254,46 228,46" fill={couleur} />
@@ -387,7 +387,7 @@ function Classement() {
       <main style={{ flex: 1 }}>
 
         {/* ── Header ── */}
-        <div style={{ position: 'relative', marginBottom: 8 }}>
+        <div style={{ position: 'relative', marginTop: 20, marginBottom: 8 }}>
           <TitreSection label="CLASSEMENT" couleur="var(--gold)" />
           <p style={{ fontSize: 12, color: 'var(--text-3)', margin: '10px 16px 0', lineHeight: 1.6 }}>
             Suis ta progression et celle de tes potes. Chaque prono correct vaut <strong style={{ color: 'var(--accent)' }}>1 point</strong> — la fourchette d'écart en rapporte un de plus.
