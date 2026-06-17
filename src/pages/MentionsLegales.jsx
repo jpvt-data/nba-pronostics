@@ -45,8 +45,7 @@ const MentionsLegales = () => (
       <Paragraphe>
         Swish League est un projet personnel développé et édité par Jean-Paul Van Tongeren,
         à titre non professionnel et non commercial. Contact :{' '}
-        {/* TODO JPVT : remplacer par ton email de contact réel */}
-        <a href="mailto:contact@swish-league.app" style={{ color: 'var(--accent)' }}>contact@swish-league.app</a>.
+        <a href="mailto:contact@prismora.fr" style={{ color: 'var(--accent)' }}>contact@prismora.fr</a>.
       </Paragraphe>
 
       <SousTitre label="Hébergement" />

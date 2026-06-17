@@ -42,40 +42,38 @@ const APropos = () => (
     <div style={{ margin: '20px 16px 32px' }}>
 
       <div style={{
-        fontFamily: "'Teko', system-ui, sans-serif", fontStyle: 'italic', fontWeight: 700,
-        fontSize: 22, color: 'var(--text-1)', letterSpacing: '0.01em', marginBottom: 4,
+        fontFamily: "'Outfit', system-ui, sans-serif", fontWeight: 600,
+        fontSize: 14, color: 'var(--text-2)', marginBottom: 4,
       }}>
-        Pronostique. Flambe. Règne.
+        La passion NBA, le suivi de la saison, et une progression qui se construit match après match.
       </div>
 
       <SousTitre label="Le projet" couleur="var(--accent)" />
       <Paragraphe>
-        Swish League est née d'une envie simple : vivre la saison NBA à fond entre potes,
-        sans prise de tête. Pronos, classements, stats, et une bonne dose de progression
-        pour pimenter chaque connexion — la compétition amicale comme moteur, la passion
-        NBA comme carburant.
+        Swish League, c'est vivre la saison NBA à fond : pronostics, classements, stats, et
+        une vraie progression personnelle pour donner du rythme à chaque connexion. La
+        passion du jeu et la compétition amicale comme moteurs.
       </Paragraphe>
 
       <SousTitre label="Qui est derrière" couleur="var(--accent)" />
       <Paragraphe>
-        Développée, designée et maintenue en solo par JPVT — sans équipe, sans budget,
-        juste l'envie de construire quelque chose qui tienne la route pour son groupe
-        de potes passionnés de NBA.
+        Développée, designée et maintenue en solo par JPVT, passionné de NBA et de data,
+        avec l'ambition de construire une expérience qui tienne la route sur la durée
+        d'une saison complète.
       </Paragraphe>
 
       <SousTitre label="Comment ça marche" couleur="var(--accent)" />
       <Paragraphe>
         Tu pronostiques les matchs NBA, tu gagnes des points selon les règles de ta ligue,
         tu progresses en XP et en niveau, et tu débloques des cartes de collection au fil
-        de tes connexions, tes pronos réussis et tes passages de niveau. Le tout en
-        comparaison directe avec les autres membres de ta ligue.
+        de tes connexions, tes pronos réussis et tes passages de niveau.
       </Paragraphe>
 
       <SousTitre label="Contact" couleur="var(--accent)" />
       <Paragraphe>
         Une question, un bug, une idée ?{' '}
         {/* TODO JPVT : remplacer par ton email de contact réel */}
-        <a href="mailto:contact@swish-league.app" style={{ color: 'var(--accent)' }}>contact@swish-league.app</a>
+        <a href="mailto:contact@prismora.fr" style={{ color: 'var(--accent)' }}>contact@prismora.fr</a>
       </Paragraphe>
 
     </div>
