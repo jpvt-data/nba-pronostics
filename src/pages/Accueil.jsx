@@ -19,7 +19,7 @@ import OnboardingTuto from '../components/OnboardingTuto'
 import PopupActu from '../components/PopupActu'
 import { track } from '../services/tracker'
 import { useNavigate } from 'react-router-dom'
-import { Calendar, Target, RefreshCw, Info, Newspaper, Clock, Trophy, MessageSquare, BarChart2, Rss, Send, ChevronDown, ChevronUp } from 'lucide-react'
+import { Calendar, Target, RefreshCw, Info, Newspaper, Clock, Trophy, MessageSquare, BarChart2, Rss, Send, ChevronDown, ChevronUp, LayoutGrid } from 'lucide-react'
 import { Avatar } from '../components/Avatar'
 import { useNoSpoil } from '../context/NoSpoilContext'
 import { useNotif } from '../context/NotifContext'
@@ -572,6 +572,10 @@ function Accueil() {
                   <button onClick={() => setMissionsOpen(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: isMobile ? 4 : 6, background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: isMobile ? '5px 8px' : '5px 11px', cursor: 'pointer', fontSize: isMobile ? 10 : 11, fontWeight: 700, color: 'var(--text-2)', letterSpacing: '0.03em', whiteSpace: 'nowrap' }}>
                     <Target size={12} strokeWidth={2} color="var(--accent)" />
                     Missions
+                  </button>
+                  <button onClick={() => navigate('/ma-collection')} style={{ display: 'inline-flex', alignItems: 'center', gap: isMobile ? 4 : 6, background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: isMobile ? '5px 8px' : '5px 11px', cursor: 'pointer', fontSize: isMobile ? 10 : 11, fontWeight: 700, color: 'var(--text-2)', letterSpacing: '0.03em', whiteSpace: 'nowrap' }}>
+                    <LayoutGrid size={12} strokeWidth={2} color="var(--gold)" />
+                    Collection
                   </button>
                 </div>
               ) : <div />}
