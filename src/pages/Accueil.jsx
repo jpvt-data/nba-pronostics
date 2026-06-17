@@ -527,7 +527,7 @@ function Accueil() {
                       Niv. {xpData.niveau}
                     </span>
                   )}
-                  <div style={{ width: isMobile ? 100 : 160, height: 4, background: 'var(--bg-2)', overflow: 'hidden', borderRadius: 3, flexShrink: 0 }}>
+                  <div style={{ width: isMobile ? 70 : 160, height: 4, background: 'var(--bg-2)', overflow: 'hidden', borderRadius: 3, flexShrink: 0 }}>
                     <div style={{
                       height: '100%',
                       width: `${xpData.niveau >= 100 ? 100 : Math.min(100, Math.round((xpData.xp_total - xpPourNiveau(xpData.niveau)) / (xpPourNiveau(xpData.niveau + 1) - xpPourNiveau(xpData.niveau)) * 100))}%`,
@@ -568,9 +568,9 @@ function Accueil() {
             </div>
           )}
 
-          {/* Ligne 3 : chips */}
+          {/* Ligne 3 : chips — alignées à gauche, sous la barre XP */}
           {user && (
-            <div style={{ marginTop: 12, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <div style={{ marginTop: 12, display: 'flex', gap: 8, flexWrap: 'wrap', paddingLeft: isMobile ? 0 : 74 }}>
               <button onClick={() => { if (roueDispo) setRoueOpen(true) }} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: '5px 11px', cursor: roueDispo ? 'pointer' : 'default', fontSize: 11, fontWeight: 700, color: 'var(--text-2)', letterSpacing: '0.03em', opacity: roueDispo ? 1 : 0.4 }}>
                 <RefreshCw size={12} strokeWidth={2} color="var(--accent)" />
                 {roueDispo ? 'Roue' : 'Roue jouée'}
