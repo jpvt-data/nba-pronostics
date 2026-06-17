@@ -313,10 +313,12 @@ function Navigation({ nbPronosAttente = 0, onOpenOnboarding }) {
 
       {/* ── MOBILE — barre logo top ── */}
       <nav className="nav-mobile-logo" style={{
-        ...navBase, top: 0, height: 52,
+        ...navBase, top: 0,
+        height: 'calc(52px + env(safe-area-inset-top, 0px))',
         background: 'var(--nav-bg)',
         borderBottomWidth: 1, borderBottomStyle: 'solid', borderBottomColor: 'var(--nav-border)',
         alignItems: 'center', justifyContent: 'space-between', padding: '0 10px 0 12px',
+        paddingTop: 'env(safe-area-inset-top, 0px)',
         backdropFilter: 'blur(12px)',
         WebkitBackdropFilter: 'blur(12px)',
       }}>

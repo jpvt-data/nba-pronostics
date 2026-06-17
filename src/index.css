@@ -220,7 +220,7 @@ img { display: block; }
   #root {
     height: 100dvh;
     overflow-y: auto;
-    padding-top: max(40px, env(safe-area-inset-top));
+    padding-top: calc(52px + env(safe-area-inset-top, 0px));
     padding-bottom: max(60px, env(safe-area-inset-bottom));
   }
 }
