@@ -25,6 +25,26 @@ const SousTitre = ({ label, couleur = 'var(--text-3)' }) => (
   </div>
 )
 
+// Recupere toutes les lignes de cartes_catalogue, en paginant pour contourner
+// le plafond "Max Rows" cote Supabase (1000 par defaut, ignore un simple .limit())
+const recupererCatalogueComplet = async () => {
+  const taillePage = 1000
+  let toutes = []
+  let page = 0
+  while (true) {
+    const { data } = await supabase
+      .from('cartes_catalogue')
+      .select('id, serie, annee, numero, nom_propre, rarete, url_front, url_back')
+      .eq('actif', true)
+      .range(page * taillePage, (page + 1) * taillePage - 1)
+    if (!data || data.length === 0) break
+    toutes = toutes.concat(data)
+    if (data.length < taillePage) break
+    page += 1
+  }
+  return toutes
+}
+
 // Tri chronologique des series (annee croissante, puis nom en cas d'egalite)
 const trierSeries = (catalogue) => {
   const anneeParSerie = {}
@@ -79,12 +99,11 @@ const MaCollection = () => {
       const { data: { user } } = await supabase.auth.getUser()
 
       // Requetes independantes en parallele - cf regle socle section 14
-      const [catalogueRes, collectionRes] = await Promise.all([
-        supabase.from('cartes_catalogue').select('id, serie, annee, numero, nom_propre, rarete, url_front, url_back').eq('actif', true).limit(2000),
+      const [cat, collectionRes] = await Promise.all([
+        recupererCatalogueComplet(),
         supabase.from('cartes_collection').select('carte_id').eq('user_id', user.id),
       ])
 
-      const cat = catalogueRes.data || []
       setCatalogue(cat)
 
       const compte = {}
@@ -102,6 +121,17 @@ const MaCollection = () => {
   }, [])
 
   const series = useMemo(() => trierSeries(catalogue), [catalogue])
+
+  // Stats obtenu/total par serie, pour affichage dans les chips
+  const statsParSerie = useMemo(() => {
+    const stats = {}
+    catalogue.forEach((c) => {
+      if (!stats[c.serie]) stats[c.serie] = { total: 0, obtenu: 0 }
+      stats[c.serie].total += 1
+      if (quantites[c.id]) stats[c.serie].obtenu += 1
+    })
+    return stats
+  }, [catalogue, quantites])
 
   const cartesAffichees = useMemo(() => {
     return catalogue
@@ -149,27 +179,37 @@ const MaCollection = () => {
       <div style={{
         display: 'flex', flexWrap: 'wrap', gap: 8, padding: '0 16px 12px',
       }}>
-        {series.map((s) => (
-          <button
-            key={s}
-            onClick={() => setSerieActive(s)}
-            style={{
-              flexShrink: 0,
-              padding: '6px 14px',
-              borderRadius: 'var(--radius-sm)',
-              border: `1px solid ${s === serieActive ? 'var(--accent-border)' : 'var(--border-2)'}`,
-              background: s === serieActive ? 'var(--accent-dim)' : 'transparent',
-              color: s === serieActive ? 'var(--accent)' : 'var(--text-2)',
-              fontFamily: "'Outfit', system-ui, sans-serif",
-              fontSize: 12,
-              fontWeight: 600,
-              cursor: 'pointer',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            {s}
-          </button>
-        ))}
+        {series.map((s) => {
+          const stat = statsParSerie[s] || { total: 0, obtenu: 0 }
+          return (
+            <button
+              key={s}
+              onClick={() => setSerieActive(s)}
+              style={{
+                flexShrink: 0,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: 2,
+                padding: '6px 14px',
+                borderRadius: 'var(--radius-sm)',
+                border: `1px solid ${s === serieActive ? 'var(--accent-border)' : 'var(--border-2)'}`,
+                background: s === serieActive ? 'var(--accent-dim)' : 'transparent',
+                color: s === serieActive ? 'var(--accent)' : 'var(--text-2)',
+                fontFamily: "'Outfit', system-ui, sans-serif",
+                fontSize: 12,
+                fontWeight: 600,
+                cursor: 'pointer',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              <span>{s}</span>
+              <span style={{ fontSize: 9, fontWeight: 700, opacity: 0.7 }}>
+                {stat.obtenu} / {stat.total}
+              </span>
+            </button>
+          )
+        })}
       </div>
 
       {/* Grid des cartes de la serie active */}
