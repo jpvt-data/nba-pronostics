@@ -556,29 +556,35 @@ function Accueil() {
             )}
           </div>
 
-          {/* Ligne 2 : logos équipes à droite */}
-          {equipesFav.length > 0 && (
-            <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: isMobile ? 4 : 8, marginTop: isMobile ? 6 : 8 }}>
-              {equipesFav.map(eq => (
-                <img key={eq.id} src={eq.logo} alt={eq.nom}
-                  style={{ width: isMobile ? 34 : 44, height: isMobile ? 34 : 44, objectFit: 'contain', opacity: 0.9 }}
-                  onError={e => { e.target.style.opacity = '0.15' }}
-                />
-              ))}
-            </div>
-          )}
+          {/* Ligne 2 : chips à gauche | logos équipes à droite, même ligne */}
+          {(user || equipesFav.length > 0) && (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginTop: isMobile ? 10 : 12 }}>
 
-          {/* Ligne 3 : chips — alignées à gauche, sous la barre XP */}
-          {user && (
-            <div style={{ marginTop: 12, display: 'flex', gap: 8, flexWrap: 'wrap', paddingLeft: isMobile ? 0 : 74 }}>
-              <button onClick={() => { if (roueDispo) setRoueOpen(true) }} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: '5px 11px', cursor: roueDispo ? 'pointer' : 'default', fontSize: 11, fontWeight: 700, color: 'var(--text-2)', letterSpacing: '0.03em', opacity: roueDispo ? 1 : 0.4 }}>
-                <RefreshCw size={12} strokeWidth={2} color="var(--accent)" />
-                {roueDispo ? 'Roue' : 'Roue jouée'}
-              </button>
-              <button onClick={() => setMissionsOpen(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: '5px 11px', cursor: 'pointer', fontSize: 11, fontWeight: 700, color: 'var(--text-2)', letterSpacing: '0.03em' }}>
-                <Target size={12} strokeWidth={2} color="var(--accent)" />
-                Missions
-              </button>
+              {/* Chips — gauche */}
+              {user ? (
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  <button onClick={() => { if (roueDispo) setRoueOpen(true) }} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: '5px 11px', cursor: roueDispo ? 'pointer' : 'default', fontSize: 11, fontWeight: 700, color: 'var(--text-2)', letterSpacing: '0.03em', opacity: roueDispo ? 1 : 0.4 }}>
+                    <RefreshCw size={12} strokeWidth={2} color="var(--accent)" />
+                    {roueDispo ? 'Roue' : 'Roue jouée'}
+                  </button>
+                  <button onClick={() => setMissionsOpen(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: '5px 11px', cursor: 'pointer', fontSize: 11, fontWeight: 700, color: 'var(--text-2)', letterSpacing: '0.03em' }}>
+                    <Target size={12} strokeWidth={2} color="var(--accent)" />
+                    Missions
+                  </button>
+                </div>
+              ) : <div />}
+
+              {/* Logos équipes — droite */}
+              {equipesFav.length > 0 && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 4 : 8, flexShrink: 0 }}>
+                  {equipesFav.map(eq => (
+                    <img key={eq.id} src={eq.logo} alt={eq.nom}
+                      style={{ width: isMobile ? 34 : 44, height: isMobile ? 34 : 44, objectFit: 'contain', opacity: 0.9 }}
+                      onError={e => { e.target.style.opacity = '0.15' }}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>
