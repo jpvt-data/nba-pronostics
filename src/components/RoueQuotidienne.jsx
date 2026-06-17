@@ -1,16 +1,18 @@
 import { useState, useEffect } from 'react'
 import { ajouterXP, verifierMissions } from '../services/xp'
 import { lundiFin } from '../services/points'
+import { donnerCarteRareGarantie } from '../services/cartes'
 import { supabase } from '../lib/supabase'
 import { X } from 'lucide-react'
 
 // Segments de la roue — ordre affiché, couleurs, probabilités
 const SEGMENTS = [
-  { label: 'Rien',     xp: 0,   couleur: '#2a2a3e', textCouleur: '#9090b0', prob: 0.30 },
-  { label: '+15 XP',  xp: 15,  couleur: '#1e1e3a', textCouleur: '#c0c0d8', prob: 0.30 },
-  { label: '+30 XP',  xp: 30,  couleur: '#1a1a4a', textCouleur: '#8b8cf8', prob: 0.20 },
-  { label: '+75 XP',  xp: 75,  couleur: '#1e2a1a', textCouleur: '#f97316', prob: 0.15 },
-  { label: 'JACKPOT', xp: 150, couleur: '#2a2000', textCouleur: '#f59e0b', prob: 0.05 },
+  { label: 'Rien',     type: 'xp',    xp: 0,   couleur: '#2a2a3e', textCouleur: '#9090b0', prob: 0.28 },
+  { label: '+15 XP',  type: 'xp',    xp: 15,  couleur: '#1e1e3a', textCouleur: '#c0c0d8', prob: 0.28 },
+  { label: '+30 XP',  type: 'xp',    xp: 30,  couleur: '#1a1a4a', textCouleur: '#8b8cf8', prob: 0.19 },
+  { label: '+75 XP',  type: 'xp',    xp: 75,  couleur: '#1e2a1a', textCouleur: '#f97316', prob: 0.15 },
+  { label: 'JACKPOT', type: 'xp',    xp: 150, couleur: '#2a2000', textCouleur: '#f59e0b', prob: 0.05 },
+  { label: 'CARTE',   type: 'carte', xp: 0,   couleur: '#241a3a', textCouleur: '#a78bfa', prob: 0.05 },
 ]
 
 // Tirage pondéré
@@ -37,7 +39,7 @@ const secteurPath = (cx, cy, r, startDeg, endDeg) => {
   return `M${cx},${cy} L${x1},${y1} A${r},${r} 0 0,1 ${x2},${y2} Z`
 }
 
-function RoueQuotidienne({ userId, onClose, onGain }) {
+function RoueQuotidienne({ userId, onClose, onGain, onGainCarte }) {
   const [phase, setPhase]       = useState('chargement') // chargement | idle | dejajouee | spin | result
   const [rotation, setRotation] = useState(0)
   const [resultat, setResultat] = useState(null)
@@ -85,7 +87,24 @@ function RoueQuotidienne({ userId, onClose, onGain }) {
 
       const jourParis = new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/Paris' })
 
-      if (segment.xp > 0) {
+      if (segment.type === 'carte') {
+        // Carte rare garantie + verrou anti-rejeu (pas d'XP, donc pas d'insert via ajouterXP)
+        try {
+          const carteObtenue = await donnerCarteRareGarantie(userId, 'roue_quotidienne')
+          await supabase.from('xp_log').insert({
+            user_id:   userId,
+            source:    'roue_quotidienne',
+            source_id: `roue_${jourParis}`,
+            xp_gagne:  0,
+            meta:      { gain: 'Carte rare' },
+            date_jour: jourParis,
+          })
+          if (carteObtenue && onGainCarte) onGainCarte(carteObtenue)
+        } catch (e) {
+          setErreur("Erreur lors de l'attribution de la carte")
+        }
+        onGain(0, null)
+      } else if (segment.xp > 0) {
         try {
           const res = await ajouterXP(
             userId, segment.xp,
@@ -199,7 +218,7 @@ function RoueQuotidienne({ userId, onClose, onGain }) {
               {SEGMENTS.map((seg, i) => (
                 <linearGradient key={`grad${i}`} id={`grad${i}`} x1="0%" y1="0%" x2="100%" y2="100%">
                   <stop offset="0%"   stopColor={seg.couleur} stopOpacity="1" />
-                  <stop offset="100%" stopColor={seg.xp > 0 ? seg.textCouleur : seg.couleur} stopOpacity="0.3" />
+                  <stop offset="100%" stopColor={(seg.xp > 0 || seg.type === 'carte') ? seg.textCouleur : seg.couleur} stopOpacity="0.3" />
                 </linearGradient>
               ))}
             </defs>
@@ -306,20 +325,24 @@ function RoueQuotidienne({ userId, onClose, onGain }) {
             <div>
               <div style={{
                 padding: '16px',
-                background: resultat.xp === 0 ? 'var(--bg-2)' : resultat.xp === 150 ? 'var(--gold-dim)' : 'var(--accent-dim)',
+                background: resultat.type === 'carte' ? 'var(--accent-dim)' : resultat.xp === 0 ? 'var(--bg-2)' : resultat.xp === 150 ? 'var(--gold-dim)' : 'var(--accent-dim)',
                 borderWidth: 1, borderStyle: 'solid',
-                borderColor: resultat.xp === 0 ? 'var(--border)' : resultat.xp === 150 ? 'var(--gold)' : 'var(--accent-border)',
+                borderColor: resultat.type === 'carte' ? 'var(--accent-border)' : resultat.xp === 0 ? 'var(--border)' : resultat.xp === 150 ? 'var(--gold)' : 'var(--accent-border)',
                 borderRadius: 'var(--radius-sm)',
                 marginBottom: 12,
               }}>
                 <div style={{
                   fontFamily: 'var(--font-title)', fontWeight: 700, fontSize: 32,
-                  color: resultat.xp === 0 ? 'var(--text-3)' : resultat.xp === 150 ? 'var(--gold)' : 'var(--accent)',
+                  color: resultat.type === 'carte' ? 'var(--accent)' : resultat.xp === 0 ? 'var(--text-3)' : resultat.xp === 150 ? 'var(--gold)' : 'var(--accent)',
                   letterSpacing: '0.03em',
                 }}>
                   {resultat.label}
                 </div>
-                {resultat.xp > 0 && (
+                {resultat.type === 'carte' ? (
+                  <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 4 }}>
+                    Une carte t'attend — découvre-la juste après
+                  </div>
+                ) : resultat.xp > 0 && (
                   <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 4 }}>
                     XP ajouté à ton profil
                   </div>

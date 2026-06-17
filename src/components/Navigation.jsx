@@ -17,19 +17,19 @@ const LIENS = [
 
 // Liens principaux hamburger
 const LIENS_PRINCIPAL = [
-  { chemin: '/groupes',    label: 'Ligues',     Icone: Shield },
-  { chemin: '/calendrier', label: 'Calendrier', Icone: Calendar },
-  { chemin: '/h2h',        label: '1v1',        Icone: Swords },
+  { chemin: '/groupes',       label: 'Ligues',     Icone: Shield },
+  { chemin: '/calendrier',    label: 'Calendrier', Icone: Calendar },
+  { chemin: '/h2h',           label: '1v1',        Icone: Swords },
+  { chemin: '/ma-collection', label: 'Collection', Icone: Layers },
 ]
 
 // Liens à venir — inactifs
 const LIENS_BIENTOT = [
-  { chemin: '/ma-collection', label: 'Collection', Icone: Layers },
-  { chemin: '/chat',          label: 'Chat',        Icone: MessageSquare },
+  { chemin: '/chat', label: 'Chat', Icone: MessageSquare },
 ]
 
-// Liens footer — inactifs
-const LIENS_FOOTER_INACTIFS = [
+// Liens footer
+const LIENS_FOOTER = [
   { chemin: '/mentions-legales', label: 'Mentions légales', Icone: FileText },
   { chemin: '/a-propos',         label: 'À propos',         Icone: Info },
 ]
@@ -203,9 +203,9 @@ function Navigation({ nbPronosAttente = 0, onOpenOnboarding }) {
 
         <div style={{ borderTopWidth: 1, borderTopStyle: 'solid', borderTopColor: 'var(--border)', margin: '0.75rem 0' }} />
 
-        {LIENS_FOOTER_INACTIFS.map(({ chemin, label, Icone }) => (
-          <button key={chemin} disabled style={styleLienInactif}>
-            <Icone size={18} strokeWidth={1.5} /> {label} <BadgeBientot />
+        {LIENS_FOOTER.map(({ chemin, label, Icone }) => (
+          <button key={chemin} onClick={() => aller(chemin)} style={styleLienHamburger(location.pathname === chemin)}>
+            <Icone size={18} strokeWidth={1.5} /> {label}
           </button>
         ))}
 

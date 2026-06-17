@@ -831,10 +831,11 @@ function Accueil() {
               niveau:   niveau ?? prev.niveau,
             }))
           }}
+          onGainCarte={(carteObtenue) => setBoosterOuverture([carteObtenue])}
         />
       )}
 
-      {/* ── Popup ouverture booster (connexion / level up) ── */}
+      {/* ── Popup ouverture booster (connexion / level up / roue) ── */}
       {boosterOuverture && (
         <PopupOuvertureBooster
           cartes={boosterOuverture}
