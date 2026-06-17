@@ -115,7 +115,7 @@ const MaCollection = () => {
       </div>
 
       {/* Chips de selection par serie */}
-      <div style={{
+      <div className="swl-chips-scroll" style={{
         display: 'flex', gap: 8, overflowX: 'auto', padding: '0 16px 12px',
         WebkitOverflowScrolling: 'touch',
       }}>
@@ -145,9 +145,11 @@ const MaCollection = () => {
       {/* Grid des cartes de la serie active */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: isMobile ? 'repeat(3, 1fr)' : 'repeat(auto-fill, minmax(120px, 1fr))',
-        gap: 12,
+        gridTemplateColumns: isMobile ? 'repeat(4, 1fr)' : 'repeat(auto-fill, minmax(95px, 1fr))',
+        columnGap: 10,
+        rowGap: 26,
         padding: '0 16px 24px',
+        marginTop: 18,
       }}>
         {cartesAffichees.map((carte) => {
           const possedee = Boolean(quantites[carte.id])
@@ -173,6 +175,11 @@ const MaCollection = () => {
           onFermer={() => setCarteAgrandie(null)}
         />
       )}
+
+      <style>{`
+        .swl-chips-scroll::-webkit-scrollbar { display: none; }
+        .swl-chips-scroll { scrollbar-width: none; -ms-overflow-style: none; }
+      `}</style>
     </div>
   )
 }
