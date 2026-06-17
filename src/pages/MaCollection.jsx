@@ -25,6 +25,17 @@ const SousTitre = ({ label, couleur = 'var(--text-3)' }) => (
   </div>
 )
 
+// Tri chronologique des series (annee croissante, puis nom en cas d'egalite)
+const trierSeries = (catalogue) => {
+  const anneeParSerie = {}
+  catalogue.forEach((c) => { if (!anneeParSerie[c.serie]) anneeParSerie[c.serie] = c.annee })
+  return Object.keys(anneeParSerie).sort((a, b) => {
+    const anA = parseInt((anneeParSerie[a].match(/\d+/) || ['0'])[0], 10)
+    const anB = parseInt((anneeParSerie[b].match(/\d+/) || ['0'])[0], 10)
+    return anA !== anB ? anA - anB : a.localeCompare(b)
+  })
+}
+
 // Tri naturel par numero (gere les formats mixtes type "AC-15", "271")
 const trierParNumero = (a, b) => {
   const numA = (a.numero || '').match(/\d+/)
@@ -82,15 +93,15 @@ const MaCollection = () => {
       })
       setQuantites(compte)
 
-      const series = [...new Set(cat.map((c) => c.serie))].sort()
-      if (series.length > 0) setSerieActive(series[0])
+      const seriesTri = trierSeries(cat)
+      if (seriesTri.length > 0) setSerieActive(seriesTri[0])
 
       setChargement(false)
     }
     charger()
   }, [])
 
-  const series = useMemo(() => [...new Set(catalogue.map((c) => c.serie))].sort(), [catalogue])
+  const series = useMemo(() => trierSeries(catalogue), [catalogue])
 
   const cartesAffichees = useMemo(() => {
     return catalogue
@@ -121,10 +132,22 @@ const MaCollection = () => {
         <SousTitre label={`${totalObtenu} / ${totalCatalogue} CARTES OBTENUES`} couleur="var(--gold)" />
       </div>
 
-      {/* Chips de selection par serie */}
-      <div className="swl-chips-scroll" style={{
-        display: 'flex', gap: 8, overflowX: 'auto', padding: '0 16px 12px',
-        WebkitOverflowScrolling: 'touch',
+      {/* Texte d'intro - explique les series Topps + moyens d'obtention */}
+      <div style={{
+        margin: '8px 16px 16px',
+        fontFamily: "'Outfit', system-ui, sans-serif",
+        fontSize: 12,
+        lineHeight: 1.5,
+        color: 'var(--text-2)',
+      }}>
+        Chaque série Topps représente un set de cartes différent (rookies, légendes, inserts spéciaux).
+        Les cartes ci-dessous se débloquent en jouant : connexion quotidienne, roue du jour, pronos et
+        fourchettes d'écart réussis, et passage de niveau.
+      </div>
+
+      {/* Chips de selection par serie - retour a la ligne, pas de scroll */}
+      <div style={{
+        display: 'flex', flexWrap: 'wrap', gap: 8, padding: '0 16px 12px',
       }}>
         {series.map((s) => (
           <button
@@ -182,11 +205,6 @@ const MaCollection = () => {
           onFermer={() => setCarteAgrandie(null)}
         />
       )}
-
-      <style>{`
-        .swl-chips-scroll::-webkit-scrollbar { display: none; }
-        .swl-chips-scroll { scrollbar-width: none; -ms-overflow-style: none; }
-      `}</style>
     </div>
   )
 }
