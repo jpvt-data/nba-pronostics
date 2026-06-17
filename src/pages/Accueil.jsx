@@ -28,7 +28,7 @@ import { SAISON_ESPN } from '../config'
 // Titre section — barres obliques pleines espacées progressivement
 const TitreSection = ({ label, couleur = 'var(--accent)' }) => (
   <div style={{
-    width: '100%', position: 'relative',
+    width: 'calc(100% - 32px)', margin: '0 16px', position: 'relative',
     height: 'clamp(38px, 6vw, 46px)',
     overflow: 'hidden',
   }}>
@@ -594,9 +594,9 @@ function Accueil() {
           <TitreSection label="À LA UNE" couleur="var(--orange)" />
         </div>
 
-        {/* Briefing ticker — juste sous le bandeau */}
+        {/* Briefing ticker — juste sous le bandeau, aligné marges intérieures */}
         {!chargement && user && (
-          <div style={{ marginTop: 10, marginBottom: 0 }}>
+          <div style={{ marginTop: 10, marginBottom: 0, padding: '0 16px' }}>
             <Briefing userId={user.id} nbPronosAttente={nbPronosAttente} matchs={matchs} />
           </div>
         )}
