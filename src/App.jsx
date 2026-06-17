@@ -20,6 +20,7 @@ import { ProfilProvider }   from './context/ProfilContext'
 import { NotifProvider }    from './context/NotifContext'
 import H2H   from './pages/H2H'
 import Admin from './pages/Admin'
+import MaCollection from './pages/MaCollection'
 
 function App() {
   const [session, setSession]         = useState(undefined)
@@ -92,6 +93,7 @@ function App() {
               <Route path="/quoi-de-neuf"   element={prive(<QuoiDeNeuf />)} />
               <Route path="/h2h"            element={prive(<H2H />)} />
               <Route path="/admin"          element={prive(<Admin />)} />
+              <Route path="/ma-collection"  element={prive(<MaCollection />)} />
               <Route path="*"               element={<Navigate to={session ? '/accueil' : '/connexion'} />} />
             </Routes>
           </BrowserRouter>
