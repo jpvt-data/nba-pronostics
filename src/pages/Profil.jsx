@@ -6,10 +6,33 @@ import { Camera, Check, X, Pencil } from 'lucide-react'
 import { couleurAvatar } from '../components/Avatar'
 import { EQUIPES_NBA } from '../data/equipesNBA'
 
-const TitreSection = ({ mot1, mot2 = '', couleur2 = 'var(--accent)', taille = 24 }) => (
-  <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 12 }}>
-    <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: taille, color: 'var(--text-1)', letterSpacing: '0.02em', lineHeight: 1 }}>{mot1}</span>
-    {mot2 && <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: taille, color: couleur2, letterSpacing: '0.02em', lineHeight: 1 }}>{mot2}</span>}
+// Titre page — bandeau oblique, charte commune
+const TitreSection = ({ label, couleur = 'var(--accent)' }) => (
+  <div style={{ width: 'calc(100% - 32px)', margin: '0 16px', position: 'relative', height: 'clamp(38px, 6vw, 46px)', overflow: 'hidden' }}>
+    <svg style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }} preserveAspectRatio="none" viewBox="0 0 500 46">
+      <polygon points="0,0 260,0 240,46 0,46" fill={couleur} />
+      <polygon points="248,0 274,0 254,46 228,46" fill={couleur} />
+      <polygon points="282,0 304,0 284,46 262,46" fill={couleur} />
+      <polygon points="312,0 330,0 310,46 292,46" fill={couleur} />
+      <polygon points="338,0 353,0 333,46 318,46" fill={couleur} />
+      <polygon points="361,0 374,0 354,46 341,46" fill={couleur} />
+      <polygon points="382,0 393,0 373,46 362,46" fill={couleur} />
+      <polygon points="401,0 410,0 390,46 381,46" fill={couleur} />
+      <polygon points="418,0 426,0 406,46 398,46" fill={couleur} />
+    </svg>
+    <span style={{
+      position: 'absolute', top: '50%', left: 16, transform: 'translateY(-46%)',
+      fontFamily: "'Teko', system-ui, sans-serif", fontWeight: 700,
+      fontSize: 'clamp(22px, 5vw, 36px)', color: '#fff',
+      letterSpacing: '0.02em', lineHeight: 1, fontStyle: 'italic', zIndex: 1,
+    }}>{label}</span>
+  </div>
+)
+
+// Sous-titre de section — sobre, discret
+const SousTitre = ({ label, couleur = 'var(--orange)' }) => (
+  <div style={{ fontSize: 10, fontWeight: 700, color: couleur, textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 10 }}>
+    {label}
   </div>
 )
 
@@ -150,9 +173,12 @@ function Profil() {
       <Navigation />
       <main style={{ flex: 1 }}>
 
-        {/* ── Header identité — bg-1 + barre accent ── */}
-        <div style={{ background: 'var(--bg-1)', padding: '20px 16px 24px', borderLeft: '3px solid var(--accent)', marginBottom: 2 }}>
-          <TitreSection mot1="MON" mot2="PROFIL" />
+        <div style={{ marginTop: 20 }}>
+          <TitreSection label="MON PROFIL" couleur="var(--accent)" />
+        </div>
+
+        {/* ── Header identité — bg-1 ── */}
+        <div style={{ background: 'var(--bg-1)', padding: '16px 16px 24px', marginBottom: 2 }}>
 
           {/* Avatar + infos */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 20 }}>
@@ -192,8 +218,8 @@ function Profil() {
 
         {/* ── Bloc fan — bg-0 + barre orange ── */}
         <div style={{ background: 'var(--bg-0)', padding: '20px 16px 24px', borderLeft: '3px solid var(--orange)' }}>
-          <TitreSection mot1="MES" mot2="ÉQUIPES" couleur2="var(--orange)" />
-          <p style={{ fontSize: 12, color: 'var(--text-3)', margin: '-6px 0 14px', lineHeight: 1.5 }}>
+          <SousTitre label="Mes équipes" couleur="var(--orange)" />
+          <p style={{ fontSize: 12, color: 'var(--text-3)', margin: '-4px 0 14px', lineHeight: 1.5 }}>
             Tes 3 équipes de cœur. En saison régulière, tu ne pronostiques que leurs matchs.
           </p>
 

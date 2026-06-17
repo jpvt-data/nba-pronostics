@@ -7,10 +7,25 @@ const ADMIN_ID = 'fa55d016-896c-4eb4-b48a-241d6be71ad0'
 const ONGLETS  = ['en_cours', 'a_venir', 'terminees']
 const LABELS   = { en_cours: 'En cours', a_venir: 'À venir', terminees: 'Terminées' }
 
-const TitreSection = ({ mot1, mot2 = '', couleur2 = 'var(--accent)', taille = 24 }) => (
-  <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 0 }}>
-    <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: taille, color: 'var(--text-1)', letterSpacing: '0.02em', lineHeight: 1 }}>{mot1}</span>
-    {mot2 && <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: taille, color: couleur2, letterSpacing: '0.02em', lineHeight: 1 }}>{mot2}</span>}
+const TitreSection = ({ label, couleur = 'var(--accent)' }) => (
+  <div style={{ width: 'calc(100% - 32px)', margin: '0 16px', position: 'relative', height: 'clamp(38px, 6vw, 46px)', overflow: 'hidden' }}>
+    <svg style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }} preserveAspectRatio="none" viewBox="0 0 500 46">
+      <polygon points="0,0 260,0 240,46 0,46" fill={couleur} />
+      <polygon points="248,0 274,0 254,46 228,46" fill={couleur} />
+      <polygon points="282,0 304,0 284,46 262,46" fill={couleur} />
+      <polygon points="312,0 330,0 310,46 292,46" fill={couleur} />
+      <polygon points="338,0 353,0 333,46 318,46" fill={couleur} />
+      <polygon points="361,0 374,0 354,46 341,46" fill={couleur} />
+      <polygon points="382,0 393,0 373,46 362,46" fill={couleur} />
+      <polygon points="401,0 410,0 390,46 381,46" fill={couleur} />
+      <polygon points="418,0 426,0 406,46 398,46" fill={couleur} />
+    </svg>
+    <span style={{
+      position: 'absolute', top: '50%', left: 16, transform: 'translateY(-46%)',
+      fontFamily: "'Teko', system-ui, sans-serif", fontWeight: 700,
+      fontSize: 'clamp(22px, 5vw, 36px)', color: '#fff',
+      letterSpacing: '0.02em', lineHeight: 1, fontStyle: 'italic', zIndex: 1,
+    }}>{label}</span>
   </div>
 )
 
@@ -173,18 +188,14 @@ function Groupes() {
       <main style={{ flex: 1 }}>
 
         {/* ── Header ── */}
-        <div style={{ padding: '20px 16px 0 16px', position: 'relative' }}>
-          <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 3, background: 'var(--accent)' }} />
-          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 6 }}>
-            <TitreSection mot1="MES" mot2="LIGUES" taille={36} />
-
-          </div>
-          <p style={{ fontSize: 12, color: 'var(--text-3)', margin: '4px 0 16px', lineHeight: 1.5 }}>
+        <div style={{ marginTop: 20 }}>
+          <TitreSection label="MES LIGUES" couleur="var(--accent)" />
+          <p style={{ fontSize: 12, color: 'var(--text-3)', margin: '10px 16px 16px', lineHeight: 1.5 }}>
             Rejoins une ligue pour entrer en compétition avec tes potes.
           </p>
 
           {/* Onglets */}
-          <div style={{ display: 'flex', gap: 4, marginBottom: 0 }}>
+          <div style={{ display: 'flex', gap: 4, margin: '0 16px 16px' }}>
             {ONGLETS.map(o => (
               <button key={o} onClick={() => setOnglet(o)} style={{
                 padding: '6px 14px',

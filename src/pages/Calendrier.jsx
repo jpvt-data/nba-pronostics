@@ -92,6 +92,29 @@ const extraireMatchs = (data, isSummerLeague = false) =>
     }
   })
 
+// Titre page — bandeau oblique, charte commune
+const TitreSection = ({ label, couleur = 'var(--accent)' }) => (
+  <div style={{ width: 'calc(100% - 32px)', margin: '0 16px', position: 'relative', height: 'clamp(38px, 6vw, 46px)', overflow: 'hidden' }}>
+    <svg style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }} preserveAspectRatio="none" viewBox="0 0 500 46">
+      <polygon points="0,0 260,0 240,46 0,46" fill={couleur} />
+      <polygon points="248,0 274,0 254,46 228,46" fill={couleur} />
+      <polygon points="282,0 304,0 284,46 262,46" fill={couleur} />
+      <polygon points="312,0 330,0 310,46 292,46" fill={couleur} />
+      <polygon points="338,0 353,0 333,46 318,46" fill={couleur} />
+      <polygon points="361,0 374,0 354,46 341,46" fill={couleur} />
+      <polygon points="382,0 393,0 373,46 362,46" fill={couleur} />
+      <polygon points="401,0 410,0 390,46 381,46" fill={couleur} />
+      <polygon points="418,0 426,0 406,46 398,46" fill={couleur} />
+    </svg>
+    <span style={{
+      position: 'absolute', top: '50%', left: 16, transform: 'translateY(-46%)',
+      fontFamily: "'Teko', system-ui, sans-serif", fontWeight: 700,
+      fontSize: 'clamp(22px, 5vw, 36px)', color: '#fff',
+      letterSpacing: '0.02em', lineHeight: 1, fontStyle: 'italic', zIndex: 1,
+    }}>{label}</span>
+  </div>
+)
+
 function Calendrier() {
   const navigate                    = useNavigate()
 
@@ -240,13 +263,9 @@ function Calendrier() {
       <Navigation />
       <main style={{ flex: 1 }}>
 
-        <div style={{ padding: '20px 16px 0 16px', position: 'relative' }}>
-          <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 3, background: 'var(--accent)' }} />
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 0, marginBottom: 4 }}>
-            <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 36, color: 'var(--text-1)', letterSpacing: '0.02em', lineHeight: 1 }}>CALENDRIER</span>
-            <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 36, color: 'var(--accent)', letterSpacing: '0.02em', lineHeight: 1 }}></span>
-          </div>
-          <p style={{ fontSize: 12, color: 'var(--text-3)', margin: '0 0 16px', lineHeight: 1.5 }}>
+        <div style={{ marginTop: 20 }}>
+          <TitreSection label="CALENDRIER" couleur="var(--accent)" />
+          <p style={{ fontSize: 12, color: 'var(--text-3)', margin: '10px 16px 16px', lineHeight: 1.5 }}>
             Tous les matchs — passés et à venir.
           </p>
         </div>
