@@ -21,6 +21,7 @@ import { NotifProvider }    from './context/NotifContext'
 import H2H   from './pages/H2H'
 import Admin from './pages/Admin'
 import MaCollection from './pages/MaCollection'
+import Arcade from './pages/Arcade'
 import MentionsLegales from './pages/MentionsLegales'
 import APropos from './pages/APropos'
 
@@ -96,6 +97,7 @@ function App() {
               <Route path="/h2h"            element={prive(<H2H />)} />
               <Route path="/admin"          element={prive(<Admin />)} />
               <Route path="/ma-collection"     element={prive(<MaCollection />)} />
+              <Route path="/arcade"            element={prive(<Arcade />)} />
               <Route path="/mentions-legales"  element={<MentionsLegales />} />
               <Route path="/a-propos"          element={<APropos />} />
               <Route path="*"                  element={<Navigate to={session ? '/accueil' : '/connexion'} />} />
