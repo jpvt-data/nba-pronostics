@@ -222,6 +222,26 @@ function Accueil() {
     return () => window.removeEventListener('resize', onResize)
   }, [])
 
+  // Subscribe Realtime sur cartes_collection - se declenche des qu'un INSERT
+  // arrive pour cet user (booster admin, prono/fourchette resolus en arriere-plan)
+  // sans avoir a recharger la page
+  useEffect(() => {
+    if (!user) return
+    const channel = supabase
+      .channel(`cartes_user_${user.id}`)
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'cartes_collection', filter: `user_id=eq.${user.id}` },
+        async () => {
+          // Un INSERT detecte : recuperer toutes les cartes non revelees et ouvrir la popup
+          const enAttente = await recupererCartesNonRevelees(user.id)
+          if (enAttente.length > 0) setBoosterOuverture(enAttente)
+        }
+      )
+      .subscribe()
+    return () => { supabase.removeChannel(channel) }
+  }, [user])
+
   useEffect(() => {
     window.scrollTo(0, 0)
     const init = async () => {
