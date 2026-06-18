@@ -713,11 +713,14 @@ const BADGES_MANUELS = BADGES_CATALOGUE.filter(b =>
 )
 
 function OngletUtilisateurs() {
-  const [users, setUsers]       = useState([])
-  const [filtre, setFiltre]     = useState('')
-  const [userSelec, setUserSelec] = useState(null)
-  const [charg, setCharg]       = useState(true)
-  const [messages, setMessages] = useState({})
+  const [users, setUsers]           = useState([])
+  const [filtre, setFiltre]         = useState('')
+  const [userSelec, setUserSelec]   = useState(null)
+  const [charg, setCharg]           = useState(true)
+  const [messages, setMessages]     = useState({})
+  const [nbBoosters, setNbBoosters] = useState(1)
+  const [msgBooster, setMsgBooster] = useState(null)
+  const [envoiBooster, setEnvoiBooster] = useState(false)
 
   useEffect(() => {
     const charger = async () => {
@@ -736,13 +739,48 @@ function OngletUtilisateurs() {
   )
 
   const selectionner = async (id) => {
-    if (!id) { setUserSelec(null); setMessages({}); return }
+    if (!id) { setUserSelec(null); setMessages({}); setMsgBooster(null); return }
     const { data } = await supabase
       .from('profils')
       .select('id, pseudo, badges, xp_total, niveau')
       .eq('id', id).single()
     setUserSelec(data)
     setMessages({})
+    setMsgBooster(null)
+  }
+
+  const distribuerBooster = async () => {
+    if (!userSelec || envoiBooster) return
+    setEnvoiBooster(true)
+    setMsgBooster(null)
+    // Tirer nbBoosters * 3 cartes (1 booster = 3 cartes)
+    const nbCartes = nbBoosters * 3
+    const inserts = []
+    for (let i = 0; i < nbCartes; i++) {
+      const r = Math.random()
+      const rarete = r < 0.05 ? 'legendary' : r < 0.35 ? 'rare' : 'common'
+      const { data: pool } = await supabase
+        .from('cartes_catalogue')
+        .select('id')
+        .eq('rarete', rarete)
+        .eq('actif', true)
+      if (pool && pool.length) {
+        const carte = pool[Math.floor(Math.random() * pool.length)]
+        inserts.push({ user_id: userSelec.id, carte_id: carte.id, source: 'admin', revelee: false })
+      }
+    }
+    if (!inserts.length) {
+      setMsgBooster({ type: 'error', text: 'Aucune carte disponible.' })
+      setEnvoiBooster(false)
+      return
+    }
+    const { error } = await supabase.from('cartes_collection').insert(inserts)
+    if (error) {
+      setMsgBooster({ type: 'error', text: `Erreur : ${error.message}` })
+    } else {
+      setMsgBooster({ type: 'ok', text: `${inserts.length} carte(s) attribuée(s) à ${userSelec.pseudo}. Visible à sa prochaine connexion.` })
+    }
+    setEnvoiBooster(false)
   }
 
   const attribuerBadge = async (badge) => {
@@ -824,6 +862,42 @@ function OngletUtilisateurs() {
               onClick={() => { setUserSelec(null); setMessages({}) }}
               style={{ background: 'none', borderWidth: 0, cursor: 'pointer', color: 'var(--text-3)', padding: 4, display: 'flex', alignItems: 'center' }}
             ><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+          </div>
+
+          {/* Section booster */}
+          <div style={{ marginBottom: 24 }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 12 }}>
+              <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 18, color: 'var(--text-1)', letterSpacing: '0.02em' }}>BOOSTERS</span>
+              <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 18, color: 'var(--danger)', letterSpacing: '0.02em' }}>MANUELS</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <button
+                  onClick={() => setNbBoosters(n => Math.max(1, n - 1))}
+                  style={{ width: 28, height: 28, borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-2)', background: 'var(--bg-2)', color: 'var(--text-1)', fontSize: 16, cursor: 'pointer', lineHeight: 1 }}
+                >-</button>
+                <span style={{ fontFamily: 'var(--font-title)', fontSize: 20, fontWeight: 700, color: 'var(--text-1)', minWidth: 20, textAlign: 'center' }}>{nbBoosters}</span>
+                <button
+                  onClick={() => setNbBoosters(n => Math.min(5, n + 1))}
+                  style={{ width: 28, height: 28, borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-2)', background: 'var(--bg-2)', color: 'var(--text-1)', fontSize: 16, cursor: 'pointer', lineHeight: 1 }}
+                >+</button>
+              </div>
+              <span style={{ fontSize: 11, color: 'var(--text-3)' }}>booster{nbBoosters > 1 ? 's' : ''} · {nbBoosters * 3} cartes</span>
+              <button
+                onClick={distribuerBooster}
+                disabled={envoiBooster}
+                style={{
+                  marginLeft: 'auto', padding: '7px 16px', fontSize: 12, fontWeight: 700,
+                  background: envoiBooster ? 'var(--bg-2)' : 'var(--danger)', color: envoiBooster ? 'var(--text-3)' : '#fff',
+                  borderWidth: 0, borderRadius: 'var(--radius-sm)', cursor: envoiBooster ? 'default' : 'pointer',
+                }}
+              >{envoiBooster ? 'Envoi…' : 'Attribuer'}</button>
+            </div>
+            {msgBooster && (
+              <div style={{ marginTop: 8, fontSize: 11, fontWeight: 600, color: msgBooster.type === 'ok' ? 'var(--success)' : 'var(--danger)' }}>
+                {msgBooster.text}
+              </div>
+            )}
           </div>
 
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 12 }}>
