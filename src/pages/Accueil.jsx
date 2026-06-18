@@ -300,6 +300,7 @@ function Accueil() {
       // ── Connexion quotidienne (dépend de dejaConnexion ci-dessus) ───────────
       const notifs = []
 
+      console.log('[connexion] dejaConnexion:', dejaConnexion, 'jourParis:', jourParis)
       if (!dejaConnexion?.length) {
         // donnerCartes separe du Promise.all : evite qu'une erreur interne soit
         // avalee silencieusement, et permet de capturer les cartes pour le popup
