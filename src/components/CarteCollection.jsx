@@ -1,40 +1,54 @@
 import { useState } from 'react'
 
-// Habillage par rarete - mappe sur les tokens existants (index.css)
+// Habillage par rarete - outline hors box model (ne deforme pas la grille)
 const STYLE_RARETE = {
-  common: { bordure: 'var(--border-2)', glow: 'none' },
-  rare: { bordure: 'var(--accent)', glow: '0 0 12px rgba(99,102,241,0.35)' },
-  legendary: { bordure: 'var(--gold)', glow: '0 0 16px rgba(245,158,11,0.45)' },
+  common:    { outline: '1px solid var(--border-2)', outlineOffset: 0,  glow: 'none',                                    badgeCouleur: 'var(--text-3)' },
+  rare:      { outline: '2px solid var(--accent)',   outlineOffset: 2,  glow: '0 0 16px rgba(99,102,241,0.55)',          badgeCouleur: 'var(--accent)' },
+  legendary: { outline: '3px solid var(--gold)',     outlineOffset: 3,  glow: '0 0 22px rgba(245,158,11,0.75)',          badgeCouleur: 'var(--gold)' },
 }
+
+// Animation pulse pour legendary
+const STYLE_PULSE = `
+@keyframes glowPulse {
+  0%, 100% { box-shadow: 0 0 22px rgba(245,158,11,0.75); }
+  50%       { box-shadow: 0 0 36px rgba(245,158,11,1); }
+}
+`
+if (!document.getElementById('carte-pulse-style')) {
+  const el = document.createElement('style')
+  el.id = 'carte-pulse-style'
+  el.textContent = STYLE_PULSE
+  document.head.appendChild(el)
+}
+
+// Labels rareté
+const LABEL_RARETE = { common: 'COMMON', rare: 'RARE', legendary: 'LEGENDARY' }
 
 // Legende partagee - meme empreinte verticale revelee ou non, pour ne jamais
 // deformer la grille au moment du reveal (cf bug grille mobile)
-const Legende = ({ ligne1, ligne2, visible }) => (
+const Legende = ({ ligne1, ligne2, rarete, visible }) => (
   <div style={{ marginTop: 4, textAlign: 'center', visibility: visible ? 'visible' : 'hidden', minWidth: 0 }}>
-    <div
-      style={{
-        fontFamily: "'Outfit', system-ui, sans-serif",
-        fontSize: 11,
-        fontWeight: 600,
-        color: 'var(--text-1)',
-        whiteSpace: 'nowrap',
-        overflow: 'hidden',
-        textOverflow: 'ellipsis',
-        minWidth: 0,
-      }}
-    >
+    <div style={{
+      fontFamily: "'Outfit', system-ui, sans-serif",
+      fontSize: 11, fontWeight: 600, color: 'var(--text-1)',
+      whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', minWidth: 0,
+    }}>
       {ligne1 || '\u00A0'}
     </div>
-    <div
-      style={{
-        fontFamily: "'Outfit', system-ui, sans-serif",
-        fontSize: 9,
-        color: 'var(--text-3)',
-        textTransform: 'uppercase',
-        letterSpacing: '0.04em',
-      }}
-    >
+    <div style={{
+      fontFamily: "'Outfit', system-ui, sans-serif",
+      fontSize: 9, color: 'var(--text-3)',
+      textTransform: 'uppercase', letterSpacing: '0.04em',
+    }}>
       {ligne2 || '\u00A0'}
+    </div>
+    <div style={{
+      fontFamily: "'Barlow Condensed', sans-serif",
+      fontSize: 8, fontWeight: 700, letterSpacing: '0.1em',
+      color: rarete ? (STYLE_RARETE[rarete]?.badgeCouleur || 'var(--text-3)') : 'transparent',
+      textTransform: 'uppercase', marginTop: 1,
+    }}>
+      {rarete ? (LABEL_RARETE[rarete] || '\u00A0') : '\u00A0'}
     </div>
   </div>
 )
@@ -86,7 +100,7 @@ const CarteCollection = ({ carte, possedee = false, quantite = 0, onClick, enMod
             border: '1px solid var(--border)',
           }}
         />
-        <Legende visible={false} />
+        <Legende visible={false} rarete={null} />
       </div>
     )
   }
@@ -115,8 +129,10 @@ const CarteCollection = ({ carte, possedee = false, quantite = 0, onClick, enMod
             transition: 'transform 0.5s',
             transformStyle: 'preserve-3d',
             transform: retournee ? 'rotateY(180deg)' : 'rotateY(0deg)',
-            border: `1px solid ${style.bordure}`,
+            outline: style.outline,
+            outlineOffset: style.outlineOffset,
             boxShadow: style.glow,
+            animation: carte.rarete === 'legendary' ? 'glowPulse 2.5s ease-in-out infinite' : 'none',
           }}
         >
           {/* Recto */}
@@ -159,6 +175,7 @@ const CarteCollection = ({ carte, possedee = false, quantite = 0, onClick, enMod
         visible
         ligne1={`${carte.numero ? `#${carte.numero} · ` : ''}${nomAffiche}`}
         ligne2={`${carte.serie} ${carte.annee}`}
+        rarete={carte.rarete}
       />
     </div>
   )
