@@ -21,7 +21,7 @@ import OnboardingTuto from '../components/OnboardingTuto'
 import PopupActu from '../components/PopupActu'
 import { track } from '../services/tracker'
 import { useNavigate } from 'react-router-dom'
-import { Calendar, Target, RefreshCw, Info, Newspaper, Clock, Trophy, MessageSquare, BarChart2, Rss, Send, ChevronDown, ChevronUp, LayoutGrid } from 'lucide-react'
+import { Calendar, Target, RefreshCw, Info, Newspaper, Clock, Trophy, MessageSquare, BarChart2, Rss, Send, ChevronDown, ChevronUp, LayoutGrid, Gamepad2 } from 'lucide-react'
 import { Avatar } from '../components/Avatar'
 import { useNoSpoil } from '../context/NoSpoilContext'
 import { useNotif } from '../context/NotifContext'
@@ -597,42 +597,42 @@ function Accueil() {
             )}
           </div>
 
-          {/* Ligne 2 : chips à gauche | logos équipes à droite, même ligne */}
-          {(user || equipesFav.length > 0) && (
-            <div style={{ display: 'flex', flexWrap: 'nowrap', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginTop: isMobile ? 10 : 12, width: '100%', minWidth: 0 }}>
-
-              {/* Chips — gauche */}
-              {user ? (
-                <div style={{ display: 'flex', gap: isMobile ? 6 : 8, flexWrap: 'nowrap', flexShrink: 0 }}>
-                  <button onClick={() => { if (roueDispo) setRoueOpen(true) }} style={{ display: 'inline-flex', alignItems: 'center', gap: isMobile ? 4 : 6, background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: isMobile ? '5px 8px' : '5px 11px', cursor: roueDispo ? 'pointer' : 'default', fontSize: isMobile ? 10 : 11, fontWeight: 700, color: 'var(--text-2)', letterSpacing: '0.03em', opacity: roueDispo ? 1 : 0.4, whiteSpace: 'nowrap' }}>
-                    <RefreshCw size={12} strokeWidth={2} color="var(--accent)" />
-                    {roueDispo ? 'Roue' : 'Roue jouée'}
-                  </button>
-                  <button onClick={() => setMissionsOpen(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: isMobile ? 4 : 6, background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: isMobile ? '5px 8px' : '5px 11px', cursor: 'pointer', fontSize: isMobile ? 10 : 11, fontWeight: 700, color: 'var(--text-2)', letterSpacing: '0.03em', whiteSpace: 'nowrap' }}>
-                    <Target size={12} strokeWidth={2} color="var(--accent)" />
-                    Missions
-                  </button>
-                  <button onClick={() => navigate('/ma-collection')} style={{ display: 'inline-flex', alignItems: 'center', gap: isMobile ? 4 : 6, background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: isMobile ? '5px 8px' : '5px 11px', cursor: 'pointer', fontSize: isMobile ? 10 : 11, fontWeight: 700, color: 'var(--text-2)', letterSpacing: '0.03em', whiteSpace: 'nowrap' }}>
-                    <LayoutGrid size={12} strokeWidth={2} color="var(--gold)" />
-                    Collection
-                  </button>
-                </div>
-              ) : <div />}
-
-              {/* Logos équipes — droite */}
-              {equipesFav.length > 0 && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 4 : 8, flexShrink: 0 }}>
-                  {equipesFav.map(eq => (
-                    <img key={eq.id} src={eq.logo} alt={eq.nom}
-                      style={{ width: isMobile ? 34 : 44, height: isMobile ? 34 : 44, objectFit: 'contain', opacity: 0.9 }}
-                      onError={e => { e.target.style.opacity = '0.15' }}
-                    />
-                  ))}
-                </div>
-              )}
+          {/* Ligne 2 : logos équipes favorites, alignés à droite */}
+          {equipesFav.length > 0 && (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: isMobile ? 4 : 8, marginTop: isMobile ? 10 : 12, width: '100%' }}>
+              {equipesFav.map(eq => (
+                <img key={eq.id} src={eq.logo} alt={eq.nom}
+                  style={{ width: isMobile ? 34 : 44, height: isMobile ? 34 : 44, objectFit: 'contain', opacity: 0.9 }}
+                  onError={e => { e.target.style.opacity = '0.15' }}
+                />
+              ))}
             </div>
           )}
         </div>
+
+        {/* ── BLOC ACTIONS — Roue / Missions / Collection / Arcade ── */}
+        {user && (
+          <div style={{ margin: '14px 16px 0', background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: isMobile ? 10 : 12 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: isMobile ? 6 : 8 }}>
+              <button onClick={() => { if (roueDispo) setRoueOpen(true) }} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: isMobile ? '8px 4px' : '10px 6px', cursor: roueDispo ? 'pointer' : 'default', opacity: roueDispo ? 1 : 0.4 }}>
+                <RefreshCw size={16} strokeWidth={2} color="var(--accent)" />
+                <span style={{ fontSize: isMobile ? 9 : 10, fontWeight: 700, color: 'var(--text-2)', letterSpacing: '0.03em', whiteSpace: 'nowrap' }}>{roueDispo ? 'Roue' : 'Jouée'}</span>
+              </button>
+              <button onClick={() => setMissionsOpen(true)} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: isMobile ? '8px 4px' : '10px 6px', cursor: 'pointer' }}>
+                <Target size={16} strokeWidth={2} color="var(--accent)" />
+                <span style={{ fontSize: isMobile ? 9 : 10, fontWeight: 700, color: 'var(--text-2)', letterSpacing: '0.03em' }}>Missions</span>
+              </button>
+              <button onClick={() => navigate('/ma-collection')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: isMobile ? '8px 4px' : '10px 6px', cursor: 'pointer' }}>
+                <LayoutGrid size={16} strokeWidth={2} color="var(--gold)" />
+                <span style={{ fontSize: isMobile ? 9 : 10, fontWeight: 700, color: 'var(--text-2)', letterSpacing: '0.03em' }}>Collection</span>
+              </button>
+              <button onClick={() => navigate('/arcade')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: isMobile ? '8px 4px' : '10px 6px', cursor: 'pointer' }}>
+                <Gamepad2 size={16} strokeWidth={2} color="var(--orange)" />
+                <span style={{ fontSize: isMobile ? 9 : 10, fontWeight: 700, color: 'var(--text-2)', letterSpacing: '0.03em' }}>Arcade</span>
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* ── À LA UNE ── */}
         <div className="anim-fade-up" style={{ paddingTop: 28 }}>
