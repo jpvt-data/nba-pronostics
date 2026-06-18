@@ -16,12 +16,11 @@ const poolCache = {}
 
 const recupererPool = async (rarete) => {
   if (poolCache[rarete]) return poolCache[rarete]
-  const { data, error } = await supabase
+  const { data } = await supabase
     .from('cartes_catalogue')
     .select('id, serie, annee, numero, nom_propre, rarete, url_front, url_back')
     .eq('rarete', rarete)
     .eq('actif', true)
-  console.log('[pool]', rarete, '→', data?.length ?? 0, 'cartes', error ? 'ERREUR:' + error.message : 'OK')
   poolCache[rarete] = data || []
   return poolCache[rarete]
 }
@@ -44,6 +43,30 @@ const recupererQuantites = async (userId, carteIds) => {
   return compte
 }
 
+// Verifie et attribue les badges collection (100 / 500 / 1000 cartes)
+// Appele apres chaque insertion - silencieux en cas d'erreur
+const SEUILS_BADGES_COLLECTION = [
+  { seuil: 100,  slug: '100_cartes' },
+  { seuil: 500,  slug: '500_cartes' },
+  { seuil: 1000, slug: '1000_cartes' },
+]
+
+const verifierBadgesCollection = async (userId) => {
+  try {
+    const [{ count }, { data: profil }] = await Promise.all([
+      supabase.from('cartes_collection').select('*', { count: 'exact', head: true }).eq('user_id', userId),
+      supabase.from('profils').select('badges').eq('id', userId).single(),
+    ])
+    if (count === null || !profil) return
+    const badgesActuels = profil.badges || []
+    const nouveaux = SEUILS_BADGES_COLLECTION
+      .filter(({ seuil, slug }) => count >= seuil && !badgesActuels.includes(slug))
+      .map(({ slug }) => slug)
+    if (!nouveaux.length) return
+    await supabase.from('profils').update({ badges: [...badgesActuels, ...nouveaux] }).eq('id', userId)
+  } catch (e) { /* silencieux */ }
+}
+
 // Donne `nombre` cartes (tirage pondere) a un user, insere en base, retourne le detail pour la popup
 export const donnerCartes = async (userId, nombre, source) => {
   const cartesObtenues = []
@@ -57,6 +80,7 @@ export const donnerCartes = async (userId, nombre, source) => {
     cartesObtenues.map((c) => ({ user_id: userId, carte_id: c.id, source }))
   )
   if (errInsert) console.error('[cartes] insert échoué:', errInsert.message)
+  else verifierBadgesCollection(userId)
 
   const idsUniques = [...new Set(cartesObtenues.map((c) => c.id))]
   const quantites = await recupererQuantites(userId, idsUniques)
@@ -78,6 +102,7 @@ export const donnerCarteRareGarantie = async (userId, source = 'roue_quotidienne
   if (!carte) return null
   const { error: errInsert } = await supabase.from('cartes_collection').insert({ user_id: userId, carte_id: carte.id, source })
   if (errInsert) console.error('[cartes] insert rare garanti échoué:', errInsert.message)
+  else verifierBadgesCollection(userId)
   const quantites = await recupererQuantites(userId, [carte.id])
   return { carte, quantite: quantites[carte.id] || 1 }
 }
