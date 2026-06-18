@@ -104,4 +104,25 @@ export const BADGES_CATALOGUE = [
     description: '10 fourchette écarts corrects ! Tu lis les matchs mieux que les bookmakers.',
     image:       badgeImageUrl('tireur_d_elite'),
   },
+  {
+    slug:        '100_cartes',
+    nom:         'Rookie Collector',
+    famille:     'collection',
+    description: '100 cartes obtenues. La collection commence à prendre forme.',
+    image:       badgeImageUrl('100_cartes'),
+  },
+  {
+    slug:        '500_cartes',
+    nom:         'Binge Collector',
+    famille:     'collection',
+    description: '500 cartes obtenues. Tu ne t\'arrêtes plus.',
+    image:       badgeImageUrl('500_cartes'),
+  },
+  {
+    slug:        '1000_cartes',
+    nom:         'Card Maniac',
+    famille:     'collection',
+    description: '1000 cartes obtenues. La folie des grandeurs, on valide.',
+    image:       badgeImageUrl('1000_cartes'),
+  },
 ]
