@@ -52,9 +52,10 @@ export const donnerCartes = async (userId, nombre, source) => {
   }
   if (!cartesObtenues.length) return []
 
-  await supabase.from('cartes_collection').insert(
+  const { error: errInsert } = await supabase.from('cartes_collection').insert(
     cartesObtenues.map((c) => ({ user_id: userId, carte_id: c.id, source }))
   )
+  if (errInsert) console.error('[cartes] insert échoué:', errInsert.message)
 
   const idsUniques = [...new Set(cartesObtenues.map((c) => c.id))]
   const quantites = await recupererQuantites(userId, idsUniques)
@@ -74,7 +75,8 @@ export const donnerCartes = async (userId, nombre, source) => {
 export const donnerCarteRareGarantie = async (userId, source = 'roue_quotidienne') => {
   const carte = await tirerCarteParRarete('rare')
   if (!carte) return null
-  await supabase.from('cartes_collection').insert({ user_id: userId, carte_id: carte.id, source })
+  const { error: errInsert } = await supabase.from('cartes_collection').insert({ user_id: userId, carte_id: carte.id, source })
+  if (errInsert) console.error('[cartes] insert rare garanti échoué:', errInsert.message)
   const quantites = await recupererQuantites(userId, [carte.id])
   return { carte, quantite: quantites[carte.id] || 1 }
 }
