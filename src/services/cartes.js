@@ -16,11 +16,12 @@ const poolCache = {}
 
 const recupererPool = async (rarete) => {
   if (poolCache[rarete]) return poolCache[rarete]
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('cartes_catalogue')
     .select('id, serie, annee, numero, nom_propre, rarete, url_front, url_back')
     .eq('rarete', rarete)
     .eq('actif', true)
+  console.log('[pool]', rarete, '→', data?.length ?? 0, 'cartes', error ? 'ERREUR:' + error.message : 'OK')
   poolCache[rarete] = data || []
   return poolCache[rarete]
 }
