@@ -118,7 +118,10 @@ const CarteCollection = ({ carte, possedee = false, quantite = 0, onClick, enMod
           aspectRatio: (enModal && estPaysage) ? '3.5 / 2.5' : '2.5 / 3.5',
           cursor: 'pointer',
           perspective: 1000,
-          overflow: 'hidden',
+          outline: style.outline,
+          outlineOffset: style.outlineOffset,
+          boxShadow: style.glow,
+          animation: carte.rarete === 'legendary' ? 'glowPulse 2.5s ease-in-out infinite' : 'none',
         }}
       >
         <div
@@ -126,13 +129,10 @@ const CarteCollection = ({ carte, possedee = false, quantite = 0, onClick, enMod
             position: 'relative',
             width: '100%',
             height: '100%',
+            overflow: 'hidden',
             transition: 'transform 0.5s',
             transformStyle: 'preserve-3d',
             transform: retournee ? 'rotateY(180deg)' : 'rotateY(0deg)',
-            outline: style.outline,
-            outlineOffset: style.outlineOffset,
-            boxShadow: style.glow,
-            animation: carte.rarete === 'legendary' ? 'glowPulse 2.5s ease-in-out infinite' : 'none',
           }}
         >
           {/* Recto */}
