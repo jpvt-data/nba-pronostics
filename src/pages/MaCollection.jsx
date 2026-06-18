@@ -75,7 +75,7 @@ const ModalCarteAgrandie = ({ carte, quantite, onFermer }) => (
     }}
   >
     <div onClick={(e) => e.stopPropagation()} style={{ width: 220 }}>
-      <CarteCollection carte={carte} possedee quantite={quantite} />
+      <CarteCollection carte={carte} possedee quantite={quantite} enModal />
     </div>
   </div>
 )

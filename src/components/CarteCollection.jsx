@@ -39,8 +39,33 @@ const Legende = ({ ligne1, ligne2, visible }) => (
   </div>
 )
 
-const CarteCollection = ({ carte, possedee = false, quantite = 0, onClick }) => {
-  const [retournee, setRetournee] = useState(false)
+// Styles image paysage en grille (rotation 90° dans conteneur portrait)
+// Les ratios TOPPS 2.5/3.5 et 3.5/2.5 sont exactement inverses → rotation sans crop
+const STYLE_RECTO_PAYSAGE_GRILLE = {
+  position: 'absolute', objectFit: 'cover', backfaceVisibility: 'hidden',
+  width: '140%', height: '71.43%', left: '-20%', top: '14.28%',
+  transform: 'rotate(90deg)',
+}
+const STYLE_VERSO_PAYSAGE_GRILLE = {
+  ...STYLE_RECTO_PAYSAGE_GRILLE,
+  transform: 'rotateY(180deg) rotate(90deg)',
+}
+const STYLE_RECTO_PORTRAIT = {
+  position: 'absolute', width: '100%', height: '100%',
+  objectFit: 'cover', backfaceVisibility: 'hidden',
+}
+const STYLE_VERSO_PORTRAIT = { ...STYLE_RECTO_PORTRAIT, transform: 'rotateY(180deg)' }
+const STYLE_RECTO_MODAL   = { ...STYLE_RECTO_PORTRAIT }
+const STYLE_VERSO_MODAL   = { ...STYLE_VERSO_PORTRAIT }
+
+// enModal : affiche la carte dans son orientation naturelle (paysage si paysage)
+const CarteCollection = ({ carte, possedee = false, quantite = 0, onClick, enModal = false }) => {
+  const [retournee, setRetournee]   = useState(false)
+  const [estPaysage, setEstPaysage] = useState(false)
+
+  const detecterOrientation = (e) => {
+    if (e.target.naturalWidth > e.target.naturalHeight) setEstPaysage(true)
+  }
 
   const gererClic = () => {
     if (!possedee) return
@@ -76,9 +101,10 @@ const CarteCollection = ({ carte, possedee = false, quantite = 0, onClick }) => 
         style={{
           position: 'relative',
           width: '100%',
-          aspectRatio: '2.5 / 3.5',
+          aspectRatio: (enModal && estPaysage) ? '3.5 / 2.5' : '2.5 / 3.5',
           cursor: 'pointer',
           perspective: 1000,
+          overflow: 'hidden',
         }}
       >
         <div
@@ -97,26 +123,14 @@ const CarteCollection = ({ carte, possedee = false, quantite = 0, onClick }) => 
           <img
             src={carte.url_front}
             alt={nomAffiche}
-            style={{
-              position: 'absolute',
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover',
-              backfaceVisibility: 'hidden',
-            }}
+            onLoad={detecterOrientation}
+            style={enModal ? STYLE_RECTO_MODAL : (estPaysage ? STYLE_RECTO_PAYSAGE_GRILLE : STYLE_RECTO_PORTRAIT)}
           />
           {/* Verso */}
           <img
             src={carte.url_back}
             alt={`${nomAffiche} - verso`}
-            style={{
-              position: 'absolute',
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover',
-              backfaceVisibility: 'hidden',
-              transform: 'rotateY(180deg)',
-            }}
+            style={enModal ? STYLE_VERSO_MODAL : (estPaysage ? STYLE_VERSO_PAYSAGE_GRILLE : STYLE_VERSO_PORTRAIT)}
           />
         </div>
 
