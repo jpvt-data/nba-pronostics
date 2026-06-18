@@ -301,12 +301,19 @@ function Accueil() {
       const notifs = []
 
       if (!dejaConnexion?.length) {
+        // donnerCartes separe du Promise.all : evite qu'une erreur interne soit
+        // avalee silencieusement, et permet de capturer les cartes pour le popup
         const [resConnexion, missionsConnexion, missionsConnexionPerm] = await Promise.all([
           ajouterXP(user.id, 5, 'passif', 'connexion_quotidienne'),
           verifierMissions(user.id, 'connexion_semaine', 1, lundiFin(), 'increment'),
           verifierMissions(user.id, 'serie_connexion', 1, null, 'increment'),
-          donnerCartes(user.id, 3, 'connexion'),
         ])
+        try {
+          const cartesConnexion = await donnerCartes(user.id, 3, 'connexion')
+          if (cartesConnexion?.length > 0) setBoosterOuverture(cartesConnexion)
+        } catch (e) {
+          console.error('[connexion] donnerCartes échoué:', e.message)
+        }
 
         // Notif XP connexion
         notifs.push({
