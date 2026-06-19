@@ -25,8 +25,8 @@ export const recupererDifficulte = async (userId) => {
   const totalPaniers = count || 0
 
   // Palier progressif — zone verte rétrécit, vitesse augmente, plafonné pour rester jouable
-  const zonePct   = Math.max(10, 18 - Math.floor(totalPaniers / 20))
-  const vitesse   = Math.min(1.8, 0.6 + totalPaniers / 150)
+  const zonePct   = Math.max(8, 18 - Math.floor(totalPaniers / 5))
+  const vitesse   = Math.min(2.2, 0.6 + totalPaniers * 0.05)
 
   return { totalPaniers, zonePct, vitesse }
 }

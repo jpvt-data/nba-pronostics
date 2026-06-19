@@ -44,6 +44,12 @@ const SousTitre = ({ label, couleur = 'var(--text-3)' }) => (
   </div>
 )
 
+const SousTitreGros = ({ label, couleur = 'var(--text-1)' }) => (
+  <div style={{ fontFamily: 'var(--font-title)', fontStyle: 'italic', fontWeight: 700, fontSize: 'clamp(20px, 4vw, 28px)', color: couleur, marginBottom: 4 }}>
+    {label}
+  </div>
+)
+
 // Récupère les potes (même pattern que genererEvenements d'Accueil.jsx)
 async function recupererPotes(userId) {
   const { data: membres } = await supabase
@@ -151,31 +157,34 @@ function Arcade() {
   return (
     <>
       <Navigation />
-      <main style={{ maxWidth: 720, margin: '0 auto', paddingBottom: 60 }}>
+      <main style={{ paddingBottom: 60 }}>
 
         <div style={{ marginTop: 20 }}>
           <TitreSection label="ARCADE" couleur="var(--orange)" />
         </div>
 
-        {/* ── Stats rapides ── */}
-        <div style={{ display: 'flex', gap: 10, padding: '16px 16px 0' }}>
-          <div style={{ flex: 1, background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: '10px', textAlign: 'center' }}>
-            <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 26, color: 'var(--gold)' }}>{etatJour.paniers}</div>
-            <div style={{ fontSize: 9, color: 'var(--text-3)', letterSpacing: '0.06em', marginTop: 2 }}>PANIERS AUJOURD'HUI</div>
-          </div>
-          <div style={{ flex: 1, background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: '10px', textAlign: 'center' }}>
-            <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 26, color: etatJour.fautes >= 3 ? 'var(--danger)' : 'var(--text-1)' }}>{etatJour.fautes}/3</div>
-            <div style={{ fontSize: 9, color: 'var(--text-3)', letterSpacing: '0.06em', marginTop: 2 }}>FAUTES</div>
-          </div>
-          <div style={{ flex: 1, background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: '10px', textAlign: 'center' }}>
-            <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 26, color: 'var(--accent)' }}>{record}</div>
-            <div style={{ fontSize: 9, color: 'var(--text-3)', letterSpacing: '0.06em', marginTop: 2 }}>RECORD PERSO</div>
-          </div>
-        </div>
-
         {/* ── Jeu — Lancer franc ── */}
-        <div style={{ padding: '20px 16px 0' }}>
-          <SousTitre label="Lancer franc" couleur="var(--orange)" />
+        <div style={{ padding: '24px 16px 0' }}>
+          <SousTitreGros label="Lancer franc" couleur="var(--orange)" />
+          <p style={{ fontSize: 12, color: 'var(--text-3)', lineHeight: 1.5, margin: '0 0 16px' }}>
+            Enchaîne les paniers sans rater 3 fois. Plus tu marques, plus la visée se resserre — à toi de tenir la cadence.
+          </p>
+
+          {/* Stats rapides */}
+          <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
+            <div style={{ flex: 1, background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: '10px', textAlign: 'center' }}>
+              <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 26, color: 'var(--gold)' }}>{etatJour.paniers}</div>
+              <div style={{ fontSize: 9, color: 'var(--text-3)', letterSpacing: '0.06em', marginTop: 2 }}>PANIERS AUJOURD'HUI</div>
+            </div>
+            <div style={{ flex: 1, background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: '10px', textAlign: 'center' }}>
+              <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 26, color: etatJour.fautes >= 3 ? 'var(--danger)' : 'var(--text-1)' }}>{etatJour.fautes}/3</div>
+              <div style={{ fontSize: 9, color: 'var(--text-3)', letterSpacing: '0.06em', marginTop: 2 }}>FAUTES</div>
+            </div>
+            <div style={{ flex: 1, background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: '10px', textAlign: 'center' }}>
+              <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 26, color: 'var(--accent)' }}>{record}</div>
+              <div style={{ fontSize: 9, color: 'var(--text-3)', letterSpacing: '0.06em', marginTop: 2 }}>RECORD PERSO</div>
+            </div>
+          </div>
 
           {etatJour.partieTerminee ? (
             <div style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', borderTop: '3px solid var(--danger)', borderRadius: 'var(--radius-md)', padding: '24px 20px', textAlign: 'center' }}>
