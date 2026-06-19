@@ -591,7 +591,7 @@ function Accueil() {
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: isMobile ? 10 : 16, marginTop: isMobile ? 14 : 18, width: '100%' }}>
 
               {/* Mes équipes — gauche, alignée sous l'avatar */}
-              <div style={{ flexShrink: 0 }}>
+              <div style={{ flexShrink: 0, textAlign: 'center' }}>
                 {equipesFav.length > 0 && (
                   <>
                     <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 6 : 10 }}>
@@ -602,7 +602,7 @@ function Accueil() {
                         />
                       ))}
                     </div>
-                    <div style={{ fontSize: 9, color: 'var(--text-3)', marginTop: 6, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+                    <div style={{ fontSize: 9, color: 'var(--text-3)', marginTop: 6, letterSpacing: '0.06em', textTransform: 'uppercase', textAlign: 'center' }}>
                       Mes équipes
                     </div>
                   </>
@@ -611,17 +611,17 @@ function Accueil() {
 
               {/* KPIs — droite, agrandis */}
               {kpis.total > 0 && (
-                <div style={{ display: 'flex', gap: isMobile ? 12 : 20, flexShrink: 0 }}>
+                <div style={{ display: 'flex', gap: isMobile ? 14 : 20, flexShrink: 0 }}>
                   <div style={{ textAlign: 'center' }}>
-                    <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: isMobile ? 32 : 'clamp(36px, 7vw, 58px)', color: 'var(--text-1)', lineHeight: 1 }}>{kpis.total}</div>
+                    <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: isMobile ? 40 : 'clamp(36px, 7vw, 58px)', color: 'var(--text-1)', lineHeight: 1 }}>{kpis.total}</div>
                     <div style={{ fontSize: 8, color: 'var(--text-3)', marginTop: 2, letterSpacing: '0.06em' }}>PRONOS</div>
                   </div>
                   <div style={{ textAlign: 'center' }}>
-                    <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: isMobile ? 32 : 'clamp(36px, 7vw, 58px)', color: 'var(--accent)', lineHeight: 1 }}>{kpis.pct}%</div>
+                    <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: isMobile ? 40 : 'clamp(36px, 7vw, 58px)', color: 'var(--accent)', lineHeight: 1 }}>{kpis.pct}%</div>
                     <div style={{ fontSize: 8, color: 'var(--text-3)', marginTop: 2, letterSpacing: '0.06em' }}>RÉUSSITE</div>
                   </div>
                   <div style={{ textAlign: 'center' }}>
-                    <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: isMobile ? 32 : 'clamp(36px, 7vw, 58px)', color: 'var(--gold)', lineHeight: 1 }}>{kpis.nbCartes}</div>
+                    <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: isMobile ? 40 : 'clamp(36px, 7vw, 58px)', color: 'var(--gold)', lineHeight: 1 }}>{kpis.nbCartes}</div>
                     <div style={{ fontSize: 8, color: 'var(--text-3)', marginTop: 2, letterSpacing: '0.06em' }}>CARTES</div>
                   </div>
                 </div>
