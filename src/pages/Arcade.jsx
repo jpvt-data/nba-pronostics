@@ -9,7 +9,7 @@ import {
   recupererRecordPersonnel,
   recupererRecordAbsoluGlobal,
   recupererRecordsSemaine,
-  verifierRecordsFinPartie,
+  verifierRecordsApresPanier,
 } from '../services/arcade'
 import PopupOuvertureBooster from '../components/PopupOuvertureBooster'
 import { marquerCartesRevelees } from '../services/cartes'
@@ -131,32 +131,43 @@ function Arcade() {
     const nouvelEtat = await recupererEtatJour(user.id)
     setEtatJour(nouvelEtat)
 
+    let carteAAfficher = res?.carteObtenue ? [res.carteObtenue] : null
+
     if (resultat === 'panier') {
       const nouveauRecord = await recupererRecordPersonnel(user.id)
       setRecord(nouveauRecord)
       setDifficulte(recupererDifficulte(nouvelEtat.paniers))
-    }
 
-    let carteAAfficher = res?.carteObtenue ? [res.carteObtenue] : null
-
-    if (nouvelEtat.partieTerminee) {
+      // Vérifie les records à CHAQUE panier (pas seulement en fin de partie) —
+      // sinon un joueur qui bat un record puis arrête sans faire sa 3e faute
+      // ne recevait jamais son booster.
       const { semaine, absolu } = recordsAvantPartieRef.current
-      const { battuSemaine, battuAbsolu, boosters } = await verifierRecordsFinPartie(
+      const { battuSemaine, battuAbsolu, boosters } = await verifierRecordsApresPanier(
         user.id, nouvelEtat.paniers, semaine, absolu
       )
-      if (battuAbsolu) setBanniereRecord('absolu')
-      else if (battuSemaine) setBanniereRecord('semaine')
+
+      if (battuAbsolu) {
+        setBanniereRecord('absolu')
+        // Met à jour les refs immédiatement pour ne pas redéclencher le même
+        // booster sur les paniers suivants de cette même partie.
+        recordsAvantPartieRef.current = { semaine: nouvelEtat.paniers, absolu: nouvelEtat.paniers }
+      } else if (battuSemaine) {
+        setBanniereRecord('semaine')
+        recordsAvantPartieRef.current = { ...recordsAvantPartieRef.current, semaine: nouvelEtat.paniers }
+      }
 
       if (boosters.length) {
         carteAAfficher = [...(carteAAfficher || []), ...boosters]
       }
 
-      const [recAbsoluGlobal, recsSemaine] = await Promise.all([
-        recupererRecordAbsoluGlobal(potesIdsRef.current),
-        recupererRecordsSemaine(potesIdsRef.current),
-      ])
-      setRecordAbsoluGlobal(recAbsoluGlobal)
-      setRecordsSemaine(recsSemaine)
+      if (battuAbsolu || battuSemaine) {
+        const [recAbsoluGlobal, recsSemaine] = await Promise.all([
+          recupererRecordAbsoluGlobal(potesIdsRef.current),
+          recupererRecordsSemaine(potesIdsRef.current),
+        ])
+        setRecordAbsoluGlobal(recAbsoluGlobal)
+        setRecordsSemaine(recsSemaine)
+      }
     }
 
     if (carteAAfficher?.length) setBoosterOuverture(carteAAfficher)

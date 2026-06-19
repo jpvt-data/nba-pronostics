@@ -107,15 +107,15 @@ export const recupererRecordAbsoluGlobal = async (userIds) => {
 }
 
 /**
- * Vérifie en fin de partie si le score du jour bat le record semaine et/ou
- * le record absolu (calculés sur l'état AVANT cette partie, donc à appeler
- * avec les records déjà connus en mémoire côté page, pas re-fetchés après coup).
- * Attribue un booster 3 cartes par record battu (cumulables).
+ * Vérifie après CHAQUE panier si le score du jour bat le record semaine et/ou
+ * le record absolu (comparés aux valeurs passées en paramètre, à tenir à jour
+ * côté appelant pour ne pas redéclencher le même booster deux fois dans la
+ * même partie). Attribue un booster 3 cartes par record battu (cumulables).
  * Retourne la liste des boosters obtenus (pour popup), et les flags records.
  */
-export const verifierRecordsFinPartie = async (userId, scoreDuJour, recordSemaineAvant, recordAbsoluAvant) => {
-  const battuSemaine = scoreDuJour > recordSemaineAvant
-  const battuAbsolu  = scoreDuJour > recordAbsoluAvant
+export const verifierRecordsApresPanier = async (userId, scoreActuel, recordSemaineConnu, recordAbsoluConnu) => {
+  const battuSemaine = scoreActuel > recordSemaineConnu
+  const battuAbsolu  = scoreActuel > recordAbsoluConnu
 
   const boosters = []
 
