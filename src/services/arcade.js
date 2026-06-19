@@ -11,24 +11,14 @@ const FAUTES_MAX = 3
 const jourParis = () => new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/Paris' })
 
 /**
- * Calcule la difficulté du jour à partir du total de paniers marqués à vie.
- * Plus le total est élevé, plus la zone verte se réduit et la vitesse augmente.
- * Retourne des valeurs utilisables directement par le composant (largeur % zone, vitesse).
+ * Calcule la difficulté du tir suivant à partir du nombre de paniers déjà
+ * marqués dans la partie DU JOUR (pas cumulatif à vie — reset chaque jour).
+ * Plus la partie avance, plus la zone verte se réduit et la vitesse augmente.
  */
-export const recupererDifficulte = async (userId) => {
-  const { count } = await supabase
-    .from('arcade_tirs')
-    .select('id', { count: 'exact', head: true })
-    .eq('user_id', userId)
-    .eq('resultat', 'panier')
-
-  const totalPaniers = count || 0
-
-  // Palier progressif — zone verte rétrécit, vitesse augmente, plafonné pour rester jouable
-  const zonePct   = Math.max(8, 18 - Math.floor(totalPaniers / 5))
-  const vitesse   = Math.min(2.2, 0.6 + totalPaniers * 0.05)
-
-  return { totalPaniers, zonePct, vitesse }
+export const recupererDifficulte = (paniersAujourdhui = 0) => {
+  const zonePct = Math.max(8, 18 - Math.floor(paniersAujourdhui / 5))
+  const vitesse = Math.min(2.2, 0.6 + paniersAujourdhui * 0.05)
+  return { paniersAujourdhui, zonePct, vitesse }
 }
 
 /**

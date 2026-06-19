@@ -94,13 +94,12 @@ function Arcade() {
       if (!u) { setChargement(false); return }
       setUser(u)
 
-      const [diff, etat, rec, potes] = await Promise.all([
-        recupererDifficulte(u.id),
+      const [etat, rec, potes] = await Promise.all([
         recupererEtatJour(u.id),
         recupererRecordPersonnel(u.id),
         recupererPotes(u.id),
       ])
-      setDifficulte(diff)
+      setDifficulte(recupererDifficulte(etat.paniers))
       setEtatJour(etat)
       setRecord(rec)
 
@@ -125,8 +124,7 @@ function Arcade() {
     if (resultat === 'panier') {
       const nouveauRecord = await recupererRecordPersonnel(user.id)
       setRecord(nouveauRecord)
-      const nouvelleDiff = await recupererDifficulte(user.id)
-      setDifficulte(nouvelleDiff)
+      setDifficulte(recupererDifficulte(nouvelEtat.paniers))
     }
 
     if (res?.carteObtenue) {
