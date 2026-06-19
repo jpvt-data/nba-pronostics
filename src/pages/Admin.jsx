@@ -151,6 +151,7 @@ function Admin() {
             { key: 'moderation',   label: 'Modération' },
             { key: 'missions',     label: 'Missions' },
             { key: 'actu',         label: 'Actu' },
+            { key: 'animations',   label: 'Animations' },
           ].map(o => (
             <button key={o.key} onClick={() => setOnglet(o.key)} style={{
               padding: '7px 14px', fontSize: 12, fontWeight: 600,
@@ -177,6 +178,7 @@ function Admin() {
         {onglet === 'moderation'    && <OngletModeration />}
         {onglet === 'missions'      && <OngletMissions />}
         {onglet === 'actu'          && <OngletActu />}
+        {onglet === 'animations'    && <OngletAnimations />}
       </main>
     </>
   )
@@ -2079,6 +2081,122 @@ const S = {
     borderRadius: 'var(--radius-sm)', color: 'var(--text-1)', fontSize: 12,
     padding: '7px 10px', fontFamily: 'var(--font-body)', width: '100%', boxSizing: 'border-box',
   },
+}
+
+// ── Onglet Animations — viewer générique pour visualiser une séquence de sprites ──
+// Pensé pour être réutilisé : ajouter une entrée dans ANIMATIONS_DISPONIBLES suffit
+// pour prévisualiser une nouvelle animation sans toucher au reste de l'admin.
+const ANIMATIONS_DISPONIBLES = [
+  {
+    key: 'lancer_franc',
+    label: 'Lancer franc — séquence de tir',
+    frames: [
+      '/sprites/arcade/tir_1_charge.png',
+      '/sprites/arcade/tir_2_arme.png',
+      '/sprites/arcade/tir_3_relache.png',
+      '/sprites/arcade/tir_4_atterrissage1.png',
+      '/sprites/arcade/tir_5_idle.png',
+    ],
+    delaiParDefaut: 160,
+  },
+]
+
+const OngletAnimations = () => {
+  const [animSelec, setAnimSelec] = useState(ANIMATIONS_DISPONIBLES[0]?.key || null)
+  const [frameActuelle, setFrameActuelle] = useState(0)
+  const [enLecture, setEnLecture] = useState(true)
+  const [delai, setDelai] = useState(ANIMATIONS_DISPONIBLES[0]?.delaiParDefaut || 160)
+  const [echelle, setEchelle] = useState(4)
+
+  const anim = ANIMATIONS_DISPONIBLES.find(a => a.key === animSelec)
+
+  useEffect(() => {
+    if (!enLecture || !anim) return
+    const id = setInterval(() => {
+      setFrameActuelle(f => (f + 1) % anim.frames.length)
+    }, delai)
+    return () => clearInterval(id)
+  }, [enLecture, delai, anim])
+
+  if (!anim) {
+    return <p style={{ color: 'var(--text-3)', fontSize: 13, padding: '2rem 16px' }}>Aucune animation enregistrée pour l'instant.</p>
+  }
+
+  return (
+    <div style={{ padding: '0 16px 32px' }}>
+      <p style={{ fontSize: 12, color: 'var(--text-3)', margin: '0 0 16px' }}>
+        Visualise une séquence de sprites isolée, sans dépendre du jeu réel — utile pour valider un pack avant intégration.
+      </p>
+
+      {/* Sélecteur d'animation */}
+      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 16 }}>
+        {ANIMATIONS_DISPONIBLES.map(a => (
+          <button key={a.key} onClick={() => { setAnimSelec(a.key); setFrameActuelle(0); setDelai(a.delaiParDefaut) }}
+            style={{
+              padding: '6px 12px', fontSize: 11, fontWeight: 600,
+              borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', cursor: 'pointer',
+              background: animSelec === a.key ? 'var(--accent)' : 'var(--bg-1)',
+              color: animSelec === a.key ? '#fff' : 'var(--text-2)',
+            }}>
+            {a.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Zone de prévisualisation */}
+      <div style={{
+        background: 'var(--bg-2)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)',
+        padding: 24, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16,
+      }}>
+        <div style={{ width: 64 * echelle, height: 64 * echelle, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-0)', borderRadius: 'var(--radius-sm)' }}>
+          <img
+            src={anim.frames[frameActuelle]}
+            alt={`frame ${frameActuelle}`}
+            style={{ width: 64 * echelle, height: 64 * echelle, imageRendering: 'pixelated' }}
+          />
+        </div>
+
+        <div style={{ fontSize: 11, color: 'var(--text-3)', fontFamily: 'var(--font-display)' }}>
+          Frame {frameActuelle + 1} / {anim.frames.length}
+        </div>
+
+        {/* Contrôles */}
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'center' }}>
+          <button onClick={() => setEnLecture(p => !p)} style={{
+            padding: '6px 14px', fontSize: 12, fontWeight: 700, borderRadius: 'var(--radius-sm)',
+            border: 'none', background: 'var(--accent)', color: '#fff', cursor: 'pointer',
+          }}>
+            {enLecture ? 'Pause' : 'Lecture'}
+          </button>
+
+          <button onClick={() => setFrameActuelle(f => (f - 1 + anim.frames.length) % anim.frames.length)} style={{
+            padding: '6px 10px', fontSize: 12, borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)',
+            background: 'var(--bg-1)', color: 'var(--text-2)', cursor: 'pointer',
+          }}>← frame</button>
+          <button onClick={() => setFrameActuelle(f => (f + 1) % anim.frames.length)} style={{
+            padding: '6px 10px', fontSize: 12, borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)',
+            background: 'var(--bg-1)', color: 'var(--text-2)', cursor: 'pointer',
+          }}>frame →</button>
+
+          <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: 'var(--text-3)' }}>
+            Vitesse (ms/frame)
+            <input type="number" value={delai} min={20} max={1000} step={20}
+              onChange={e => setDelai(Number(e.target.value) || 160)}
+              style={{ width: 60, padding: '4px 6px', fontSize: 11, background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', color: 'var(--text-1)' }}
+            />
+          </label>
+
+          <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: 'var(--text-3)' }}>
+            Échelle
+            <input type="number" value={echelle} min={1} max={8} step={1}
+              onChange={e => setEchelle(Number(e.target.value) || 4)}
+              style={{ width: 50, padding: '4px 6px', fontSize: 11, background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', color: 'var(--text-1)' }}
+            />
+          </label>
+        </div>
+      </div>
+    </div>
+  )
 }
 
 export default Admin
