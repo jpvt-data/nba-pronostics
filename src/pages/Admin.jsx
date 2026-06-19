@@ -2083,123 +2083,108 @@ const S = {
   },
 }
 
-// ── Onglet Animations — viewer générique pour visualiser une séquence de sprites ──
-// Pensé pour être réutilisé : ajouter une entrée dans ANIMATIONS_DISPONIBLES suffit
-// pour prévisualiser une nouvelle animation sans toucher au reste de l'admin.
-const ANIMATIONS_DISPONIBLES = [
-  {
-    key: 'lancer_franc',
-    label: 'Lancer franc — séquence de tir',
-    frames: [
-      '/sprites/arcade/tir_1_charge.png',
-      '/sprites/arcade/tir_2_arme.png',
-      '/sprites/arcade/tir_3_relache.png',
-      '/sprites/arcade/tir_4_atterrissage1.png',
-      '/sprites/arcade/tir_5_idle.png',
-    ],
-    delaiParDefaut: 160,
-  },
-  {
-    key: 'panneau_poteau',
-    label: 'Panneau + poteau (statique)',
-    frames: ['/sprites/arcade/panneau_poteau.png'],
-    delaiParDefaut: 1000,
-  },
-]
 
-const OngletAnimations = () => {
-  const [animSelec, setAnimSelec] = useState(ANIMATIONS_DISPONIBLES[0]?.key || null)
-  const [frameActuelle, setFrameActuelle] = useState(0)
-  const [enLecture, setEnLecture] = useState(true)
-  const [delai, setDelai] = useState(ANIMATIONS_DISPONIBLES[0]?.delaiParDefaut || 160)
-  const [echelle, setEchelle] = useState(4)
+// ── Onglet Animations — panneau réaliste SVG/CSS, ballon réussi ou raté ──
+// Pas de sprite externe : tout est dessiné en SVG, vue de face, filet en losanges.
+const SCENE_W = 320
+const SCENE_H = 280
+const CERCLE_CX = 160
+const CERCLE_CY = 150
+const CERCLE_RX = 46
+const CERCLE_RY = 10
 
-  const anim = ANIMATIONS_DISPONIBLES.find(a => a.key === animSelec)
+const PanneauRealiste = () => (
+  <g>
+    {/* Panneau trapézoïdal */}
+    <path d="M70 30 L250 30 L270 110 L50 110 Z" fill="#e8e8ec" stroke="#1a1a1a" strokeWidth="3" />
+    <path d="M70 30 L250 30 L270 110 L50 110 Z" fill="none" stroke="#d85a30" strokeWidth="2.5" transform="scale(0.94) translate(10,5)" />
+    <rect x="130" y="58" width="60" height="42" fill="none" stroke="#d85a30" strokeWidth="2.5" />
+
+    {/* Cercle (arceau) vu en perspective légère — ellipse */}
+    <ellipse cx={CERCLE_CX} cy={CERCLE_CY} rx={CERCLE_RX} ry={CERCLE_RY} fill="none" stroke="#1a1a1a" strokeWidth="4" />
+    <ellipse cx={CERCLE_CX} cy={CERCLE_CY} rx={CERCLE_RX - 3} ry={CERCLE_RY - 2} fill="none" stroke="#d85a30" strokeWidth="2" />
+
+    {/* Filet — losanges, accroché sous l'arceau */}
+    <g stroke="#ffffff" strokeWidth="1.5" fill="none" opacity="0.9">
+      {[-36, -22, -8, 8, 22, 36].map((dx, i) => (
+        <path key={`l${i}`} d={`M${CERCLE_CX + dx} ${CERCLE_CY + 2} L${CERCLE_CX + dx * 0.35} ${CERCLE_CY + 62}`} />
+      ))}
+      {[14, 28, 42, 56].map((dy, i) => {
+        const ratio = 1 - dy / 70
+        const span = CERCLE_RX * ratio
+        return <ellipse key={`e${i}`} cx={CERCLE_CX} cy={CERCLE_CY + dy} rx={Math.max(span, 4)} ry={CERCLE_RY * ratio * 0.7} />
+      })}
+    </g>
+  </g>
+)
+
+const AnimationLancer = ({ resultat, rejouerKey }) => {
+  const [phase, setPhase] = useState('depart')
 
   useEffect(() => {
-    if (!enLecture || !anim) return
-    const id = setInterval(() => {
-      setFrameActuelle(f => (f + 1) % anim.frames.length)
-    }, delai)
-    return () => clearInterval(id)
-  }, [enLecture, delai, anim])
+    setPhase('depart')
+    const t1 = setTimeout(() => setPhase('monte'), 50)
+    const t2 = setTimeout(() => setPhase(resultat === 'panier' ? 'rentre' : 'rebond'), 750)
+    const t3 = setTimeout(() => setPhase('fin'), resultat === 'panier' ? 1300 : 1250)
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3) }
+  }, [resultat, rejouerKey])
 
-  if (!anim) {
-    return <p style={{ color: 'var(--text-3)', fontSize: 13, padding: '2rem 16px' }}>Aucune animation enregistrée pour l'instant.</p>
-  }
+  const ballonStyle = (() => {
+    if (phase === 'depart') return { cx: 160, cy: 250, scale: 1, opacity: 1 }
+    if (phase === 'monte')  return { cx: 160, cy: CERCLE_CY - 6, scale: 1, opacity: 1 }
+    if (phase === 'rentre') return { cx: 160, cy: CERCLE_CY + 55, scale: 0.75, opacity: 1 }
+    if (phase === 'rebond') return { cx: 205, cy: CERCLE_CY - 30, scale: 1, opacity: 1 }
+    return { cx: 205, cy: CERCLE_CY - 30, scale: 1, opacity: 0 }
+  })()
+
+  const dureeTransition = phase === 'monte' ? '0.7s' : phase === 'fin' ? '0.4s' : '0.55s'
+
+  return (
+    <svg width="100%" viewBox={`0 0 ${SCENE_W} ${SCENE_H}`} role="img" style={{ background: '#cfe0ea', borderRadius: 8 }}>
+      <title>Animation de lancer franc</title>
+      <desc>Panneau de basket vu de face avec ballon qui monte et rentre ou rebondit sur le cercle</desc>
+
+      <PanneauRealiste />
+
+      <g style={{ transition: `transform ${dureeTransition} cubic-bezier(0.33,0,0.67,1), opacity 0.3s`, transform: `translate(${ballonStyle.cx}px, ${ballonStyle.cy}px) scale(${ballonStyle.scale})`, opacity: ballonStyle.opacity }}>
+        <circle cx="0" cy="0" r="16" fill="#d85a30" stroke="#1a1a1a" strokeWidth="1.5" />
+        <path d="M-16 0 L16 0 M0 -16 L0 16 M-11 -11 Q0 0 -11 11 M11 -11 Q0 0 11 11" stroke="#1a1a1a" strokeWidth="1" fill="none" />
+      </g>
+    </svg>
+  )
+}
+
+const OngletAnimations = () => {
+  const [resultatSelec, setResultatSelec] = useState('panier')
+  const [rejouerKey, setRejouerKey] = useState(0)
 
   return (
     <div style={{ padding: '0 16px 32px' }}>
       <p style={{ fontSize: 12, color: 'var(--text-3)', margin: '0 0 16px' }}>
-        Visualise une séquence de sprites isolée, sans dépendre du jeu réel — utile pour valider un pack avant intégration.
+        Animation du panneau et du ballon, dessinée en SVG — vérifie les 2 issues avant intégration dans le jeu.
       </p>
 
-      {/* Sélecteur d'animation */}
-      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 16 }}>
-        {ANIMATIONS_DISPONIBLES.map(a => (
-          <button key={a.key} onClick={() => { setAnimSelec(a.key); setFrameActuelle(0); setDelai(a.delaiParDefaut) }}
-            style={{
-              padding: '6px 12px', fontSize: 11, fontWeight: 600,
-              borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', cursor: 'pointer',
-              background: animSelec === a.key ? 'var(--accent)' : 'var(--bg-1)',
-              color: animSelec === a.key ? '#fff' : 'var(--text-2)',
-            }}>
-            {a.label}
-          </button>
-        ))}
+      <div style={{ display: 'flex', gap: 6, marginBottom: 16 }}>
+        <button onClick={() => { setResultatSelec('panier'); setRejouerKey(k => k + 1) }} style={{
+          padding: '6px 14px', fontSize: 12, fontWeight: 700, borderRadius: 'var(--radius-sm)',
+          border: '1px solid var(--border)', cursor: 'pointer',
+          background: resultatSelec === 'panier' ? 'var(--success)' : 'var(--bg-1)',
+          color: resultatSelec === 'panier' ? '#fff' : 'var(--text-2)',
+        }}>Panier réussi</button>
+        <button onClick={() => { setResultatSelec('rate'); setRejouerKey(k => k + 1) }} style={{
+          padding: '6px 14px', fontSize: 12, fontWeight: 700, borderRadius: 'var(--radius-sm)',
+          border: '1px solid var(--border)', cursor: 'pointer',
+          background: resultatSelec === 'rate' ? 'var(--danger)' : 'var(--bg-1)',
+          color: resultatSelec === 'rate' ? '#fff' : 'var(--text-2)',
+        }}>Tir raté</button>
+        <button onClick={() => setRejouerKey(k => k + 1)} style={{
+          padding: '6px 14px', fontSize: 12, fontWeight: 700, borderRadius: 'var(--radius-sm)',
+          border: '1px solid var(--border)', cursor: 'pointer', background: 'var(--bg-1)', color: 'var(--text-2)',
+        }}>Rejouer</button>
       </div>
 
-      {/* Zone de prévisualisation */}
-      <div style={{
-        background: 'var(--bg-2)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)',
-        padding: 24, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16,
-      }}>
-        <div style={{ minWidth: 64 * echelle, minHeight: 64 * echelle, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-0)', borderRadius: 'var(--radius-sm)', padding: 12 }}>
-          <img
-            src={anim.frames[frameActuelle]}
-            alt={`frame ${frameActuelle}`}
-            style={{ height: 64 * echelle, width: 'auto', imageRendering: 'pixelated' }}
-          />
-        </div>
-
-        <div style={{ fontSize: 11, color: 'var(--text-3)', fontFamily: 'var(--font-display)' }}>
-          Frame {frameActuelle + 1} / {anim.frames.length}
-        </div>
-
-        {/* Contrôles */}
-        <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'center' }}>
-          <button onClick={() => setEnLecture(p => !p)} style={{
-            padding: '6px 14px', fontSize: 12, fontWeight: 700, borderRadius: 'var(--radius-sm)',
-            border: 'none', background: 'var(--accent)', color: '#fff', cursor: 'pointer',
-          }}>
-            {enLecture ? 'Pause' : 'Lecture'}
-          </button>
-
-          <button onClick={() => setFrameActuelle(f => (f - 1 + anim.frames.length) % anim.frames.length)} style={{
-            padding: '6px 10px', fontSize: 12, borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)',
-            background: 'var(--bg-1)', color: 'var(--text-2)', cursor: 'pointer',
-          }}>← frame</button>
-          <button onClick={() => setFrameActuelle(f => (f + 1) % anim.frames.length)} style={{
-            padding: '6px 10px', fontSize: 12, borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)',
-            background: 'var(--bg-1)', color: 'var(--text-2)', cursor: 'pointer',
-          }}>frame →</button>
-
-          <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: 'var(--text-3)' }}>
-            Vitesse (ms/frame)
-            <input type="number" value={delai} min={20} max={1000} step={20}
-              onChange={e => setDelai(Number(e.target.value) || 160)}
-              style={{ width: 60, padding: '4px 6px', fontSize: 11, background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', color: 'var(--text-1)' }}
-            />
-          </label>
-
-          <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: 'var(--text-3)' }}>
-            Échelle
-            <input type="number" value={echelle} min={1} max={8} step={1}
-              onChange={e => setEchelle(Number(e.target.value) || 4)}
-              style={{ width: 50, padding: '4px 6px', fontSize: 11, background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', color: 'var(--text-1)' }}
-            />
-          </label>
-        </div>
+      <div style={{ maxWidth: 420 }}>
+        <AnimationLancer resultat={resultatSelec} rejouerKey={rejouerKey} />
       </div>
     </div>
   )
