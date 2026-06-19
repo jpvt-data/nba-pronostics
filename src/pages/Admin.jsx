@@ -2099,6 +2099,12 @@ const ANIMATIONS_DISPONIBLES = [
     ],
     delaiParDefaut: 160,
   },
+  {
+    key: 'panneau_poteau',
+    label: 'Panneau + poteau (statique)',
+    frames: ['/sprites/arcade/panneau_poteau.png'],
+    delaiParDefaut: 1000,
+  },
 ]
 
 const OngletAnimations = () => {
@@ -2148,11 +2154,11 @@ const OngletAnimations = () => {
         background: 'var(--bg-2)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)',
         padding: 24, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16,
       }}>
-        <div style={{ width: 64 * echelle, height: 64 * echelle, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-0)', borderRadius: 'var(--radius-sm)' }}>
+        <div style={{ minWidth: 64 * echelle, minHeight: 64 * echelle, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-0)', borderRadius: 'var(--radius-sm)', padding: 12 }}>
           <img
             src={anim.frames[frameActuelle]}
             alt={`frame ${frameActuelle}`}
-            style={{ width: 64 * echelle, height: 64 * echelle, imageRendering: 'pixelated' }}
+            style={{ height: 64 * echelle, width: 'auto', imageRendering: 'pixelated' }}
           />
         </div>
 
