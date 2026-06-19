@@ -1,24 +1,80 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 
-// Joueur chibi + panneau + arceau — esthétique flat retro, tokens CSS de l'app.
-// Mécanique : 2 barres de précision séquentielles (horizontale puis verticale).
-// Vert + Vert = panier. Toute autre combinaison = raté.
+// Panneau + arceau + filet réaliste en SVG, ballon en trajectoire d'arc (offset-path).
+// Mécanique inchangée : 2 barres de précision séquentielles (horizontale puis verticale).
+// Trajectoires calibrées et validées dans Admin > Animations avant intégration ici.
+
+const STYLE_ANIM_LANCER = `
+@keyframes swl-tir-reussi {
+  0%   { offset-distance: 0%; opacity: 1; }
+  70%  { offset-distance: 100%; opacity: 1; }
+  100% { offset-distance: 100%; opacity: 0; }
+}
+@keyframes swl-tir-rate {
+  0%   { offset-distance: 0%; opacity: 1; }
+  85%  { offset-distance: 100%; opacity: 1; }
+  100% { offset-distance: 100%; opacity: 0; }
+}
+`
+if (typeof document !== 'undefined' && !document.getElementById('swl-anim-lancer-style')) {
+  const el = document.createElement('style')
+  el.id = 'swl-anim-lancer-style'
+  el.textContent = STYLE_ANIM_LANCER
+  document.head.appendChild(el)
+}
+
+const TRAJECTOIRE_REUSSI = 'M 55 330 C 50 210, 70 95, 130 75 C 150 68, 158 95, 155 128 C 153 150, 155 165, 155 185'
+const TRAJECTOIRE_RATE   = 'M 55 330 C 50 200, 75 90, 140 75 C 165 70, 195 85, 215 115 C 228 135, 232 155, 222 175'
+
+const PanneauEtArceau = () => (
+  <g>
+    <rect x="148" y="160" width="14" height="160" fill="#9a9a9a" />
+    <rect x="148" y="160" width="5" height="160" fill="#c4c4c4" />
+    <ellipse cx="155" cy="320" rx="22" ry="6" fill="#000" opacity="0.2" />
+
+    <g transform="translate(155,60)">
+      <rect x="-95" y="0" width="190" height="78" rx="3" fill="#e9e9ec" stroke="#1a1a1a" strokeWidth="3" />
+      <rect x="-83" y="10" width="166" height="58" fill="none" stroke="#d23b1f" strokeWidth="3" />
+      <rect x="-30" y="36" width="60" height="32" fill="none" stroke="#d23b1f" strokeWidth="3" />
+      <rect x="-95" y="68" width="190" height="10" fill="#1a1a1a" />
+    </g>
+
+    <g stroke="#f5f5f5" strokeWidth="1.3" fill="none" opacity="0.95">
+      <path d="M-34 1 L-12 56" transform="translate(155,128)" />
+      <path d="M-22 3 L-7 58" transform="translate(155,128)" />
+      <path d="M-9 4 L-2 59" transform="translate(155,128)" />
+      <path d="M9 4 L2 59" transform="translate(155,128)" />
+      <path d="M22 3 L7 58" transform="translate(155,128)" />
+      <path d="M34 1 L12 56" transform="translate(155,128)" />
+      <ellipse cx="155" cy="142" rx="33" ry="6.3" />
+      <ellipse cx="155" cy="156" rx="24" ry="4.6" />
+      <ellipse cx="155" cy="168" rx="15" ry="2.9" />
+      <ellipse cx="155" cy="178" rx="7" ry="1.4" />
+    </g>
+  </g>
+)
+
+const Arceau = () => (
+  <g>
+    <ellipse cx="155" cy="128" rx="42" ry="9" fill="none" stroke="#1a1a1a" strokeWidth="4" />
+    <ellipse cx="155" cy="128" rx="38" ry="7.2" fill="none" stroke="#e8501f" strokeWidth="2.2" />
+  </g>
+)
 
 const JoueurArcade = ({ zonePct = 18, vitesse = 2.5, onResultat, verrouille = false }) => {
-  const [etape, setEtape] = useState('horizontale') // 'horizontale' | 'verticale' | 'resultat'
+  const [etape, setEtape] = useState('horizontale')
   const [posH, setPosH] = useState(0)
   const [posV, setPosV] = useState(0)
   const [dirH, setDirH] = useState(1)
   const [dirV, setDirV] = useState(1)
   const [reussiH, setReussiH] = useState(null)
-  const [resultatFinal, setResultatFinal] = useState(null) // 'panier' | 'rate'
-  const [ballonAnim, setBallonAnim] = useState(null) // 'tir' | 'rebond' | null
+  const [resultatFinal, setResultatFinal] = useState(null)
+  const [animKey, setAnimKey] = useState(0)
 
   const rafRef = useRef(null)
   const zoneDebut = (100 - zonePct) / 2
   const zoneFin = zoneDebut + zonePct
 
-  // Boucle d'oscillation — une seule barre active à la fois
   useEffect(() => {
     if (verrouille || etape === 'resultat') return
 
@@ -58,64 +114,48 @@ const JoueurArcade = ({ zonePct = 18, vitesse = 2.5, onResultat, verrouille = fa
       const dansLaZone = posV >= zoneDebut && posV <= zoneFin
       const panier = reussiH && dansLaZone
       setResultatFinal(panier ? 'panier' : 'rate')
-      setBallonAnim(panier ? 'tir' : 'rebond')
+      setAnimKey(k => k + 1)
       setEtape('resultat')
     }
   }, [etape, posH, posV, reussiH, zoneDebut, zoneFin, verrouille])
 
-  // Notifie le parent une fois l'animation jouée, puis reset pour le tir suivant
   useEffect(() => {
     if (etape !== 'resultat' || !resultatFinal) return
     const t = setTimeout(() => {
       onResultat?.(resultatFinal)
       setEtape('horizontale')
       setPosH(0); setPosV(0); setDirH(1); setDirV(1)
-      setReussiH(null); setResultatFinal(null); setBallonAnim(null)
-    }, 1100)
+      setReussiH(null); setResultatFinal(null)
+    }, 1500)
     return () => clearTimeout(t)
   }, [etape, resultatFinal, onResultat])
+
+  const trajectoire = resultatFinal === 'panier' ? TRAJECTOIRE_REUSSI : TRAJECTOIRE_RATE
+  const animation = resultatFinal === 'panier' ? 'swl-tir-reussi' : 'swl-tir-rate'
 
   return (
     <div style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: 16 }}>
 
-      <svg width="100%" viewBox="0 0 320 200" style={{ display: 'block', background: 'var(--bg-2)', borderRadius: 'var(--radius-sm)' }}>
-        {/* Sol */}
-        <rect x="0" y="170" width="320" height="30" fill="var(--bg-0)" />
+      <svg key={animKey} width="100%" viewBox="0 0 320 360" style={{ display: 'block', background: '#1a2e3d', borderRadius: 'var(--radius-sm)' }}>
+        <rect x="0" y="320" width="320" height="40" fill="#2a3f4f" />
+        <ellipse cx="160" cy="320" rx="140" ry="8" fill="#000" opacity="0.15" />
 
-        {/* Panneau + arceau */}
-        <g transform="translate(220,20)">
-          <rect x="0" y="0" width="60" height="42" fill="var(--text-1)" opacity="0.9" rx="2" />
-          <rect x="4" y="4" width="52" height="34" fill="none" stroke="var(--text-3)" strokeWidth="2" />
-          <ellipse cx="30" cy="48" rx="22" ry="5" fill="none" stroke="var(--orange)" strokeWidth="3" />
-          <path d="M10 50 L14 80 M20 51 L22 82 M30 52 L30 84 M40 51 L38 82 M50 50 L46 80"
-            stroke="var(--accent)" strokeOpacity="0.4" strokeWidth="1" />
-        </g>
+        <PanneauEtArceau />
 
-        {/* Joueur chibi */}
-        <g transform="translate(60,110)">
-          <ellipse cx="20" cy="78" rx="22" ry="5" fill="#000" opacity="0.15" />
-          <circle cx="20" cy="14" r="11" fill="#fbc89a" />
-          <path d="M9 11 Q20 0 31 11 L31 7 Q20 -3 9 7 Z" fill="var(--text-1)" opacity="0.7" />
-          <rect x="8" y="26" width="24" height="28" fill="var(--accent)" rx="4" />
-          <rect x="12" y="60" width="8" height="22" fill="var(--bg-0)" rx="3" />
-          <rect x="20" y="60" width="8" height="22" fill="var(--bg-0)" rx="3" />
-        </g>
+        {resultatFinal && (
+          <g style={{
+            offsetPath: `path('${trajectoire}')`,
+            offsetDistance: '0%',
+            animation: `${animation} 1.5s ${resultatFinal === 'panier' ? 'ease-in-out' : 'linear'} 1`,
+          }}>
+            <circle cx="0" cy="0" r="15" fill="#e8731f" stroke="#1a1a1a" strokeWidth="1.5" />
+            <path d="M-15 0 L15 0 M0 -15 L0 15 M-10.5 -10.5 Q0 0 -10.5 10.5 M10.5 -10.5 Q0 0 10.5 10.5" stroke="#1a1a1a" strokeWidth="1" fill="none" />
+          </g>
+        )}
 
-        {/* Ballon — position selon étape de l'animation */}
-        <g style={{
-          transform: ballonAnim === 'tir'
-            ? 'translate(220px, 40px)'
-            : ballonAnim === 'rebond'
-              ? 'translate(130px, 150px)'
-              : 'translate(95px, 95px)',
-          transition: 'transform 0.9s cubic-bezier(0.3, 0, 0.7, 1)',
-        }}>
-          <circle cx="0" cy="0" r="9" fill="var(--orange)" />
-          <path d="M-9 0 L9 0 M0 -9 L0 9" stroke="var(--bg-0)" strokeWidth="1" />
-        </g>
+        <Arceau />
       </svg>
 
-      {/* Barre horizontale */}
       <div style={{ marginTop: 14 }}>
         <div style={{ fontSize: 10, color: 'var(--text-3)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
           Visée gauche / droite
@@ -131,7 +171,6 @@ const JoueurArcade = ({ zonePct = 18, vitesse = 2.5, onResultat, verrouille = fa
         </div>
       </div>
 
-      {/* Barre verticale */}
       <div style={{ marginTop: 14, display: 'flex', alignItems: 'center', gap: 10 }}>
         <div style={{ fontSize: 10, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.08em', width: 70 }}>
           Visée force
@@ -143,7 +182,6 @@ const JoueurArcade = ({ zonePct = 18, vitesse = 2.5, onResultat, verrouille = fa
           )}
         </div>
 
-        {/* Résultat */}
         <div style={{ flex: 1, textAlign: 'center' }}>
           {resultatFinal === 'panier' && (
             <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 20, color: 'var(--success)' }}>PANIER !</span>
@@ -159,11 +197,9 @@ const JoueurArcade = ({ zonePct = 18, vitesse = 2.5, onResultat, verrouille = fa
         </div>
       </div>
 
-      {/* Bouton d'action */}
       <button
         onClick={arreterBarre}
         disabled={verrouille || etape === 'resultat'}
-        className="btn-tap"
         style={{
           marginTop: 16, width: '100%', padding: '12px 0',
           background: 'var(--accent)', border: 'none', borderRadius: 'var(--radius-sm)',

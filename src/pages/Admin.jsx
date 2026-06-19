@@ -2095,7 +2095,7 @@ const STYLE_ANIM_LANCER = `
 }
 @keyframes swl-tir-rate {
   0%   { offset-distance: 0%; opacity: 1; }
-  62%  { offset-distance: 62%; opacity: 1; }
+  85%  { offset-distance: 100%; opacity: 1; }
   100% { offset-distance: 100%; opacity: 0; }
 }
 `
@@ -2107,7 +2107,7 @@ if (typeof document !== 'undefined' && !document.getElementById('swl-anim-lancer
 }
 
 const TRAJECTOIRE_REUSSI = 'M 55 330 C 50 210, 70 95, 130 75 C 150 68, 158 95, 155 128 C 153 150, 155 165, 155 185'
-const TRAJECTOIRE_RATE   = 'M 55 330 C 50 210, 70 95, 130 75 C 150 68, 165 100, 200 110 C 220 116, 230 130, 225 150'
+const TRAJECTOIRE_RATE   = 'M 55 330 C 50 200, 75 90, 140 75 C 165 70, 195 85, 215 115 C 228 135, 232 155, 222 175'
 
 const PanneauEtArceau = () => (
   <g>
@@ -2161,7 +2161,7 @@ const AnimationLancer = ({ resultat, rejouerKey }) => {
       <g style={{
         offsetPath: `path('${trajectoire}')`,
         offsetDistance: '0%',
-        animation: `${animation} 2.4s ease-in-out infinite`,
+        animation: `${animation} 2.4s ${resultat === 'panier' ? 'ease-in-out' : 'linear'} infinite`,
       }}>
         <circle cx="0" cy="0" r="15" fill="#e8731f" stroke="#1a1a1a" strokeWidth="1.5" />
         <path d="M-15 0 L15 0 M0 -15 L0 15 M-10.5 -10.5 Q0 0 -10.5 10.5 M10.5 -10.5 Q0 0 10.5 10.5" stroke="#1a1a1a" strokeWidth="1" fill="none" />
