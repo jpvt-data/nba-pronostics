@@ -200,7 +200,7 @@ function Accueil() {
   const [typeSaisonLigues, setTypeSaisonLigues] = useState(null)
   const [articleUne, setArticleUne]             = useState(null)
   const [xpData, setXpData]                     = useState({ xp_total: 0, niveau: 1 })
-  const [kpis, setKpis]                         = useState({ total: 0, pct: 0 })
+  const [kpis, setKpis]                         = useState({ total: 0, pct: 0, nbCartes: 0 })
   const [equipesFav, setEquipesFav]             = useState([])
   const [evenements, setEvenements]             = useState([])
   const [actusOuvertes, setActusOuvertes]       = useState(false)
@@ -261,6 +261,7 @@ function Accueil() {
         { data: actus },
         { data: liguesUser },
         m,
+        { count: nbCartes },
       ] = await Promise.all([
         supabase.from('profils').select('pseudo, avatar_url, badges, xp_total, niveau, onboarding_done, equipes_favorites').eq('id', user.id).single(),
         genererEvenements(user.id),
@@ -270,6 +271,7 @@ function Accueil() {
         supabase.from('actu_app').select('*').eq('actif', true).order('cree_le', { ascending: false }),
         supabase.from('membres_groupe').select('groupes(type_saison, date_fin)').eq('user_id', user.id).eq('actif', true),
         recupererTimeline(15, 15),
+        supabase.from('cartes_collection').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
       ])
 
       // Tracking — utilise le profil déjà chargé, pas besoin d'un 2e appel
@@ -295,7 +297,7 @@ function Accueil() {
       const total    = pronosKpi?.length || 0
       const corrects = pronosKpi?.filter(p => p.resultat === 'correct').length || 0
       const pct      = total > 0 ? Math.round(corrects / total * 100) : 0
-      setKpis({ total, pct })
+      setKpis({ total, pct, nbCartes: nbCartes || 0 })
 
       // ── Connexion quotidienne (dépend de dejaConnexion ci-dessus) ───────────
       const notifs = []
@@ -582,30 +584,48 @@ function Accueil() {
               </div>
             </div>
 
-            {/* KPIs — droite */}
-            {kpis.total > 0 && (
-              <div style={{ display: 'flex', gap: isMobile ? 10 : 16, flexShrink: 0 }}>
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: isMobile ? 28 : 'clamp(32px, 6vw, 52px)', color: 'var(--text-1)', lineHeight: 1 }}>{kpis.total}</div>
-                  <div style={{ fontSize: 8, color: 'var(--text-3)', marginTop: 2, letterSpacing: '0.06em' }}>PRONOS</div>
-                </div>
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: isMobile ? 28 : 'clamp(32px, 6vw, 52px)', color: 'var(--accent)', lineHeight: 1 }}>{kpis.pct}%</div>
-                  <div style={{ fontSize: 8, color: 'var(--text-3)', marginTop: 2, letterSpacing: '0.06em' }}>RÉUSSITE</div>
-                </div>
-              </div>
-            )}
           </div>
 
-          {/* Ligne 2 : logos équipes favorites, alignés à droite */}
-          {equipesFav.length > 0 && (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: isMobile ? 4 : 8, marginTop: isMobile ? 10 : 12, width: '100%' }}>
-              {equipesFav.map(eq => (
-                <img key={eq.id} src={eq.logo} alt={eq.nom}
-                  style={{ width: isMobile ? 34 : 44, height: isMobile ? 34 : 44, objectFit: 'contain', opacity: 0.9 }}
-                  onError={e => { e.target.style.opacity = '0.15' }}
-                />
-              ))}
+          {/* Ligne 2 : Mes équipes (gauche, avec label) | KPIs agrandis (droite) */}
+          {(equipesFav.length > 0 || kpis.total > 0) && (
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: isMobile ? 10 : 16, marginTop: isMobile ? 14 : 18, width: '100%' }}>
+
+              {/* Mes équipes — gauche, alignée sous l'avatar */}
+              <div style={{ flexShrink: 0 }}>
+                {equipesFav.length > 0 && (
+                  <>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 6 : 10 }}>
+                      {equipesFav.map(eq => (
+                        <img key={eq.id} src={eq.logo} alt={eq.nom}
+                          style={{ width: isMobile ? 44 : 56, height: isMobile ? 44 : 56, objectFit: 'contain', opacity: 0.9 }}
+                          onError={e => { e.target.style.opacity = '0.15' }}
+                        />
+                      ))}
+                    </div>
+                    <div style={{ fontSize: 9, color: 'var(--text-3)', marginTop: 6, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+                      Mes équipes
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* KPIs — droite, agrandis */}
+              {kpis.total > 0 && (
+                <div style={{ display: 'flex', gap: isMobile ? 12 : 20, flexShrink: 0 }}>
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: isMobile ? 32 : 'clamp(36px, 7vw, 58px)', color: 'var(--text-1)', lineHeight: 1 }}>{kpis.total}</div>
+                    <div style={{ fontSize: 8, color: 'var(--text-3)', marginTop: 2, letterSpacing: '0.06em' }}>PRONOS</div>
+                  </div>
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: isMobile ? 32 : 'clamp(36px, 7vw, 58px)', color: 'var(--accent)', lineHeight: 1 }}>{kpis.pct}%</div>
+                    <div style={{ fontSize: 8, color: 'var(--text-3)', marginTop: 2, letterSpacing: '0.06em' }}>RÉUSSITE</div>
+                  </div>
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: isMobile ? 32 : 'clamp(36px, 7vw, 58px)', color: 'var(--gold)', lineHeight: 1 }}>{kpis.nbCartes}</div>
+                    <div style={{ fontSize: 8, color: 'var(--text-3)', marginTop: 2, letterSpacing: '0.06em' }}>CARTES</div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
