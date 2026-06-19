@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { X } from 'lucide-react'
 
 // Habillage par rarete - identique a CarteCollection.jsx
 const STYLE_RARETE = {
@@ -125,10 +126,36 @@ const PopupOuvertureBooster = ({ cartes, onFermer }) => {
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        justifyContent: 'center',
-        padding: 24,
+        justifyContent: 'flex-start',
+        padding: '24px 24px 40px',
+        overflowY: 'auto',
       }}
     >
+      {/* Croix de fermeture — toujours accessible, n'apparaît cliquable qu'une fois tout révélé */}
+      <button
+        onClick={toutesRevelees ? onFermer : undefined}
+        disabled={!toutesRevelees}
+        aria-label="Fermer"
+        style={{
+          position: 'fixed',
+          top: 16,
+          right: 16,
+          width: 36,
+          height: 36,
+          borderRadius: '50%',
+          background: 'var(--bg-1)',
+          border: '1px solid var(--border)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          cursor: toutesRevelees ? 'pointer' : 'default',
+          opacity: toutesRevelees ? 1 : 0.35,
+          zIndex: 1001,
+        }}
+      >
+        <X size={18} strokeWidth={2} color="var(--text-1)" />
+      </button>
+
       <div
         style={{
           fontFamily: "'Teko', system-ui, sans-serif",
@@ -137,6 +164,7 @@ const PopupOuvertureBooster = ({ cartes, onFermer }) => {
           fontSize: 'clamp(24px, 6vw, 34px)',
           color: '#fff',
           marginBottom: 24,
+          marginTop: 12,
           textAlign: 'center',
         }}
       >
@@ -150,7 +178,7 @@ const PopupOuvertureBooster = ({ cartes, onFermer }) => {
           flexWrap: 'wrap',
           justifyContent: 'center',
           width: '100%',
-          maxWidth: cartes.length > 1 ? 480 : 200,
+          maxWidth: cartes.length > 1 ? 560 : 200,
         }}
       >
         {cartes.map((item, i) => (
