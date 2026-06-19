@@ -382,6 +382,7 @@ function MesPronos() {
   const [modalHistorique, setModalHistorique] = useState(false)
   const [missionsOpen, setMissionsOpen]  = useState(false)
   const [profilId, setProfilId]          = useState(null)
+  const [apercuJeux, setApercuJeux]      = useState({ nbCartes: 0, recordArcade: 0 })
   const [charg, setCharg]                = useState(true)
   const [estMoi, setEstMoi]              = useState(true)
   const [isMobile, setIsMobile]          = useState(window.innerWidth < 640)
@@ -411,6 +412,13 @@ function MesPronos() {
       setProfil(p)
       const badgesSlugs = p?.badges || []
       setXpData({ xp_total: p?.xp_total || 0, niveau: p?.niveau || 1, badges: badgesSlugs })
+
+      // Aperçu Collection + Arcade — vue d'ensemble, le détail vit sur /ma-collection et /arcade
+      const [{ count: nbCartes }, { data: meilleurScore }] = await Promise.all([
+        supabase.from('cartes_collection').select('id', { count: 'exact', head: true }).eq('user_id', cibleId),
+        supabase.from('arcade_scores_jour').select('paniers').eq('user_id', cibleId).order('paniers', { ascending: false }).limit(1).maybeSingle(),
+      ])
+      setApercuJeux({ nbCartes: nbCartes || 0, recordArcade: meilleurScore?.paniers || 0 })
 
       if (badgesSlugs.length > 0) {
         const { data: logsJalons } = await supabase
@@ -576,216 +584,222 @@ function MesPronos() {
         {/* ── Header fusionné : Profil + XP ── */}
         <div style={{ background: 'var(--bg-1)', padding: '20px 16px 20px', borderLeft: '3px solid var(--gold)' }}>
 
-          {/* Ligne principale : col1 + col2(desktop) + col3 */}
-          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-
-            {/* Col 1 — Avatar + Pseudo + Titre + Niveau + Barre XP */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flexShrink: 0, minWidth: 0, maxWidth: isMobile ? '55%' : 'none' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <Avatar url={profil?.avatar_url} pseudo={profil?.pseudo} taille={48} fontSize={16} />
-                <div>
-                  <div style={{ fontFamily: 'var(--font-title)', fontWeight: 700, fontSize: 'clamp(22px, 5vw, 32px)', color: 'var(--accent)', letterSpacing: '-0.01em', lineHeight: 1 }}>
-                    {profil?.pseudo || '—'}
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginTop: 2 }}>
-                    <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 'clamp(16px, 3.5vw, 20px)', color: 'var(--gold)', letterSpacing: '0.02em', lineHeight: 1 }}>
-                      {titreRPG}
-                    </span>
-                    <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 12, color: 'var(--text-3)' }}>
-                      Niv. {niveau}
-                    </span>
-                  </div>
+          {/* Ligne 1 — Avatar + Pseudo + Titre + Niveau + Barre XP (identité seule) */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <Avatar url={profil?.avatar_url} pseudo={profil?.pseudo} taille={48} fontSize={16} />
+              <div>
+                <div style={{ fontFamily: 'var(--font-title)', fontWeight: 700, fontSize: 'clamp(22px, 5vw, 32px)', color: 'var(--accent)', letterSpacing: '-0.01em', lineHeight: 1 }}>
+                  {profil?.pseudo || '—'}
                 </div>
-              </div>
-
-              {/* Barre XP — col 1 seulement */}
-              <div style={{ width: '100%' }}>
-                <div style={{ height: 4, background: 'var(--bg-2)', overflow: 'hidden', borderRadius: 3 }}>
-                  <div style={{ height: '100%', width: `${pctBarre}%`, background: 'var(--gold)', transition: 'width 0.6s ease' }} />
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 3 }}>
-                  <span style={{ fontSize: 10, color: 'var(--text-3)', fontFamily: 'var(--font-display)', fontWeight: 600 }}>
-                    {xpActuel.toLocaleString('fr-FR')} XP
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginTop: 2 }}>
+                  <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 'clamp(16px, 3.5vw, 20px)', color: 'var(--gold)', letterSpacing: '0.02em', lineHeight: 1 }}>
+                    {titreRPG}
                   </span>
-                  {niveau < 100 && (
-                    <span style={{ fontSize: 10, color: 'var(--text-3)', fontFamily: 'var(--font-display)' }}>
-                      encore {xpRestant.toLocaleString('fr-FR')} XP
-                    </span>
-                  )}
+                  <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 12, color: 'var(--text-3)' }}>
+                    Niv. {niveau}
+                  </span>
                 </div>
               </div>
-
-              {/* Équipes favorites — sous barre XP sur mobile uniquement */}
-              {/* Supprimé de col 1 — bio et équipes gérés en ligne séparée */}
             </div>
 
-            {/* Col 2 — Équipes favorites (desktop uniquement) */}
-            {!isMobile && (() => {
-              const equipesFav = profil?.equipes_favorites || []
-              if (equipesFav.length === 0 && !estMoi) return null
-              return (
-                <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'center' }}>
-                  <span style={{ fontSize: 9, color: 'var(--text-3)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                    Mes équipes
-                  </span>
-                  {equipesFav.length > 0 ? (
-                    <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
-                      {equipesFav.map(eq => (
-                        <img key={eq.id} src={eq.logo} alt={eq.nom}
-                          style={{ width: 36, height: 36, objectFit: 'contain' }}
-                          onError={e => { e.target.style.opacity = '0.2' }}
-                        />
-                      ))}
-                    </div>
-                  ) : (
-                    <button onClick={() => navigate('/profil')} style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: '4px 8px', fontSize: 10, color: 'var(--text-3)', cursor: 'pointer' }}>
-                      Définir →
-                    </button>
-                  )}
-                </div>
-              )
-            })()}
-
-            {/* Col 3 — KPIs */}
-            {stats.total > 0 && (
-              <div style={{ display: 'flex', gap: 12, flexShrink: 0, alignItems: 'flex-start', marginLeft: 'auto' }}>
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 'clamp(28px, 7vw, 42px)', color: 'var(--text-1)', lineHeight: 1 }}>
-                    {stats.total}
-                  </div>
-                  <div style={{ fontSize: 9, color: 'var(--text-3)', marginTop: 2, letterSpacing: '0.04em' }}>PRONOS</div>
-                </div>
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 'clamp(28px, 7vw, 42px)', color: 'var(--accent)', lineHeight: 1 }}>
-                    {taux(stats.corrects, stats.incorrects)}%
-                  </div>
-                  <div style={{ fontSize: 9, color: 'var(--text-3)', marginTop: 2, letterSpacing: '0.04em' }}>RÉUSSITE</div>
-                </div>
+            {/* Barre XP */}
+            <div style={{ width: isMobile ? '100%' : 300 }}>
+              <div style={{ height: 4, background: 'var(--bg-2)', overflow: 'hidden', borderRadius: 3 }}>
+                <div style={{ height: '100%', width: `${pctBarre}%`, background: 'var(--gold)', transition: 'width 0.6s ease' }} />
               </div>
-            )}
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 3 }}>
+                <span style={{ fontSize: 10, color: 'var(--text-3)', fontFamily: 'var(--font-display)', fontWeight: 600 }}>
+                  {xpActuel.toLocaleString('fr-FR')} XP
+                </span>
+                {niveau < 100 && (
+                  <span style={{ fontSize: 10, color: 'var(--text-3)', fontFamily: 'var(--font-display)' }}>
+                    encore {xpRestant.toLocaleString('fr-FR')} XP
+                  </span>
+                )}
+              </div>
+            </div>
           </div>
 
-          {/* Ligne 2 mobile — Bio (gauche) + Équipes (droite) */}
-          {isMobile && (
-            <div style={{ display: 'flex', gap: 12, marginTop: 10, alignItems: 'flex-start' }}>
-              {/* Col gauche — Bio */}
-              <div style={{ flex: 1, minWidth: 0 }}>
-                {profil?.description ? (
-                  <>
-                    <span style={{ fontSize: 9, color: 'var(--text-3)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Bio</span>
-                    <p style={{ fontSize: 12, color: 'var(--text-2)', margin: '2px 0 0', lineHeight: 1.5, fontStyle: 'italic' }}>{profil.description}</p>
-                  </>
-                ) : estMoi ? (
-                  <button onClick={() => navigate('/profil')} style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: '4px 8px', fontSize: 10, color: 'var(--text-3)', cursor: 'pointer' }}>
-                    Ajouter une bio →
-                  </button>
-                ) : null}
-              </div>
-              {/* Col droite — Équipes */}
-              {(() => {
-                const equipesFav = profil?.equipes_favorites || []
-                if (equipesFav.length === 0 && !estMoi) return null
-                return (
-                  <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-start' }}>
-                    <span style={{ fontSize: 9, color: 'var(--text-3)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Mes équipes</span>
-                    {equipesFav.length > 0 ? (
-                      <div style={{ display: 'flex', gap: 6 }}>
-                        {equipesFav.map(eq => (
-                          <img key={eq.id} src={eq.logo} alt={eq.nom}
-                            style={{ width: 30, height: 30, objectFit: 'contain' }}
-                            onError={e => { e.target.style.opacity = '0.2' }}
-                          />
-                        ))}
-                      </div>
-                    ) : (
-                      <button onClick={() => navigate('/profil')} style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: '4px 8px', fontSize: 10, color: 'var(--text-3)', cursor: 'pointer' }}>
-                        Définir →
-                      </button>
-                    )}
-                  </div>
-                )
-              })()}
-            </div>
-          )}
+          {/* Ligne 2 — Mes équipes (gauche) | KPIs Pronos/Réussite/Cartes (droite) — visible pour tout le monde */}
+          {(() => {
+            const equipesFav = profil?.equipes_favorites || []
+            const montrerEquipes = equipesFav.length > 0 || estMoi
+            const montrerKpis = stats.total > 0
+            if (!montrerEquipes && !montrerKpis) return null
+            return (
+              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginTop: 16, flexWrap: isMobile ? 'wrap' : 'nowrap' }}>
 
-          {/* Bio desktop seulement */}
-          {!isMobile && profil?.description && (
-            <div style={{ marginTop: 10 }}>
+                {/* Mes équipes — gauche */}
+                <div style={{ flexShrink: 0, textAlign: 'center' }}>
+                  {montrerEquipes && (
+                    <>
+                      {equipesFav.length > 0 ? (
+                        <div style={{ display: 'flex', gap: isMobile ? 6 : 8, justifyContent: 'center' }}>
+                          {equipesFav.map(eq => (
+                            <img key={eq.id} src={eq.logo} alt={eq.nom}
+                              style={{ width: isMobile ? 34 : 40, height: isMobile ? 34 : 40, objectFit: 'contain' }}
+                              onError={e => { e.target.style.opacity = '0.2' }}
+                            />
+                          ))}
+                        </div>
+                      ) : (
+                        <button onClick={() => navigate('/profil')} style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: '4px 8px', fontSize: 10, color: 'var(--text-3)', cursor: 'pointer' }}>
+                          Définir →
+                        </button>
+                      )}
+                      <div style={{ fontSize: 9, color: 'var(--text-3)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginTop: 6 }}>
+                        Mes équipes
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {/* KPIs — droite */}
+                {montrerKpis && (
+                  <div style={{ display: 'flex', gap: isMobile ? 12 : 18, flexShrink: 0 }}>
+                    <div style={{ textAlign: 'center' }}>
+                      <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: isMobile ? 28 : 'clamp(28px, 6vw, 42px)', color: 'var(--text-1)', lineHeight: 1 }}>
+                        {stats.total}
+                      </div>
+                      <div style={{ fontSize: 8, color: 'var(--text-3)', marginTop: 2, letterSpacing: '0.04em' }}>PRONOS</div>
+                    </div>
+                    <div style={{ textAlign: 'center' }}>
+                      <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: isMobile ? 28 : 'clamp(28px, 6vw, 42px)', color: 'var(--accent)', lineHeight: 1 }}>
+                        {taux(stats.corrects, stats.incorrects)}%
+                      </div>
+                      <div style={{ fontSize: 8, color: 'var(--text-3)', marginTop: 2, letterSpacing: '0.04em' }}>RÉUSSITE</div>
+                    </div>
+                    <div style={{ textAlign: 'center' }}>
+                      <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: isMobile ? 28 : 'clamp(28px, 6vw, 42px)', color: 'var(--gold)', lineHeight: 1 }}>
+                        {apercuJeux.nbCartes}
+                      </div>
+                      <div style={{ fontSize: 8, color: 'var(--text-3)', marginTop: 2, letterSpacing: '0.04em' }}>CARTES</div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )
+          })()}
+
+          {/* Bio */}
+          {profil?.description ? (
+            <div style={{ marginTop: 14 }}>
               <span style={{ fontSize: 9, color: 'var(--text-3)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Bio</span>
               <p style={{ fontSize: 12, color: 'var(--text-2)', margin: '2px 0 0', lineHeight: 1.5, fontStyle: 'italic' }}>
                 {profil.description}
               </p>
             </div>
-          )}
-
-          {/* Bouton 1v1 — toujours visible si profil public */}
-          {!estMoi && (
-            <button
-              onClick={() => navigate(`/h2h?user2=${new URLSearchParams(location.search).get('user_id')}`)}
-              style={{
-                marginTop: 10, display: 'inline-flex', alignItems: 'center', gap: 6,
-                padding: '6px 12px', background: 'var(--accent)',
-                borderWidth: 0, color: '#fff', fontSize: 11, fontWeight: 700, cursor: 'pointer',
-                borderRadius: 'var(--radius-sm)',
-              }}
-            >
-              1v1 — me comparer à {profil?.pseudo}
-            </button>
-          )}
-
-          {/* Chips boutons — estMoi seulement */}
-          {estMoi && (
-            <div style={{ display: 'flex', gap: 8, marginTop: 14, flexWrap: 'wrap' }}>
-              <button
-                onClick={() => setMissionsOpen(true)}
-                style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 6,
-                  background: 'var(--bg-2)', border: '1px solid var(--border)',
-                  borderRadius: 'var(--radius-sm)', padding: '5px 11px',
-                  fontSize: 11, fontWeight: 700, color: 'var(--text-2)', cursor: 'pointer', letterSpacing: '0.03em',
-                }}
-              >
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><path d="M9 12l2 2 4-4"/></svg>
-                Missions
-              </button>
-              <button
-                onClick={() => setModalHistorique(true)}
-                style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 6,
-                  background: 'var(--bg-2)', border: '1px solid var(--border)',
-                  borderRadius: 'var(--radius-sm)', padding: '5px 11px',
-                  fontSize: 11, fontWeight: 700, color: 'var(--text-2)', cursor: 'pointer', letterSpacing: '0.03em',
-                }}
-              >
-                Historique XP
-              </button>
-              <button
-                onClick={() => navigate('/profil')}
-                style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 6,
-                  background: 'var(--bg-2)', border: '1px solid var(--border)',
-                  borderRadius: 'var(--radius-sm)', padding: '5px 11px',
-                  fontSize: 11, fontWeight: 700, color: 'var(--text-2)', cursor: 'pointer', letterSpacing: '0.03em',
-                }}
-              >
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--text-3)" strokeWidth="2" strokeLinecap="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                Mon profil
-              </button>
-              <button
-                onClick={() => setModalInfo(true)}
-                style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 6,
-                  background: 'var(--bg-2)', border: '1px solid var(--border)',
-                  borderRadius: 'var(--radius-sm)', padding: '5px 11px',
-                  fontSize: 11, fontWeight: 700, color: 'var(--text-2)', cursor: 'pointer', letterSpacing: '0.03em',
-                }}
-              >
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-                Infos XP
+          ) : estMoi ? (
+            <div style={{ marginTop: 14 }}>
+              <button onClick={() => navigate('/profil')} style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: '4px 8px', fontSize: 10, color: 'var(--text-3)', cursor: 'pointer' }}>
+                Ajouter une bio →
               </button>
             </div>
-          )}
+          ) : null}
+        </div>
 
+        {/* ── Bloc actions — séparé du header, fluide (1 chip si profil d'un autre, 4 si moi) ── */}
+        <div style={{ margin: '14px 16px 0', background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: isMobile ? 10 : 12 }}>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {!estMoi && (
+              <button
+                onClick={() => navigate(`/h2h?user2=${new URLSearchParams(location.search).get('user_id')}`)}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 6,
+                  background: 'var(--accent)', border: 'none',
+                  borderRadius: 'var(--radius-sm)', padding: '8px 14px',
+                  fontSize: 12, fontWeight: 700, color: '#fff', cursor: 'pointer', letterSpacing: '0.02em',
+                }}
+              >
+                1v1 — me comparer à {profil?.pseudo}
+              </button>
+            )}
+            {estMoi && (
+              <>
+                <button
+                  onClick={() => setMissionsOpen(true)}
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 6,
+                    background: 'var(--bg-2)', border: '1px solid var(--border)',
+                    borderRadius: 'var(--radius-sm)', padding: '8px 14px',
+                    fontSize: 12, fontWeight: 700, color: 'var(--text-2)', cursor: 'pointer', letterSpacing: '0.02em',
+                  }}
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><path d="M9 12l2 2 4-4"/></svg>
+                  Missions
+                </button>
+                <button
+                  onClick={() => setModalHistorique(true)}
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 6,
+                    background: 'var(--bg-2)', border: '1px solid var(--border)',
+                    borderRadius: 'var(--radius-sm)', padding: '8px 14px',
+                    fontSize: 12, fontWeight: 700, color: 'var(--text-2)', cursor: 'pointer', letterSpacing: '0.02em',
+                  }}
+                >
+                  Historique XP
+                </button>
+                <button
+                  onClick={() => navigate('/profil')}
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 6,
+                    background: 'var(--bg-2)', border: '1px solid var(--border)',
+                    borderRadius: 'var(--radius-sm)', padding: '8px 14px',
+                    fontSize: 12, fontWeight: 700, color: 'var(--text-2)', cursor: 'pointer', letterSpacing: '0.02em',
+                  }}
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--text-3)" strokeWidth="2" strokeLinecap="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                  Mon profil
+                </button>
+                <button
+                  onClick={() => setModalInfo(true)}
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 6,
+                    background: 'var(--bg-2)', border: '1px solid var(--border)',
+                    borderRadius: 'var(--radius-sm)', padding: '8px 14px',
+                    fontSize: 12, fontWeight: 700, color: 'var(--text-2)', cursor: 'pointer', letterSpacing: '0.02em',
+                  }}
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                  Infos XP
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* ── Aperçu rapide — Collection & Arcade (vue d'ensemble, détail sur leurs pages dédiées) ── */}
+        <div style={{ display: 'flex', gap: 10, margin: '14px 16px 0' }}>
+          <button
+            onClick={() => navigate('/ma-collection')}
+            style={{
+              flex: 1, textAlign: 'left', background: 'var(--bg-1)', border: '1px solid var(--border)',
+              borderRadius: 'var(--radius-sm)', padding: isMobile ? '12px' : '14px', cursor: 'pointer',
+            }}
+          >
+            <div style={{ fontSize: 9, color: 'var(--text-3)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Collection</div>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginTop: 4 }}>
+              <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: isMobile ? 24 : 30, color: 'var(--gold)', lineHeight: 1 }}>{apercuJeux.nbCartes}</span>
+              <span style={{ fontSize: 11, color: 'var(--text-3)' }}>cartes</span>
+            </div>
+          </button>
+          <button
+            onClick={() => navigate('/arcade')}
+            style={{
+              flex: 1, textAlign: 'left', background: 'var(--bg-1)', border: '1px solid var(--border)',
+              borderRadius: 'var(--radius-sm)', padding: isMobile ? '12px' : '14px', cursor: 'pointer',
+            }}
+          >
+            <div style={{ fontSize: 9, color: 'var(--text-3)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Arcade</div>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginTop: 4 }}>
+              <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: isMobile ? 24 : 30, color: 'var(--orange)', lineHeight: 1 }}>{apercuJeux.recordArcade}</span>
+              <span style={{ fontSize: 11, color: 'var(--text-3)' }}>record paniers</span>
+            </div>
+          </button>
+        </div>
+
+        <div style={{ padding: '0 16px' }}>
           {/* Badges obtenus */}
           {badgesObtenus.length > 0 && (
             <div style={{ marginTop: 16 }}>
