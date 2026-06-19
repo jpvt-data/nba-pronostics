@@ -80,7 +80,7 @@ export const enregistrerTir = async (userId, tirNumero, resultat) => {
   return { carteObtenue }
 }
 
-/** Record personnel (meilleur score d'une journée, à vie). */
+/** Record absolu personnel (meilleur score d'une journée, toutes périodes confondues). */
 export const recupererRecordPersonnel = async (userId) => {
   const { data } = await supabase
     .from('arcade_scores_jour')
@@ -90,6 +90,48 @@ export const recupererRecordPersonnel = async (userId) => {
     .limit(1)
     .maybeSingle()
   return data?.paniers || 0
+}
+
+/** Record absolu, tous users confondus (pour affichage "Record depuis toujours"). */
+export const recupererRecordAbsoluGlobal = async (userIds) => {
+  if (!userIds?.length) return null
+  const { data } = await supabase
+    .from('arcade_scores_jour')
+    .select('user_id, paniers, profils(pseudo)')
+    .in('user_id', userIds)
+    .order('paniers', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+  if (!data) return null
+  return { user_id: data.user_id, paniers: data.paniers, pseudo: data.profils?.pseudo || '—' }
+}
+
+/**
+ * Vérifie en fin de partie si le score du jour bat le record semaine et/ou
+ * le record absolu (calculés sur l'état AVANT cette partie, donc à appeler
+ * avec les records déjà connus en mémoire côté page, pas re-fetchés après coup).
+ * Attribue un booster 3 cartes par record battu (cumulables).
+ * Retourne la liste des boosters obtenus (pour popup), et les flags records.
+ */
+export const verifierRecordsFinPartie = async (userId, scoreDuJour, recordSemaineAvant, recordAbsoluAvant) => {
+  const battuSemaine = scoreDuJour > recordSemaineAvant
+  const battuAbsolu  = scoreDuJour > recordAbsoluAvant
+
+  const boosters = []
+
+  if (battuAbsolu) {
+    try {
+      const cartes = await donnerCartes(userId, 3, 'arcade_record_absolu')
+      boosters.push(...cartes)
+    } catch (e) { console.error('[arcade] booster record absolu échoué:', e.message) }
+  } else if (battuSemaine) {
+    try {
+      const cartes = await donnerCartes(userId, 3, 'arcade_record_semaine')
+      boosters.push(...cartes)
+    } catch (e) { console.error('[arcade] booster record semaine échoué:', e.message) }
+  }
+
+  return { battuSemaine, battuAbsolu, boosters }
 }
 
 /** Historique des scores de la semaine en cours (perso). */
@@ -104,10 +146,10 @@ export const recupererHistoriquePerso = async (userId, depuis = lundiFin()) => {
 }
 
 /**
- * Classement hebdomadaire entre potes : meilleur score de chacun depuis lundi.
+ * Record de la semaine : meilleur score de chaque pote depuis lundi, classé.
  * userIds : liste des user_id du groupe (potes + soi-même).
  */
-export const recupererClassementSemaine = async (userIds, depuis = lundiFin()) => {
+export const recupererRecordsSemaine = async (userIds, depuis = lundiFin()) => {
   if (!userIds?.length) return []
 
   const { data } = await supabase

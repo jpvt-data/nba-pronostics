@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import Navigation from '../components/Navigation'
 import JoueurArcade from '../components/JoueurArcade'
@@ -7,11 +7,13 @@ import {
   recupererEtatJour,
   enregistrerTir,
   recupererRecordPersonnel,
-  recupererClassementSemaine,
+  recupererRecordAbsoluGlobal,
+  recupererRecordsSemaine,
+  verifierRecordsFinPartie,
 } from '../services/arcade'
 import PopupOuvertureBooster from '../components/PopupOuvertureBooster'
 import { marquerCartesRevelees } from '../services/cartes'
-import { Trophy, Flame } from 'lucide-react'
+import { Trophy, Flame, Crown } from 'lucide-react'
 
 const GROUPE_GENERAL_ID = 'aaaaaaaa-0000-0000-0000-000000000001'
 
@@ -73,20 +75,18 @@ async function recupererPotes(userId) {
 function Arcade() {
   const [user, setUser] = useState(null)
   const [chargement, setChargement] = useState(true)
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 640)
 
-  const [difficulte, setDifficulte] = useState({ zonePct: 18, vitesse: 2.5 })
+  const [difficulte, setDifficulte] = useState({ zonePct: 18, vitesse: 0.6 })
   const [etatJour, setEtatJour] = useState({ paniers: 0, fautes: 0, prochainTirNumero: 1, partieTerminee: false })
   const [record, setRecord] = useState(0)
-  const [classement, setClassement] = useState([])
+  const [recordAbsoluGlobal, setRecordAbsoluGlobal] = useState(null)
+  const [recordsSemaine, setRecordsSemaine] = useState([])
   const [boosterOuverture, setBoosterOuverture] = useState(null)
   const [enAttente, setEnAttente] = useState(false)
+  const [banniereRecord, setBanniereRecord] = useState(null) // 'semaine' | 'absolu' | null
 
-  useEffect(() => {
-    const onResize = () => setIsMobile(window.innerWidth < 640)
-    window.addEventListener('resize', onResize)
-    return () => window.removeEventListener('resize', onResize)
-  }, [])
+  const potesIdsRef = useRef([])
+  const recordsAvantPartieRef = useRef({ semaine: 0, absolu: 0 })
 
   useEffect(() => {
     const init = async () => {
@@ -94,17 +94,27 @@ function Arcade() {
       if (!u) { setChargement(false); return }
       setUser(u)
 
-      const [etat, rec, potes] = await Promise.all([
+      const potes = await recupererPotes(u.id)
+      potesIdsRef.current = potes
+
+      const [etat, rec, recAbsoluGlobal, recsSemaine] = await Promise.all([
         recupererEtatJour(u.id),
         recupererRecordPersonnel(u.id),
-        recupererPotes(u.id),
+        recupererRecordAbsoluGlobal(potes),
+        recupererRecordsSemaine(potes),
       ])
+
       setDifficulte(recupererDifficulte(etat.paniers))
       setEtatJour(etat)
       setRecord(rec)
+      setRecordAbsoluGlobal(recAbsoluGlobal)
+      setRecordsSemaine(recsSemaine)
 
-      const classementSemaine = await recupererClassementSemaine(potes)
-      setClassement(classementSemaine)
+      const monRecordSemaineAvant = recsSemaine.find(r => r.user_id === u.id)?.paniers || 0
+      recordsAvantPartieRef.current = {
+        semaine: monRecordSemaineAvant,
+        absolu: recAbsoluGlobal?.paniers || 0,
+      }
 
       setChargement(false)
     }
@@ -127,9 +137,29 @@ function Arcade() {
       setDifficulte(recupererDifficulte(nouvelEtat.paniers))
     }
 
-    if (res?.carteObtenue) {
-      setBoosterOuverture([res.carteObtenue])
+    let carteAAfficher = res?.carteObtenue ? [res.carteObtenue] : null
+
+    if (nouvelEtat.partieTerminee) {
+      const { semaine, absolu } = recordsAvantPartieRef.current
+      const { battuSemaine, battuAbsolu, boosters } = await verifierRecordsFinPartie(
+        user.id, nouvelEtat.paniers, semaine, absolu
+      )
+      if (battuAbsolu) setBanniereRecord('absolu')
+      else if (battuSemaine) setBanniereRecord('semaine')
+
+      if (boosters.length) {
+        carteAAfficher = [...(carteAAfficher || []), ...boosters]
+      }
+
+      const [recAbsoluGlobal, recsSemaine] = await Promise.all([
+        recupererRecordAbsoluGlobal(potesIdsRef.current),
+        recupererRecordsSemaine(potesIdsRef.current),
+      ])
+      setRecordAbsoluGlobal(recAbsoluGlobal)
+      setRecordsSemaine(recsSemaine)
     }
+
+    if (carteAAfficher?.length) setBoosterOuverture(carteAAfficher)
 
     setEnAttente(false)
   }, [user, etatJour, enAttente])
@@ -161,14 +191,27 @@ function Arcade() {
           <TitreSection label="ARCADE" couleur="var(--orange)" />
         </div>
 
-        {/* ── Jeu — Lancer franc ── */}
         <div style={{ padding: '24px 16px 0' }}>
           <SousTitreGros label="Lancer franc" couleur="var(--orange)" />
           <p style={{ fontSize: 12, color: 'var(--text-3)', lineHeight: 1.5, margin: '0 0 16px' }}>
-            Enchaîne les paniers sans rater 3 fois. Plus tu marques, plus la visée se resserre — à toi de tenir la cadence.
+            Enchaîne les paniers sans rater 3 fois. Chaque panier vaut <strong style={{ color: 'var(--text-2)' }}>+5 XP</strong>, et une carte tombe tous les 5 paniers.
+            Bats le record de la semaine ou le record absolu pour décrocher un booster de 3 cartes.
           </p>
 
-          {/* Stats rapides */}
+          {banniereRecord && (
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', marginBottom: 14,
+              background: banniereRecord === 'absolu' ? 'var(--gold-dim)' : 'var(--accent-dim)',
+              border: `1px solid ${banniereRecord === 'absolu' ? 'var(--gold)' : 'var(--accent-border)'}`,
+              borderRadius: 'var(--radius-sm)',
+            }}>
+              <Crown size={16} strokeWidth={2} color={banniereRecord === 'absolu' ? 'var(--gold)' : 'var(--accent)'} />
+              <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-1)' }}>
+                {banniereRecord === 'absolu' ? 'Nouveau record absolu ! Booster débloqué.' : 'Nouveau record de la semaine ! Booster débloqué.'}
+              </span>
+            </div>
+          )}
+
           <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
             <div style={{ flex: 1, background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: '10px', textAlign: 'center' }}>
               <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 26, color: 'var(--gold)' }}>{etatJour.paniers}</div>
@@ -180,7 +223,7 @@ function Arcade() {
             </div>
             <div style={{ flex: 1, background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: '10px', textAlign: 'center' }}>
               <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 26, color: 'var(--accent)' }}>{record}</div>
-              <div style={{ fontSize: 9, color: 'var(--text-3)', letterSpacing: '0.06em', marginTop: 2 }}>RECORD PERSO</div>
+              <div style={{ fontSize: 9, color: 'var(--text-3)', letterSpacing: '0.06em', marginTop: 2 }}>MON RECORD</div>
             </div>
           </div>
 
@@ -200,14 +243,24 @@ function Arcade() {
           )}
         </div>
 
-        {/* ── Classement potes ── */}
-        <div style={{ padding: '28px 16px 0' }}>
-          <SousTitre label="Classement de la semaine" couleur="var(--gold)" />
-          {classement.length === 0 ? (
+        {recordAbsoluGlobal && (
+          <div style={{ padding: '28px 16px 0' }}>
+            <SousTitre label="Record depuis toujours" couleur="var(--gold)" />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', background: 'var(--gold-dim)', border: '1px solid var(--gold)', borderRadius: 'var(--radius-sm)' }}>
+              <Crown size={16} strokeWidth={2} color="var(--gold)" />
+              <div style={{ flex: 1, fontSize: 13, fontWeight: 600, color: 'var(--text-1)' }}>{recordAbsoluGlobal.pseudo}</div>
+              <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 18, color: 'var(--gold)' }}>{recordAbsoluGlobal.paniers}</div>
+            </div>
+          </div>
+        )}
+
+        <div style={{ padding: '20px 16px 0' }}>
+          <SousTitre label="Record de la semaine" couleur="var(--accent)" />
+          {recordsSemaine.length === 0 ? (
             <p style={{ fontSize: 12, color: 'var(--text-3)' }}>Pas encore de scores cette semaine.</p>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              {classement.map((c, i) => (
+              {recordsSemaine.map((c, i) => (
                 <div key={c.user_id} style={{
                   display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px',
                   background: c.user_id === user.id ? 'var(--accent-dim)' : 'var(--bg-1)',
@@ -227,12 +280,12 @@ function Arcade() {
 
       </main>
 
-      {/* ── Popup ouverture booster (carte obtenue en jouant) ── */}
       {boosterOuverture && (
         <PopupOuvertureBooster
           cartes={boosterOuverture}
           onFermer={() => {
             setBoosterOuverture(null)
+            setBanniereRecord(null)
             marquerCartesRevelees(user.id).catch(() => {})
           }}
         />
