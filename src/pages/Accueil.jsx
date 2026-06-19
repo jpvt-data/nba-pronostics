@@ -545,16 +545,16 @@ function Accueil() {
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: isMobile ? 8 : 12 }}>
 
             {/* Gauche : avatar + pseudo + titre + niv + barre XP */}
-            <div style={{ display: 'flex', gap: isMobile ? 10 : 14, alignItems: 'center', minWidth: 0, flex: 1 }}>
+            <div style={{ display: 'flex', gap: isMobile ? 12 : 14, alignItems: 'center', minWidth: 0, flex: 1 }}>
               <div onClick={() => navigate('/profil')} style={{ cursor: 'pointer', flexShrink: 0 }}>
-                <Avatar url={avatarUrl} pseudo={pseudo} taille={isMobile ? 44 : 60} fontSize={isMobile ? 15 : 20} />
+                <Avatar url={avatarUrl} pseudo={pseudo} taille={isMobile ? 58 : 60} fontSize={isMobile ? 19 : 20} />
               </div>
               <div onClick={() => navigate('/mes-pronos')} style={{ cursor: 'pointer', minWidth: 0, flex: 1 }}>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: isMobile ? 5 : 8, flexWrap: 'wrap' }}>
-                  <span style={{ fontFamily: 'var(--font-title)', fontWeight: 700, fontSize: isMobile ? 26 : 'clamp(28px, 5vw, 46px)', color: 'var(--accent)', letterSpacing: '-0.01em', lineHeight: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: isMobile ? 6 : 8, flexWrap: 'wrap' }}>
+                  <span style={{ fontFamily: 'var(--font-title)', fontWeight: 700, fontSize: isMobile ? 32 : 'clamp(28px, 5vw, 46px)', color: 'var(--accent)', letterSpacing: '-0.01em', lineHeight: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {pseudo || ''}
                   </span>
-                  <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: isMobile ? 18 : 'clamp(20px, 3.5vw, 28px)', color: 'var(--gold)', letterSpacing: '0.02em', lineHeight: 1, whiteSpace: 'nowrap' }}>
+                  <span style={{ fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: isMobile ? 22 : 'clamp(20px, 3.5vw, 28px)', color: 'var(--gold)', letterSpacing: '0.02em', lineHeight: 1, whiteSpace: 'nowrap' }}>
                     {titrDepuisNiveau(xpData.niveau)}
                   </span>
                   {!isMobile && (
@@ -564,20 +564,20 @@ function Accueil() {
                   )}
                 </div>
                 {/* Niv + Barre XP */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 5 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
                   {isMobile && (
-                    <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 11, color: 'var(--text-3)', flexShrink: 0 }}>
+                    <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 13, color: 'var(--text-3)', flexShrink: 0 }}>
                       Niv. {xpData.niveau}
                     </span>
                   )}
-                  <div style={{ width: isMobile ? 70 : 160, height: 4, background: 'var(--bg-2)', overflow: 'hidden', borderRadius: 3, flexShrink: 0 }}>
+                  <div style={{ width: isMobile ? 90 : 160, height: isMobile ? 6 : 4, background: 'var(--bg-2)', overflow: 'hidden', borderRadius: 3, flexShrink: 0 }}>
                     <div style={{
                       height: '100%',
                       width: `${xpData.niveau >= 100 ? 100 : Math.min(100, Math.round((xpData.xp_total - xpPourNiveau(xpData.niveau)) / (xpPourNiveau(xpData.niveau + 1) - xpPourNiveau(xpData.niveau)) * 100))}%`,
                       background: 'var(--gold)', transition: 'width 0.6s ease',
                     }} />
                   </div>
-                  <span style={{ fontSize: 9, color: 'var(--text-3)', fontFamily: 'var(--font-display)', fontWeight: 600, flexShrink: 0 }}>
+                  <span style={{ fontSize: isMobile ? 11 : 9, color: 'var(--text-3)', fontFamily: 'var(--font-display)', fontWeight: 600, flexShrink: 0 }}>
                     {xpData.xp_total.toLocaleString('fr-FR')} XP
                   </span>
                 </div>
