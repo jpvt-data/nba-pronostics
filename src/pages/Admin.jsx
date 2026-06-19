@@ -2084,72 +2084,90 @@ const S = {
 }
 
 
+
 // ── Onglet Animations — panneau réaliste SVG/CSS, ballon réussi ou raté ──
-// Pas de sprite externe : tout est dessiné en SVG, vue de face, filet en losanges.
-const SCENE_W = 320
-const SCENE_H = 280
-const CERCLE_CX = 160
-const CERCLE_CY = 150
-const CERCLE_RX = 46
-const CERCLE_RY = 10
+// Trajectoire en arc via offset-path, traverse le centre du cercle pour le panier.
+const STYLE_ANIM_LANCER = `
+@keyframes swl-tir-reussi {
+  0%   { offset-distance: 0%; opacity: 1; }
+  70%  { offset-distance: 100%; opacity: 1; }
+  100% { offset-distance: 100%; opacity: 0; }
+}
+@keyframes swl-tir-rate {
+  0%   { offset-distance: 0%; opacity: 1; }
+  62%  { offset-distance: 62%; opacity: 1; }
+  100% { offset-distance: 100%; opacity: 0; }
+}
+`
+if (typeof document !== 'undefined' && !document.getElementById('swl-anim-lancer-style')) {
+  const el = document.createElement('style')
+  el.id = 'swl-anim-lancer-style'
+  el.textContent = STYLE_ANIM_LANCER
+  document.head.appendChild(el)
+}
 
-const PanneauRealiste = () => (
+const TRAJECTOIRE_REUSSI = 'M 55 330 C 50 210, 70 95, 130 75 C 150 68, 158 95, 155 128 C 153 150, 155 165, 155 185'
+const TRAJECTOIRE_RATE   = 'M 55 330 C 50 210, 70 95, 130 75 C 150 68, 165 100, 200 110 C 220 116, 230 130, 225 150'
+
+const PanneauEtArceau = () => (
   <g>
-    {/* Panneau trapézoïdal */}
-    <path d="M70 30 L250 30 L270 110 L50 110 Z" fill="#e8e8ec" stroke="#1a1a1a" strokeWidth="3" />
-    <path d="M70 30 L250 30 L270 110 L50 110 Z" fill="none" stroke="#d85a30" strokeWidth="2.5" transform="scale(0.94) translate(10,5)" />
-    <rect x="130" y="58" width="60" height="42" fill="none" stroke="#d85a30" strokeWidth="2.5" />
+    <rect x="148" y="160" width="14" height="160" fill="#9a9a9a" />
+    <rect x="148" y="160" width="5" height="160" fill="#c4c4c4" />
+    <ellipse cx="155" cy="320" rx="22" ry="6" fill="#000" opacity="0.2" />
 
-    {/* Cercle (arceau) vu en perspective légère — ellipse */}
-    <ellipse cx={CERCLE_CX} cy={CERCLE_CY} rx={CERCLE_RX} ry={CERCLE_RY} fill="none" stroke="#1a1a1a" strokeWidth="4" />
-    <ellipse cx={CERCLE_CX} cy={CERCLE_CY} rx={CERCLE_RX - 3} ry={CERCLE_RY - 2} fill="none" stroke="#d85a30" strokeWidth="2" />
+    <g transform="translate(155,60)">
+      <rect x="-95" y="0" width="190" height="78" rx="3" fill="#e9e9ec" stroke="#1a1a1a" strokeWidth="3" />
+      <rect x="-83" y="10" width="166" height="58" fill="none" stroke="#d23b1f" strokeWidth="3" />
+      <rect x="-30" y="36" width="60" height="32" fill="none" stroke="#d23b1f" strokeWidth="3" />
+      <rect x="-95" y="68" width="190" height="10" fill="#1a1a1a" />
+    </g>
 
-    {/* Filet — losanges, accroché sous l'arceau */}
-    <g stroke="#ffffff" strokeWidth="1.5" fill="none" opacity="0.9">
-      {[-36, -22, -8, 8, 22, 36].map((dx, i) => (
-        <path key={`l${i}`} d={`M${CERCLE_CX + dx} ${CERCLE_CY + 2} L${CERCLE_CX + dx * 0.35} ${CERCLE_CY + 62}`} />
-      ))}
-      {[14, 28, 42, 56].map((dy, i) => {
-        const ratio = 1 - dy / 70
-        const span = CERCLE_RX * ratio
-        return <ellipse key={`e${i}`} cx={CERCLE_CX} cy={CERCLE_CY + dy} rx={Math.max(span, 4)} ry={CERCLE_RY * ratio * 0.7} />
-      })}
+    <g stroke="#f5f5f5" strokeWidth="1.3" fill="none" opacity="0.95">
+      <path d="M-34 1 L-12 56" transform="translate(155,128)" />
+      <path d="M-22 3 L-7 58" transform="translate(155,128)" />
+      <path d="M-9 4 L-2 59" transform="translate(155,128)" />
+      <path d="M9 4 L2 59" transform="translate(155,128)" />
+      <path d="M22 3 L7 58" transform="translate(155,128)" />
+      <path d="M34 1 L12 56" transform="translate(155,128)" />
+      <ellipse cx="155" cy="142" rx="33" ry="6.3" />
+      <ellipse cx="155" cy="156" rx="24" ry="4.6" />
+      <ellipse cx="155" cy="168" rx="15" ry="2.9" />
+      <ellipse cx="155" cy="178" rx="7" ry="1.4" />
     </g>
   </g>
 )
 
+const Arceau = () => (
+  <g>
+    <ellipse cx="155" cy="128" rx="42" ry="9" fill="none" stroke="#1a1a1a" strokeWidth="4" />
+    <ellipse cx="155" cy="128" rx="38" ry="7.2" fill="none" stroke="#e8501f" strokeWidth="2.2" />
+  </g>
+)
+
 const AnimationLancer = ({ resultat, rejouerKey }) => {
-  const [phase, setPhase] = useState('depart')
-
-  useEffect(() => {
-    setPhase('depart')
-    const t1 = setTimeout(() => setPhase('monte'), 50)
-    const t2 = setTimeout(() => setPhase(resultat === 'panier' ? 'rentre' : 'rebond'), 750)
-    const t3 = setTimeout(() => setPhase('fin'), resultat === 'panier' ? 1300 : 1250)
-    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3) }
-  }, [resultat, rejouerKey])
-
-  const ballonStyle = (() => {
-    if (phase === 'depart') return { cx: 160, cy: 250, scale: 1, opacity: 1 }
-    if (phase === 'monte')  return { cx: 160, cy: CERCLE_CY - 6, scale: 1, opacity: 1 }
-    if (phase === 'rentre') return { cx: 160, cy: CERCLE_CY + 55, scale: 0.75, opacity: 1 }
-    if (phase === 'rebond') return { cx: 205, cy: CERCLE_CY - 30, scale: 1, opacity: 1 }
-    return { cx: 205, cy: CERCLE_CY - 30, scale: 1, opacity: 0 }
-  })()
-
-  const dureeTransition = phase === 'monte' ? '0.7s' : phase === 'fin' ? '0.4s' : '0.55s'
+  const trajectoire = resultat === 'panier' ? TRAJECTOIRE_REUSSI : TRAJECTOIRE_RATE
+  const animation = resultat === 'panier' ? 'swl-tir-reussi' : 'swl-tir-rate'
 
   return (
-    <svg width="100%" viewBox={`0 0 ${SCENE_W} ${SCENE_H}`} role="img" style={{ background: '#cfe0ea', borderRadius: 8 }}>
+    <svg key={rejouerKey} width="100%" viewBox="0 0 320 360" role="img" style={{ display: 'block', background: '#1a2e3d', borderRadius: 8 }}>
       <title>Animation de lancer franc</title>
-      <desc>Panneau de basket vu de face avec ballon qui monte et rentre ou rebondit sur le cercle</desc>
+      <desc>Panneau de basket avec poteau, ballon qui suit une trajectoire en arc vers le cercle, réussie ou ratée</desc>
 
-      <PanneauRealiste />
+      <rect x="0" y="320" width="320" height="40" fill="#2a3f4f" />
+      <ellipse cx="160" cy="320" rx="140" ry="8" fill="#000" opacity="0.15" />
 
-      <g style={{ transition: `transform ${dureeTransition} cubic-bezier(0.33,0,0.67,1), opacity 0.3s`, transform: `translate(${ballonStyle.cx}px, ${ballonStyle.cy}px) scale(${ballonStyle.scale})`, opacity: ballonStyle.opacity }}>
-        <circle cx="0" cy="0" r="16" fill="#d85a30" stroke="#1a1a1a" strokeWidth="1.5" />
-        <path d="M-16 0 L16 0 M0 -16 L0 16 M-11 -11 Q0 0 -11 11 M11 -11 Q0 0 11 11" stroke="#1a1a1a" strokeWidth="1" fill="none" />
+      <PanneauEtArceau />
+
+      <g style={{
+        offsetPath: `path('${trajectoire}')`,
+        offsetDistance: '0%',
+        animation: `${animation} 2.4s ease-in-out infinite`,
+      }}>
+        <circle cx="0" cy="0" r="15" fill="#e8731f" stroke="#1a1a1a" strokeWidth="1.5" />
+        <path d="M-15 0 L15 0 M0 -15 L0 15 M-10.5 -10.5 Q0 0 -10.5 10.5 M10.5 -10.5 Q0 0 10.5 10.5" stroke="#1a1a1a" strokeWidth="1" fill="none" />
       </g>
+
+      <Arceau />
     </svg>
   )
 }
