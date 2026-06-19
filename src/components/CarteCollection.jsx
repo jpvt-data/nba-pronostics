@@ -60,17 +60,15 @@ const STYLE_RECTO_PAYSAGE_GRILLE = {
   width: '140%', height: '71.43%', left: '-20%', top: '14.28%',
   transform: 'rotate(90deg)',
 }
-const STYLE_VERSO_PAYSAGE_GRILLE = {
+const STYLE_VERSO_PAYSAGE_GRILLE_SANS_ROTATION = {
   ...STYLE_RECTO_PAYSAGE_GRILLE,
-  transform: 'rotateY(180deg) rotate(90deg)',
 }
 const STYLE_RECTO_PORTRAIT = {
   position: 'absolute', width: '100%', height: '100%',
-  objectFit: 'cover', backfaceVisibility: 'hidden',
+  objectFit: 'cover',
 }
-const STYLE_VERSO_PORTRAIT = { ...STYLE_RECTO_PORTRAIT, transform: 'rotateY(180deg)' }
 const STYLE_RECTO_MODAL   = { ...STYLE_RECTO_PORTRAIT }
-const STYLE_VERSO_MODAL   = { ...STYLE_VERSO_PORTRAIT }
+const STYLE_VERSO_MODAL_SANS_ROTATION = { ...STYLE_RECTO_PORTRAIT }
 
 // enModal : affiche la carte dans son orientation naturelle (paysage si paysage)
 const CarteCollection = ({ carte, possedee = false, quantite = 0, onClick, enModal = false }) => {
@@ -129,25 +127,28 @@ const CarteCollection = ({ carte, possedee = false, quantite = 0, onClick, enMod
             position: 'relative',
             width: '100%',
             height: '100%',
-            overflow: 'hidden',
             transition: 'transform 0.5s',
             transformStyle: 'preserve-3d',
             transform: retournee ? 'rotateY(180deg)' : 'rotateY(0deg)',
           }}
         >
           {/* Recto */}
-          <img
-            src={carte.url_front}
-            alt={nomAffiche}
-            onLoad={detecterOrientation}
-            style={enModal ? STYLE_RECTO_MODAL : (estPaysage ? STYLE_RECTO_PAYSAGE_GRILLE : STYLE_RECTO_PORTRAIT)}
-          />
+          <div style={{ position: 'absolute', width: '100%', height: '100%', overflow: 'hidden', backfaceVisibility: 'hidden' }}>
+            <img
+              src={carte.url_front}
+              alt={nomAffiche}
+              onLoad={detecterOrientation}
+              style={enModal ? STYLE_RECTO_MODAL : (estPaysage ? STYLE_RECTO_PAYSAGE_GRILLE : STYLE_RECTO_PORTRAIT)}
+            />
+          </div>
           {/* Verso */}
-          <img
-            src={carte.url_back}
-            alt={`${nomAffiche} - verso`}
-            style={enModal ? STYLE_VERSO_MODAL : (estPaysage ? STYLE_VERSO_PAYSAGE_GRILLE : STYLE_VERSO_PORTRAIT)}
-          />
+          <div style={{ position: 'absolute', width: '100%', height: '100%', overflow: 'hidden', backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}>
+            <img
+              src={carte.url_back}
+              alt={`${nomAffiche} - verso`}
+              style={enModal ? STYLE_VERSO_MODAL_SANS_ROTATION : (estPaysage ? STYLE_VERSO_PAYSAGE_GRILLE_SANS_ROTATION : STYLE_RECTO_PORTRAIT)}
+            />
+          </div>
         </div>
 
         {/* Badge doublon - affiche xN si quantite > 1 */}
