@@ -86,7 +86,12 @@ function Arcade() {
   const [banniereRecord, setBanniereRecord] = useState(null) // 'semaine' | 'absolu' | null
 
   const potesIdsRef = useRef([])
+  // Seuils figés au début de la partie du jour — ne JAMAIS les remonter pendant la partie
+  // (sinon le score qui grimpe à chaque panier dépasse à nouveau le seuil au panier suivant).
   const recordsAvantPartieRef = useRef({ semaine: 0, absolu: 0 })
+  // Flags "déjà obtenu cette partie" — c'est CA qui empêche le re-déclenchement du booster,
+  // pas le déplacement du seuil.
+  const recordsDejaBattusRef = useRef({ semaine: false, absolu: false })
 
   useEffect(() => {
     const init = async () => {
@@ -115,6 +120,7 @@ function Arcade() {
         semaine: monRecordSemaineAvant,
         absolu: recAbsoluGlobal?.paniers || 0,
       }
+      recordsDejaBattusRef.current = { semaine: false, absolu: false }
 
       setChargement(false)
     }
@@ -141,19 +147,30 @@ function Arcade() {
       // Vérifie les records à CHAQUE panier (pas seulement en fin de partie) —
       // sinon un joueur qui bat un record puis arrête sans faire sa 3e faute
       // ne recevait jamais son booster.
+      // MAIS : un record déjà battu cette partie ne doit plus jamais redéclencher
+      // de booster, même si le score continue de dépasser le seuil figé.
       const { semaine, absolu } = recordsAvantPartieRef.current
-      const { battuSemaine, battuAbsolu, boosters } = await verifierRecordsApresPanier(
-        user.id, nouvelEtat.paniers, semaine, absolu
-      )
+      const dejaAbsolu  = recordsDejaBattusRef.current.absolu
+      const dejaSemaine = recordsDejaBattusRef.current.semaine
+
+      let battuAbsolu = false
+      let battuSemaine = false
+      let boosters = []
+
+      if (!dejaAbsolu || !dejaSemaine) {
+        const verif = await verifierRecordsApresPanier(user.id, nouvelEtat.paniers, semaine, absolu)
+        battuAbsolu  = !dejaAbsolu  && verif.battuAbsolu
+        battuSemaine = !dejaSemaine && verif.battuSemaine
+        boosters = verif.boosters
+      }
 
       if (battuAbsolu) {
         setBanniereRecord('absolu')
-        // Met à jour les refs immédiatement pour ne pas redéclencher le même
-        // booster sur les paniers suivants de cette même partie.
-        recordsAvantPartieRef.current = { semaine: nouvelEtat.paniers, absolu: nouvelEtat.paniers }
+        // Battre l'absolu implique mécaniquement avoir battu la semaine.
+        recordsDejaBattusRef.current = { semaine: true, absolu: true }
       } else if (battuSemaine) {
         setBanniereRecord('semaine')
-        recordsAvantPartieRef.current = { ...recordsAvantPartieRef.current, semaine: nouvelEtat.paniers }
+        recordsDejaBattusRef.current.semaine = true
       }
 
       if (boosters.length) {
