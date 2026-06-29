@@ -26,6 +26,7 @@ import { Avatar } from '../components/Avatar'
 import { useNoSpoil } from '../context/NoSpoilContext'
 import { useNotif } from '../context/NotifContext'
 import { SAISON_ESPN } from '../config'
+import { VERSION_COURANTE, CHANGELOG } from '../data/changelog'
 
 // Titre section — barres obliques pleines espacées progressivement
 const TitreSection = ({ label, couleur = 'var(--accent)' }) => (
@@ -204,6 +205,7 @@ function Accueil() {
   const [equipesFav, setEquipesFav]             = useState([])
   const [evenements, setEvenements]             = useState([])
   const [actusOuvertes, setActusOuvertes]       = useState(false)
+  const [nouveauteVue, setNouveauteVue]         = useState(() => !!localStorage.getItem(`swish_version_${VERSION_COURANTE}`))
   const [missionsOpen, setMissionsOpen]         = useState(false)
   const [roueOpen, setRoueOpen]                 = useState(false)
   const [roueDispo, setRoueDispo]               = useState(false)
@@ -663,6 +665,38 @@ function Accueil() {
         {!chargement && user && (
           <div style={{ marginTop: 10, marginBottom: 0, padding: '0 16px' }}>
             <Briefing userId={user.id} nbPronosAttente={nbPronosAttente} matchs={matchs} />
+          </div>
+        )}
+
+        {/* Carte nouveauté — visible une seule fois par version, disparaît au clic */}
+        {!nouveauteVue && CHANGELOG[0] && (
+          <div
+            onClick={() => {
+              localStorage.setItem(`swish_version_${VERSION_COURANTE}`, '1')
+              setNouveauteVue(true)
+              navigate('/quoi-de-neuf')
+            }}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 12,
+              margin: '10px 16px 0',
+              background: 'var(--bg-2)',
+              border: '1px solid var(--accent-border)',
+              borderLeft: '3px solid var(--accent)',
+              borderRadius: 'var(--radius-sm)',
+              padding: '10px 14px',
+              cursor: 'pointer',
+            }}
+          >
+            <span style={{ fontSize: 22, flexShrink: 0 }}>{CHANGELOG[0].icone}</span>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 2 }}>
+                Nouveauté {VERSION_COURANTE}
+              </div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-1)', lineHeight: 1.3 }}>
+                {CHANGELOG[0].titre}
+              </div>
+            </div>
+            <span style={{ fontSize: 16, color: 'var(--text-3)', flexShrink: 0 }}>›</span>
           </div>
         )}
 
