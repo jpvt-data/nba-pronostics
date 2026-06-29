@@ -160,7 +160,7 @@ const JoueurArcade = ({ zonePct = 18, vitesse = 2.5, onResultat, verrouille = fa
         </div>
 
         {/* Colonne droite — barres de précision + feedback + bouton */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minWidth: 0 }}>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 10, minWidth: 0 }}>
 
           {/* Barre horizontale */}
           <div>
@@ -178,32 +178,29 @@ const JoueurArcade = ({ zonePct = 18, vitesse = 2.5, onResultat, verrouille = fa
             </div>
           </div>
 
-          {/* Barre verticale + feedback */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-            <div style={{ flexShrink: 0 }}>
-              <div style={{ fontSize: 9, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>
-                Force
-              </div>
-              <div style={{ position: 'relative', width: 14, height: 80, background: 'var(--bg-2)', borderRadius: 'var(--radius-sm)', overflow: 'hidden' }}>
+          {/* Barre verticale + feedback — centré horizontalement */}
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+            <div style={{ fontSize: 9, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Force</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{ position: 'relative', width: 14, height: 80, background: 'var(--bg-2)', borderRadius: 'var(--radius-sm)', overflow: 'hidden', flexShrink: 0 }}>
                 <div style={{ position: 'absolute', top: `${zoneDebut}%`, height: `${zonePct}%`, width: '100%', background: 'var(--success-dim)', borderTop: '1px solid var(--success)', borderBottom: '1px solid var(--success)' }} />
                 {etape === 'verticale' && (
                   <div style={{ position: 'absolute', top: `${posV}%`, left: 0, height: 3, width: '100%', background: 'var(--text-1)', transform: 'translateY(-1.5px)' }} />
                 )}
               </div>
-            </div>
-
-            <div style={{ flex: 1, textAlign: 'center' }}>
-              {resultatFinal === 'panier' && (
-                <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 18, color: 'var(--success)' }}>PANIER !</span>
-              )}
-              {resultatFinal === 'rate' && (
-                <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 18, color: 'var(--danger)' }}>RATÉ</span>
-              )}
-              {!resultatFinal && (
-                <span style={{ fontSize: 10, color: 'var(--text-3)', lineHeight: 1.4 }}>
-                  {etape === 'horizontale' ? 'Stoppe la\nbarre' : 'Encore\nune fois !'}
-                </span>
-              )}
+              <div style={{ textAlign: 'center' }}>
+                {resultatFinal === 'panier' && (
+                  <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 18, color: 'var(--success)' }}>PANIER !</span>
+                )}
+                {resultatFinal === 'rate' && (
+                  <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 18, color: 'var(--danger)' }}>RATÉ</span>
+                )}
+                {!resultatFinal && (
+                  <span style={{ fontSize: 10, color: 'var(--text-3)', lineHeight: 1.5 }}>
+                    {etape === 'horizontale' ? 'Stoppe la barre' : 'Encore une fois !'}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
 
