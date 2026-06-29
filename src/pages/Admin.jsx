@@ -522,7 +522,21 @@ function OngletLigues({ scanResultats, scanSaison }) {
     if (formulaire.id) {
       await supabase.from('groupes').update(payload).eq('id', formulaire.id)
     } else {
-      await supabase.from('groupes').insert({ ...payload, admin_id: user.id, code_invitation: null })
+      const { data: newLigue } = await supabase
+        .from('groupes')
+        .insert({ ...payload, admin_id: user.id, code_invitation: null })
+        .select('id')
+        .single()
+
+      // Auto-inscription de tous les profils existants à la nouvelle ligue
+      if (newLigue?.id) {
+        const { data: tousLesProfils } = await supabase.from('profils').select('id')
+        if (tousLesProfils?.length) {
+          await supabase.from('membres_groupe').insert(
+            tousLesProfils.map(p => ({ groupe_id: newLigue.id, user_id: p.id, actif: true }))
+          )
+        }
+      }
     }
     await charger()
     setSauveg(false)
