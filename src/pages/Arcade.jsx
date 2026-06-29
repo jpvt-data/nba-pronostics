@@ -89,8 +89,9 @@ function Arcade() {
   // Seuils figés au début de la partie du jour — ne JAMAIS les remonter pendant la partie
   // (sinon le score qui grimpe à chaque panier dépasse à nouveau le seuil au panier suivant).
   const recordsAvantPartieRef = useRef({ semaine: 0, absolu: 0 })
-  // Flags "déjà obtenu cette partie" — c'est CA qui empêche le re-déclenchement du booster,
-  // pas le déplacement du seuil.
+  // Flags "déjà obtenu cette partie" — utilisés pour transformer le seuil en Infinity
+  // (cf handleResultat) afin qu'un record déjà acquis devienne mathématiquement
+  // imbattable pour le reste de la partie, donc plus aucun risque de redonner un booster.
   const recordsDejaBattusRef = useRef({ semaine: false, absolu: false })
 
   useEffect(() => {
@@ -147,20 +148,26 @@ function Arcade() {
       // Vérifie les records à CHAQUE panier (pas seulement en fin de partie) —
       // sinon un joueur qui bat un record puis arrête sans faire sa 3e faute
       // ne recevait jamais son booster.
-      // MAIS : un record déjà battu cette partie ne doit plus jamais redéclencher
-      // de booster, même si le score continue de dépasser le seuil figé.
       const { semaine, absolu } = recordsAvantPartieRef.current
       const dejaAbsolu  = recordsDejaBattusRef.current.absolu
       const dejaSemaine = recordsDejaBattusRef.current.semaine
+
+      // Seuil Infinity = mathématiquement imbattable. C'est CA qui empêche
+      // verifierRecordsApresPanier de redonner un booster pour un record déjà
+      // acquis cette partie — pas un masquage de l'affichage après coup
+      // (verifierRecordsApresPanier distribue elle-même les cartes en interne,
+      // donc il faut l'empêcher de détecter un "battu" à la source).
+      const seuilSemaine = dejaSemaine ? Infinity : semaine
+      const seuilAbsolu  = dejaAbsolu  ? Infinity : absolu
 
       let battuAbsolu = false
       let battuSemaine = false
       let boosters = []
 
       if (!dejaAbsolu || !dejaSemaine) {
-        const verif = await verifierRecordsApresPanier(user.id, nouvelEtat.paniers, semaine, absolu)
-        battuAbsolu  = !dejaAbsolu  && verif.battuAbsolu
-        battuSemaine = !dejaSemaine && verif.battuSemaine
+        const verif = await verifierRecordsApresPanier(user.id, nouvelEtat.paniers, seuilSemaine, seuilAbsolu)
+        battuAbsolu  = verif.battuAbsolu
+        battuSemaine = verif.battuSemaine
         boosters = verif.boosters
       }
 
