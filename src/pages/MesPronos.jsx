@@ -584,8 +584,8 @@ function MesPronos() {
         {/* ── Header fusionné : Profil + XP ── */}
         <div style={{ background: 'var(--bg-1)', padding: '20px 16px 20px', borderLeft: '3px solid var(--gold)' }}>
 
-          {/* Ligne 1 — Avatar + Pseudo + Titre + Niveau + Barre XP (identité), Bio alignée à droite en mobile */}
-          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: isMobile ? 'space-between' : 'flex-start', gap: 10 }}>
+          {/* Ligne 1 — Avatar + Pseudo + Titre + Niveau + Barre XP (identité), Bio alignée à droite (mobile + desktop) */}
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <Avatar url={profil?.avatar_url} pseudo={profil?.pseudo} taille={48} fontSize={16} />
               <div>
@@ -601,17 +601,17 @@ function MesPronos() {
                   </span>
                 </div>
 
-                {/* Barre XP — largeur bornée au bloc identité (ne va que jusqu'au niveau), jamais pleine largeur */}
-                <div style={{ width: isMobile ? 180 : 300, marginTop: 6 }}>
+                {/* Barre XP — largeur bornée au bloc "Niveau", ne dépasse jamais sous la Bio */}
+                <div style={{ width: 130, marginTop: 6 }}>
                   <div style={{ height: 4, background: 'var(--bg-2)', overflow: 'hidden', borderRadius: 3 }}>
                     <div style={{ height: '100%', width: `${pctBarre}%`, background: 'var(--gold)', transition: 'width 0.6s ease' }} />
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 3 }}>
-                    <span style={{ fontSize: 10, color: 'var(--text-3)', fontFamily: 'var(--font-display)', fontWeight: 600 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 3, gap: 6 }}>
+                    <span style={{ fontSize: 10, color: 'var(--text-3)', fontFamily: 'var(--font-display)', fontWeight: 600, whiteSpace: 'nowrap' }}>
                       {xpActuel.toLocaleString('fr-FR')} XP
                     </span>
                     {niveau < 100 && (
-                      <span style={{ fontSize: 10, color: 'var(--text-3)', fontFamily: 'var(--font-display)' }}>
+                      <span style={{ fontSize: 10, color: 'var(--text-3)', fontFamily: 'var(--font-display)', whiteSpace: 'nowrap' }}>
                         encore {xpRestant.toLocaleString('fr-FR')} XP
                       </span>
                     )}
@@ -620,21 +620,19 @@ function MesPronos() {
               </div>
             </div>
 
-            {/* Bio — remonte ici sur mobile uniquement, alignée à droite, au-dessus des KPIs (réduit la hauteur du header) */}
-            {isMobile && (
-              profil?.description ? (
-                <div style={{ textAlign: 'right', maxWidth: 140 }}>
-                  <span style={{ fontSize: 9, color: 'var(--text-3)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Bio</span>
-                  <p style={{ fontSize: 12, color: 'var(--text-2)', margin: '2px 0 0', lineHeight: 1.5, fontStyle: 'italic' }}>
-                    {profil.description}
-                  </p>
-                </div>
-              ) : estMoi ? (
-                <button onClick={() => navigate('/profil')} style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: '4px 8px', fontSize: 10, color: 'var(--text-3)', cursor: 'pointer', flexShrink: 0 }}>
-                  Ajouter une bio →
-                </button>
-              ) : null
-            )}
+            {/* Bio — alignée à droite de l'identité, au-dessus des KPIs (mobile + desktop) */}
+            {profil?.description ? (
+              <div style={{ textAlign: 'right', maxWidth: isMobile ? 140 : 220, flexShrink: 0 }}>
+                <span style={{ fontSize: 9, color: 'var(--text-3)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Bio</span>
+                <p style={{ fontSize: 12, color: 'var(--text-2)', margin: '2px 0 0', lineHeight: 1.5, fontStyle: 'italic' }}>
+                  {profil.description}
+                </p>
+              </div>
+            ) : estMoi ? (
+              <button onClick={() => navigate('/profil')} style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: '4px 8px', fontSize: 10, color: 'var(--text-3)', cursor: 'pointer', flexShrink: 0 }}>
+                Ajouter une bio →
+              </button>
+            ) : null}
           </div>
 
           {/* Ligne 2 — Mes équipes (gauche) | KPIs Pronos/Réussite/Cartes (droite) — visible pour tout le monde */}
@@ -698,23 +696,6 @@ function MesPronos() {
             )
           })()}
 
-          {/* Bio — desktop uniquement ici (mobile : remontée à côté de l'identité, cf Ligne 1) */}
-          {!isMobile && (
-            profil?.description ? (
-              <div style={{ marginTop: 14 }}>
-                <span style={{ fontSize: 9, color: 'var(--text-3)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Bio</span>
-                <p style={{ fontSize: 12, color: 'var(--text-2)', margin: '2px 0 0', lineHeight: 1.5, fontStyle: 'italic' }}>
-                  {profil.description}
-                </p>
-              </div>
-            ) : estMoi ? (
-              <div style={{ marginTop: 14 }}>
-                <button onClick={() => navigate('/profil')} style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: '4px 8px', fontSize: 10, color: 'var(--text-3)', cursor: 'pointer' }}>
-                  Ajouter une bio →
-                </button>
-              </div>
-            ) : null
-          )}
         </div>
 
         {/* ── Bloc actions — séparé du header, fluide (1 chip si profil d'un autre, 4 si moi) ── */}
