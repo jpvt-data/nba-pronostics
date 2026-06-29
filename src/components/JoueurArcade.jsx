@@ -134,82 +134,96 @@ const JoueurArcade = ({ zonePct = 18, vitesse = 2.5, onResultat, verrouille = fa
   const animation = resultatFinal === 'panier' ? 'swl-tir-reussi' : 'swl-tir-rate'
 
   return (
-    <div style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: 16 }}>
+    <div style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: 12 }}>
 
-      <svg key={animKey} width="100%" viewBox="0 0 320 360" style={{ display: 'block', background: '#1a2e3d', borderRadius: 'var(--radius-sm)' }}>
-        <rect x="0" y="320" width="320" height="40" fill="#2a3f4f" />
-        <ellipse cx="160" cy="320" rx="140" ry="8" fill="#000" opacity="0.15" />
+      {/* Layout 2 colonnes : animation gauche, contrôles droite */}
+      <div style={{ display: 'flex', gap: 12, alignItems: 'stretch' }}>
 
-        <PanneauEtArceau />
-
-        {resultatFinal && (
-          <g style={{
-            offsetPath: `path('${trajectoire}')`,
-            offsetDistance: '0%',
-            animation: `${animation} 1.5s ${resultatFinal === 'panier' ? 'ease-in-out' : 'linear'} 1`,
-          }}>
-            <circle cx="0" cy="0" r="15" fill="#e8731f" stroke="#1a1a1a" strokeWidth="1.5" />
-            <path d="M-15 0 L15 0 M0 -15 L0 15 M-10.5 -10.5 Q0 0 -10.5 10.5 M10.5 -10.5 Q0 0 10.5 10.5" stroke="#1a1a1a" strokeWidth="1" fill="none" />
-          </g>
-        )}
-
-        <Arceau />
-      </svg>
-
-      <div style={{ marginTop: 14 }}>
-        <div style={{ fontSize: 10, color: 'var(--text-3)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-          Visée gauche / droite
+        {/* Colonne gauche — animation SVG, hauteur fixe */}
+        <div style={{ flexShrink: 0, width: 160 }}>
+          <svg key={animKey} width="160" height="220" viewBox="0 0 320 360" style={{ display: 'block', background: '#1a2e3d', borderRadius: 'var(--radius-sm)' }}>
+            <rect x="0" y="320" width="320" height="40" fill="#2a3f4f" />
+            <ellipse cx="160" cy="320" rx="140" ry="8" fill="#000" opacity="0.15" />
+            <PanneauEtArceau />
+            {resultatFinal && (
+              <g style={{
+                offsetPath: `path('${trajectoire}')`,
+                offsetDistance: '0%',
+                animation: `${animation} 1.5s ${resultatFinal === 'panier' ? 'ease-in-out' : 'linear'} 1`,
+              }}>
+                <circle cx="0" cy="0" r="15" fill="#e8731f" stroke="#1a1a1a" strokeWidth="1.5" />
+                <path d="M-15 0 L15 0 M0 -15 L0 15 M-10.5 -10.5 Q0 0 -10.5 10.5 M10.5 -10.5 Q0 0 10.5 10.5" stroke="#1a1a1a" strokeWidth="1" fill="none" />
+              </g>
+            )}
+            <Arceau />
+          </svg>
         </div>
-        <div style={{ position: 'relative', height: 16, background: 'var(--bg-2)', borderRadius: 'var(--radius-sm)', overflow: 'hidden' }}>
-          <div style={{ position: 'absolute', left: `${zoneDebut}%`, width: `${zonePct}%`, height: '100%', background: 'var(--success-dim)', borderLeft: '1px solid var(--success)', borderRight: '1px solid var(--success)' }} />
-          {etape === 'horizontale' && (
-            <div style={{ position: 'absolute', left: `${posH}%`, top: 0, width: 3, height: '100%', background: 'var(--text-1)', transform: 'translateX(-1.5px)' }} />
-          )}
-          {etape !== 'horizontale' && (
-            <div style={{ position: 'absolute', left: `${posH}%`, top: 0, width: 3, height: '100%', background: reussiH ? 'var(--success)' : 'var(--danger)', transform: 'translateX(-1.5px)' }} />
-          )}
+
+        {/* Colonne droite — barres de précision + feedback + bouton */}
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minWidth: 0 }}>
+
+          {/* Barre horizontale */}
+          <div>
+            <div style={{ fontSize: 9, color: 'var(--text-3)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+              Gauche / Droite
+            </div>
+            <div style={{ position: 'relative', height: 14, background: 'var(--bg-2)', borderRadius: 'var(--radius-sm)', overflow: 'hidden' }}>
+              <div style={{ position: 'absolute', left: `${zoneDebut}%`, width: `${zonePct}%`, height: '100%', background: 'var(--success-dim)', borderLeft: '1px solid var(--success)', borderRight: '1px solid var(--success)' }} />
+              {etape === 'horizontale' && (
+                <div style={{ position: 'absolute', left: `${posH}%`, top: 0, width: 3, height: '100%', background: 'var(--text-1)', transform: 'translateX(-1.5px)' }} />
+              )}
+              {etape !== 'horizontale' && (
+                <div style={{ position: 'absolute', left: `${posH}%`, top: 0, width: 3, height: '100%', background: reussiH ? 'var(--success)' : 'var(--danger)', transform: 'translateX(-1.5px)' }} />
+              )}
+            </div>
+          </div>
+
+          {/* Barre verticale + feedback */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div>
+              <div style={{ fontSize: 9, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>
+                Force
+              </div>
+              <div style={{ position: 'relative', width: 14, height: 80, background: 'var(--bg-2)', borderRadius: 'var(--radius-sm)', overflow: 'hidden' }}>
+                <div style={{ position: 'absolute', top: `${zoneDebut}%`, height: `${zonePct}%`, width: '100%', background: 'var(--success-dim)', borderTop: '1px solid var(--success)', borderBottom: '1px solid var(--success)' }} />
+                {etape === 'verticale' && (
+                  <div style={{ position: 'absolute', top: `${posV}%`, left: 0, height: 3, width: '100%', background: 'var(--text-1)', transform: 'translateY(-1.5px)' }} />
+                )}
+              </div>
+            </div>
+
+            <div style={{ flex: 1, textAlign: 'center' }}>
+              {resultatFinal === 'panier' && (
+                <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 18, color: 'var(--success)' }}>PANIER !</span>
+              )}
+              {resultatFinal === 'rate' && (
+                <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 18, color: 'var(--danger)' }}>RATÉ</span>
+              )}
+              {!resultatFinal && (
+                <span style={{ fontSize: 10, color: 'var(--text-3)', lineHeight: 1.4 }}>
+                  {etape === 'horizontale' ? 'Stoppe la\nbarre' : 'Encore\nune fois !'}
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Bouton TIRER */}
+          <button
+            onClick={arreterBarre}
+            disabled={verrouille || etape === 'resultat'}
+            style={{
+              width: '100%', padding: '14px 0',
+              background: 'var(--accent)', border: 'none', borderRadius: 'var(--radius-sm)',
+              color: '#fff', fontWeight: 700, fontSize: 15, fontFamily: 'var(--font-body)',
+              cursor: verrouille || etape === 'resultat' ? 'default' : 'pointer',
+              opacity: verrouille || etape === 'resultat' ? 0.5 : 1,
+              letterSpacing: '0.05em',
+            }}
+          >
+            TIRER
+          </button>
         </div>
       </div>
-
-      <div style={{ marginTop: 14, display: 'flex', alignItems: 'center', gap: 10 }}>
-        <div style={{ fontSize: 10, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.08em', width: 70 }}>
-          Visée force
-        </div>
-        <div style={{ position: 'relative', width: 16, height: 70, background: 'var(--bg-2)', borderRadius: 'var(--radius-sm)', overflow: 'hidden', flexShrink: 0 }}>
-          <div style={{ position: 'absolute', top: `${zoneDebut}%`, height: `${zonePct}%`, width: '100%', background: 'var(--success-dim)', borderTop: '1px solid var(--success)', borderBottom: '1px solid var(--success)' }} />
-          {etape === 'verticale' && (
-            <div style={{ position: 'absolute', top: `${posV}%`, left: 0, height: 3, width: '100%', background: 'var(--text-1)', transform: 'translateY(-1.5px)' }} />
-          )}
-        </div>
-
-        <div style={{ flex: 1, textAlign: 'center' }}>
-          {resultatFinal === 'panier' && (
-            <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 20, color: 'var(--success)' }}>PANIER !</span>
-          )}
-          {resultatFinal === 'rate' && (
-            <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 20, color: 'var(--danger)' }}>RATÉ</span>
-          )}
-          {!resultatFinal && (
-            <span style={{ fontSize: 11, color: 'var(--text-3)' }}>
-              {etape === 'horizontale' ? 'Tape pour stopper' : 'Encore une fois !'}
-            </span>
-          )}
-        </div>
-      </div>
-
-      <button
-        onClick={arreterBarre}
-        disabled={verrouille || etape === 'resultat'}
-        style={{
-          marginTop: 16, width: '100%', padding: '12px 0',
-          background: 'var(--accent)', border: 'none', borderRadius: 'var(--radius-sm)',
-          color: '#fff', fontWeight: 700, fontSize: 14, fontFamily: 'var(--font-body)',
-          cursor: verrouille || etape === 'resultat' ? 'default' : 'pointer',
-          opacity: verrouille || etape === 'resultat' ? 0.5 : 1,
-        }}
-      >
-        TIRER
-      </button>
     </div>
   )
 }
