@@ -179,8 +179,8 @@ const JoueurArcade = ({ zonePct = 18, vitesse = 2.5, onResultat, verrouille = fa
           </div>
 
           {/* Barre verticale + feedback */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+            <div style={{ flexShrink: 0 }}>
               <div style={{ fontSize: 9, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>
                 Force
               </div>
