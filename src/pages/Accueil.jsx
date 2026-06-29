@@ -205,7 +205,6 @@ function Accueil() {
   const [equipesFav, setEquipesFav]             = useState([])
   const [evenements, setEvenements]             = useState([])
   const [actusOuvertes, setActusOuvertes]       = useState(false)
-  const [nouveauteVue, setNouveauteVue]         = useState(() => !!localStorage.getItem(`swish_version_${VERSION_COURANTE}`))
   const [missionsOpen, setMissionsOpen]         = useState(false)
   const [roueOpen, setRoueOpen]                 = useState(false)
   const [roueDispo, setRoueDispo]               = useState(false)
@@ -668,14 +667,10 @@ function Accueil() {
           </div>
         )}
 
-        {/* Carte nouveauté — visible une seule fois par version, disparaît au clic */}
-        {!nouveauteVue && CHANGELOG[0] && (
+        {/* Carte nouveauté — lien permanent vers les dernières nouveautés */}
+        {CHANGELOG[0] && (
           <div
-            onClick={() => {
-              localStorage.setItem(`swish_version_${VERSION_COURANTE}`, '1')
-              setNouveauteVue(true)
-              navigate('/quoi-de-neuf')
-            }}
+            onClick={() => navigate('/quoi-de-neuf')}
             style={{
               display: 'flex', alignItems: 'center', gap: 12,
               margin: '10px 16px 0',
