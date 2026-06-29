@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { useNavigate } from 'react-router-dom'
 
-// Icônes SVG inline Lucide-style
 const IconTrophy = () => (
   <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
     <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/>
@@ -20,21 +19,9 @@ const IconLayers = () => (
   </svg>
 )
 
-const IconStar = () => (
-  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-  </svg>
-)
-
 const IconTarget = () => (
   <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
     <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>
-  </svg>
-)
-
-const IconSearch = () => (
-  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
   </svg>
 )
 
@@ -44,13 +31,28 @@ const IconBarChart = () => (
   </svg>
 )
 
+const IconCards = () => (
+  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="2" y="5" width="14" height="18" rx="2"/>
+    <path d="M8 2h12a2 2 0 0 1 2 2v14"/>
+  </svg>
+)
+
+const IconGamepad = () => (
+  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="6" y1="12" x2="10" y2="12"/><line x1="8" y1="10" x2="8" y2="14"/>
+    <circle cx="15" cy="13" r="1" fill="currentColor"/><circle cx="17" cy="11" r="1" fill="currentColor"/>
+    <path d="M5 8a2 2 0 0 0-2 2v4a7 7 0 0 0 14 0v-4a2 2 0 0 0-2-2Z"/>
+    <path d="M15 8v-.5a2.5 2.5 0 0 0-5 0V8"/>
+  </svg>
+)
+
 const IconZap = () => (
   <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
     <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
   </svg>
 )
 
-// Données des slides
 const SLIDES = [
   {
     icone: <IconTrophy />,
@@ -59,53 +61,28 @@ const SLIDES = [
     titre2: 'SWISH LEAGUE',
     couleur2: 'var(--accent)',
     contenu: [
-      'Pronostique les matchs NBA, grimpe au classement, et flambe face à tes potes.',
+      'Vis la Saison NBA autrement.',
+      'Swish League, c\'est du suivi de saison NBA, de la progression personnelle et de la compétition amicale entre passionnés.',
       '"Pronostique. Flambe. Règne." — chaque action compte, chaque prono fait la différence.',
     ],
-    tag: null,
   },
   {
     icone: <IconLayers />,
     couleurIcone: 'var(--accent)',
-    titre1: 'UNE SAISON,',
-    titre2: 'DES LIGUES',
+    titre1: 'LES',
+    titre2: 'LIGUES',
     couleur2: 'var(--orange)',
     contenu: [
-      'Chaque phase NBA = une ligue dédiée dans Swish League.',
-      'Rejoins une ligue depuis le menu Ligues pour participer au classement et affronter les autres.',
-    ],
-    tag: null,
-  },
-  {
-    icone: <IconStar />,
-    couleurIcone: 'var(--gold)',
-    titre1: 'LIGUES',
-    titre2: 'PRINCIPALES',
-    couleur2: 'var(--gold)',
-    contenu: [
-      'Saison régulière — le socle. Des centaines de matchs, tout le monde participe.',
-      'Playoffs et NBA Finals — l\'intensité monte. Chaque prono pèse lourd.',
-    ],
-    liste: [
-      { label: 'Saison régulière', couleur: '#9090b0' },
-      { label: 'Playoffs', couleur: '#ef4444' },
-      { label: 'NBA Finals', couleur: '#e11d48' },
-    ],
-  },
-  {
-    icone: <IconStar />,
-    couleurIcone: 'var(--orange)',
-    titre1: 'LIGUES',
-    titre2: 'BONUS',
-    couleur2: 'var(--orange)',
-    contenu: [
-      'Des ligues courtes et intenses tout au long de l\'année pour ne jamais s\'ennuyer.',
+      'Chaque phase de la saison NBA a sa ligue dédiée dans Swish League.',
+      'Tu es automatiquement inscrit à chaque nouvelle phase — rien à faire. Tu peux les visualiser dans le menu Ligues.',
     ],
     liste: [
       { label: 'Summer League', couleur: '#06b6d4' },
       { label: 'Pré-saison', couleur: '#6366f1' },
+      { label: 'Saison régulière', couleur: '#9090b0' },
       { label: 'NBA Cup', couleur: '#f97316' },
-      { label: 'All-Star Game', couleur: '#f59e0b' },
+      { label: 'Playoffs', couleur: '#ef4444' },
+      { label: 'NBA Finals', couleur: '#e11d48' },
     ],
   },
   {
@@ -115,37 +92,64 @@ const SLIDES = [
     titre2: 'PRONO',
     couleur2: 'var(--success)',
     contenu: [
-      'Sur l\'accueil ou dans le Calendrier, clique sur un match pour accéder au détail.',
-      'Pose ton prono avant le tip-off. Ajoute une fourchette d\'écart pour tenter des points bonus.',
-      'Stats, prédictions et cotes sont disponibles dans le détail du match pour t\'aider à choisir.',
+      'Depuis l\'Accueil ou le Calendrier, clique sur un match pour accéder à sa fiche.',
+      'Pose ton pronostic avant le tip-off. Ajoute une fourchette d\'écart (serré, modéré, large…) pour tenter des points bonus.',
+      'Stats, cotes et prédictions ESPN sont disponibles dans chaque fiche match pour t\'aider à choisir.',
     ],
-    tag: null,
   },
   {
-    icone: <IconSearch />,
+    icone: <IconBarChart />,
+    couleurIcone: 'var(--accent)',
+    titre1: 'SUIS TA',
+    titre2: 'SAISON',
+    couleur2: 'var(--accent)',
+    contenu: [
+      'La page Stats regroupe ton historique complet : pronos, taux de réussite, fourchettes, points par ligue.',
+      'Le Classement te situe face aux autres participants en temps réel.',
+      'Clique sur un profil pour déclencher un duel 1v1 — comparaison tête-à-tête de vos stats et performances.',
+    ],
+  },
+  {
+    icone: <IconCards />,
+    couleurIcone: 'var(--gold)',
+    titre1: 'TA',
+    titre2: 'COLLECTION',
+    couleur2: 'var(--gold)',
+    contenu: [
+      'Des cartes Topps NBA à débloquer au fil de ton parcours.',
+      'Plus tu joues, plus ta collection s\'enrichit. Chaque carte a une rareté : Common, Rare, ou Legendary.',
+    ],
+    liste: [
+      { label: 'Pronos réussis', couleur: '#22c55e' },
+      { label: 'Fourchettes correctes', couleur: '#22c55e' },
+      { label: 'Roue quotidienne', couleur: '#6366f1' },
+      { label: 'Passage de niveau', couleur: '#f59e0b' },
+      { label: 'Arcade', couleur: '#f97316' },
+    ],
+  },
+  {
+    icone: <IconGamepad />,
     couleurIcone: 'var(--orange)',
-    titre1: 'EXPLORE &',
-    titre2: 'COMPARE',
+    titre1: 'L\'ARCADE —',
+    titre2: 'CHAQUE JOUR',
     couleur2: 'var(--orange)',
     contenu: [
-      'Explorer — stats joueurs, classements NBA, infos équipes. Tout pour préparer tes pronos.',
-      'Stats — ton historique de pronos, tes performances, tes résultats.',
-      'Classement — vois où tu en es. Clique sur un profil pour un duel 1v1.',
+      'Un mini-jeu quotidien indépendant du calendrier NBA — jouable 365 jours par an.',
+      'Lancer franc, mode survie : enchaîne les paniers sans rater 3 fois. Difficulté progressive, 1 partie par jour.',
+      'Records perso, record de la semaine et record absolu entre vous. Bats un record → booster de 3 cartes.',
     ],
-    tag: null,
   },
   {
     icone: <IconZap />,
     couleurIcone: 'var(--gold)',
-    titre1: 'PROGRESSE &',
-    titre2: 'FLAMBE',
+    titre1: 'TA',
+    titre2: 'PROGRESSION',
     couleur2: 'var(--gold)',
     contenu: [
-      'Chaque action rapporte de l\'XP : connexion, pronos corrects, missions complétées.',
-      'Missions hebdo et permanentes. Roue quotidienne pour de l\'XP bonus.',
-      'Monte de niveau, débloque des titres. De Rookie à GOAT.',
+      'Chaque action rapporte de l\'XP : connexion quotidienne, pronos corrects, missions, roue du jour, Arcade.',
+      'Monte de niveau — de Rookie à GOAT. Des badges se débloquent en chemin.',
+      'Missions hebdo et permanentes pour accélérer ta progression. Consulte-les depuis ton profil.',
     ],
-    tag: null,
   },
 ]
 
@@ -155,13 +159,9 @@ export default function OnboardingTuto({ userId, onClose }) {
   const total = SLIDES.length
   const estDerniere = slide === total - 1
 
-  // Marque onboarding_done à la fermeture
   const marquerFait = async () => {
     if (!userId) return
-    await supabase
-      .from('profils')
-      .update({ onboarding_done: true })
-      .eq('id', userId)
+    await supabase.from('profils').update({ onboarding_done: true }).eq('id', userId)
   }
 
   const fermer = async () => {
@@ -175,7 +175,6 @@ export default function OnboardingTuto({ userId, onClose }) {
     navigate('/accueil')
   }
 
-  // Fermeture clavier Escape
   useEffect(() => {
     const handleKey = (e) => { if (e.key === 'Escape') fermer() }
     window.addEventListener('keydown', handleKey)
@@ -197,26 +196,29 @@ export default function OnboardingTuto({ userId, onClose }) {
         borderRadius: 'var(--radius-md)',
         width: '100%', maxWidth: 420,
         padding: '28px 24px 24px',
-        display: 'flex', flexDirection: 'column', gap: 20,
+        display: 'flex', flexDirection: 'column', gap: 18,
         boxShadow: 'var(--shadow-md)',
         position: 'relative',
-        minHeight: 420,
+        minHeight: 440,
+        maxHeight: '90vh',
+        overflowY: 'auto',
       }}>
 
         {/* Bouton fermer */}
-        <button
-          onClick={fermer}
-          style={{
-            position: 'absolute', top: 12, right: 14,
-            background: 'none', border: 'none', cursor: 'pointer',
-            color: 'var(--text-2)', fontSize: 20, lineHeight: 1, padding: 4,
-          }}
-        >
-          {/* X SVG */}
+        <button onClick={fermer} style={{
+          position: 'absolute', top: 12, right: 14,
+          background: 'none', border: 'none', cursor: 'pointer',
+          color: 'var(--text-2)', padding: 4,
+        }}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
             <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
           </svg>
         </button>
+
+        {/* Compteur slide */}
+        <div style={{ fontSize: 10, color: 'var(--text-3)', textAlign: 'right', fontWeight: 600, letterSpacing: '0.08em', paddingRight: 28 }}>
+          {slide + 1} / {total}
+        </div>
 
         {/* Icône */}
         <div style={{ color: s.couleurIcone, display: 'flex', justifyContent: 'center' }}>
@@ -241,12 +243,12 @@ export default function OnboardingTuto({ userId, onClose }) {
             </p>
           ))}
 
-          {/* Liste tags si présente */}
+          {/* Tags si présents */}
           {s.liste && (
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center', marginTop: 8 }}>
               {s.liste.map((item) => (
                 <span key={item.label} style={{
-                  fontSize: 12, fontWeight: 600, fontFamily: 'var(--font-body)',
+                  fontSize: 11, fontWeight: 600,
                   color: item.couleur,
                   background: item.couleur + '1a',
                   border: `1px solid ${item.couleur}44`,
@@ -263,57 +265,41 @@ export default function OnboardingTuto({ userId, onClose }) {
         {/* Dots navigation */}
         <div style={{ display: 'flex', justifyContent: 'center', gap: 6 }}>
           {SLIDES.map((_, i) => (
-            <button
-              key={i}
-              onClick={() => setSlide(i)}
-              style={{
-                width: i === slide ? 20 : 8,
-                height: 8,
-                borderRadius: 4,
-                border: 'none',
-                cursor: 'pointer',
-                background: i === slide ? 'var(--accent)' : 'var(--border-2)',
-                transition: 'width 0.2s ease, background 0.2s ease',
-                padding: 0,
-              }}
-            />
+            <button key={i} onClick={() => setSlide(i)} style={{
+              width: i === slide ? 20 : 8, height: 8,
+              borderRadius: 4, border: 'none', cursor: 'pointer',
+              background: i === slide ? 'var(--accent)' : 'var(--border-2)',
+              transition: 'width 0.2s ease, background 0.2s ease',
+              padding: 0,
+            }} />
           ))}
         </div>
 
         {/* Boutons navigation */}
         <div style={{ display: 'flex', gap: 10 }}>
           {slide > 0 && (
-            <button
-              onClick={() => setSlide(s => s - 1)}
-              style={{
-                flex: 1, padding: '10px 0', borderRadius: 'var(--radius-sm)',
-                border: '1px solid var(--border-2)', background: 'none',
-                color: 'var(--text-2)', fontSize: 13, cursor: 'pointer',
-              }}
-            >
+            <button onClick={() => setSlide(s => s - 1)} style={{
+              flex: 1, padding: '10px 0', borderRadius: 'var(--radius-sm)',
+              border: '1px solid var(--border-2)', background: 'none',
+              color: 'var(--text-2)', fontSize: 13, cursor: 'pointer',
+            }}>
               Précédent
             </button>
           )}
           {!estDerniere ? (
-            <button
-              onClick={() => setSlide(s => s + 1)}
-              style={{
-                flex: 1, padding: '10px 0', borderRadius: 'var(--radius-sm)',
-                border: 'none', background: 'var(--accent)',
-                color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer',
-              }}
-            >
+            <button onClick={() => setSlide(s => s + 1)} style={{
+              flex: 1, padding: '10px 0', borderRadius: 'var(--radius-sm)',
+              border: 'none', background: 'var(--accent)',
+              color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer',
+            }}>
               Suivant
             </button>
           ) : (
-            <button
-              onClick={terminer}
-              style={{
-                flex: 1, padding: '10px 0', borderRadius: 'var(--radius-sm)',
-                border: 'none', background: 'var(--accent)',
-                color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer',
-              }}
-            >
+            <button onClick={terminer} style={{
+              flex: 1, padding: '10px 0', borderRadius: 'var(--radius-sm)',
+              border: 'none', background: 'var(--accent)',
+              color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer',
+            }}>
               C'est parti
             </button>
           )}
