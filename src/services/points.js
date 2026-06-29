@@ -1,6 +1,6 @@
 // src/services/points.js
 import { supabase } from '../lib/supabase'
-import { recupererGagnant } from './espn'
+import { recupererGagnant, recupererStatutMatch } from './espn'
 import { ajouterXP, verifierJalons, verifierMissions } from './xp'
 import { donnerCartes } from './cartes'
 
@@ -157,6 +157,32 @@ const résoudreFourchette = async (pe, fourchetteReelle, type_saison, saison, lu
 
 export const calculerPoints = async () => {
   const lundi = lundiFin()
+
+  // ── PASSE 0 : nettoyage des matchs annulés / inutiles ────────────────────
+  // Matchs locaux non terminés dont la date est dépassée de plus de 24h.
+  // On interroge ESPN : si STATUS_CANCELED / STATUS_POSTPONED / STATUS_UNNECESSARY
+  // → suppression des pronos + marquage match 'annule' (ex: Game 6/7 non joués).
+  const STATUTS_ANNULES = ['STATUS_CANCELED', 'STATUS_POSTPONED', 'STATUS_UNNECESSARY']
+  const hier = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
+
+  const { data: matchsOrphelins } = await supabase
+    .from('matchs')
+    .select('id, espn_id')
+    .neq('statut', 'termine')
+    .neq('statut', 'annule')
+    .lt('date_match', hier)
+
+  for (const m of (matchsOrphelins || [])) {
+    const statut = await recupererStatutMatch(m.espn_id)
+    if (!statut || !STATUTS_ANNULES.includes(statut)) continue
+
+    console.log(`[nettoyage] Match annulé détecté — espn_id:${m.espn_id} statut ESPN:${statut}`)
+
+    // Supprimer fourchettes puis pronos liés à ce match
+    await supabase.from('pronos_ecart').delete().eq('match_id', m.id)
+    await supabase.from('pronos').delete().eq('match_id', m.id)
+    await supabase.from('matchs').update({ statut: 'annule' }).eq('id', m.id)
+  }
 
   // ── PASSE 1 : résoudre les pronos en attente ──────────────────────────────
   const { data: pronosEnAttente } = await supabase

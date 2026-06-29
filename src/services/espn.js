@@ -352,3 +352,17 @@ export const recupererGagnant = async (espnId) => {
     return null
   }
 }
+
+// Retourne le statut ESPN brut d'un match — utilisé pour détecter les matchs
+// annulés ou inutiles (Game 6/7 de séries terminées plus tôt).
+// Valeurs pertinentes : STATUS_CANCELED | STATUS_POSTPONED | STATUS_UNNECESSARY | STATUS_FINAL | null (erreur réseau)
+export const recupererStatutMatch = async (espnId) => {
+  try {
+    const res  = await fetchAvecTimeout(`${BASE_WEB}/summary?event=${espnId}`)
+    const data = await res.json()
+    return data.header?.competitions?.[0]?.status?.type?.name || null
+  } catch (err) {
+    console.error('Erreur récupération statut match:', err)
+    return null
+  }
+}

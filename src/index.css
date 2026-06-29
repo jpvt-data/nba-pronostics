@@ -65,7 +65,7 @@ html, body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* ── FOND DESKTOP — halos violets aux coins ── */
+/* ── FOND DESKTOP — parquet bâtons rompus + halos violets aux coins ── */
 @media (min-width: 768px) {
   body {
     background:
@@ -73,7 +73,8 @@ html, body {
       radial-gradient(ellipse 60% 50% at 100% 0%,  rgba(99, 102, 241, 0.22) 0%, transparent 65%),
       radial-gradient(ellipse 60% 50% at 0% 100%,  rgba(99, 102, 241, 0.14) 0%, transparent 65%),
       radial-gradient(ellipse 60% 50% at 100% 100%,rgba(99, 102, 241, 0.14) 0%, transparent 65%),
-      var(--bg-0);
+      url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2MCIgaGVpZ2h0PSI0MCI+CiAgPHJlY3Qgd2lkdGg9IjYwIiBoZWlnaHQ9IjQwIiBmaWxsPSIjMGYwZTBhIi8+CiAgPCEtLSBQbGFuY2hlIGhhdXQgZ2F1Y2hlIC0tPgogIDxyZWN0IHg9IjEiIHk9IjEiIHdpZHRoPSIyOCIgaGVpZ2h0PSIxNyIgcng9IjEiIGZpbGw9IiMxNDExMDgiIHN0cm9rZT0iIzFmMWEwZSIgc3Ryb2tlLXdpZHRoPSIwLjUiLz4KICA8bGluZSB4MT0iMSIgeTE9IjYiIHgyPSIyOSIgeTI9IjYiIHN0cm9rZT0iIzFhMTUwOSIgc3Ryb2tlLXdpZHRoPSIwLjQiLz4KICA8bGluZSB4MT0iMSIgeTE9IjExIiB4Mj0iMjkiIHkyPSIxMSIgc3Ryb2tlPSIjMWExNTA5IiBzdHJva2Utd2lkdGg9IjAuMyIvPgogIDwhLS0gUGxhbmNoZSBoYXV0IGRyb2l0ZSAtLT4KICA8cmVjdCB4PSIzMSIgeT0iMSIgd2lkdGg9IjI4IiBoZWlnaHQ9IjE3IiByeD0iMSIgZmlsbD0iIzEzMTAwNyIgc3Ryb2tlPSIjMWYxYTBlIiBzdHJva2Utd2lkdGg9IjAuNSIvPgogIDxsaW5lIHgxPSIzMSIgeTE9IjciIHgyPSI1OSIgeTI9IjciIHN0cm9rZT0iIzE5MTQwYSIgc3Ryb2tlLXdpZHRoPSIwLjQiLz4KICA8bGluZSB4MT0iMzEiIHkxPSIxMiIgeDI9IjU5IiB5Mj0iMTIiIHN0cm9rZT0iIzE5MTQwYSIgc3Ryb2tlLXdpZHRoPSIwLjMiLz4KICA8IS0tIFBsYW5jaGUgYmFzIChkw6ljYWzDqWUpIC0tPgogIDxyZWN0IHg9Ii0xNCIgeT0iMjEiIHdpZHRoPSIyOCIgaGVpZ2h0PSIxNyIgcng9IjEiIGZpbGw9IiMxNDEyMDgiIHN0cm9rZT0iIzFmMWEwZSIgc3Ryb2tlLXdpZHRoPSIwLjUiLz4KICA8bGluZSB4MT0iLTE0IiB5MT0iMjYiIHgyPSIxNCIgeTI9IjI2IiBzdHJva2U9IiMxYTE1MDkiIHN0cm9rZS13aWR0aD0iMC40Ii8+CiAgPHJlY3QgeD0iMTYiIHk9IjIxIiB3aWR0aD0iMjgiIGhlaWdodD0iMTciIHJ4PSIxIiBmaWxsPSIjMTIxMDA3IiBzdHJva2U9IiMxZjFhMGUiIHN0cm9rZS13aWR0aD0iMC41Ii8+CiAgPGxpbmUgeDE9IjE2IiB5MT0iMjgiIHgyPSI0NCIgeTI9IjI4IiBzdHJva2U9IiMxOTE0MGEiIHN0cm9rZS13aWR0aD0iMC4zIi8+CiAgPHJlY3QgeD0iNDYiIHk9IjIxIiB3aWR0aD0iMjgiIGhlaWdodD0iMTciIHJ4PSIxIiBmaWxsPSIjMTQxMTA4IiBzdHJva2U9IiMxZjFhMGUiIHN0cm9rZS13aWR0aD0iMC41Ii8+CiAgPGxpbmUgeDE9IjQ2IiB5MT0iMjUiIHgyPSI3NCIgeTI9IjI1IiBzdHJva2U9IiMxYTE1MDkiIHN0cm9rZS13aWR0aD0iMC40Ii8+Cjwvc3ZnPg==")
+      repeat;
   }
 }
 
