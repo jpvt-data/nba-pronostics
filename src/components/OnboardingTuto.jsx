@@ -62,8 +62,7 @@ const SLIDES = [
     couleur2: 'var(--accent)',
     contenu: [
       'Vis la Saison NBA autrement.',
-      'Swish League, c\'est du suivi de saison NBA, de la progression personnelle et de la compétition amicale entre passionnés.',
-      '"Pronostique. Flambe. Règne." — chaque action compte, chaque prono fait la différence.',
+      'Pronos, stats, classements, collection de cartes et mini-jeux — tout pour vivre la saison NBA avec tes potes, du tip-off de la Summer League jusqu\'aux Finals.',
     ],
   },
   {
