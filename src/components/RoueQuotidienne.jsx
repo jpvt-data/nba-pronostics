@@ -91,7 +91,7 @@ function RoueQuotidienne({ userId, onClose, onGain, onGainCarte }) {
         // Carte rare garantie + verrou anti-rejeu (pas d'XP, donc pas d'insert via ajouterXP)
         try {
           const carteObtenue = await donnerCarteRareGarantie(userId, 'roue_quotidienne')
-          await supabase.from('xp_log').insert({
+          const { error: errLog } = await supabase.from('xp_log').insert({
             user_id:   userId,
             source:    'roue_quotidienne',
             source_id: `roue_${jourParis}`,
@@ -99,37 +99,47 @@ function RoueQuotidienne({ userId, onClose, onGain, onGainCarte }) {
             meta:      { gain: 'Carte rare' },
             date_jour: jourParis,
           })
+          if (errLog) {
+            console.error('[roue] verrou carte échoué:', errLog.message)
+            setErreur("Le verrou anti-rejeu n'a pas pu être posé — préviens JPVT si la roue se rejoue.")
+          }
           if (carteObtenue && onGainCarte) onGainCarte(carteObtenue)
         } catch (e) {
+          console.error('[roue] attribution carte échouée:', e.message)
           setErreur("Erreur lors de l'attribution de la carte")
         }
         onGain(0, null)
       } else if (segment.xp > 0) {
-        try {
-          const res = await ajouterXP(
-            userId, segment.xp,
-            'roue_quotidienne', `roue_${jourParis}`,
-            { gain: segment.label }
-          )
-          if (res?.xp_total ?? segment.xp) {
-            onGain(res?.xp_total ?? segment.xp, res?.niveau ?? null)
-          }
-        } catch (e) {
-          setErreur("Erreur lors de l'enregistrement XP")
-          onGain(segment.xp, null)
+        const res = await ajouterXP(
+          userId, segment.xp,
+          'roue_quotidienne', `roue_${jourParis}`,
+          { gain: segment.label }
+        )
+        // Ne JAMAIS retomber sur segment.xp en cas d'échec : ça affichait un succès
+        // fictif (ex: JACKPOT affiché alors que le profil n'avait rien reçu) quand
+        // ajouterXP renvoyait null (insert xp_log échoué — ex: contrainte unique
+        // déjà consommée par un essai précédent dans la même journée).
+        if (res) {
+          onGain(res.xp_total, res.niveau)
+        } else {
+          console.error('[roue] ajouterXP a échoué pour', segment.label)
+          setErreur("Erreur lors de l'enregistrement XP — le gain n'a pas été crédité. Réessaie ou préviens JPVT.")
         }
       } else {
-        // Segment "Rien" — on insère quand même en xp_log pour bloquer le re-tirage
-        try {
-          await supabase.from('xp_log').insert({
-            user_id:   userId,
-            source:    'roue_quotidienne',
-            source_id: `roue_${jourParis}`,
-            xp_gagne:  0,
-            meta:      { gain: 'Rien' },
-            date_jour: jourParis,
-          })
-        } catch (e) { /* silencieux */ }
+        // Segment "Rien" — on insère quand même en xp_log pour bloquer le re-tirage.
+        // xp_gagne=0 est autorisé par la contrainte CHECK (xp_gagne >= 0) côté DB.
+        const { error: errLog } = await supabase.from('xp_log').insert({
+          user_id:   userId,
+          source:    'roue_quotidienne',
+          source_id: `roue_${jourParis}`,
+          xp_gagne:  0,
+          meta:      { gain: 'Rien' },
+          date_jour: jourParis,
+        })
+        if (errLog) {
+          console.error('[roue] verrou "Rien" échoué:', errLog.message)
+          setErreur("Le verrou anti-rejeu n'a pas pu être posé — préviens JPVT si la roue se rejoue.")
+        }
         onGain(0, null)
       }
 
@@ -342,7 +352,7 @@ function RoueQuotidienne({ userId, onClose, onGain, onGainCarte }) {
                   <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 4 }}>
                     Une carte t'attend — découvre-la juste après
                   </div>
-                ) : resultat.xp > 0 && (
+                ) : resultat.xp > 0 && !erreur && (
                   <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 4 }}>
                     XP ajouté à ton profil
                   </div>
