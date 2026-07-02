@@ -447,8 +447,12 @@ function OngletLigues({ scanResultats, scanSaison }) {
 
   const supprimer = async (id) => {
     if (!window.confirm('Supprimer cette ligue ? Irréversible.')) return
-    await supabase.from('membres_groupe').delete().eq('groupe_id', id)
-    await supabase.from('groupes').delete().eq('id', id)
+    // membres_groupe supprimés par CASCADE — pas besoin de delete manuel
+    const { error } = await supabase.from('groupes').delete().eq('id', id)
+    if (error) {
+      alert(`Erreur suppression : ${error.message}`)
+      return
+    }
     setLigues(prev => prev.filter(l => l.id !== id))
   }
 
