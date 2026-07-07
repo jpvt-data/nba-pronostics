@@ -288,13 +288,20 @@ export const recupererTimeline = async (joursAvant = 15, joursApres = 15) => {
     moisCurseur.setMonth(moisCurseur.getMonth() + 1)
   }
 
+  // Fetch NBA classique + Summer League en parallèle, sur les mêmes plages
+  const appels = plages.flatMap(plage => [
+    { url: `${BASE_URL}/scoreboard?dates=${plage}&limit=500`, sl: false },
+    { url: `${BASE_SL}/scoreboard?dates=${plage}&limit=500`,  sl: true  },
+  ])
+
   const resultats = await Promise.allSettled(
-    plages.map(plage => fetchAvecTimeout(`${BASE_URL}/scoreboard?dates=${plage}&limit=500`).then(r => r.json()))
+    appels.map(a => fetchAvecTimeout(a.url).then(r => r.json()))
   )
 
   const matchs = []
   resultats.forEach((res, i) => {
-    if (res.status === 'rejected') { console.error(`Erreur ESPN timeline plage ${i}:`, res.reason); return }
+    const { sl } = appels[i]
+    if (res.status === 'rejected') { console.error(`Erreur ESPN timeline (sl=${sl}) plage ${i}:`, res.reason); return }
     ;(res.value.events || []).forEach(evt => {
       const comp      = evt.competitions[0]
       const dom       = comp.competitors.find(c => c.homeAway === 'home')
@@ -309,10 +316,10 @@ export const recupererTimeline = async (joursAvant = 15, joursApres = 15) => {
       matchs.push({
         espn_id: evt.id, date: evt.date, statut,
         saison: evt.season?.year ? `${evt.season.year - 1}-${String(evt.season.year).slice(2)}` : null,
-        typeSaison: TYPE_SAISON[evt.season?.type] || null,
+        typeSaison: sl ? 'Summer League' : (TYPE_SAISON[evt.season?.type] || null),
         saisonNum: evt.season?.year ?? null, typeSaisonNum: evt.season?.type ?? null,
-        tag: detecterType(evt.season?.type, headline, comp.type?.abbreviation, false),
-        headline,
+        tag: detecterType(evt.season?.type, headline, comp.type?.abbreviation, sl),
+        headline, isSummerLeague: sl,
         stade: venue?.fullName || null, ville: venue?.address?.city || null,
         canal: comp.broadcasts?.[0]?.names?.[0] || null,
         domicile: { nom: dom.team.displayName, trigramme: dom.team.abbreviation, logo: dom.team.logo, score: dom.score ?? null, color: dom.team.color || null, alternateColor: dom.team.alternateColor || null },
