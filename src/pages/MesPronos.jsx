@@ -503,10 +503,13 @@ function MesPronos() {
       setStreaks(calculerStreaks(terminesTries))
       setEquipes(calculerEquipes(termines))
 
+      const GROUPE_GENERAL_ID = 'aaaaaaaa-0000-0000-0000-000000000001'
+
       const { data: membres } = await supabase
         .from('membres_groupe')
-        .select('points, groupe_id, groupes(id, nom)')
+        .select('points, groupe_id, groupes(id, nom, date_debut, date_fin)')
         .eq('user_id', cibleId)
+        .neq('groupe_id', GROUPE_GENERAL_ID) // Général exclu — vit dans Stats globales, jamais ici
 
       if (membres?.length > 0) {
         const groupeIds = membres.map(m => m.groupes.id)
@@ -535,11 +538,16 @@ function MesPronos() {
           ecartsLigues = el || []
         }
 
+        const maintenant = new Date()
         const ligueStats = {}
         membres.forEach(m => {
+          const dateDebut = m.groupes.date_debut
+          const dateFin    = m.groupes.date_fin
+          const enCours    = (!dateDebut || new Date(dateDebut) <= maintenant) && (!dateFin || new Date(dateFin) >= maintenant)
           ligueStats[m.groupes.id] = {
             id: m.groupes.id,
             nom: m.groupes.nom, points: m.points,
+            dateDebut, dateFin, enCours,
             corrects: 0, incorrects: 0,
             ecartCorrects: 0, ecartIncorrects: 0, ecartPts: 0,
           }
@@ -555,11 +563,17 @@ function MesPronos() {
           if (e.correct) { ligueStats[gid].ecartCorrects++; ligueStats[gid].ecartPts += e.points_gagnes }
           else ligueStats[gid].ecartIncorrects++
         })
-        const liguesArray = Object.values(ligueStats)
-          .filter(l => (l.corrects + l.incorrects) > 0)
-          .sort((a, b) => b.points - a.points)
+        // Toutes les ligues (hors Général) sont gardées, même sans prono résolu —
+        // une ligue en cours peut n'avoir encore aucun match terminé (ex: Summer League au lancement).
+        // Tri : en cours d'abord, puis passées les plus récentes en premier (date_fin desc).
+        const liguesArray = Object.values(ligueStats).sort((a, b) => {
+          if (a.enCours !== b.enCours) return a.enCours ? -1 : 1
+          return new Date(b.dateFin || 0) - new Date(a.dateFin || 0)
+        })
         setStatsLig(liguesArray)
-        if (liguesArray.length > 0) setLigueActive(liguesArray[0].id)
+        // Sélection par défaut : la ligue en cours, sinon la plus récente
+        const defaut = liguesArray.find(l => l.enCours) || liguesArray[0]
+        if (defaut) setLigueActive(defaut.id)
       }
 
       setCharg(false)
