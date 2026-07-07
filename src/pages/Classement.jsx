@@ -260,16 +260,17 @@ function Classement() {
   }
 
   const chargerGeneralFiltre = async (ids, groupeIds, glob, filtreActif) => {
-    const debutMap = { semaine: debutSemaineCourante(), mois: debutMoisCourant(), annee: debutAnneeNBA() }
+    const debutMap = { semaine: debutSemaineCourante(), mois: debutMoisCourant(), annee: debutAnneeNBA(), globale: null }
     const debut = debutMap[filtreActif]
 
-    const { data: pronosFiltres } = await supabase
+    let requetePronos = supabase
       .from('pronos')
       .select('user_id, match_id, resultat, points_gagnes')
       .in('user_id', [...ids])
       .in('groupe_id', [...groupeIds])
       .neq('resultat', 'en_attente')
-      .gte('cree_le', debut.toISOString())
+    if (debut) requetePronos = requetePronos.gte('cree_le', debut.toISOString())
+    const { data: pronosFiltres } = await requetePronos
 
     const seen = new Set()
     const dedup = []
@@ -280,12 +281,13 @@ function Classement() {
       dedup.push(p)
     }
 
-    const { data: ecartsFiltres } = await supabase
+    let requeteEcarts = supabase
       .from('pronos_ecart')
       .select('user_id, points_gagnes')
       .eq('correct', true)
       .in('user_id', [...ids])
-      .gte('cree_le', debut.toISOString())
+    if (debut) requeteEcarts = requeteEcarts.gte('cree_le', debut.toISOString())
+    const { data: ecartsFiltres } = await requeteEcarts
 
     const agg = {}
     ids.forEach(id => { agg[id] = { points: 0, corrects: 0, incorrects: 0 } })
@@ -374,7 +376,7 @@ function Classement() {
     await chargerGeneralFiltre(tousIds, tousGroupeIds, globMap, f)
   }
 
-  const labelFiltre = { semaine: 'Cette semaine', mois: 'Ce mois', annee: `Saison ${labelAnneeNBA()}` }
+  const labelFiltre = { semaine: 'Cette semaine', mois: 'Ce mois', annee: `Saison ${labelAnneeNBA()}`, globale: 'Depuis le début' }
 
   // Ligue sélectionnée infos
   const ligueCourante = toutesLigues.find(g => g.id === ligueSelectId)
@@ -487,7 +489,7 @@ function Classement() {
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 16px', marginBottom: 10 }}>
                 <SousTitre label={labelFiltre[filtre]} couleur="var(--text-2)" />
                 <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
-                  {['semaine', 'mois', 'annee'].map(f => (
+                  {['semaine', 'mois', 'annee', 'globale'].map(f => (
                     <button key={f} onClick={() => changerFiltre(f)} style={{
                       padding: '4px 9px',
                       background: filtre === f ? 'var(--accent)' : 'transparent',
@@ -497,7 +499,7 @@ function Classement() {
                       color: filtre === f ? '#fff' : 'var(--text-3)',
                       fontSize: 10, fontWeight: 600, cursor: 'pointer',
                     }}>
-                      {f === 'semaine' ? 'Sem.' : f === 'mois' ? 'Mois' : 'Saison'}
+                      {f === 'semaine' ? 'Sem.' : f === 'mois' ? 'Mois' : f === 'annee' ? 'Saison' : 'Globale'}
                     </button>
                   ))}
                 </div>

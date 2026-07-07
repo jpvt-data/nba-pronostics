@@ -9,9 +9,10 @@ const MEDAILLES_STYLE = [
   { label: '#3', color: '#b45309' },
 ]
 
-function labelAnneeNBA() {
+function labelAnneeNBA(estSummerLeague = false) {
   const d = new Date()
-  const a = d.getMonth() >= 8 ? d.getFullYear() : d.getFullYear() - 1
+  let a = d.getMonth() >= 8 ? d.getFullYear() : d.getFullYear() - 1
+  if (estSummerLeague) a += 1 // SL de juillet appartient à la saison suivante (cf. espn_capacites)
   return `${String(a).slice(2)}-${String(a + 1).slice(2)}`
 }
 
@@ -29,7 +30,7 @@ function ClassementRapide({ userId }) {
       // Toutes les ligues de l'user
       const { data: membres } = await supabase
         .from('membres_groupe')
-        .select('groupe_id, groupes(id, nom, date_debut, date_fin)')
+        .select('groupe_id, groupes(id, nom, date_debut, date_fin, tag)')
         .eq('user_id', userId).eq('actif', true)
 
       if (!membres?.length) return
@@ -123,7 +124,7 @@ function ClassementRapide({ userId }) {
             {modeGeneral ? 'Classement général' : groupeActif?.nom}
           </h3>
           <span style={{ fontSize: 10, color: 'var(--text-3)' }}>
-            {modeGeneral ? 'Tous temps confondus' : `Saison ${labelAnneeNBA()}`}
+            {modeGeneral ? 'Tous temps confondus' : `Saison ${labelAnneeNBA(groupeActif?.tag === 'summer_league')}`}
           </span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
