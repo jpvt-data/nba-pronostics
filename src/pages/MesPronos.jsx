@@ -389,6 +389,12 @@ function MesPronos() {
   const navigate                         = useNavigate()
   const location                         = useLocation()
 
+  // Dédup Historique : 1 ligne par match (l'user peut avoir plusieurs lignes `pronos`
+  // si inscrit à plusieurs ligues actives simultanément sur le même match)
+  const pronosUniques = Array.from(
+    new Map(pronos.map(p => [p.matchs?.espn_id, p])).values()
+  )
+
   useEffect(() => {
     const onResize = () => setIsMobile(window.innerWidth < 640)
     window.addEventListener('resize', onResize)
@@ -1062,7 +1068,7 @@ function MesPronos() {
             <div style={{ background: 'var(--bg-0)', padding: '16px 16px 20px', borderLeft: '3px solid var(--border-2)' }}>
               <TitreSection mot1="HISTORIQUE" />
               <div style={{ display: 'flex', flexDirection: 'column' }}>
-                {pronos.map((p, i) => {
+                {pronosUniques.map((p, i) => {
                   const m = p.matchs
                   const cliquable = estMoi && !!m?.espn_id
                   const couleur = p.resultat === 'correct'
@@ -1117,7 +1123,7 @@ function MesPronos() {
                     </div>
                   )
                 })}
-                {pronos.length === 0 && (
+                {pronosUniques.length === 0 && (
                   <p style={{ color: 'var(--text-3)', fontSize: 13, padding: '8px 0' }}>Aucun prono pour l'instant.</p>
                 )}
               </div>
