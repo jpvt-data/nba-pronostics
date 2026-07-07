@@ -28,7 +28,7 @@ import { useNotif } from '../context/NotifContext'
 import { SAISON_ESPN } from '../config'
 import { VERSION_COURANTE, CHANGELOG } from '../data/changelog'
 
-// Titre section — barres obliques pleines espacées progressivement
+// Titre de section — bandeau oblique
 const TitreSection = ({ label, couleur = 'var(--accent)' }) => (
   <div style={{
     width: 'calc(100% - 32px)', margin: '0 16px', position: 'relative',
@@ -303,7 +303,6 @@ function Accueil() {
       // ── Connexion quotidienne (dépend de dejaConnexion ci-dessus) ───────────
       const notifs = []
 
-      console.log('[connexion] dejaConnexion:', dejaConnexion, 'jourParis:', jourParis)
       if (!dejaConnexion?.length) {
         // donnerCartes separe du Promise.all : evite qu'une erreur interne soit
         // avalee silencieusement, et permet de capturer les cartes pour le popup
@@ -382,26 +381,7 @@ function Accueil() {
         }
       }
 
-      // ── Matchs terminés avec pronos non vus ────────────────────────────────
-      // const { data: pronosNonVus } = await supabase
-      //  .from('pronos')
-      //  .select('id, matchs(statut)')
-      //  .eq('user_id', user.id)
-      //  .eq('vu', false)
-      //  .not('matchs', 'is', null)
-
-      //const nbNonVus = pronosNonVus?.filter(p => p.matchs?.statut === 'termine').length || 0
-      //if (nbNonVus > 0) {
-      //  notifs.push({
-      //    id:      `matchs_termines_${jourParis}`,
-      //    type:    'matchs',
-      //    titre:   `${nbNonVus} résultat${nbNonVus > 1 ? 's' : ''} à découvrir !`,
-      //    message: 'Va voir tes pronos pour connaître le verdict.',
-      //  })
-      // }
-
-      // Priorité : niveau/titre > mission > badge > matchs > xp passif
-      // L'ordre dans notifs[] est déjà correct — on push dans l'ordre voulu
+      // Priorité : niveau/titre > mission > badge > xp passif
       if (notifs.length > 0) pushNotifs(notifs)
 
       // ── Calcul points (résolution matchs) ──────────────────────────────────
@@ -532,6 +512,9 @@ function Accueil() {
   const typeSaisonActuel   = matchsAffichables[0]?.typeSaisonNum ?? null
   const typeSaisonEffectif = typeSaisonActuel ?? typeSaisonLigues
   const saisonActuelle     = matchsAffichables[0]?.saisonNum ?? SAISON_ESPN
+  // Summer League : typeSaisonNum vaut 2 comme la saison régulière côté ESPN,
+  // seul le flag isSummerLeague (posé par recupererTimeline) permet de la distinguer.
+  const isSL = matchsAffichables[0]?.isSummerLeague || false
 
   return (
     <>
@@ -762,9 +745,9 @@ function Accueil() {
                 <span style={{
                   fontSize: 9, fontWeight: 700, letterSpacing: '0.1em', color: '#fff',
                   textTransform: 'uppercase', padding: '2px 7px', borderRadius: 2,
-                  background: typeSaisonEffectif === 3 ? 'var(--danger)' : typeSaisonEffectif === 5 ? 'var(--success)' : 'var(--text-3)',
+                  background: typeSaisonEffectif === 3 ? 'var(--danger)' : typeSaisonEffectif === 5 ? 'var(--success)' : isSL ? 'var(--orange)' : 'var(--text-3)',
                 }}>
-                  {typeSaisonEffectif === 3 ? 'Playoffs' : typeSaisonEffectif === 5 ? 'Play-In' : typeSaisonEffectif === 4 ? 'Pré-saison' : 'Saison rég.'}
+                  {typeSaisonEffectif === 3 ? 'Playoffs' : typeSaisonEffectif === 5 ? 'Play-In' : typeSaisonEffectif === 4 ? 'Pré-saison' : isSL ? 'Summer League' : 'Saison rég.'}
                 </span>
               )}
               {matchsAffichables.length > 0 && (
