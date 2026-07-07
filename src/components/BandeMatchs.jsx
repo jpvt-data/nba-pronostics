@@ -140,7 +140,7 @@ function FiltreEquipe({ equipeFiltre, onSelect }) {
   )
 }
 
-function CarteMatch({ match, pronoData, onProno, userId }) {
+function CarteMatch({ match, pronoData, onProno, userId, refEl }) {
   const navigate = useNavigate()
   const { noSpoil } = useNoSpoil()
   // pronoData = { equipe, resultat } ou null
@@ -182,7 +182,7 @@ function CarteMatch({ match, pronoData, onProno, userId }) {
   }
 
   return (
-    <div onClick={() => navigate(`/match/${match.espn_id}`)} style={{
+    <div ref={refEl} onClick={() => navigate(`/match/${match.espn_id}`)} style={{
       position: 'relative',
       width: '80vw', maxWidth: 320, minWidth: 260,
       height: 175, flexShrink: 0,
@@ -196,14 +196,15 @@ function CarteMatch({ match, pronoData, onProno, userId }) {
       <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '45%', background: 'linear-gradient(0deg, rgba(6,6,8,0.95) 0%, transparent 100%)' }} />
 
       {/* Label type de saison — haut-centre, flottant au-dessus des logos */}
-      {match.typeSaisonNum && (
+      {(match.typeSaisonNum || match.isSummerLeague) && (
         <div style={{ position: 'absolute', top: 6, left: 0, right: 0, display: 'flex', justifyContent: 'center', zIndex: 10, pointerEvents: 'none' }}>
           <span style={{
             fontFamily: 'var(--font-display)', fontSize: 8, fontWeight: 700,
             letterSpacing: '0.14em', color: 'rgba(255,255,255,0.28)',
             textTransform: 'uppercase',
           }}>
-            {match.typeSaisonNum === 1 ? 'Pré-saison'
+            {match.isSummerLeague ? 'Summer League'
+              : match.typeSaisonNum === 1 ? 'Pré-saison'
               : match.typeSaisonNum === 2 ? 'Saison régulière'
               : match.typeSaisonNum === 3 ? 'Playoffs'
               : null}
@@ -286,7 +287,7 @@ function CarteMatch({ match, pronoData, onProno, userId }) {
   )
 }
 
-function GroupeJour({ jour, matchs, pronos, onProno, userId, refEl }) {
+function GroupeJour({ jour, matchs, indexDebut, pronos, onProno, userId, refEl, onCardRef }) {
   const aujd = estAujourdhui(jour)
   return (
     <div ref={refEl} style={{ flexShrink: 0 }}>
@@ -297,13 +298,14 @@ function GroupeJour({ jour, matchs, pronos, onProno, userId, refEl }) {
         </span>
       </div>
       <div style={{ display: 'flex', gap: 8 }}>
-        {matchs.map(match => (
+        {matchs.map((match, i) => (
           <CarteMatch
             key={match.espn_id}
             match={match}
             pronoData={pronos[match.espn_id] || null}
             onProno={onProno}
             userId={userId}
+            refEl={(el) => onCardRef(indexDebut + i, el)}
           />
         ))}
       </div>
@@ -315,7 +317,8 @@ function BandeMatchs({ matchs, userId, onProno, onBadge, equipeFiltre, onFiltreC
   const [pronos, setPronos] = useState({})
   const scrollRef      = useRef(null)
   const cibleScrollRef = useRef(null)
-  const groupesRefsArr = useRef([])  // refs sur chaque GroupeJour
+  const groupesRefsArr = useRef([])  // refs sur chaque GroupeJour (headers de date)
+  const cardsRefsArr   = useRef([])  // refs à plat sur chaque vignette match (navigation flèches)
   const [hovered, setHovered]       = useState(false)
   const [peutGauche, setPeutGauche] = useState(false)
   const [peutDroite, setPeutDroite] = useState(true)
@@ -327,13 +330,13 @@ function BandeMatchs({ matchs, userId, onProno, onBadge, equipeFiltre, onFiltreC
     setPeutDroite(c.scrollLeft < c.scrollWidth - c.clientWidth - 10)
   }
 
-  // Trouver le groupe le plus centré à l'écran actuellement
-  const indexGroupeCourant = () => {
+  // Trouver la vignette la plus centrée à l'écran actuellement
+  const indexCarteCourante = () => {
     const c = scrollRef.current
     if (!c) return 0
     const centreCourant = c.scrollLeft + c.clientWidth / 2
     let plusProche = 0, distMin = Infinity
-    groupesRefsArr.current.forEach((el, i) => {
+    cardsRefsArr.current.forEach((el, i) => {
       if (!el) return
       const dist = Math.abs(el.offsetLeft + el.offsetWidth / 2 - centreCourant)
       if (dist < distMin) { distMin = dist; plusProche = i }
@@ -341,9 +344,9 @@ function BandeMatchs({ matchs, userId, onProno, onBadge, equipeFiltre, onFiltreC
     return plusProche
   }
 
-  const scrollerVersGroupe = (idx) => {
+  const scrollerVersCarte = (idx) => {
     const c = scrollRef.current
-    const el = groupesRefsArr.current[idx]
+    const el = cardsRefsArr.current[idx]
     if (!c || !el) return
     const centre = el.offsetLeft - (c.clientWidth / 2) + (el.offsetWidth / 2)
     c.scrollTo({ left: Math.max(0, centre), behavior: 'smooth' })
@@ -351,18 +354,17 @@ function BandeMatchs({ matchs, userId, onProno, onBadge, equipeFiltre, onFiltreC
   }
 
   const scrollerGauche = () => {
-    const idx = indexGroupeCourant()
-    scrollerVersGroupe(Math.max(0, idx - 1))
+    const idx = indexCarteCourante()
+    scrollerVersCarte(Math.max(0, idx - 1))
   }
   const scrollerDroite = () => {
-    const idx = indexGroupeCourant()
-    scrollerVersGroupe(Math.min(groupesRefsArr.current.length - 1, idx + 1))
+    const idx = indexCarteCourante()
+    scrollerVersCarte(Math.min(cardsRefsArr.current.length - 1, idx + 1))
   }
 
   useEffect(() => {
     const charger = async () => {
       if (!userId) return
-      // REQUÊTE ORIGINALE — celle qui marchait
       const espnIds = matchs.map(m => m.espn_id)
       const { data } = await supabase
         .from('pronos')
@@ -382,18 +384,6 @@ function BandeMatchs({ matchs, userId, onProno, onBadge, equipeFiltre, onFiltreC
     charger()
   }, [userId, matchs])
 
-  useEffect(() => {
-    if (!cibleScrollRef.current || !scrollRef.current) return
-    const container = scrollRef.current
-    const el = cibleScrollRef.current
-    // Centrer le groupe cible dans le container (fix desktop)
-    setTimeout(() => {
-      const centre = el.offsetLeft - (container.clientWidth / 2) + (el.offsetWidth / 2)
-      container.scrollLeft = Math.max(0, centre)
-      mettreAJourFleches()
-    }, 100)
-  }, [matchs])
-
   if (!matchs.length) return null
 
   const matchsFiltres = equipeFiltre
@@ -401,13 +391,27 @@ function BandeMatchs({ matchs, userId, onProno, onBadge, equipeFiltre, onFiltreC
     : matchs
 
   const groupes = grouperParJour(matchsFiltres)
-  console.log('matchs tags:', matchsFiltres.map(m => ({ id: m.espn_id, tag: m.tag, headline: m.headline, date: m.date?.slice(0,10) })))
-  const aujourdhui = new Date().toISOString().slice(0, 10)
-  // Chercher le premier jour avec un match à venir (pas terminé, pas en cours)
-  const jourAvecProno = groupes.find(([j, ms]) => 
+  const jourAvecProno = groupes.find(([j, ms]) =>
     ms.some(m => m.statut !== 'STATUS_FINAL' && m.statut !== 'STATUS_IN_PROGRESS')
   )?.[0]
   const jourCible = jourAvecProno || groupes[groupes.length - 1]?.[0]
+  const estPremierGroupe = groupes[0]?.[0] === jourCible
+
+  useEffect(() => {
+    if (!scrollRef.current) return
+    const container = scrollRef.current
+    setTimeout(() => {
+      if (estPremierGroupe || !cibleScrollRef.current) {
+        // Premier jour affiché : pas de centrage, on part du début — évite le chevauchement
+        container.scrollLeft = 0
+      } else {
+        const el = cibleScrollRef.current
+        const centre = el.offsetLeft - (container.clientWidth / 2) + (el.offsetWidth / 2)
+        container.scrollLeft = Math.max(0, centre)
+      }
+      mettreAJourFleches()
+    }, 100)
+  }, [matchs])
 
   if (!groupes.length) return (
     <div style={{ padding: '16px', fontSize: 13, color: 'var(--text-3)' }}>
@@ -428,6 +432,8 @@ function BandeMatchs({ matchs, userId, onProno, onBadge, equipeFiltre, onFiltreC
     userSelect: 'none',
   })
 
+  let compteurGlobal = 0
+
   return (
     <div
       style={{ position: 'relative' }}
@@ -445,20 +451,26 @@ function BandeMatchs({ matchs, userId, onProno, onBadge, equipeFiltre, onFiltreC
         style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', paddingTop: 10, paddingBottom: 16, position: 'relative', zIndex: 0  }}
       >
         <div style={{ display: 'flex', flexDirection: 'row', gap: 20, paddingLeft: 16, paddingRight: 16, width: 'max-content', alignItems: 'flex-start' }}>
-          {groupes.map(([jour, matchsJour], index) => (
-            <GroupeJour
-              key={jour}
-              jour={jour}
-              matchs={matchsJour}
-              pronos={pronos}
-              onProno={onProno}
-              userId={userId}
-              refEl={(el) => {
-                groupesRefsArr.current[index] = el
-                if (jour === jourCible) cibleScrollRef.current = el
-              }}
-            />
-          ))}
+          {groupes.map(([jour, matchsJour], index) => {
+            const indexDebut = compteurGlobal
+            compteurGlobal += matchsJour.length
+            return (
+              <GroupeJour
+                key={jour}
+                jour={jour}
+                matchs={matchsJour}
+                indexDebut={indexDebut}
+                pronos={pronos}
+                onProno={onProno}
+                userId={userId}
+                onCardRef={(i, el) => { cardsRefsArr.current[i] = el }}
+                refEl={(el) => {
+                  groupesRefsArr.current[index] = el
+                  if (jour === jourCible) cibleScrollRef.current = el
+                }}
+              />
+            )
+          })}
         </div>
       </div>
 
