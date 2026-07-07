@@ -42,13 +42,14 @@ function debutMoisCourant() {
 
 function debutAnneeNBA() {
   const d = new Date()
-  const annee = d.getMonth() >= 8 ? d.getFullYear() : d.getFullYear() - 1
-  return new Date(`${annee}-09-01T00:00:00`)
+  const annee = d.getMonth() >= 6 ? d.getFullYear() : d.getFullYear() - 1
+  return new Date(`${annee}-07-01T00:00:00`)
 }
 
 function labelAnneeNBA() {
   const d = new Date()
-  const a = d.getMonth() >= 8 ? d.getFullYear() : d.getFullYear() - 1
+  // Bascule au 1er juillet (démarrage Summer League = perçu comme la saison suivante)
+  const a = d.getMonth() >= 6 ? d.getFullYear() : d.getFullYear() - 1
   return `${String(a).slice(2)}-${String(a + 1).slice(2)}`
 }
 

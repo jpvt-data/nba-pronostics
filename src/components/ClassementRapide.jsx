@@ -9,10 +9,10 @@ const MEDAILLES_STYLE = [
   { label: '#3', color: '#b45309' },
 ]
 
-function labelAnneeNBA(estSummerLeague = false) {
+function labelAnneeNBA() {
   const d = new Date()
-  let a = d.getMonth() >= 8 ? d.getFullYear() : d.getFullYear() - 1
-  if (estSummerLeague) a += 1 // SL de juillet appartient à la saison suivante (cf. espn_capacites)
+  // Bascule au 1er juillet (démarrage Summer League = perçu comme la saison suivante)
+  const a = d.getMonth() >= 6 ? d.getFullYear() : d.getFullYear() - 1
   return `${String(a).slice(2)}-${String(a + 1).slice(2)}`
 }
 
@@ -124,7 +124,7 @@ function ClassementRapide({ userId }) {
             {modeGeneral ? 'Classement général' : groupeActif?.nom}
           </h3>
           <span style={{ fontSize: 10, color: 'var(--text-3)' }}>
-            {modeGeneral ? 'Tous temps confondus' : `Saison ${labelAnneeNBA(groupeActif?.tag === 'summer_league')}`}
+            {modeGeneral ? 'Tous temps confondus' : `Saison ${labelAnneeNBA()}`}
           </span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
