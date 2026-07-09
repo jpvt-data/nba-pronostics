@@ -1269,6 +1269,11 @@ function OngletDashboard() {
   const nbClicVest     = events.filter(e => e.event_type === 'clic_vestiaire').length
   const nbClicMissions = events.filter(e => e.event_type === 'clic_missions').length
   const nbClicNav      = events.filter(e => e.event_type === 'clic_nav').length
+  const nbClicTir      = events.filter(e => e.event_type === 'clic_tir').length
+  const nbRecordBattu  = events.filter(e => e.event_type === 'record_battu').length
+  const nbClicRoue     = events.filter(e => e.event_type === 'clic_roue').length
+  const nbClicSerie    = events.filter(e => e.event_type === 'clic_serie').length
+  const nbClicLigue    = events.filter(e => e.event_type === 'clic_ligue').length
 
   // Rétention — jours distincts par user sur la période
   const joursParUser = {}
@@ -1375,9 +1380,23 @@ function OngletDashboard() {
             sub={nbClicProno > 0 ? `${Math.round(nbClicFourch / nbClicProno * 100)}% des pronos` : null} />
           <KPI label="MESSAGES VESTIAIRE" val={nbClicVest} couleur="var(--orange)" />
           <KPI label="CLICS MISSIONS" val={nbClicMissions} couleur="var(--success)" />
+          <KPI label="CLICS ROUE" val={nbClicRoue} couleur="var(--gold)" />
+          <KPI label="CHANGEMENTS SÉRIE" val={nbClicSerie} couleur="var(--accent)" />
+          <KPI label="CHANGEMENTS LIGUE" val={nbClicLigue} couleur="var(--accent)" />
           <KPI label="NAVIGATIONS" val={nbClicNav} couleur="var(--accent)" />
         </div>
       </div>
+
+      {/* Bloc 4bis — Arcade */}
+      <div>
+        <TitreBloc mot1="ARCADE" couleur2="var(--orange)" />
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
+          <KPI label="TIRS JOUÉS" val={nbClicTir} couleur="var(--orange)" />
+          <KPI label="RECORDS BATTUS" val={nbRecordBattu} couleur="var(--gold)"
+            sub={nbClicTir > 0 ? `${Math.round(nbRecordBattu / nbClicTir * 100)}% des tirs` : null} />
+        </div>
+      </div>
+
 
       {/* Bloc 5 — Top users */}
       <div>

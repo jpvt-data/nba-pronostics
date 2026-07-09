@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import Navigation from '../components/Navigation'
 import CarteCollection from '../components/CarteCollection'
+import { track } from '../services/tracker'
 
 const TitreSection = ({ label, couleur = 'var(--gold)' }) => (
   <div style={{ width: 'calc(100% - 32px)', margin: '0 16px', position: 'relative', height: 'clamp(38px, 6vw, 46px)', overflow: 'hidden' }}>
@@ -81,6 +82,7 @@ const MaCollection = () => {
   const [carteAgrandie, setCarteAgrandie] = useState(null)
   const [chargement, setChargement] = useState(true)
   const [cartesIntro, setCartesIntro] = useState([])
+  const [userId, setUserId] = useState(null)
   const scrollRef = useRef(null)
 
   useEffect(() => {
@@ -92,6 +94,8 @@ const MaCollection = () => {
   useEffect(() => {
     const charger = async () => {
       const { data: { user } } = await supabase.auth.getUser()
+      track(user.id, 'page_view', '/ma-collection')
+      setUserId(user.id)
       const [cat, collectionRes] = await Promise.all([
         recupererCatalogueComplet(),
         supabase.from('cartes_collection').select('carte_id').eq('user_id', user.id),
@@ -230,7 +234,7 @@ const MaCollection = () => {
             return (
               <button
                 key={s}
-                onClick={() => setSerieActive(s)}
+                onClick={() => { track(userId, 'clic_serie', '/ma-collection', { serie: s }); setSerieActive(s) }}
                 style={{
                   flexShrink: 0,
                   display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,

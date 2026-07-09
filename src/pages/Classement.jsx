@@ -257,6 +257,7 @@ function Classement() {
 
   const changerLigue = async (id) => {
     setLigueSelectId(id)
+    track(moi, 'clic_ligue', '/classement', { groupe_id: id })
     await chargerClassementLigue(id)
   }
 
@@ -374,6 +375,7 @@ function Classement() {
 
   const changerFiltre = async (f) => {
     setFiltre(f)
+    track(moi, 'clic_filtre_periode', '/classement', { filtre: f })
     await chargerGeneralFiltre(tousIds, tousGroupeIds, globMap, f)
   }
 

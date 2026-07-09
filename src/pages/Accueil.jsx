@@ -618,11 +618,11 @@ function Accueil() {
         {user && (
           <div style={{ margin: '14px 16px 0', background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: isMobile ? 10 : 12 }}>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: isMobile ? 6 : 8 }}>
-              <button onClick={() => { if (roueDispo) setRoueOpen(true) }} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: isMobile ? '8px 4px' : '10px 6px', cursor: roueDispo ? 'pointer' : 'default', opacity: roueDispo ? 1 : 0.4 }}>
+              <button onClick={() => { if (roueDispo) { track(user.id, 'clic_roue', '/accueil'); setRoueOpen(true) } }} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: isMobile ? '8px 4px' : '10px 6px', cursor: roueDispo ? 'pointer' : 'default', opacity: roueDispo ? 1 : 0.4 }}>
                 <RefreshCw size={16} strokeWidth={2} color="var(--accent)" />
                 <span style={{ fontSize: isMobile ? 9 : 10, fontWeight: 700, color: 'var(--text-2)', letterSpacing: '0.03em', whiteSpace: 'nowrap' }}>{roueDispo ? 'Roue' : 'Jouée'}</span>
               </button>
-              <button onClick={() => setMissionsOpen(true)} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: isMobile ? '8px 4px' : '10px 6px', cursor: 'pointer' }}>
+              <button onClick={() => { track(user.id, 'clic_missions', '/accueil'); setMissionsOpen(true) }} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: isMobile ? '8px 4px' : '10px 6px', cursor: 'pointer' }}>
                 <Target size={16} strokeWidth={2} color="var(--accent)" />
                 <span style={{ fontSize: isMobile ? 9 : 10, fontWeight: 700, color: 'var(--text-2)', letterSpacing: '0.03em' }}>Missions</span>
               </button>

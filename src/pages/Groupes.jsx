@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { useNavigate } from 'react-router-dom'
 import Navigation from '../components/Navigation'
+import { track } from '../services/tracker'
 
 const GROUPE_GENERAL_ID = 'aaaaaaaa-0000-0000-0000-000000000001'
 const ONGLETS  = ['en_cours', 'a_venir', 'terminees']
@@ -51,6 +52,7 @@ function Groupes() {
   const charger = async () => {
     const { data: { user } } = await supabase.auth.getUser()
     setUserId(user.id)
+    track(user.id, 'page_view', '/groupes')
 
     const { data: toutesLigues } = await supabase
       .from('groupes')

@@ -1,5 +1,8 @@
+import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Navigation from '../components/Navigation'
+import { supabase } from '../lib/supabase'
+import { track } from '../services/tracker'
 import { CHANGELOG, VERSION_COURANTE } from '../data/changelog'
 
 const TitreSection = ({ label, couleur = 'var(--accent)' }) => (
@@ -26,6 +29,12 @@ const TitreSection = ({ label, couleur = 'var(--accent)' }) => (
 
 function QuoiDeNeuf() {
   const navigate = useNavigate()
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) track(user.id, 'page_view', '/quoi-de-neuf')
+    })
+  }, [])
 
   return (
     <>

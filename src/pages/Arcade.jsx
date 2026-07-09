@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import Navigation from '../components/Navigation'
 import JoueurArcade from '../components/JoueurArcade'
+import { track } from '../services/tracker'
 import {
   recupererDifficulte,
   recupererEtatJour,
@@ -99,6 +100,7 @@ function Arcade() {
       const { data: { user: u } } = await supabase.auth.getUser()
       if (!u) { setChargement(false); return }
       setUser(u)
+      track(u.id, 'page_view', '/arcade')
 
       const potes = await recupererPotes(u.id)
       potesIdsRef.current = potes
@@ -134,6 +136,7 @@ function Arcade() {
 
     const numero = etatJour.prochainTirNumero
     const res = await enregistrerTir(user.id, numero, resultat)
+    track(user.id, 'clic_tir', '/arcade', { resultat, numero })
 
     const nouvelEtat = await recupererEtatJour(user.id)
     setEtatJour(nouvelEtat)
@@ -173,10 +176,12 @@ function Arcade() {
 
       if (battuAbsolu) {
         setBanniereRecord('absolu')
+        track(user.id, 'record_battu', '/arcade', { type: 'absolu', paniers: nouvelEtat.paniers })
         // Battre l'absolu implique mécaniquement avoir battu la semaine.
         recordsDejaBattusRef.current = { semaine: true, absolu: true }
       } else if (battuSemaine) {
         setBanniereRecord('semaine')
+        track(user.id, 'record_battu', '/arcade', { type: 'semaine', paniers: nouvelEtat.paniers })
         recordsDejaBattusRef.current.semaine = true
       }
 

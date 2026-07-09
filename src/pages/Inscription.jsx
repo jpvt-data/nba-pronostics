@@ -16,6 +16,24 @@ function Inscription() {
     if (error) { setErreur(error.message); setCharg(false); return }
     const { error: errProfil } = await supabase.from('profils').insert({ id: data.user.id, pseudo })
     if (errProfil) { setErreur('Ce pseudo est déjà pris'); setCharg(false); return }
+
+    // Auto-inscription : Général (toujours) + ligues actuellement actives (dates en cours)
+    const GROUPE_GENERAL_ID = 'aaaaaaaa-0000-0000-0000-000000000001'
+    const maintenant = new Date().toISOString()
+    const { data: liguesActives } = await supabase
+      .from('groupes')
+      .select('id')
+      .neq('id', GROUPE_GENERAL_ID)
+      .or(`date_debut.is.null,date_debut.lte.${maintenant}`)
+      .or(`date_fin.is.null,date_fin.gte.${maintenant}`)
+
+    const inscriptions = [
+      { groupe_id: GROUPE_GENERAL_ID, user_id: data.user.id, actif: true },
+      ...(liguesActives || []).map(g => ({ groupe_id: g.id, user_id: data.user.id, actif: true })),
+    ]
+    const { error: errInscription } = await supabase.from('membres_groupe').insert(inscriptions)
+    if (errInscription) console.error('[inscription] Auto-inscription ligues échouée:', errInscription.message)
+
     localStorage.setItem('skip_popup', '1')
     navigate('/accueil')
     setCharg(false)
