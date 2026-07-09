@@ -1274,6 +1274,12 @@ function OngletDashboard() {
   const nbClicRoue     = events.filter(e => e.event_type === 'clic_roue').length
   const nbClicSerie    = events.filter(e => e.event_type === 'clic_serie').length
   const nbClicLigue    = events.filter(e => e.event_type === 'clic_ligue').length
+  const nbClicFleche   = events.filter(e => e.event_type === 'clic_fleche_timeline').length
+  const nbClicFiltreEq = events.filter(e => e.event_type === 'clic_filtre_equipe').length
+  const nbResultatRoue = events.filter(e => e.event_type === 'resultat_roue').length
+  const nbOnbTermine   = events.filter(e => e.event_type === 'onboarding_termine').length
+  const nbOnbFerme     = events.filter(e => e.event_type === 'onboarding_ferme').length
+  const nbClicBriefing = events.filter(e => e.event_type === 'clic_briefing').length
 
   // Rétention — jours distincts par user sur la période
   const joursParUser = {}
@@ -1384,6 +1390,19 @@ function OngletDashboard() {
           <KPI label="CHANGEMENTS SÉRIE" val={nbClicSerie} couleur="var(--accent)" />
           <KPI label="CHANGEMENTS LIGUE" val={nbClicLigue} couleur="var(--accent)" />
           <KPI label="NAVIGATIONS" val={nbClicNav} couleur="var(--accent)" />
+          <KPI label="FLÈCHES TIMELINE" val={nbClicFleche} couleur="var(--accent)" />
+          <KPI label="FILTRES ÉQUIPE" val={nbClicFiltreEq} couleur="var(--accent)" />
+          <KPI label="CLICS BRIEFING" val={nbClicBriefing} couleur="var(--gold)" />
+        </div>
+      </div>
+
+      {/* Bloc 4ter — Roue & Onboarding */}
+      <div>
+        <TitreBloc mot1="ROUE" mot2="& ONBOARDING" couleur2="var(--gold)" />
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
+          <KPI label="TIRAGES ROUE" val={nbResultatRoue} couleur="var(--gold)" />
+          <KPI label="ONBOARDING TERMINÉ" val={nbOnbTermine} couleur="var(--success)"
+            sub={(nbOnbTermine + nbOnbFerme) > 0 ? `${Math.round(nbOnbTermine / (nbOnbTermine + nbOnbFerme) * 100)}% de complétion` : null} />
         </div>
       </div>
 

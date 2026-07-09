@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useNoSpoil } from '../context/NoSpoilContext'
+import { track } from '../services/tracker'
 
 const formaterHeure = (dateStr) =>
   new Date(dateStr).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
@@ -354,10 +355,12 @@ function BandeMatchs({ matchs, userId, onProno, onBadge, equipeFiltre, onFiltreC
   }
 
   const scrollerGauche = () => {
+    track(userId, 'clic_fleche_timeline', '/accueil', { direction: 'gauche' })
     const idx = indexCarteCourante()
     scrollerVersCarte(Math.max(0, idx - 1))
   }
   const scrollerDroite = () => {
+    track(userId, 'clic_fleche_timeline', '/accueil', { direction: 'droite' })
     const idx = indexCarteCourante()
     scrollerVersCarte(Math.min(cardsRefsArr.current.length - 1, idx + 1))
   }

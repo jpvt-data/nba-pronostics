@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { useNavigate } from 'react-router-dom'
+import { track } from '../services/tracker'
 
 const IconTrophy = () => (
   <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -165,11 +166,13 @@ export default function OnboardingTuto({ userId, onClose }) {
 
   const fermer = async () => {
     await marquerFait()
+    track(userId, 'onboarding_ferme', '/onboarding', { slide, total })
     onClose()
   }
 
   const terminer = async () => {
     await marquerFait()
+    track(userId, 'onboarding_termine', '/onboarding', { total })
     onClose()
     navigate('/accueil')
   }

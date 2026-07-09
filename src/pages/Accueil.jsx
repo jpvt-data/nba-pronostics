@@ -755,7 +755,7 @@ function Accueil() {
               )}
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <FiltreEquipe equipeFiltre={equipeFiltre} onSelect={setEquipeFiltre} />
+              <FiltreEquipe equipeFiltre={equipeFiltre} onSelect={(eq) => { track(user.id, 'clic_filtre_equipe', '/accueil', { equipe: eq }); setEquipeFiltre(eq) }} />
               <button onClick={() => navigate('/calendrier')} className="btn-tap" style={{
                 display: 'flex', alignItems: 'center', gap: 5,
                 background: 'var(--accent-dim)', border: '1px solid var(--accent-border)',

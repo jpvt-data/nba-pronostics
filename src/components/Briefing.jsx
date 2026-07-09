@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { BADGES_CATALOGUE } from '../data/badges'
 import { lundiFin } from '../services/points'
+import { track } from '../services/tracker'
 
 const DISMISS_KEY = (key) => {
   const today = new Date().toISOString().slice(0, 10)
@@ -464,7 +465,7 @@ export default function Briefing({ userId, nbPronosAttente = 0, matchs = [] }) {
               background: msg.couleur || 'var(--accent)', display: 'inline-block',
             }} />
             <span
-              onClick={() => msg.lien ? navigate(msg.lien) : undefined}
+              onClick={() => { if (msg.lien) { track(userId, 'clic_briefing', '/accueil', { id: msg.id, lien: msg.lien }); navigate(msg.lien) } }}
               style={{
                 fontSize: 12, fontWeight: 600, color: '#1a1a2e',
                 cursor: msg.lien ? 'pointer' : 'default',

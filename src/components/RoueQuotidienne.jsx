@@ -3,6 +3,7 @@ import { ajouterXP, verifierMissions } from '../services/xp'
 import { lundiFin } from '../services/points'
 import { donnerCarteRareGarantie } from '../services/cartes'
 import { supabase } from '../lib/supabase'
+import { track } from '../services/tracker'
 import { X } from 'lucide-react'
 
 // Segments de la roue — ordre affiché, couleurs, probabilités
@@ -84,6 +85,7 @@ function RoueQuotidienne({ userId, onClose, onGain, onGainCarte }) {
     setTimeout(async () => {
       setResultat(segment)
       setPhase('result')
+      track(userId, 'resultat_roue', '/accueil', { gain: segment.label, type: segment.type, xp: segment.xp })
 
       const jourParis = new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/Paris' })
 
