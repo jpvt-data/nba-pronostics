@@ -97,13 +97,16 @@ const résoudreFourchette = async (pe, fourchetteReelle, type_saison, saison, ta
   const correctEcart = pe.fourchette_choisie === fourchetteReelle
 
   // Vérifier si le prono du même match est correct pour cet user
-  const { data: pronoUser } = await supabase
+  // .limit(1) au lieu de .maybeSingle() : pronos a une ligne par ligue pour un même
+  // match/user (Général + ligues spécifiques), .maybeSingle() plantait silencieusement
+  // dès qu'il y avait >1 ligne → pronoCorrect toujours false → bonus 2pts jamais déclenché.
+  const { data: pronoUserRows } = await supabase
     .from('pronos')
     .select('resultat')
     .eq('user_id', pe.user_id)
     .eq('match_id', pe.match_id)
-    .maybeSingle()
-  const pronoCorrect = pronoUser?.resultat === 'correct'
+    .limit(1)
+  const pronoCorrect = pronoUserRows?.[0]?.resultat === 'correct'
 
   // Règle points : fourchette seule = 1pt, prono+fourchette = +2pts (total 3)
   const pointsEcart = correctEcart ? (pronoCorrect ? 2 : 1) : 0

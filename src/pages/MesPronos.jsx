@@ -1119,7 +1119,7 @@ function MesPronos() {
                               {ecart.fourchette_reelle == null
                                 ? <span style={{ color: 'var(--gold)' }}>Écart : {FL[ecart.fourchette_choisie]} (en attente)</span>
                                 : ecart.correct
-                                  ? <span style={{ color: 'var(--success)' }}>Écart : {FL[ecart.fourchette_choisie]} · +2 pts</span>
+                                  ? <span style={{ color: 'var(--success)' }}>Écart : {FL[ecart.fourchette_choisie]} · +{ecart.points_gagnes} pt{ecart.points_gagnes > 1 ? 's' : ''}</span>
                                   : <span style={{ color: 'var(--danger)' }}>Écart : {FL[ecart.fourchette_choisie]} · raté (réel : {FL[ecart.fourchette_reelle]})</span>
                               }
                             </div>
