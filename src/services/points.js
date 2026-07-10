@@ -84,8 +84,16 @@ const calculerStatsUser = async (userId) => {
   }
 }
 
+// Matching ligue générique — utilisé partout où on crédite des points.
+// Général (type_saison null) matche tout. Sinon : match par tag sémantique
+// (summer_league, playoffs, etc.) en priorité, sinon fallback type_saison+saison bruts ESPN.
+const matcheLigue = (ligue, type_saison, saison, tag) =>
+  !ligue.type_saison ||
+  (tag && ligue.tag === tag) ||
+  (ligue.type_saison === type_saison && ligue.saison === saison)
+
 // Résout une fourchette — appelé depuis calculerPoints (pass 1 et pass 2)
-const résoudreFourchette = async (pe, fourchetteReelle, type_saison, saison, lundi) => {
+const résoudreFourchette = async (pe, fourchetteReelle, type_saison, saison, tag, lundi) => {
   const correctEcart = pe.fourchette_choisie === fourchetteReelle
 
   // Vérifier si le prono du même match est correct pour cet user
@@ -135,17 +143,14 @@ const résoudreFourchette = async (pe, fourchetteReelle, type_saison, saison, lu
     // +pts ligue si fourchette correcte
     const { data: membres } = await supabase
       .from('membres_groupe')
-      .select('id, points, groupes(type_saison, saison)')
+      .select('id, points, groupes(type_saison, saison, tag)')
       .eq('user_id', pe.user_id)
       .eq('actif', true)
 
     for (const membre of (membres || [])) {
       const ligue = membre.groupes
       if (!ligue) continue
-      const matcheLigue =
-        !ligue.type_saison ||
-        (ligue.type_saison === type_saison && ligue.saison === saison)
-      if (matcheLigue) {
+      if (matcheLigue(ligue, type_saison, saison, tag)) {
         await supabase
           .from('membres_groupe')
           .update({ points: membre.points + pointsEcart })
@@ -262,17 +267,14 @@ export const calculerPoints = async () => {
 
           const { data: membres } = await supabase
             .from('membres_groupe')
-            .select('id, points, groupes(type_saison, saison)')
+            .select('id, points, groupes(type_saison, saison, tag)')
             .eq('user_id', prono.user_id)
             .eq('actif', true)
 
           for (const membre of (membres || [])) {
             const ligue = membre.groupes
             if (!ligue) continue
-            const matcheLigue =
-              !ligue.type_saison ||
-              (ligue.type_saison === type_saison && ligue.saison === saison)
-            if (matcheLigue) {
+            if (matcheLigue(ligue, type_saison, saison, tag)) {
               await supabase
                 .from('membres_groupe')
                 .update({ points: membre.points + 1 })
@@ -293,7 +295,7 @@ export const calculerPoints = async () => {
           .is('fourchette_reelle', null)
 
         for (const pe of (pronosEcart || [])) {
-          await résoudreFourchette(pe, fourchetteReelle, type_saison, saison, lundi)
+          await résoudreFourchette(pe, fourchetteReelle, type_saison, saison, tag, lundi)
           usersTraites.add(pe.user_id)
         }
       }
@@ -305,7 +307,7 @@ export const calculerPoints = async () => {
   // ou si calculerPoints a tourné sans traiter la fourchette
   const { data: fourchetteOrphelines } = await supabase
     .from('pronos_ecart')
-    .select('id, user_id, fourchette_choisie, match_id, matchs(id, espn_id, statut, score_domicile, score_exterieur, type_saison, saison)')
+    .select('id, user_id, fourchette_choisie, match_id, matchs(id, espn_id, statut, score_domicile, score_exterieur, type_saison, saison, tag)')
     .is('fourchette_reelle', null)
     .not('matchs', 'is', null)
 
@@ -321,7 +323,7 @@ export const calculerPoints = async () => {
       ecartFinal <= 20 ? 'net'       :
       ecartFinal <= 30 ? 'large'     : 'domination'
 
-    await résoudreFourchette(pe, fourchetteReelle, m.type_saison, m.saison, lundi)
+    await résoudreFourchette(pe, fourchetteReelle, m.type_saison, m.saison, m.tag, lundi)
     usersTraites.add(pe.user_id)
   }
 
