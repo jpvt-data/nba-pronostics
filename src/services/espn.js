@@ -331,11 +331,28 @@ export const recupererTimeline = async (joursAvant = 15, joursApres = 15) => {
   return matchs
 }
 
-export const recupererGagnant = async (espnId) => {
+// Fetch summary NBA classique, fallback Summer League si échec — utilisé par
+// recupererGagnant et recupererStatutMatch pour couvrir les 2 compétitions.
+const fetchSummaryAvecFallbackSL = async (espnId) => {
   try {
     const res  = await fetchAvecTimeout(`${BASE_WEB}/summary?event=${espnId}`)
-    const data = await res.json()
-    const comp = data.header?.competitions?.[0]
+    const json = await res.json()
+    if (json?.header?.competitions?.[0]) return { data: json, isSummerLeague: false }
+  } catch { /* silencieux */ }
+
+  try {
+    const res  = await fetchAvecTimeout(`${BASE_WEB_SL}/summary?event=${espnId}`)
+    const json = await res.json()
+    if (json?.header?.competitions?.[0]) return { data: json, isSummerLeague: true }
+  } catch { /* silencieux */ }
+
+  return { data: null, isSummerLeague: false }
+}
+
+export const recupererGagnant = async (espnId) => {
+  try {
+    const { data, isSummerLeague } = await fetchSummaryAvecFallbackSL(espnId)
+    const comp = data?.header?.competitions?.[0]
     if (!comp || comp.status?.type?.name !== 'STATUS_FINAL') return null
     const gagnant = comp.competitors.find(c => c.winner === true)
     if (!gagnant) return null
@@ -346,7 +363,7 @@ export const recupererGagnant = async (espnId) => {
     const ecart_final = Math.abs(score_domicile - score_exterieur)
     // Calcul tag depuis season.type (sans appel scoreboard supplémentaire — headline non dispo ici)
     const typeSaisonNum = data.header?.season?.type ?? null
-    let tag = detecterType(typeSaisonNum, '', comp.type?.abbreviation, false)
+    let tag = detecterType(typeSaisonNum, '', comp.type?.abbreviation, isSummerLeague)
     // Fallback Finals via seasonseries si pas de headline
     if (typeSaisonNum === 3 && tag !== 'finals') {
       const serie = data.seasonseries?.find(s => s.type === 'playoff')
@@ -365,9 +382,8 @@ export const recupererGagnant = async (espnId) => {
 // Valeurs pertinentes : STATUS_CANCELED | STATUS_POSTPONED | STATUS_UNNECESSARY | STATUS_FINAL | null (erreur réseau)
 export const recupererStatutMatch = async (espnId) => {
   try {
-    const res  = await fetchAvecTimeout(`${BASE_WEB}/summary?event=${espnId}`)
-    const data = await res.json()
-    return data.header?.competitions?.[0]?.status?.type?.name || null
+    const { data } = await fetchSummaryAvecFallbackSL(espnId)
+    return data?.header?.competitions?.[0]?.status?.type?.name || null
   } catch (err) {
     console.error('Erreur récupération statut match:', err)
     return null
