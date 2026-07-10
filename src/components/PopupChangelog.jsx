@@ -6,16 +6,18 @@ import { VERSION_COURANTE } from '../data/changelog'
 const CLE_STORAGE = `popup_vu_${VERSION_COURANTE}`
 
 function PopupChangelog({ forceOuvert = false, onFermer }) {
-  const [visible, setVisible]   = useState(false)
-  const [pseudo, setPseudo]     = useState(null)
-  const [connecte, setConnecte] = useState(false)
-  const [phase, setPhase]       = useState(0)
-  const [email, setEmail]       = useState('')
-  const [mdp, setMdp]           = useState('')
-  const [erreur, setErreur]     = useState(null)
-  const [charg, setCharg]       = useState(false)
-  const [fontPret, setFontPret] = useState(false)
-  const navigate                = useNavigate()
+  const [visible, setVisible]         = useState(false)
+  const [pseudo, setPseudo]           = useState(null)
+  const [connecte, setConnecte]       = useState(false)
+  const [phase, setPhase]             = useState(0)
+  const [email, setEmail]             = useState('')
+  const [mdp, setMdp]                 = useState('')
+  const [erreur, setErreur]           = useState(null)
+  const [charg, setCharg]             = useState(false)
+  const [fontPret, setFontPret]       = useState(false)
+  const [modeReset, setModeReset]     = useState(false)
+  const [resetEnvoye, setResetEnvoye] = useState(false)
+  const navigate                      = useNavigate()
 
   useEffect(() => {
     document.fonts.ready.then(() => setFontPret(true))
@@ -72,10 +74,18 @@ function PopupChangelog({ forceOuvert = false, onFermer }) {
     setCharg(false)
   }
 
-  if (!visible) return null
+  const envoyerReset = async () => {
+    if (!email) { setErreur('Renseigne ton email d\'abord'); return }
+    setCharg(true); setErreur(null)
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: 'https://swish-league.vercel.app/reset-password'
+    })
+    setCharg(false)
+    if (error) { setErreur('Erreur lors de l\'envoi'); return }
+    setResetEnvoye(true)
+  }
 
-  const MOTS = ['Pronostique.', 'Flambe.', 'Règne.']
-  const COULEURS = ['var(--text-1)', 'var(--accent)', 'var(--orange)']
+  if (!visible) return null
 
   return (
     <>
@@ -118,7 +128,7 @@ function PopupChangelog({ forceOuvert = false, onFermer }) {
           }}>LEAGUE</span>
         </div>
 
-        {/* Tagline B — apparition après le logo */}
+        {/* Tagline — apparition après le logo */}
         <p style={{
           fontSize: 11, fontWeight: 500, color: 'var(--text-3)',
           letterSpacing: '0.14em', textTransform: 'uppercase',
@@ -170,7 +180,7 @@ function PopupChangelog({ forceOuvert = false, onFermer }) {
           }}>
             {[
               { label: 'Email',        type: 'email',    val: email, set: setEmail, ph: 'ton@email.com' },
-              { label: 'Mot de passe', type: 'password', val: mdp,   set: setMdp,   ph: '••••••••' },
+              ...(modeReset ? [] : [{ label: 'Mot de passe', type: 'password', val: mdp, set: setMdp, ph: '••••••••' }]),
             ].map(({ label, type, val, set, ph }) => (
               <div key={label} style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
                 <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{label}</label>
@@ -178,7 +188,7 @@ function PopupChangelog({ forceOuvert = false, onFermer }) {
                   type={type} value={val}
                   onChange={e => set(e.target.value)}
                   placeholder={ph}
-                  onKeyDown={e => e.key === 'Enter' && seConnecter()}
+                  onKeyDown={e => e.key === 'Enter' && (modeReset ? envoyerReset() : seConnecter())}
                   style={{
                     background: 'var(--bg-0)', borderWidth: 1, borderStyle: 'solid', borderColor: 'var(--border)',
                     borderRadius: 'var(--radius-sm)', color: 'var(--text-1)',
@@ -197,21 +207,60 @@ function PopupChangelog({ forceOuvert = false, onFermer }) {
               </div>
             )}
 
-            <button onClick={seConnecter} disabled={charg} style={{
-              width: '100%', padding: '12px', marginTop: 4,
-              background: 'var(--accent)', borderWidth: 0, borderRadius: 'var(--radius-sm)',
-              color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer',
-              letterSpacing: '0.06em', opacity: charg ? 0.6 : 1,
-            }}>
-              {charg ? 'Connexion…' : 'SE CONNECTER'}
-            </button>
+            {modeReset && resetEnvoye && (
+              <div style={{ fontSize: 12, color: 'var(--success)', background: 'var(--success-dim)', borderWidth: 1, borderStyle: 'solid', borderColor: 'rgba(34,197,94,0.3)', borderRadius: 'var(--radius-sm)', padding: '8px 12px' }}>
+                Email envoyé si ce compte existe. Vérifie ta boîte mail.
+              </div>
+            )}
+
+            {!modeReset && (
+              <button onClick={seConnecter} disabled={charg} style={{
+                width: '100%', padding: '12px', marginTop: 4,
+                background: 'var(--accent)', borderWidth: 0, borderRadius: 'var(--radius-sm)',
+                color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer',
+                letterSpacing: '0.06em', opacity: charg ? 0.6 : 1,
+              }}>
+                {charg ? 'Connexion…' : 'SE CONNECTER'}
+              </button>
+            )}
+
+            {modeReset && !resetEnvoye && (
+              <button onClick={envoyerReset} disabled={charg} style={{
+                width: '100%', padding: '12px', marginTop: 4,
+                background: 'var(--accent)', borderWidth: 0, borderRadius: 'var(--radius-sm)',
+                color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer',
+                letterSpacing: '0.06em', opacity: charg ? 0.6 : 1,
+              }}>
+                {charg ? 'Envoi…' : 'ENVOYER LE LIEN'}
+              </button>
+            )}
 
             <p style={{ fontSize: 12, color: 'var(--text-3)', textAlign: 'center', margin: 0 }}>
-              Pas encore de compte ?{' '}
-              <Link to="/inscription" style={{ color: 'var(--accent)', textDecoration: 'none', fontWeight: 600 }}>
-                Créer un compte
-              </Link>
+              {!modeReset ? (
+                <span
+                  onClick={() => { setModeReset(true); setErreur(null) }}
+                  style={{ color: 'var(--accent)', cursor: 'pointer' }}
+                >
+                  Mot de passe oublié ?
+                </span>
+              ) : (
+                <span
+                  onClick={() => { setModeReset(false); setResetEnvoye(false); setErreur(null) }}
+                  style={{ color: 'var(--accent)', cursor: 'pointer' }}
+                >
+                  Retour à la connexion
+                </span>
+              )}
             </p>
+
+            {!modeReset && (
+              <p style={{ fontSize: 12, color: 'var(--text-3)', textAlign: 'center', margin: 0 }}>
+                Pas encore de compte ?{' '}
+                <Link to="/inscription" style={{ color: 'var(--accent)', textDecoration: 'none', fontWeight: 600 }}>
+                  Créer un compte
+                </Link>
+              </p>
+            )}
           </div>
         )}
 

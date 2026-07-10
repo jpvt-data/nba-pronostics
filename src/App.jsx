@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from './lib/supabase'
 import Connexion      from './pages/Connexion'
 import Inscription    from './pages/Inscription'
+import ResetPassword from './pages/ResetPassword'
 import Accueil        from './pages/Accueil'
 import Groupes        from './pages/Groupes'
 import Classement     from './pages/Classement'
@@ -85,6 +86,7 @@ function App() {
             <Routes>
               <Route path="/connexion"      element={public_(<Connexion />)} />
               <Route path="/inscription"    element={<Inscription />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/accueil"        element={prive(<Accueil />)} />
               <Route path="/classement"     element={prive(<Classement />)} />
               <Route path="/mes-pronos"     element={prive(<MesPronos />)} />
